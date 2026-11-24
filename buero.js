@@ -1033,7 +1033,8 @@ const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsa
   bewerbernummer: "Bewerbernummer", theorie_frist_bis: "Theorie-Frist", sehhilfe: "Sehhilfe", vorbesitz: "Vorbesitz", auslands_fs: "Ausländischer Führerschein",
   wohnsitz_de_seit: "Wohnsitz in Deutschland seit", uebersetzung_vorhanden: "Übersetzung liegt vor",
   fahrlehrerlaubnis: "Fahrlehrerlaubnis", klassen: "Ausbildungsklassen", fuehrerschein_klassen: "Eigener Führerschein", fuehrerschein_c_bis: "Führerschein C/CE bis",
-  fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse" };
+  fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse",
+  paket: "Paket" }; // Werkstatt 13: Verkauf, Wechsel und Storno eines Pakets (Spur aus schueler_pakete)
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   // W14: zum Schüler gehören auch die Eltern-Angaben (eigene Tabelle)
@@ -1629,9 +1630,9 @@ function renderSchueler() {
     const b197 = x.klasse === "B197";
     const testfahrt = b197 ? (x.b197_testfahrt_am ? `<span class="marke-pill gruen">Testfahrt ✓ ${esc(datumDE(x.b197_testfahrt_am).slice(0, 6))}</span>` : `<span class="marke-pill gelb">Testfahrt offen</span>`) : "";
     return `<tr${istAktiv(x) ? "" : ' class="inaktivzeile"'}>
-      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
-      <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${x.paket_id ? " · " + esc(paketName(x.paket_id)) : ""}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
+      <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
@@ -2346,6 +2347,9 @@ function elternNachKonflikt(dlg, basis, neu, erg) {
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
+  // Werkstatt 13: „Normale Anmeldung“ oder Paket verkaufen (buero-pakete.js). Ohne neue Datenbank: die alte Paket-Auswahl
+  const mitVerkauf = typeof bkVerkaufDa === "function" && bkVerkaufDa();
+  let bkAnm = null;
   // W14 (Fable B1): Vergleichsstand ist eine KOPIE vom Öffnen. Das Objekt in S.schueler ändern auch andere Knöpfe im Fenster
   // (z. B. „Zahlung ausstehend“ kopiert die ganze frische Zeile hinein) – dann gälte ein alter Wert im Feld als „von mir geändert“.
   const basisX = id ? JSON.parse(JSON.stringify(x)) : x;
@@ -2355,10 +2359,11 @@ function schuelerDialog(id) {
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
       ${elternFelderHTML(x)}
       <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
-      <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.filter((p) => p.aktiv !== false || p.id === x.paket_id).map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}${x.paket_id && !S.pakete.some((p) => p.id === x.paket_id) ? `<option value="${esc(x.paket_id)}" selected>(Paket nicht mehr in der Liste)</option>` : ""}</select></label>
+      ${mitVerkauf ? "" : `<label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.filter((p) => p.aktiv !== false || p.id === x.paket_id).map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}${x.paket_id && !S.pakete.some((p) => p.id === x.paket_id) ? `<option value="${esc(x.paket_id)}" selected>(Paket nicht mehr in der Liste)</option>` : ""}</select></label>`}
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
       <label>Vertrag abgeschlossen am<input type="date" name="vertrag_am" value="${esc(x.vertrag_am || "")}"></label>
+      ${mitVerkauf ? bkAnmeldungHTML() : ""}
       ${behoerdeHTML(x)}
       <div class="voll b197-feld" id="b197Feld"${x.klasse === "B197" ? "" : " hidden"}>
         <label class="wahl"><input type="checkbox" name="testfahrt"${x.b197_testfahrt_am ? " checked" : ""}> B197: Testfahrt abgegeben</label>
@@ -2383,6 +2388,8 @@ function schuelerDialog(id) {
     const elternNeu = { email: d.eltern_email, mail_an: d.zahlungsmail_an };
     const name = (d.name || "").trim();
     if (!name) { toast("Bitte einen Namen eintragen.", true); return false; }
+    const paketFehler = bkAnm ? bkAnm.pruefen() : "";
+    if (paketFehler) { toast(paketFehler, true); return false; }
     const offeneAufgabe = form.querySelector("#agText");
     if (offeneAufgabe && offeneAufgabe.value.trim()) { toast("Die Aufgabe ist noch nicht gespeichert. Bitte „Aufgabe speichern“ oder „Heute zu tun“ tippen oder den Text löschen.", true); return false; }
     const offenerText = form.querySelector("#nzText");
@@ -2395,6 +2402,7 @@ function schuelerDialog(id) {
       buero_notiz: (d.buero_notiz || "").trim() || null,
     };
     Object.assign(werte, behoerdeWerte(form, dlg, d));
+    if (bkAnm) bkAnm.werte(werte); // Paket setzt die Datenbank beim Verkauf (schueler.paket_id), nicht das Formular
     // Bestehende Akte: gesendet wird nur, was im Fenster geändert wurde (speichereAkteSicher, W14)
     const ohneLand = [...dlg.querySelectorAll(".afs-zeile")].find((z) => [...z.querySelectorAll("[data-afs]")].some((i) => i.value.trim()) && !z.querySelector('[data-afs="land"]').value.trim());
     if (ohneLand && !dlg.querySelector("#umschreiberFeld").hidden) {
@@ -2418,6 +2426,7 @@ function schuelerDialog(id) {
       if (!elt.ok) toast(`${name} ist angelegt, aber die E-Mail der Eltern ist nicht gespeichert. Bitte in der Akte nachtragen.`, true); // Fenster zu: sonst legte ein zweites Speichern den Schüler doppelt an
       else toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
       zeichne();
+      if (bkAnm) await bkAnm.nachSpeichern(neueId);
       return true;
     }
     // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
@@ -2435,11 +2444,19 @@ function schuelerDialog(id) {
     akteNachziehen(id, basisX, erg.zeile);
     const elt = elternBasis ? await speichereElternSicher(id, elternBasis, elternNeu) : { ok: true, leer: true, konflikte: [] };
     const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
-    // bei Konflikt erklärt der Kasten; scheitert die Eltern-Adresse, steht deren Meldung
-    if (elt.ok && !erg.konflikte.length && !(elt.konflikte || []).length) toast(erg.leer && elt.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
+    // bei Konflikt erklärt der Kasten; scheitert die Eltern-Adresse, steht deren Meldung.
+    // Nur ein Paket verkauft, storniert oder zugeordnet: kein „Nichts geändert“, die Meldung dazu kommt von nachSpeichern (Richter W13)
+    if (elt.ok && !erg.konflikte.length && !(elt.konflikte || []).length && !(erg.leer && elt.leer && bkAnm && bkAnm.tutWas())) toast(erg.leer && elt.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
     zeichne();
     if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
+    if (bkAnm) {
+      await bkAnm.nachSpeichern(id, erg.konflikte); // Werkstatt 13: Verkauf oder Storno des Pakets (merkt sich den Stand, bleibt das Fenster offen)
+      // Hinweis Fable (W14): Verkauf, Storno und Zuordnung schreiben paket_id an der Akte vorbei. Die Basis des offenen Fensters
+      // nachziehen, sonst gälte beim nächsten Speichern der eigene Verkauf als „woanders geändert“
+      const jetzt = S.schueler.find((y) => y.id === id);
+      if (jetzt) basisX.paket_id = jetzt.paket_id;
+    }
     const konflikte = erg.konflikte.concat(elt.konflikte || []);
     if (konflikte.length) {
       akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
@@ -2450,6 +2467,7 @@ function schuelerDialog(id) {
     if (!elt.ok) { elternNachKonflikt(dlg, elternBasis, elternNeu, null); return false; } // Eltern-Adresse nicht gespeichert: Fenster bleibt offen (Meldung steht)
     return true;
   });
+  if (mitVerkauf) bkAnm = bkAnmeldungBinden(dlg, x, id);
   if (id) bindeZahlBlock(dlg, id);
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
@@ -3618,7 +3636,7 @@ function renderZahlenListe() {
     return kopf(`Anmeldungen (${l.length})`, `<p>${Object.entries(nachArt).map(([k, v]) => `<span class="marke-pill">${esc(k)}: ${v}</span>`).join(" ")}</p>`) +
       (l.length ? `<table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th>Klasse</th><th>Ausbildungsart</th><th>Fahrlehrer</th><th>Paket</th><th>Stand</th></tr></thead><tbody>${l.map((x) => `<tr>
         <td class="zeitspalte">${esc(datumDE(anmeldeDatum(x)))}</td><td>${name(x.id)}</td><td>${esc(klasseVon(x))}</td><td>${esc(artName(x.ausbildungsart))}</td>
-        <td>${esc(x.fahrlehrer_id ? lehrerName(x.fahrlehrer_id) : "–")}</td><td>${esc(x.paket_id ? paketName(x.paket_id) : "–")}</td>
+        <td>${esc(x.fahrlehrer_id ? lehrerName(x.fahrlehrer_id) : "–")}</td><td>${esc((bkAktivesPaket(x.id) || {}).name || (x.paket_id ? paketName(x.paket_id) : "–"))}</td>
         <td>${istAktiv(x) ? (x.praxis_bestanden_am ? '<span class="marke-pill gruen">bestanden</span>' : '<span class="marke-pill">aktiv</span>') : '<span class="marke-pill">Archiv</span>'}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Keine Anmeldungen in diesem Zeitraum.</p>`) + "</div>";
   }
   if (liste === "praxis" || liste === "theorie") {
@@ -4414,7 +4432,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, eltern] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4438,6 +4456,7 @@ async function ladeDaten() {
       supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", fsId).maybeSingle(),   // Werkstatt 11 (Zahlungsmail); fehlt die Tabelle → Abschnitt „noch nicht eingerichtet“
       supa.from("zahlungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
+      alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
@@ -4465,6 +4484,8 @@ async function ladeDaten() {
     // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
+    // Werkstatt 13: null = Tabelle fehlt (alte Datenbank) → alte Paket-Auswahl im Schüler-Fenster. Anderer Ladefehler: letzten Stand behalten
+    S.verkauft = verkauft && !verkauft.error ? (verkauft.data || []) : (verkauft && verkauft.error && !prTabelleFehlt(verkauft.error) ? S.verkauft : null);
     // W14: Eltern-Adressen je Schüler. null = Tabelle fehlt (alte Datenbank): Feld nicht zeigen. Anderer Ladefehler: letzten Stand behalten
     if (eltern && !eltern.error) { S.eltern = {}; S.elternFehler = false; (eltern.data || []).forEach((e) => { S.eltern[e.schueler_id] = e; }); }
     else if (eltern && eltern.error && elternTabelleFehlt(eltern.error)) { S.eltern = null; S.elternFehler = false; }
@@ -4879,7 +4900,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.fsId = e.target.value;
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
-  S.bkFehlt = false; // Werkstatt 13: neue Fahrschule, Paket-Spalten neu prüfen
+  S.bkFehlt = false; S.verkauft = null; // Werkstatt 13: neue Fahrschule, Paket-Spalten und verkaufte Pakete neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg

@@ -4,11 +4,17 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.24.11", datum: "2026-11-24", kurz: "Gesamtansicht: Termine überschreiben nichts Neueres mehr.",
+  { version: "2026.11.24.12", datum: "2026-11-24", kurz: "Gesamtansicht: Termine überschreiben nichts Neueres mehr.",
     punkte: ["In der Gesamtansicht speichert ein Termin oder eine Prüfung nur noch, was du geändert hast. Was der Fahrlehrer inzwischen eingetragen hat, zum Beispiel „durchgeführt“ oder eine Unterschrift, bleibt.",
              "Hat jemand dieselbe Angabe gleichzeitig geändert, bleibt sein Stand. Ein Hinweis sagt dir das.",
              "Ein Termin, der woanders gelöscht wurde, kommt nicht mehr zurück.",
              "Löschst du einen Termin, der inzwischen woanders geändert wurde, bleibt er stehen. Sieh ihn dir dann bitte nochmal an."] },
+  { version: "2026.11.24.11", datum: "2026-11-24", kurz: "Büro: Pakete an Schüler verkaufen, „noch offen“ sehen.",
+    punkte: ["Im Schülerfenster wählst du „Normale Anmeldung“ oder ein Paket. Beim Speichern ist das Paket verkauft. Die Preise bleiben dann fest, auch wenn sich die Preisliste ändert.",
+             "Mit „Anpassen“ änderst du das Paket nur für diesen Schüler, zum Beispiel mehr Übungsstunden.",
+             "In der Akte steht bei jedem Posten, was schon gefahren ist und was noch offen ist, zum Beispiel „12 von 20 gefahren · noch 8 offen“.",
+             "In der App sieht der Fahrlehrer das Paket mit demselben Stand, aber ohne Preise.",
+             "Paket wechseln oder zurück zur normalen Anmeldung geht ohne Rückfrage, danach kannst du es rückgängig machen."] },
   { version: "2026.11.24.10", datum: "2026-11-24", kurz: "Büro: Zahlungs-Mails jetzt auch an die Eltern.",
     punkte: ["In der Schüler-Akte gibt es ein Feld für die E-Mail der Eltern.",
              "Darunter wählst du, wer die Zahlungs-Mail bekommt: Schüler und Eltern, nur Eltern oder nur Schüler.",

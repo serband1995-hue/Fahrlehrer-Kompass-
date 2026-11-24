@@ -94,6 +94,7 @@ function attrappeEinbauen() {
       const patch = C(q.payload);
       if (["schueler", "kalender_termine", "kalender_pruefungen"].includes(q.table) && patch.aktualisiert_am === undefined) patch.aktualisiert_am = new Date().toISOString();
       l.forEach((r) => Object.assign(r, patch));
+      if (fake.nachUpdate) fake.nachUpdate(l); // W14b: wie ein BEFORE-UPDATE-Trigger, der die Zeile noch ändert
       return q.retSel ? liefere(l, q.retCols) : { data: null, error: null };
     }
     return err("XX000", "unbekannte Operation");
@@ -693,20 +694,21 @@ const serverPruefung = (id, extra = {}) => Object.assign({
   geloescht: false, payload: {}, aktualisiert_am: "2026-10-09T08:00:00.000Z",
 }, extra);
 // Gesamtansicht mit dem Stand der Attrappe öffnen (wie _fsLoadAggData: Zeilen → Einträge, Vergleichsstand = Kopie)
-async function gesamt({ termine = [], pruefungen = [] } = {}) {
-  await setzeTabelle("schueler", []);
+async function gesamt({ termine = [], pruefungen = [], schueler = [] } = {}) {
+  await setzeTabelle("schueler", schueler);
   await setzeTabelle("kalender_termine", termine);
   await setzeTabelle("kalender_pruefungen", pruefungen);
   await ruf(() => {
     _fsAgg = { fahrschuleId: "fs-1", fahrschule: { name: "Testfahrschule" }, lehrer: [{ id: "fl-1", name: "Fahr Lehrer" }], fahrzeuge: [], pakete: [] };
+    const t = document.getElementById("toast"); t.classList.remove("show", "undo"); t.textContent = ""; // kein Hinweis aus dem Fall davor
     const T = window.__fake.T, ln = () => "Fahr Lehrer";
-    DB = { students: [], lessons: T.kalender_termine.map((r) => _fsMapTermin(JSON.parse(JSON.stringify(r)), ln)),
+    DB = { students: T.schueler.map((r) => _fsMapSchueler(JSON.parse(JSON.stringify(r)), ln)), lessons: T.kalender_termine.map((r) => _fsMapTermin(JSON.parse(JSON.stringify(r)), ln)),
       exams: T.kalender_pruefungen.map((r) => _fsMapPruefung(JSON.parse(JSON.stringify(r)), ln)), termine: [] };
-    _fsBaseline = JSON.parse(JSON.stringify({ students: [], lessons: DB.lessons, exams: DB.exams }));
+    _fsBaseline = JSON.parse(JSON.stringify({ students: DB.students, lessons: DB.lessons, exams: DB.exams }));
   });
 }
 const gesamtSpeichern = () => ruf(() => _fsSyncAggJetzt());
-const gesamtEnde = () => ruf(() => { _fsAgg = null; _fsBaseline = null; window.__fake.vorUpdate = null; window.__fake.gesperrt = null; });
+const gesamtEnde = () => ruf(() => { _fsAgg = null; _fsBaseline = null; window.__fake.vorUpdate = null; window.__fake.nachUpdate = null; window.__fake.gesperrt = null; });
 const letzterHinweis = () => ruf(() => document.getElementById("toast").textContent);
 
 fall("26 W14b: Gesamtansicht – Leitung verschiebt Termin, Fahrlehrer hat inzwischen „durchgeführt“ und Notiz gesetzt: nichts geht verloren", async (f) => {
@@ -822,6 +824,35 @@ fall("32 W14b: Gesamtansicht – Löschen, Termin und Prüfung inzwischen woande
   if (!/nicht gelöscht/.test(hinweis) || !/nochmal ansehen/.test(hinweis)) f("Hinweis fehlt: " + hinweis);
 });
 
+fall("32b W14b: Gesamtansicht – Storno abgelehnt (inzwischen geändert): Verlaufseintrag „storniert“ verschwindet wieder, Rückgängig-Hinweis bleibt", async (f) => {
+  await neu();
+  await gesamt({ schueler: [serverSchueler("S1", "Anna Muster", { ausbildung: { hist: [] } })], termine: [serverTermin("T1", { schueler_id: "S1" })] });
+  await ruf(() => { _authProfile = { id: "fl-1", fahrschule_id: "fs-1", rolle: "fahrschule_admin" }; stornoLesson("T1", "Falsch eingetragen", false); });
+  const vorher = await ruf(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length);
+  await aendereZeile("kalender_termine", "T1", { status: "durchgefuehrt", aktualisiert_am: "+1s" });
+  await gesamtSpeichern();
+  const nachher = await ruf(() => (DB.students[0].hist || []).filter((h) => h.typ === "storno").length);
+  await lauf(2500); // der geänderte Verlauf geht mit dem nächsten Speichern hinaus
+  const s = await zeile("schueler", "S1"), t1 = await zeile("kalender_termine", "T1");
+  const storno = await ruf(() => _stornoWert("T1"));
+  await gesamtEnde();
+  if (vorher !== 1) return f("Testaufbau: Storno-Eintrag fehlt (" + vorher + ")");
+  if (t1.geloescht) f("Termin trotz Änderung woanders gelöscht");
+  if (nachher !== 0) f("Verlaufseintrag „storniert“ steht noch beim Schüler");
+  if (((s.ausbildung || {}).hist || []).some((h) => h.typ === "storno")) f("Verlaufseintrag „storniert“ steht noch auf dem Server");
+  if (storno) f("Storno-Wunsch nicht vergessen");
+});
+
+fall("32c W14b: Gesamtansicht – „Gespeichert ✓“ verdrängt keinen Rückgängig-Hinweis", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")] });
+  await ruf(() => { toastUndo("Stunde storniert", () => {}); DB.lessons[1].von = "16:00"; });
+  await gesamtSpeichern();
+  const r = await ruf(() => { const t = document.getElementById("toast"); return { undo: t.classList.contains("undo"), text: t.textContent }; });
+  await gesamtEnde();
+  if (!r.undo) f("Rückgängig-Hinweis ersetzt durch: " + r.text);
+});
+
 fall("33 W14b: Gesamtansicht – Löschen ohne Änderung woanders: wird gelöscht (wie bisher)", async (f) => {
   await neu();
   await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")], pruefungen: [serverPruefung("P1")] });
@@ -834,6 +865,150 @@ fall("33 W14b: Gesamtansicht – Löschen ohne Änderung woanders: wird gelösch
   if (!t1.geloescht || !p1.geloescht) f("Nicht gelöscht: Termin " + t1.geloescht + ", Prüfung " + p1.geloescht);
   if (t2.geloescht) f("Falscher Termin gelöscht");
   if (hinweis !== "Gespeichert ✓") f("Unerwarteter Hinweis: " + hinweis);
+});
+
+fall("33b W14b: Gesamtansicht – Löschen, Büro hat inzwischen „Kurs bezahlt“ gesetzt: nicht gelöscht (Büro-Prüfer)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { art: "erstehilfe", kurs_bezahlt: false })] });
+  await aendereZeile("kalender_termine", "T1", { kurs_bezahlt: true });
+  await ruf(() => { DB.lessons = []; });
+  await gesamtSpeichern();
+  const t1 = await zeile("kalender_termine", "T1");
+  const ids = await dbIds("lessons");
+  await gesamtEnde();
+  if (t1.geloescht) f("Termin trotz Büro-Änderung gelöscht");
+  if (!ids.includes("T1")) f("Termin erscheint nicht wieder");
+});
+
+fall("33c W14b: Gesamtansicht – hier neu angelegter Termin lässt sich nach dem Speichern wieder löschen", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  await ruf(() => { DB.lessons.push({ id: "T-neu", sid: null, date: "2026-11-05", von: "08:00", bis: "09:30", art: "fahrstunde", status: "geplant", _fahrlehrerId: "fl-1", notiz: "neu" }); });
+  await gesamtSpeichern();
+  const vorher = await zeile("kalender_termine", "T-neu");
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "T-neu"); });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T-neu");
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (!vorher) return f("Neuer Termin nicht angelegt");
+  if (!z.geloescht) f("Neuer Termin ließ sich nicht löschen");
+  if (/nicht gelöscht/.test(hinweis)) f("Falscher Hinweis: " + hinweis);
+  const kopien = Object.keys(vorher.payload || {}).filter((k) => ["kurs_bezahlt", "buero_fc_status", "_fahrlehrerId", "status", "von"].includes(k));
+  if (kopien.length) f("Kopien in der Nutzlast des neuen Termins: " + kopien.join(", "));
+});
+
+fall("33d W14b: Gesamtansicht – alter Status in der Nutzlast fällt beim Schreiben weg (Büro liest ihn vor der Spalte)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { payload: { status: "nicht erschienen", notiz: "bleibt", kurs_bezahlt: false, buero_fc_status: "offen" } })] });
+  await ruf(() => { DB.lessons[0].status = "abgesagt"; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (z.status !== "abgesagt") f("Status nicht gespeichert: " + z.status);
+  if (z.payload && "status" in z.payload) f("Alter Status steht noch in der Nutzlast: " + z.payload.status);
+  if (!z.payload || z.payload.notiz !== "bleibt") f("Nutzlast verloren: " + JSON.stringify(z.payload));
+  // Daten-Prüfer: ohne die alten Kopien meldete der Abruf der Fahrlehrer-App jede Minute „aktualisiert“
+  if (!z.payload || z.payload.kurs_bezahlt !== false || z.payload.buero_fc_status !== "offen") f("Alte Kopien aus der Nutzlast entfernt (App-Schleife): " + JSON.stringify(z.payload));
+});
+
+fall("33e W14b: Gesamtansicht – Termin ändert sich genau beim Löschen: nicht gelöscht, Hinweis (Daten-Prüfer)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")] });
+  await ruf(() => { window.__fake.vorUpdate = (q, T) => { if (q.table !== "kalender_termine" || !q.payload || q.payload.geloescht !== true) return; const r = T.kalender_termine.find((x) => x.id === "T1"); r.status = "durchgefuehrt"; r.aktualisiert_am = "2026-11-24T12:00:00.000Z"; }; });
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "T1"); });
+  await gesamtSpeichern();
+  const t1 = await zeile("kalender_termine", "T1");
+  const ids = await dbIds("lessons");
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (t1.geloescht) f("Gerade geänderter Termin wurde gelöscht");
+  if (!ids.includes("T1")) f("Termin erscheint nicht wieder");
+  if (!/nicht gelöscht/.test(hinweis)) f("Hinweis fehlt: " + hinweis);
+});
+
+fall("35b W14b: Gesamtansicht – neuer Termin, danach Fehler: Wiederholung schreibt ihn nicht mehr ganz neu (Daten-Prüfer)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  await ruf(() => { window.__fake.gesperrt = ["T1"]; DB.lessons[0].von = "15:00";
+    DB.lessons.push({ id: "T-neu", sid: null, date: "2026-11-05", von: "08:00", bis: "09:30", art: "fahrstunde", status: "geplant", _fahrlehrerId: "fl-1" }); });
+  const ok1 = await gesamtSpeichern();
+  // inzwischen unterschreibt der Fahrlehrer die neue Stunde
+  await aendereZeile("kalender_termine", "T-neu", { payload: { signed: true }, aktualisiert_am: "+1s" });
+  await ruf(() => { window.__fake.gesperrt = null; });
+  const ok2 = await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T-neu"), t1 = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (ok1) f("Erstes Speichern meldete trotz Fehler Erfolg");
+  if (!ok2) f("Zweites Speichern meldete Fehler");
+  if (!z || !z.payload || z.payload.signed !== true) f("Unterschrift auf dem neuen Termin überschrieben: " + JSON.stringify(z && z.payload));
+  if (t1.von !== "15:00") f("Ausstehende Änderung nicht nachgeholt: " + t1.von);
+});
+
+fall("35c W14b: Gesamtansicht – Neuladen während des Speicherns wartet, bis das Speichern fertig ist (Daten-Prüfer)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  const r = await ruf(async () => {
+    const altLaden = _fsLoadAggData, altDarf = _fsDarfGesamt; const laeuftBeimLaden = [];
+    _fsLoadAggData = async () => { laeuftBeimLaden.push(!!_fsSyncLaeuftP); return false; };
+    _fsDarfGesamt = () => true;
+    try {
+      DB.lessons[0].von = "15:00";
+      const p = _fsSyncAggJetzt(); const q = _fsRefreshAggData();
+      await p; await q;
+    } finally { _fsLoadAggData = altLaden; _fsDarfGesamt = altDarf; }
+    return laeuftBeimLaden;
+  });
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (z.von !== "15:00") f("Änderung nicht gespeichert: " + z.von);
+  if (r.length !== 1 || r[0] !== false) f("Neuladen lief, während noch gespeichert wurde: " + JSON.stringify(r));
+});
+
+fall("35d W14b: Gesamtansicht – Trigger ändert die Nutzlast beim eigenen Speichern, hier wird weitergetippt, dann gelöscht: wird gelöscht (Daten-Prüfer, Fall E)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { payload: { signed: true, signatureSnap: { a: 1 } } })] });
+  await ruf(() => {
+    // wie termin_nachweis_spur: Uhrzeit einer unterschriebenen Stunde geändert → Unterschrift ungültig
+    window.__fake.nachUpdate = (l) => { l.forEach((r) => { if (r.payload && r.payload.signed === true) r.payload = Object.assign({}, r.payload, { signed: false, signatureSnap: null, signaturUngueltig: { am: "t" } }); }); };
+    window.__fake.vorUpdate = () => { DB.lessons[0].notiz = "weiter getippt"; };
+    DB.lessons[0].von = "15:00";
+  });
+  await gesamtSpeichern();
+  const lok = await ruf(() => ({ signed: DB.lessons[0].signed, notiz: DB.lessons[0].notiz }));
+  await ruf(() => { window.__fake.nachUpdate = null; DB.lessons = []; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (lok.signed !== false) f("Ansicht zeigt die ungültige Unterschrift nicht: " + JSON.stringify(lok));
+  if (lok.notiz !== "weiter getippt") f("Weitergetipptes verloren: " + JSON.stringify(lok));
+  if (!z.geloescht) f("Nicht gelöscht, obwohl niemand sonst etwas geändert hat (" + hinweis + ")");
+});
+
+fall("35e W14b: Gesamtansicht – Löschen, dann „Rückgängig“: alte Kopien in der Nutzlast bleiben, keine Abruf-Schleife in der Fahrlehrer-App (Richter, R4)", async (f) => {
+  await neu();
+  const alt = serverTermin("T1", { kurs_bezahlt: true, buero_fc_status: "abgegeben", payload: { notiz: "x", kurs_bezahlt: false, buero_fc_status: "offen", interessent_name: "", theorie_gesperrt_bis: null, buero_fc_nachgereicht_am: null, interessent_telefon: "", signed: true }, erstellt_von: "bu-1" });
+  await setzeTabelle("kalender_termine", [JSON.parse(JSON.stringify(alt))]);
+  await ruf(() => pullTermineZuweisungen());
+  const appLessons = await ruf(() => JSON.parse(JSON.stringify(DB.lessons)));
+  await gesamt({ termine: [alt] });
+  await ruf(() => { window.__geloescht = DB.lessons[0]; DB.lessons = []; });
+  await gesamtSpeichern();
+  await ruf(() => { DB.lessons.push(window.__geloescht); });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  // Fahrlehrer-App ruft danach dreimal ab
+  await ruf(() => { window.__toasts.length = 0; });
+  await setzeLokal("lessons", appLessons);
+  await ruf(() => { DB.students = []; });
+  const zahl = [];
+  for (let i = 0; i < 3; i++) { await ruf(() => pullTermineZuweisungen()); zahl.push(await ruf(() => window.__toasts.filter((t) => /aktualisiert/.test(t)).length)); await page.clock.runFor(61000); }
+  if (z.geloescht) f("„Rückgängig“ holt den Termin nicht zurück");
+  if (z.kurs_bezahlt !== true || z.buero_fc_status !== "abgegeben" || !z.payload.signed) f("Spalten/Nutzlast verloren: " + JSON.stringify(z));
+  if (z.erstellt_von !== "bu-1") f("Ersteller überschrieben: " + z.erstellt_von);
+  if (zahl[2] > zahl[0]) f("Fahrlehrer-App meldet bei jedem Abruf erneut „aktualisiert“: " + zahl.join(","));
 });
 
 fall("34 W14b: Gesamtansicht – Zeile ändert sich zwischen Lesen und Schreiben: neu gelesen, nichts zurückgedreht", async (f) => {

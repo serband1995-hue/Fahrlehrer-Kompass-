@@ -4970,22 +4970,27 @@ function _abglNachZusammenfuehren(ids) {
   _abglSpeichern(mem);
 }
 // Zeigt die aktuelle Ansicht neu, wenn gerade nichts bearbeitet wird (kein offenes Fenster, kein Eingabefeld).
+// Liefert false, wenn gerade bearbeitet wird (dann später nochmal, z. B. nach dem Schließen des Blatts – W14b).
 function _ansichtNeuZeigen() {
   try {
     const sh = document.getElementById("sheet");
-    if (sh && sh.classList.contains("open")) return;
+    if (sh && sh.classList.contains("open")) return false;
     const a = document.activeElement;
-    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return false;
     const dr = document.getElementById("drawer");
-    if ((dr && dr.classList.contains("open")) || (typeof _calDragActive !== "undefined" && _calDragActive)) return;
+    if ((dr && dr.classList.contains("open")) || (typeof _calDragActive !== "undefined" && _calDragActive)) return false;
     const letzte = _navStack[_navStack.length - 1];
     // Nur reine Anzeigeseiten neu zeigen - Seiten mit halb ausgefüllten Eingaben (z.B. Prüfung eintragen) nie.
-    if (!letzte || !["routeDashboard", "routeHome", "routeKalender", "routeDetail", "routePlan"].includes(letzte.name)) return;
+    if (!letzte || !["routeDashboard", "routeHome", "routeKalender", "routeDetail", "routePlan"].includes(letzte.name)) return true;
     const y = view.scrollTop;
     _navFahrt = true; try { letzte.fn.apply(null, letzte.args); } finally { _navFahrt = false; }
     view.scrollTop = y;
   } catch (e) {}
+  return true;
 }
+// W14b: Gesamtansicht hat nach dem Speichern den Stand vom Server übernommen, die Ansicht war aber gerade in Bearbeitung
+let _fsNeuZeigenOffen = false;
+function _fsNeuZeigenNachholen() { if (!_fsNeuZeigenOffen) return; if (_ansichtNeuZeigen()) _fsNeuZeigenOffen = false; }
 // Holt den Cloud-Stand (oder nimmt den schon gelesenen) und führt ihn mit DB zusammen.
 // Liefert den Server-Zeitstempel (Text) oder wirft.
 async function _snapHolenUndZusammenfuehren(supa, vorrang, schonGelesen, gen) {
@@ -5497,6 +5502,7 @@ async function pullSchuelerZuweisungen() {
     if (schErr) throw schErr;
     _merkeFristen(rows);
     _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
+    _ladePakete(supa, (rows||[]).map(r=>r.id)); // Werkstatt 13: verkauftes Paket (nur lesen)
     // Klassen des Fahrlehrers neu lesen: trägt das Büro CE ein, sind die Lkw-Klassen ohne neues Anmelden frei
     const uidKl = _authUser.id;
     supa.from("profiles").select("klassen,fahrlehrerlaubnis").eq("id", uidKl).maybeSingle().then(({ data: pr, error: prErr }) => {
@@ -6081,6 +6087,7 @@ async function _fsLoadAggData(fahrschuleId){
   DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
   _merkeFristen(schuelerR.data);
   _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
+  _ladePakete(supa, (schuelerR.data||[]).map(r=>r.id)); // Werkstatt 13
   DB.lessons=(termineR.data||[]).map(r=>_fsMapTermin(r,lehrerName));
   DB.exams=(pruefungenR.data||[]).map(r=>_fsMapPruefung(r,lehrerName));
   // Urlaub als künstliche "Blockiert"-Termine einspeisen. W14: Abgleich über die Fahrlehrer-ID (fahrschule_urlaub.fahrlehrer_id);
@@ -6134,6 +6141,8 @@ async function _fsExitAggMode(){
   try{ await _fsExitAggModeJetzt(); }finally{ _fsExitLaeuft=false; }
 }
 async function _fsExitAggModeJetzt(){
+  // W14b (Daten-Prüfer): ein laufendes Speichern erst zu Ende kommen lassen (sonst bricht es mitten im Schreiben ab)
+  if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
   // Noch nicht geschriebene Änderungen erst speichern - sonst gingen sie beim Umschalten verloren.
   if(_fsAgg&&(_fsSyncDebounce||_fsUngespeichert)){
     clearTimeout(_fsSyncDebounce);
@@ -6157,6 +6166,9 @@ async function _fsExitAggModeJetzt(){
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
   if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
+  // W14b (Daten-Prüfer): erst ein laufendes Speichern abwarten – sonst läse das Neuladen den Stand davor und das
+  // nächste Speichern drehte die eigene Änderung zurück
+  if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
   // Ungespeicherte Änderungen zuerst schreiben. Klappt das nicht, wird nicht neu geladen -
   // das Neuladen würde sie sonst still verwerfen.
   if(_fsSyncDebounce||_fsUngespeichert){
@@ -6482,6 +6494,7 @@ async function routeFahrschuleDetail(fahrschuleId){
   const fs=fsR.data, lehrer=lehrerR.data||[], admins=adminR.data||[], schueler=schuelerR.data||[], pakete=paketeR.data||[];
   const wrap=$("#fsDetailWrap");
   if(!fs){if(wrap)wrap.innerHTML='<p class="muted-p">Fahrschule nicht gefunden.</p>';return;}
+  await _ladePakete(supa, schueler.map(s=>s.id)); // Werkstatt 13 (Richter): im Büro verkaufte Pakete auch hier schützen
   window._fsCache={fahrschuleId,lehrer,pakete,admins};
 
   const backBtn=binSuper?`<button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschulenListe()">← Alle Fahrschulen</button>`:"";
@@ -6531,7 +6544,8 @@ async function routeFahrschuleDetail(fahrschuleId){
         <div class="field"><label style="font-size:11px;">Fahrlehrer</label>
           <select onchange="schuelerVerschieben(${_jsArg(s.id)},this.value,${_jsArg(s.fahrlehrer_id||"")},${_jsArg(fahrschuleId)})" style="width:100%;">${lehrerOptionsFor(s.fahrlehrer_id)}</select></div>
         <div class="field"><label style="font-size:11px;">Paket</label>
-          <select onchange="schuelerPaketSetzen(${_jsArg(s.id)},this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select></div>
+          ${_paketVerkauft&&_paketVerkauft[s.id]?`<div class="fs-sub">„${esc(_paketVerkauft[s.id].name)}“ · im Büro verkauft, ändern nur dort</div>`
+          :`<select onchange="schuelerPaketSetzen(${_jsArg(s.id)},this.value)" style="width:100%;">${paketOptionsFor(s.paket_id)}</select>`}</div>
         <div class="toggle-row" style="margin-top:6px;"><div class="tc-name" style="font-size:13px;">Simulator gekauft</div>
           <button class="check-toggle${s.hat_simulator?' on':''}" onclick="schuelerFlagToggle(${_jsArg(s.id)},'hat_simulator',${!s.hat_simulator})"></button></div>
         <div class="toggle-row"><div class="tc-name" style="font-size:13px;">Theorie-App gekauft</div>
@@ -6765,6 +6779,7 @@ async function schuelerVerschieben(schuelerId,neuerLehrerId,alterLehrerId,fahrsc
 }
 
 async function schuelerPaketSetzen(schuelerId,paketId){
+  if(_paketVerkauft&&_paketVerkauft[schuelerId]){ toast("Dieses Paket ist im Büro verkauft. Ändern geht nur im Büro."); return; } // Werkstatt 13
   const supa=getSupa();
   await supa.from("schueler").update({paket_id:paketId||null}).eq("id",schuelerId);
   toast("Paket aktualisiert ✓");
@@ -7963,7 +7978,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.11";
+const APP_VERSION="2026.11.24.12";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8131,14 +8146,20 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
         upd[k]=mein[k];
       });
       const mP=mein.payload, bP=basis.payload, fP=frT.payload;
+      let neuP=null;
       if(_fsStab(mP)!==_fsStab(bP)){
         if(Object.keys(Object.assign({},mP,bP,fP)).some(n=>{ const m=_fsStab(mP[n]),b=_fsStab(bP[n]),f=_fsStab(fP[n]); return m!==b&&f!==b&&m!==f; })) erg.woanders.add(mein.id);
         const r=_snapDrei(mP,fP,_snapBaum(bP,2),2,true);   // dasselbe Feld an beiden Orten: Stand von woanders bleibt
-        if(_fsStab(r.wert)!==_fsStab(fP)){
-          // Felder, die die Ansicht nicht als Nutzlast kennt (z. B. alte Spalten-Kopien), bleiben wie auf dem Server
-          const voll={}; Object.keys(fr.payload||{}).forEach(k=>{ if(a.kern.includes(k)||_FS_NUR_SPALTE.includes(k)) voll[k]=fr.payload[k]; });
-          upd.payload=Object.assign(voll,r.wert);
-        }
+        if(_fsStab(r.wert)!==_fsStab(fP)) neuP=r.wert;
+      }
+      // Kopien von Kern-Spalten in der Nutzlast (z. B. payload.status: das Büro liest ihn vor der Spalte und zeigte sonst
+      // den alten Status, Büro-Prüfer 24.11.) fallen beim Schreiben weg, wie früher beim Upsert der ganzen Zeile.
+      // Ältere Kopien der Büro-Spalten (kurs_bezahlt …) bleiben stehen: die Fahrlehrer-App hat sie lokal, ohne sie meldete
+      // ihr Abruf jede Minute „aktualisiert“ (Daten-Prüfer 24.11.). Neu geschrieben werden sie nie.
+      const kernInP=Object.keys(fr.payload||{}).some(k=>a.kern.includes(k));
+      if(neuP||(kernInP&&Object.keys(upd).length)){
+        const bleibt={}; Object.keys(fr.payload||{}).forEach(k=>{ if(_FS_NUR_SPALTE.includes(k)) bleibt[k]=fr.payload[k]; });
+        upd.payload=Object.assign(bleibt,neuP||fP);
       }
       if(!Object.keys(upd).length){ erg.zeilen[mein.id]=fr; continue; }
       upd.aktualisiert_am=nowIso;
@@ -8154,24 +8175,63 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
   }
   return erg;
 }
-// Löschen nur, was seit dem Laden der Ansicht nirgends geändert wurde. liste: [{id,basis}] (basis je _fsTeile).
+// Löschen nur, was seit dem Laden der Ansicht nirgends geändert wurde. liste: [{id,roh}] (roh = Eintrag im Vergleichsstand).
+// Mitgezählt werden auch die Büro-Spalten (Kurs bezahlt, FC-Status, Theorie …), soweit die Ansicht sie beim Laden kannte
+// (ein hier neu angelegter Eintrag kennt sie nicht und bleibt löschbar). Büro-Prüfer 24.11.2026.
 // Liefert {loeschen:[id], bleibt:[Server-Zeile], weg:[id] (schon gelöscht oder nicht mehr sichtbar)}.
+const _FS_BUERO_SPALTEN=["buero_fc_status","buero_fc_nachgereicht_am","theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
 async function _fsLoeschenPruefen(supa,tabelle,liste){
   const a=_FS_ART[tabelle], erg={loeschen:[],bleibt:[],weg:[]};
   if(!liste.length)return erg;
   const fMap=await _fsLiesZeilen(supa,tabelle,liste.map(x=>x.id));
-  liste.forEach(({id,basis})=>{
+  liste.forEach(({id,roh})=>{
     const fr=fMap[id];
     if(!fr||fr.geloescht){ erg.weg.push(id); return; }
-    const frT=_fsTeile(tabelle,a.map(fr));
-    const anders=a.spalten.some(k=>_fsStab(frT[k])!==_fsStab(basis[k]))||_fsStab(frT.payload)!==_fsStab(basis.payload);
+    const frM=a.map(fr), frT=_fsTeile(tabelle,frM), basis=_fsTeile(tabelle,roh);
+    const anders=a.spalten.some(k=>_fsStab(frT[k])!==_fsStab(basis[k]))||_fsStab(frT.payload)!==_fsStab(basis.payload)
+      ||_FS_BUERO_SPALTEN.some(k=>(k in roh)&&_fsStab(frM[k])!==_fsStab(roh[k]));
     if(anders) erg.bleibt.push(fr); else erg.loeschen.push(id);
   });
+  erg.zeilen=fMap;
   return erg;
+}
+// Löschen (in den Papierkorb) nur, solange die Zeile noch so ist wie in _fsLoeschenPruefen gelesen; sonst bleibt sie (Hinweis)
+async function _fsLoeschenSchreiben(supa,tabelle,del,nowIso){
+  for(const id of del.loeschen.slice()){
+    const fr=del.zeilen[id];
+    let q=supa.from(tabelle).update({geloescht:true,aktualisiert_am:nowIso}).eq("id",id);
+    q=fr.aktualisiert_am==null?q.is("aktualisiert_am",null):q.eq("aktualisiert_am",fr.aktualisiert_am);
+    const r=_fsPruefe(await q.select("id"));
+    if(r.data&&r.data.length)continue;
+    del.loeschen=del.loeschen.filter(x=>x!==id);
+    const neu=(await _fsLiesZeilen(supa,tabelle,[id]))[id];
+    if(neu&&!neu.geloescht) del.bleibt.push(neu); else del.weg.push(id);
+  }
+}
+// W14b (Richter): „Neue“ Einträge, die es auf dem Server schon gibt (z. B. „Rückgängig“ nach dem Löschen): alte Kopien der
+// Büro-Spalten in der Nutzlast und den ursprünglichen Ersteller stehen lassen. Ohne die Kopien meldete der Abruf der
+// Fahrlehrer-App jede Minute „aktualisiert“. Alle Zeilen behalten dieselben Felder (Sammel-Upsert füllt Fehlendes mit null).
+async function _fsNeuAberVorhanden(supa,tabelle,rows){
+  if(!rows.length)return;
+  const fMap=await _fsLiesZeilen(supa,tabelle,rows.map(r=>r.id));
+  rows.forEach(r=>{
+    const fr=fMap[r.id]; if(!fr)return;
+    const bleibt={}; Object.keys(fr.payload||{}).forEach(k=>{ if(_FS_NUR_SPALTE.includes(k)) bleibt[k]=fr.payload[k]; });
+    r.payload=Object.assign(bleibt,r.payload);
+    if(fr.erstellt_von) r.erstellt_von=fr.erstellt_von;
+  });
+}
+// W14b (Daten-Prüfer): Geschriebene neue Einträge sofort in den Vergleichsstand. Scheitert danach etwas anderes, gelten sie
+// beim nächsten Lauf als bestehend (sicherer Weg) statt als neu (ganze Zeile darüber, z. B. über eine Unterschrift).
+function _fsInBasis(feld,snapListe,geschrieben){
+  if(!_fsBaseline)return;
+  const liste=_fsBaseline[feld]=_fsBaseline[feld]||[];
+  geschrieben.forEach(z=>{ const sn=snapListe.find(x=>x.id===z.id); if(sn&&!liste.some(x=>x.id===z.id)) liste.push(JSON.parse(JSON.stringify(sn))); });
 }
 async function _fsSyncAggJetztKern(){
     _fsSyncDebounce=null;
     if(!_fsAgg||!_fsBaseline)return true;
+    const basisStart=_fsBaseline; // W14b: wurde inzwischen neu geladen, gilt der neue Stand (nicht mit dem alten überschreiben)
     try{
       const supa=getSupa();
       const nowIso=new Date().toISOString();
@@ -8200,7 +8260,7 @@ async function _fsSyncAggJetztKern(){
         else if(JSON.stringify(s)!==JSON.stringify(b)) schuelerAend.push({mein:sZeile(s),basis:sZeile(b)});
       });
       const schuelerDeletes=(_fsBaseline.students||[]).filter(b=>!curSIds.has(b.id)).map(b=>b.id);
-      if(schuelerUpserts.length) _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"}));
+      if(schuelerUpserts.length){ _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"})); _fsInBasis("students",snap.students,schuelerUpserts); }
       /* W14: Bestehende Schüler nicht mehr ganz überschreiben (sonst drehte die Gesamtansicht zurück, was Fahrlehrer-App oder
          Büro inzwischen geändert hatten, z. B. den Ausbildungsstand). Nur geänderte Spalten; frischen Stand lesen; hat jemand
          dieselbe Spalte geändert, bleibt sein Stand. Ausbildungsstand (jsonb) Feld für Feld zusammenführen. */
@@ -8249,16 +8309,25 @@ async function _fsSyncAggJetztKern(){
         termineUpserts.push(Object.assign(t,{fahrschule_id:_fsAgg.fahrschuleId, geloescht:false, erstellt_von:meineId, aktualisiert_am:nowIso}));
       });
       const termineDeletes=(_fsBaseline.lessons||[]).filter(b=>!b._synthetic&&!curTIds.has(b.id)).map(b=>b.id);
-      if(termineUpserts.length) _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"}));
+      if(termineUpserts.length){ await _fsNeuAberVorhanden(supa,"kalender_termine",termineUpserts); _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"})); _fsInBasis("lessons",snap.lessons,termineUpserts); }
       const tErg=await _fsZeilenSicher(supa,"kalender_termine",termineAend,nowIso);
       // Löschen nur, was nirgends geändert wurde (sonst bleibt es; der Storno-Wunsch dafür verfällt)
-      const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,basis:_fsTeile("kalender_termine",baseT[id])})));
+      const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,roh:baseT[id]})));
+      // Storno nicht ausgeführt: auch den Verlaufseintrag „… storniert: Grund“ beim Schüler zurücknehmen (Bedienungs-Prüfer 24.11.)
+      let histZurueck=false;
+      tDel.bleibt.forEach(r=>{
+        if(!_stornoWert(r.id))return;
+        const b=baseT[r.id], st=b&&(DB.students||[]).find(x=>x.id===b.sid);
+        if(!st||!Array.isArray(st.hist))return;
+        const anfang=`Fahrstunde ${isoDE(b.date)} ${b.von||""}–${b.bis||""} storniert:`;
+        for(let i=st.hist.length-1;i>=0;i--){ const h=st.hist[i]; if(h&&h.typ==="storno"&&String(h.text||"").startsWith(anfang)){ st.hist.splice(i,1); histZurueck=true; break; } }
+      });
       [...tDel.weg,...tDel.bleibt.map(r=>r.id)].forEach(id=>{ if(_stornoWert(id)) _stornoVergessen(id); });
       // K7: Stornierte Stunden einzeln mit Grund und Vermerk, der Rest wie bisher in den Papierkorb
       const termineStorno=tDel.loeschen.filter(id=>_stornoWert(id));
       for(const id of termineStorno){ await _stornoSchreiben(id,nowIso); _stornoVergessen(id); }
-      const termineWeg=tDel.loeschen.filter(id=>termineStorno.indexOf(id)<0);
-      if(termineWeg.length) _fsPruefe(await supa.from("kalender_termine").update({geloescht:true,aktualisiert_am:nowIso}).in("id",termineWeg));
+      const termineStornoSet=new Set(termineStorno);
+      await _fsLoeschenSchreiben(supa,"kalender_termine",{...tDel,loeschen:tDel.loeschen.filter(id=>!termineStornoSet.has(id)),bleibt:tDel.bleibt,weg:tDel.weg},nowIso);
 
       // ---- PRÜFUNGEN ---- (W14b: wie Termine)
       const baseP={}; (_fsBaseline.exams||[]).forEach(e=>baseP[e.id]=e);
@@ -8274,29 +8343,40 @@ async function _fsSyncAggJetztKern(){
         pruefungenUpserts.push(Object.assign(p,{fahrschule_id:_fsAgg.fahrschuleId, geloescht:false, erstellt_von:meineId, aktualisiert_am:nowIso}));
       });
       const pruefungenDeletes=(_fsBaseline.exams||[]).filter(b=>!curPIds.has(b.id)).map(b=>b.id);
-      if(pruefungenUpserts.length) _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"}));
+      if(pruefungenUpserts.length){ await _fsNeuAberVorhanden(supa,"kalender_pruefungen",pruefungenUpserts); _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"})); _fsInBasis("exams",snap.exams,pruefungenUpserts); }
       const pErg=await _fsZeilenSicher(supa,"kalender_pruefungen",pruefungenAend,nowIso);
-      const pDel=await _fsLoeschenPruefen(supa,"kalender_pruefungen",pruefungenDeletes.map(id=>({id,basis:_fsTeile("kalender_pruefungen",baseP[id])})));
-      if(pDel.loeschen.length) _fsPruefe(await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pDel.loeschen));
+      const pDel=await _fsLoeschenPruefen(supa,"kalender_pruefungen",pruefungenDeletes.map(id=>({id,roh:baseP[id]})));
+      await _fsLoeschenSchreiben(supa,"kalender_pruefungen",pDel,nowIso);
 
       // Baseline auf den geschriebenen Stand heben. Einträge ohne Fahrlehrer wurden NICHT geschrieben:
       // für sie bleibt der alte Vergleichsstand, damit sie beim nächsten Lauf wieder auffallen.
       const altT={}; (_fsBaseline.lessons||[]).forEach(l=>altT[l.id]=l);
       const altP={}; (_fsBaseline.exams||[]).forEach(e=>altP[e.id]=e);
       const behalte=(liste,ohne,alt)=>liste.map(x=>ohne.has(x.id)?alt[x.id]:x).filter(Boolean);
-      // W14/W14b: Geschriebene Einträge zeigen den Stand vom Server (dort kann inzwischen mehr stehen als hier, z. B. von der App).
-      // Nur, wenn hier während des Speicherns nichts mehr geändert wurde; sonst bleibt der alte Vergleichsstand, damit der
-      // nächste Lauf nur die neue Eingabe schreibt (und nichts zurückdreht, was woanders geändert wurde).
+      // W14/W14b: Geschriebene Einträge zeigen den Stand vom Server (dort kann inzwischen mehr stehen als hier, z. B. von der App),
+      // und der Vergleichsstand ist der Server-Stand. Wurde hier während des Speicherns weitergetippt, bleibt genau das als
+      // eigene Änderung für den nächsten Lauf (nichts Woanders-Geändertes wird so zurückgedreht).
+      if(_fsBaseline!==basisStart||!_fsAgg){ toast("Gespeichert ✓"); return true; }
       const lehrerName=id=>{ const l=(_fsAgg.lehrer||[]).find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
       let neuZeigen=false;
       const anServer=(feld,mapF,zeilen,weg,dazu)=>{
         const sListe=snap[feld];
-        const unveraendert=(sn)=>{ const lok=(DB[feld]||[]).find(x=>x.id===sn.id); return lok&&JSON.stringify(lok)===JSON.stringify(sn)?lok:null; };
+        const j=x=>JSON.stringify(x);
         sListe.forEach((sn,i)=>{
           const row=zeilen[sn.id]; if(!row)return;
-          const neu=mapF(row,lehrerName); if(JSON.stringify(neu)===JSON.stringify(sn))return;
-          const lok=unveraendert(sn); if(!lok)return;
-          _ersetzeInhalt(lok,JSON.parse(JSON.stringify(neu))); sListe[i]=neu; neuZeigen=true;
+          const neu=mapF(row,lehrerName); if(j(neu)===j(sn))return;
+          const lok=(DB[feld]||[]).find(x=>x.id===sn.id);
+          if(lok){
+            if(j(lok)===j(sn)) _ersetzeInhalt(lok,JSON.parse(JSON.stringify(neu)));
+            // Während des Speicherns hier weitergetippt: nur die Felder, die hier unberührt blieben, vom Server übernehmen.
+            // Dann unterscheidet sich der Eintrag vom Vergleichsstand (= Server) genau um das neu Getippte (Daten-Prüfer, Fall E).
+            else new Set([...Object.keys(lok),...Object.keys(sn),...Object.keys(neu)]).forEach(k=>{
+              if(j(lok[k])!==j(sn[k]))return;
+              if(neu[k]!==undefined) lok[k]=JSON.parse(JSON.stringify(neu[k])); else delete lok[k];
+            });
+            neuZeigen=true;
+          }
+          sListe[i]=neu;
         });
         // woanders gelöscht: hier auch weg (sonst käme er beim nächsten Speichern als „neu“ zurück)
         if(weg.size){
@@ -8314,16 +8394,22 @@ async function _fsSyncAggJetztKern(){
       anServer("lessons",_fsMapTermin,tErg.zeilen,tErg.weg,tDel.bleibt);
       anServer("exams",_fsMapPruefung,pErg.zeilen,pErg.weg,pDel.bleibt);
       _fsBaseline={students:snap.students,lessons:behalte(snap.lessons,ohneLehrerT,altT),exams:behalte(snap.exams,ohneLehrerP,altP)};
-      if(neuZeigen) _ansichtNeuZeigen();
+      if(neuZeigen){ _fsNeuZeigenOffen=true; _fsNeuZeigenNachholen(); }
       const ohne=ohneLehrerT.size+ohneLehrerP.size;
       _fsNurOhneLehrer=ohne>0;
       if(ohne){ _fsUngespeichert=true; toast(`⚠ ${ohne} ${ohne===1?"Eintrag":"Einträge"} ohne Fahrlehrer – bitte zuordnen`); return false; }
       _fsUngespeichert=false;
-      const anders=woanders+tErg.woanders.size+tErg.weg.size+pErg.woanders.size+pErg.weg.size;
-      const nichtWeg=tDel.bleibt.length+pDel.bleibt.length;
-      let meldung=anders?`Gespeichert ✓ – ${anders===1?"eine Angabe war":"einige Angaben waren"} inzwischen woanders geändert, der neue Stand bleibt`:"Gespeichert ✓";
-      if(nichtWeg) meldung+=(anders?". ":" – ")+`${nichtWeg===1?"Ein Eintrag wurde":nichtWeg+" Einträge wurden"} inzwischen geändert und nicht gelöscht, bitte nochmal ansehen`;
-      toast(meldung);
+      if(histZurueck) _fsSyncAggChanges(); // geänderten Verlauf des Schülers gleich mit speichern
+      const anders=woanders+tErg.woanders.size+pErg.woanders.size, weg=tErg.weg.size+pErg.weg.size;
+      const nichtWeg=[...tDel.bleibt.map(r=>`Termin ${isoDE(r.datum)}${r.von?" "+r.von:""}`),...pDel.bleibt.map(r=>`Prüfung ${isoDE(r.datum)}`)];
+      const teile=[];
+      if(anders) teile.push(`${anders===1?"eine Angabe war":"einige Angaben waren"} inzwischen woanders geändert, der neue Stand bleibt`);
+      if(weg) teile.push(`${weg===1?"ein Eintrag wurde":weg+" Einträge wurden"} inzwischen woanders gelöscht`);
+      if(nichtWeg.length) teile.push(`${nichtWeg.length===1?nichtWeg[0]+" wurde":nichtWeg.length+" Einträge wurden"} inzwischen geändert und nicht gelöscht, bitte nochmal ansehen`);
+      // Ein „Rückgängig“-Hinweis (z. B. „Stunde storniert“) bleibt stehen, solange nur „Gespeichert ✓“ zu sagen ist
+      const tEl=document.getElementById("toast");
+      if(!teile.length&&tEl&&tEl.classList.contains("show")&&tEl.classList.contains("undo")) return true;
+      toast(teile.length?"Gespeichert ✓ – "+teile.join(". "):"Gespeichert ✓");
       return true;
     }catch(e){ _fsUngespeichert=true; _fsNurOhneLehrer=false; console.warn("[Kompass] Fahrschul-Speichern fehlgeschlagen:",e.message); toast("Fehler beim Speichern: "+e.message); return false; }
 }
@@ -9494,6 +9580,7 @@ function routeDetail(id){
     ${uebernahmeCard(s)}
     ${behoerdeCard(s)}
     ${theorieCard(s)}
+    ${paketCard(s)}
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
@@ -10125,6 +10212,50 @@ async function _ladeTheorieBesuch(supa, ids){
     _theorieBesuch=_theorieBesuch||{};
     for(const sid in neu){ if((_theorieNrJe[sid]||0)<=nr){ _theorieBesuch[sid]=neu[sid]; _theorieNrJe[sid]=nr; } }
   }catch(e){ /* z. B. offline: alten Stand behalten */ }
+}
+/* Paket-Baukasten (Werkstatt 13, 🗣 Serband 24.11.2026): Das Büro verkauft ein Paket als feste Kopie (Tabelle schueler_pakete).
+   Der Fahrlehrer sieht in der Akte Name und Posten, nur lesend und ohne Preise. Fehlt die Tabelle (alte Datenbank) oder gibt es
+   keine Verbindung: keine Karte, kein Fehler. Später (Schritt 2) kommt „noch offen“ je Posten dazu. */
+let _paketVerkauft = null; // schueler_id -> {name, posten:[{art, bezeichnung, anzahl}]} oder null (kein Paket); null = nicht geladen
+let _paketLadeNr = 0; const _paketNrJe = {};
+async function _ladePakete(supa, ids){
+  const nr=++_paketLadeNr;
+  try{
+    if(!supa||!ids||!ids.length) return;
+    const neu={};
+    for(let i=0;i<ids.length;i+=150){
+      const teil=ids.slice(i,i+150);
+      const {data,error}=await supa.from("schueler_pakete").select("schueler_id,name,posten,vorlage_id").in("schueler_id",teil).is("storniert_am",null);
+      if(error) return; // Tabelle fehlt oder offline: alten Stand behalten
+      teil.forEach(sid=>{ neu[sid]=null; });
+      (data||[]).forEach(x=>{ neu[x.schueler_id]={ name:String(x.name||""), vorlage_id:x.vorlage_id||null, posten:(Array.isArray(x.posten)?x.posten:[]).map(p=>({art:p.art,bezeichnung:String(p.bezeichnung||""),anzahl:Number(p.anzahl)||0})) }; });
+    }
+    // wie beim Theorie-Besuch: hat ein neuerer Abruf den Schüler schon geladen, gilt dessen Stand
+    _paketVerkauft=_paketVerkauft||{};
+    for(const sid in neu){ if((_paketNrJe[sid]||0)<=nr){ _paketVerkauft[sid]=neu[sid]; _paketNrJe[sid]=nr; } }
+  }catch(e){ /* offline: alten Stand behalten */ }
+}
+/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: eigene
+   Termine dieses Geräts, Prüfungen mit Ergebnis (DB.exams) und die Sonderfahrten aus dem Ausbildungsplan. */
+function _paketQuelle(s){
+  if(!window.KR||!KR.paketQuelleAusTerminen)return null;
+  const d=new Date();
+  const pruefDaten=(DB.exams||[]).filter(ex=>ex.sid===s.id&&istPruefung(ex)&&ex.date&&(ex.result==="pass"||ex.result==="fail")).map(ex=>ex.date);
+  return KR.paketQuelleAusTerminen((DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,srcSonder:l.srcSonder,sonderArt:l.sonderArt,tatsaechlicheDauer:l.tatsaechlicheDauer})),todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten,plan:s.plan});
+}
+function paketCard(s){
+  const p=_paketVerkauft&&_paketVerkauft[s.id];
+  if(!p) return "";
+  const q=_paketQuelle(s), v=q?KR.paketVerbrauch(p.posten,q):[];
+  const zahl=n=>(Math.round(Number(n)*10)/10).toLocaleString("de-DE");
+  // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“
+  const rechts=(x,i)=>{ const z=v[i]; if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
+    return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`<span style="white-space:nowrap">${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}</span>`; };
+  return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
+    <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
+    ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}
+    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Gefahren von gebucht (Einheiten à 45 Min.). Ändern nur im Büro.</p>
+  </div>`;
 }
 function theorieStandFuer(s){
   if(!window.KR||!KR.theorieSoll)return null;
@@ -15151,7 +15282,8 @@ function openSheet(html,opts){
 }
 function closeSheet(){ const sh=$("#sheet"); sh.classList.remove("open","sheet-wechsel"); sh.style.transform=""; $("#sheetScrim").classList.remove("open");
   _sheetStapel=[]; _sheetEbene=null;
-  const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } } }
+  const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } }
+  if(_fsNeuZeigenOffen) setTimeout(_fsNeuZeigenNachholen,0); } // W14b: Server-Stand aus der Gesamtansicht jetzt zeigen
 function sheetOffen(){ return $("#sheet").classList.contains("open"); }
 /* Eine Ebene zurück (für Nutzer-Gesten). Rückgabe: "zurueck" (vorige Ebene gezeigt), "zu" (ganz geschlossen),
    "bleibt" (Rückfrage abgelehnt), "leer" (nurEbene gesetzt und keine vorige Ebene – nichts getan). */
