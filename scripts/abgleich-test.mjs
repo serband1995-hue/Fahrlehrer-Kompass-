@@ -87,7 +87,9 @@ function attrappeEinbauen() {
       return q.retSel ? liefere(betroffen, q.retCols) : { data: null, error: null };
     }
     if (q.op === "update") {
-      const l = rows.filter(passt);
+      // W14b: Test-Haken – „jemand ändert die Zeile genau jetzt“ (einmalig) und „kein Recht“ (Zeile wird nie getroffen)
+      if (fake.vorUpdate) { const h = fake.vorUpdate; fake.vorUpdate = null; h(q, T); }
+      const l = rows.filter(passt).filter((r) => !(fake.gesperrt || []).includes(r.id));
       zaehle(stats.updates, q.table, l.length);
       const patch = C(q.payload);
       if (["schueler", "kalender_termine", "kalender_pruefungen"].includes(q.table) && patch.aktualisiert_am === undefined) patch.aktualisiert_am = new Date().toISOString();
@@ -648,6 +650,182 @@ fall("25 W14: Gesamtansicht – Leitung und Büro ändern dasselbe Telefon: Bür
   if (z.telefon !== "0170 BUERO") f("Büro-Stand überschrieben: " + z.telefon);
   if (r.t !== "0170 BUERO" || r.b !== "0170 BUERO") f("Anzeige/Vergleichsstand zeigt nicht den Server-Stand: " + JSON.stringify(r));
   if (!/woanders/.test(r.toast)) f("Hinweis fehlt: " + r.toast);
+});
+
+/* ---------- W14b: Gesamtansicht speichert Termine und Prüfungen sicher ---------- */
+const serverPruefung = (id, extra = {}) => Object.assign({
+  id, fahrschule_id: "fs-1", fahrlehrer_id: "fl-1", schueler_id: "S1", datum: "2026-12-01", result: null, pruefer: null, attempt: 1,
+  geloescht: false, payload: {}, aktualisiert_am: "2026-10-09T08:00:00.000Z",
+}, extra);
+// Gesamtansicht mit dem Stand der Attrappe öffnen (wie _fsLoadAggData: Zeilen → Einträge, Vergleichsstand = Kopie)
+async function gesamt({ termine = [], pruefungen = [] } = {}) {
+  await setzeTabelle("schueler", []);
+  await setzeTabelle("kalender_termine", termine);
+  await setzeTabelle("kalender_pruefungen", pruefungen);
+  await ruf(() => {
+    _fsAgg = { fahrschuleId: "fs-1", fahrschule: { name: "Testfahrschule" }, lehrer: [{ id: "fl-1", name: "Fahr Lehrer" }], fahrzeuge: [], pakete: [] };
+    const T = window.__fake.T, ln = () => "Fahr Lehrer";
+    DB = { students: [], lessons: T.kalender_termine.map((r) => _fsMapTermin(JSON.parse(JSON.stringify(r)), ln)),
+      exams: T.kalender_pruefungen.map((r) => _fsMapPruefung(JSON.parse(JSON.stringify(r)), ln)), termine: [] };
+    _fsBaseline = JSON.parse(JSON.stringify({ students: [], lessons: DB.lessons, exams: DB.exams }));
+  });
+}
+const gesamtSpeichern = () => ruf(() => _fsSyncAggJetzt());
+const gesamtEnde = () => ruf(() => { _fsAgg = null; _fsBaseline = null; window.__fake.vorUpdate = null; window.__fake.gesperrt = null; });
+const letzterHinweis = () => ruf(() => document.getElementById("toast").textContent);
+
+fall("26 W14b: Gesamtansicht – Leitung verschiebt Termin, Fahrlehrer hat inzwischen „durchgeführt“ und Notiz gesetzt: nichts geht verloren", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { payload: { notiz: "alt" } })] });
+  await aendereZeile("kalender_termine", "T1", { status: "durchgefuehrt", payload: { notiz: "vom Fahrlehrer" }, aktualisiert_am: "+1s" });
+  await ruf(() => { const l = DB.lessons[0]; l.von = "15:00"; l.bis = "16:30"; });
+  const ok = await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  const lok = await ruf(() => ({ status: DB.lessons[0].status, notiz: DB.lessons[0].notiz, von: DB.lessons[0].von }));
+  await gesamtEnde();
+  if (!ok) f("Speichern meldete Fehler");
+  if (z.von !== "15:00" || z.bis !== "16:30") f("Neue Uhrzeit nicht gespeichert: " + z.von + "–" + z.bis);
+  if (z.status !== "durchgefuehrt") f("Status vom Fahrlehrer zurückgedreht: " + z.status);
+  if (!z.payload || z.payload.notiz !== "vom Fahrlehrer") f("Notiz vom Fahrlehrer zurückgedreht: " + JSON.stringify(z.payload));
+  if (lok.status !== "durchgefuehrt" || lok.notiz !== "vom Fahrlehrer" || lok.von !== "15:00") f("Ansicht zeigt nicht den Stand vom Server: " + JSON.stringify(lok));
+});
+
+fall("27 W14b: Gesamtansicht – dieselbe Uhrzeit hier und woanders geändert: Stand von woanders bleibt, Hinweis", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  await aendereZeile("kalender_termine", "T1", { von: "10:00", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.lessons[0].von = "15:00"; DB.lessons[0].status = "abgesagt"; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  const r = await ruf(() => ({ von: DB.lessons[0].von, b: _fsBaseline.lessons[0].von }));
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (z.von !== "10:00") f("Stand von woanders überschrieben: " + z.von);
+  if (z.status !== "abgesagt") f("Eigene Änderung (Status) fehlt: " + z.status);
+  if (r.von !== "10:00" || r.b !== "10:00") f("Ansicht/Vergleichsstand zeigt nicht den Server-Stand: " + JSON.stringify(r));
+  if (!/woanders/.test(hinweis)) f("Hinweis fehlt: " + hinweis);
+});
+
+fall("28 W14b: Gesamtansicht – Termin woanders gelöscht, hier geändert: kommt nicht zurück, auch nicht beim nächsten Speichern", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")] });
+  await aendereZeile("kalender_termine", "T1", { geloescht: true, aktualisiert_am: "+1s" });
+  await ruf(() => { DB.lessons.find((l) => l.id === "T1").von = "15:00"; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  const ids = await dbIds("lessons");
+  await zaehlerNull();
+  await ruf(() => { DB.lessons.find((l) => l.id === "T2").von = "16:00"; });
+  await gesamtSpeichern();
+  const z2 = await zeile("kalender_termine", "T1");
+  const n = await zaehler("upserts", "kalender_termine");
+  await gesamtEnde();
+  if (z.geloescht !== true || z2.geloescht !== true) f("Gelöschter Termin kam zurück");
+  if (z.von !== "13:00") f("Gelöschter Termin wurde trotzdem geändert: " + z.von);
+  if (ids.includes("T1")) f("Ansicht zeigt den woanders gelöschten Termin noch");
+  if (n !== 0) f("Zweites Speichern legte etwas neu an: " + n);
+});
+
+fall("29 W14b: Gesamtansicht – Nutzlast Feld für Feld: Leitung ändert Kilometer, Fahrlehrer unterschreibt: beides bleibt", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { payload: { km: 10 } })] });
+  await aendereZeile("kalender_termine", "T1", { payload: { km: 10, signed: true, signedAt: "2026-11-24T10:00:00Z" }, aktualisiert_am: "+1s" });
+  await ruf(() => { DB.lessons[0].km = 20; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (!z.payload || z.payload.km !== 20) f("Kilometer der Leitung fehlen: " + JSON.stringify(z.payload));
+  if (!z.payload || z.payload.signed !== true || !z.payload.signedAt) f("Unterschrift vom Fahrlehrer verloren: " + JSON.stringify(z.payload));
+});
+
+fall("30 W14b: Gesamtansicht – Spalten wie „Kurs bezahlt“ landen nicht in der Nutzlast, Büro-Stand bleibt", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { kurs_bezahlt: false, buero_fc_status: "offen" })] });
+  await aendereZeile("kalender_termine", "T1", { kurs_bezahlt: true, buero_fc_status: "abgegeben" });
+  await ruf(() => { DB.lessons[0].von = "15:00"; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (z.von !== "15:00") f("Uhrzeit nicht gespeichert: " + z.von);
+  if (z.kurs_bezahlt !== true || z.buero_fc_status !== "abgegeben") f("Büro-Spalten zurückgedreht: " + z.kurs_bezahlt + " / " + z.buero_fc_status);
+  const kopien = Object.keys(z.payload || {}).filter((k) => ["kurs_bezahlt", "buero_fc_status", "buero_fc_nachgereicht_am", "theorie_bestanden", "interessent_name", "_fahrlehrerId", "_fahrlehrerName"].includes(k));
+  if (kopien.length) f("Spalten-Kopien in der Nutzlast: " + kopien.join(", "));
+});
+
+fall("31 W14b: Gesamtansicht – Prüfung: Leitung ändert Datum, Fahrlehrer trägt Ergebnis ein: beides bleibt", async (f) => {
+  await neu();
+  await gesamt({ pruefungen: [serverPruefung("P1", { payload: { ort: "Offenbach" } })] });
+  await aendereZeile("kalender_pruefungen", "P1", { result: "bestanden", pruefer: "Herr Prüfer", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.exams[0].date = "2026-12-05"; });
+  const ok = await gesamtSpeichern();
+  const z = await zeile("kalender_pruefungen", "P1");
+  const lok = await ruf(() => DB.exams[0].result);
+  await gesamtEnde();
+  if (!ok) f("Speichern meldete Fehler");
+  if (z.datum !== "2026-12-05") f("Neues Datum nicht gespeichert: " + z.datum);
+  if (z.result !== "bestanden" || z.pruefer !== "Herr Prüfer") f("Ergebnis vom Fahrlehrer zurückgedreht: " + z.result + " / " + z.pruefer);
+  if (!z.payload || z.payload.ort !== "Offenbach") f("Nutzlast verloren: " + JSON.stringify(z.payload));
+  if (lok !== "bestanden") f("Ansicht zeigt das Ergebnis nicht: " + lok);
+});
+
+fall("32 W14b: Gesamtansicht – Löschen, Termin und Prüfung inzwischen woanders geändert: nicht gelöscht, wieder sichtbar, Hinweis", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")], pruefungen: [serverPruefung("P1")] });
+  await aendereZeile("kalender_termine", "T1", { status: "durchgefuehrt", aktualisiert_am: "+1s" });
+  await aendereZeile("kalender_pruefungen", "P1", { result: "bestanden", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "T1"); DB.exams = []; });
+  await gesamtSpeichern();
+  const t1 = await zeile("kalender_termine", "T1"), p1 = await zeile("kalender_pruefungen", "P1");
+  const r = await ruf(() => ({ t: DB.lessons.map((l) => l.id + ":" + l.status).sort().join(","), p: DB.exams.map((e) => e.id + ":" + e.result).join(","),
+    bT: _fsBaseline.lessons.map((l) => l.id).sort().join(","), bP: _fsBaseline.exams.map((e) => e.id).join(",") }));
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (t1.geloescht) f("Woanders geänderter Termin wurde gelöscht");
+  if (p1.geloescht) f("Woanders geänderte Prüfung wurde gelöscht");
+  if (r.t !== "T1:durchgefuehrt,T2:geplant" || r.p !== "P1:bestanden") f("Ansicht zeigt die Einträge nicht wieder: " + JSON.stringify(r));
+  if (r.bT !== "T1,T2" || r.bP !== "P1") f("Vergleichsstand passt nicht: " + JSON.stringify(r));
+  if (!/nicht gelöscht/.test(hinweis) || !/nochmal ansehen/.test(hinweis)) f("Hinweis fehlt: " + hinweis);
+});
+
+fall("33 W14b: Gesamtansicht – Löschen ohne Änderung woanders: wird gelöscht (wie bisher)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1"), serverTermin("T2")], pruefungen: [serverPruefung("P1")] });
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "T1"); DB.exams = []; });
+  const ok = await gesamtSpeichern();
+  const t1 = await zeile("kalender_termine", "T1"), t2 = await zeile("kalender_termine", "T2"), p1 = await zeile("kalender_pruefungen", "P1");
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (!ok) f("Speichern meldete Fehler");
+  if (!t1.geloescht || !p1.geloescht) f("Nicht gelöscht: Termin " + t1.geloescht + ", Prüfung " + p1.geloescht);
+  if (t2.geloescht) f("Falscher Termin gelöscht");
+  if (hinweis !== "Gespeichert ✓") f("Unerwarteter Hinweis: " + hinweis);
+});
+
+fall("34 W14b: Gesamtansicht – Zeile ändert sich zwischen Lesen und Schreiben: neu gelesen, nichts zurückgedreht", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  await ruf(() => { window.__fake.vorUpdate = (q, T) => { if (q.table !== "kalender_termine") return; const r = T.kalender_termine.find((x) => x.id === "T1"); r.status = "durchgefuehrt"; r.aktualisiert_am = "2026-11-24T12:00:00.000Z"; }; });
+  await ruf(() => { DB.lessons[0].von = "15:00"; });
+  await zaehlerNull();
+  const ok = await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (!ok) f("Speichern meldete Fehler");
+  if (z.von !== "15:00") f("Uhrzeit nicht gespeichert: " + z.von);
+  if (z.status !== "durchgefuehrt") f("Änderung zwischen Lesen und Schreiben zurückgedreht: " + z.status);
+});
+
+fall("35 W14b: Gesamtansicht – ohne Recht auf die Zeile: Fehler statt „Gespeichert“, kein Endlos-Versuch", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  await ruf(() => { window.__fake.gesperrt = ["T1"]; DB.lessons[0].von = "15:00"; });
+  const ok = await gesamtSpeichern();
+  const hinweis = await letzterHinweis();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (ok) f("Speichern meldete Erfolg");
+  if (!/Fehler beim Speichern/.test(hinweis)) f("Kein Fehler-Hinweis: " + hinweis);
+  if (z.von !== "13:00") f("Zeile trotzdem geändert: " + z.von);
 });
 
 /* ---------- Ausführen ---------- */
