@@ -2977,13 +2977,17 @@ function vkVorschlag(typ) {
   const b = typ === "simulator" ? c.betragSimulator : c.betragAkademie;
   return b != null && b !== "" ? Number(b) : (typ === "akademie" ? 100 : 149); // Akademie 100 € (Serband 08.10.2026), Simulator-Flat 149 € (Webseite)
 }
+// Werkstatt 12: Ein Verkauf durch das Büro (oder ein alter Eintrag ohne Fahrlehrer) zählt nie als Provision für eine Person.
+// Die Datenbank verlangt eine Fahrlehrer-ID; darum steht dort die ID des Büro-Nutzers und aufteilung.keine_provision = true.
+function istKeineProvision(e) { return !!e && (!e.fahrlehrer_id || !!(e.aufteilung && e.aufteilung.keine_provision === true)); }
+function vkLehrerId(e) { return istKeineProvision(e) ? null : e.fahrlehrer_id; }
 function monatVon(iso) { return String(iso || "").slice(0, 7); }
 function renderVerkaeufe() {
   const monat = /^\d{4}-\d\d$/.test(fristenParam("monat")) ? fristenParam("monat") : KR.todayISO().slice(0, 7);
   const lehrerF = fristenParam("lehrer");
   const statusF = fristenParam("status");
   let liste = S.verkaeufe.filter((v) => monatVon(v.erstellt_am) === monat || (v.status === "bezahlt" && monatVon(v.aktualisiert_am) === monat) || (v.status !== "bezahlt" && v.status !== "storniert"));
-  if (lehrerF) liste = liste.filter((v) => v.fahrlehrer_id === lehrerF);
+  if (lehrerF) liste = liste.filter((v) => vkLehrerId(v) === lehrerF);
   if (statusF) liste = liste.filter((v) => v.status === statusF);
   const bezahltMonat = S.verkaeufe.filter((v) => v.status === "bezahlt" && monatVon(v.aktualisiert_am || v.erstellt_am) === monat);
   const umsatz = bezahltMonat.reduce((a, v) => a + Number(v.betrag || 0), 0);
@@ -3000,7 +3004,7 @@ function renderVerkaeufe() {
     if (v.status === "storniert") knoepfe.push(`<button class="knopf klein" data-vwieder="${esc(v.id)}" type="button">Wieder öffnen</button>`);
     if (v.status !== "storniert") knoepfe.push(`<button class="knopf klein" data-vstorno="${esc(v.id)}" type="button">${v.status === "bezahlt" ? "Zurücknehmen" : "Stornieren"}</button>`);
     return `<tr>
-      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${v.fahrlehrer_id ? "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : "Büro"}</div></td>
+      <td><b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b><div class="unter">${esc(datumDE(String(v.erstellt_am).slice(0, 10)))} · ${istKeineProvision(v) ? "Büro (keine Provision)" : "von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))}</div></td>
       <td><span class="marke-pill ${v.typ === "simulator" ? "blau" : "gruen"}">${esc(V_TYP[v.typ] || v.typ)}</span></td>
       <td><span class="marke-pill ${sf}">${esc(st)}</span></td>
       <td class="zahlspalte">${v.betrag != null ? euro(v.betrag) : "–"}</td>
@@ -3062,13 +3066,14 @@ function verkaufBezahltDialog(id) {
   const v = S.verkaeufe.find((x) => x.id === id);
   if (!v) return;
   const split = vkKonfig().splitKollege;
-  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${v.fahrlehrer_id ? ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id)) : ""}.</p>
+  const body = `<p>${esc(V_TYP[v.typ] || v.typ)} für <b>${esc(v.schueler_name || schuelerName(v.schueler_id))}</b>${istKeineProvision(v) ? "" : ", vermittelt von " + esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))}.</p>
     <div class="formular"><label>Bezahlter Betrag (€)<input type="number" name="betrag" min="0" step="1" value="${vkVorschlag(v.typ)}" required></label></div>
     <div id="vSplit" class="split"></div>`;
   const dlg = oeffneDialog("Zahlung eintragen", body, async (form) => {
     const betrag = Number(form.betrag.value);
     if (!(betrag >= 0) || form.betrag.value === "") { toast("Bitte den Betrag eintragen.", true); return false; }
-    const auf = v.fahrlehrer_id ? KR.aufteilung(betrag, split) : null;
+    const keine = istKeineProvision(v);
+    const auf = keine ? { keine_provision: true } : KR.aufteilung(betrag, split);
     const neu = await verkaufStatus(id, { status: "bezahlt", betrag, aufteilung: auf });
     if (!neu) return false;
     // Je bezahltem Verkauf mit Provision genau eine nicht stornierte Provision (B1). Die Tabelle provisionen kennt den
@@ -3092,14 +3097,14 @@ function verkaufBezahltDialog(id) {
     }
     if (v.typ === "simulator" && v.schueler_id) await supa.from("schueler").update({ hat_simulator: true }).eq("id", v.schueler_id);
     if (!fehler) toast(gebucht ? `Bezahlt. Provision ${euro(auf.fahrlehrer)} für ${lehrerName(v.fahrlehrer_id)} gebucht.`
-      : (v.fahrlehrer_id && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
+      : (!istKeineProvision(v) && auf && auf.fahrlehrer > 0 ? "Bezahlt eingetragen. Die Provision dafür ist schon gebucht." : "Bezahlt eingetragen"));
     zeichne();
     return true;
   }, "Bezahlt speichern");
   const feld = dlg.querySelector("input[name=betrag]");
   const zeig = () => {
     const box = dlg.querySelector("#vSplit");
-    if (!v.fahrlehrer_id) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
+    if (istKeineProvision(v)) { box.innerHTML = `<p class="leise klein">Direktverkauf durch das Büro: keine Provision.</p>`; return; }
     const a = KR.aufteilung(Number(feld.value || 0), split);
     box.innerHTML = a ? `<table class="tabelle"><tbody>
         <tr><td>${esc(v.fahrlehrer_name || lehrerName(v.fahrlehrer_id))} (Provision)</td><td class="zahlspalte"><b>${euro(a.fahrlehrer)}</b></td></tr>
@@ -3115,7 +3120,7 @@ async function verkaufStorno(id) {
   if (!v) return;
   const war = v.status === "bezahlt";
   if (!(await bestaetige(war ? "Zahlung zurücknehmen?" : "Empfehlung stornieren?", war ? "Betrag und Aufteilung werden zurückgesetzt. Eine schon gebuchte Provision bitte bei „Offene Provisionen“ prüfen." : "Die Empfehlung wird als storniert markiert.", "Ja"))) return;
-  const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: null }, war ? "Zurückgenommen" : "Storniert");
+  const neu = await verkaufStatus(id, { status: "storniert", betrag: null, aufteilung: istKeineProvision(v) ? { keine_provision: true } : null }, war ? "Zurückgenommen" : "Storniert");
   if (!neu) return;
   // Nur eine bezahlte Zahlung hat eine Provision. Davon fällt genau EINE noch nicht ausgezahlte weg (bei zwei
   // Verkäufen gleicher Art bleibt die andere stehen); ist keine mehr offen, aber schon ausgezahlt, wird das gemeldet.
@@ -3158,9 +3163,16 @@ function verkaufNeuDialog() {
     if (!d.schueler_id) { toast("Bitte einen Schüler wählen.", true); return false; }
     const doppelt = S.verkaeufe.find((v) => v.schueler_id === d.schueler_id && v.typ === d.typ && v.status !== "storniert");
     if (doppelt && !(await bestaetige("Schon vorhanden", `Für diesen Schüler gibt es schon einen Eintrag (${(V_STATUS[doppelt.status] || ["", doppelt.status])[1]}). Trotzdem neu anlegen?`, "Ja"))) return false;
+    // „Büro (keine Provision)“: die Datenbank verlangt eine Fahrlehrer-ID (NOT NULL). Darum die eigene ID des angemeldeten
+    // Büro-Nutzers und sein Profilname; das Kennzeichen in aufteilung sorgt dafür, dass nie eine Provision daraus wird.
+    const keine = !d.fahrlehrer_id;
+    const eigenId = S.user && S.user.id;
+    if (keine && !eigenId) { toast("Nicht angemeldet. Bitte neu anmelden.", true); return false; }
     const res = await supa.from("fahrschule_empfehlungen").insert({
       fahrschule_id: S.fsId, schueler_id: d.schueler_id, schueler_name: schuelerName(d.schueler_id), typ: d.typ, status: "empfohlen",
-      fahrlehrer_id: d.fahrlehrer_id || null, fahrlehrer_name: d.fahrlehrer_id ? lehrerName(d.fahrlehrer_id) : null,
+      fahrlehrer_id: keine ? eigenId : d.fahrlehrer_id,
+      fahrlehrer_name: keine ? ((S.profil && S.profil.name) || (S.user && S.user.email) || "Büro") : lehrerName(d.fahrlehrer_id),
+      ...(keine ? { aufteilung: { keine_provision: true } } : {}),
     }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.verkaeufe.unshift(res.data[0]);
