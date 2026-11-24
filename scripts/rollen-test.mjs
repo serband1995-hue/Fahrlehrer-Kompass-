@@ -493,6 +493,19 @@ for (const R of ROLLEN) {
     const weiter = await page.waitForURL(/buero\.html/, { timeout: 8000 }).then(() => true).catch(() => false);
     await pruefe("R22", "[Leitung, Startseite Büro] nach dem neuen Passwort → Büro-Seite", () => (weiter ? null : "bleibt auf " + page.url()));
   }
+  // d) Bedienungs-Prüfer: nach dem Sprung zur Büro-Seite führt „Zurück“ in die App, und die darf nicht wieder wegschicken
+  await neu();
+  await merkeBuero();
+  await page.evaluate(() => { sessionStorage.clear(); history.pushState({ w16: 1 }, ""); }); // ein Eintrag davor wie in der echten App
+  u = await starteApp(page, LEITUNG, { behalte: true });
+  if (aufBuero(u)) {
+    await page.goBack({ waitUntil: "load" }).catch(() => {}); await warte(page, 500);
+    const art = await page.evaluate(() => { try { return performance.getEntriesByType("navigation")[0].type; } catch (e) { return "?"; } }).catch(() => "?");
+    // Neu geladen (kein Zwischenspeicher des Browsers): die App meldet sich an wie beim echten Start
+    const u2 = art === "back_forward" && !aufBuero(page.url()) ? await starteApp(page, LEITUNG, { behalte: true }) : page.url();
+    await warte(page, 600);
+    await pruefe("R22", "[Leitung, Startseite Büro] Zurück von der Büro-Seite → bleibt in der App (keine Schleife)", () => (!aufBuero(u2) && !aufBuero(page.url()) ? null : "wieder zur Büro-Seite (" + art + ")"));
+  } else await pruefe("R22", "[Leitung, Startseite Büro] Weiterleitung für den Zurück-Test", () => "nicht weitergeleitet: " + u);
   // c) Offline-Start der PWA: die Rolle ist unbekannt → nie weiterleiten
   await neu();
   const off = await page.evaluate(async () => {

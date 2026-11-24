@@ -4535,9 +4535,12 @@ async function _continueLoginFlow(prof) {
   }
   // W16: Leitung, die selbst fährt, oder Super-Admin mit der Startseite „Fahrschule“: nach dem eigenen Abgleich in die
   // Gesamtansicht (wie früher der Tipp auf den Streifen; die eigenen Daten bleiben gesichert und werden weiter abgeglichen).
-  if (startZiel === "gesamt" && !_fsAgg && _fsDarfGesamt() && prof && prof.fahrschule_id) await _fsEnterAggMode(prof.fahrschule_id);
+  if (startZiel === "gesamt" && !_fsAgg && _fsDarfGesamt() && prof && prof.fahrschule_id) {
+    if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) toast("Fahrschule gerade nicht erreichbar. Du bist in deiner Fahrlehrer-Ansicht.");
+  }
   // Startseite „Büro-Seite“ mit eigenem Stand: erst alles hochladen (sonst bliebe Neues nur auf diesem Gerät), dann weiter
-  if (startZiel === "buero" && !_startWeiterWartet) {
+  if (startZiel === "buero" && !_startWeiterWartet && window.KS_START && KS_START.weiterMoeglich("buero")) {
+    toast("Startseite Büro-Seite: sichere kurz deine Daten …");
     if (await _eigenesSichern(8000)) _zurBueroWeiter();
     else toast("Nicht alles gesichert (Internet?). Du bleibst in der App.");
   }

@@ -19,9 +19,10 @@ function speicher(kaputt) {
     removeItem: (k) => m.delete(k), _m: m };
 }
 // Neue Umgebung: pfad = aktuelle Seite; gibt KS_START und die Liste der Weiterleitungen zurück
-function umgebung(pfad = "/Fahrlehrer-Kompass-/index.html", { kaputt = false, jetzt } = {}) {
+function umgebung(pfad = "/Fahrlehrer-Kompass-/index.html", { kaputt = false, jetzt, zurueck = false } = {}) {
   const ziele = [];
-  const g = { localStorage: speicher(kaputt), sessionStorage: speicher(kaputt), location: { pathname: pfad, replace: (u) => ziele.push(u) }, document: null };
+  const g = { localStorage: speicher(kaputt), sessionStorage: speicher(kaputt), location: { pathname: pfad, replace: (u) => ziele.push(u) }, document: null,
+    performance: { getEntriesByType: (t) => (t === "navigation" ? [{ type: zurueck ? "back_forward" : "navigate" }] : []) } };
   g.window = g;
   const ctx = vm.createContext(Object.assign(g, { Date: jetzt ? class extends Date { static now() { return jetzt(); } } : Date, JSON, Math, String, Object, Array }));
   vm.runInContext(CODE, ctx);
@@ -103,6 +104,14 @@ const P = {
 {
   const { KS, ziele } = umgebung("/Fahrlehrer-Kompass-/", { kaputt: true });
   pruefe("S4", "Startadresse ohne Dateinamen gilt als App; ohne Tab-Speicher trotzdem weiter", KS.weiter("app") === false && KS.weiter("buero") === true && ziele[0] === "buero.html" || ziele.join());
+}
+{
+  const { KS, ziele } = umgebung("/Fahrlehrer-Kompass-/index.html", { zurueck: true });
+  pruefe("S5", "mit „Zurück“ in die App gekommen: nicht wieder zur Büro-Seite (sonst käme man nie weg)", KS.weiterMoeglich("buero") === false && KS.weiter("buero") === false && !ziele.length || ziele.join());
+  const b = umgebung("/Fahrlehrer-Kompass-/buero.html", { zurueck: true });
+  pruefe("S5", "mit „Zurück“ auf die Büro-Seite gekommen: nicht wieder zur App", b.KS.weiter("app") === false && !b.ziele.length || b.ziele.join());
+  const n = umgebung();
+  pruefe("S5", "normaler Start: weiterMoeglich ohne Nebenwirkung", n.KS.weiterMoeglich("buero") === true && !n.ziele.length && n.g.sessionStorage.getItem(n.KS.WEITER_KEY) === null || "Nebenwirkung");
 }
 console.log(`\nStartseiten-Test: ${ok} ok, ${fehler} Fehler`);
 process.exit(fehler ? 1 : 0);

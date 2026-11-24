@@ -58,18 +58,30 @@
   }
 
   function _aufBuero() { return /\/buero(\.html)?$/.test(g.location.pathname); } // auch /buero ohne Endung (GitHub Pages)
+  function _perZurueck() {
+    try { var n = g.performance && g.performance.getEntriesByType && g.performance.getEntriesByType("navigation")[0]; return !!(n && n.type === "back_forward"); } catch (e) { return false; }
+  }
   function _merke(nach) { try { g.sessionStorage.setItem(WEITER_KEY, JSON.stringify({ nach: nach, t: Date.now() })); } catch (e) { /* ohne Merker weiter */ } }
 
   // Automatische Weiterleitung beim Start (nach = "buero" oder "app"). Gibt false zurück, wenn nicht weitergeleitet wird:
   // - schon auf der Zielseite (z. B. zeigt der Service Worker offline die App unter der Adresse der Büro-Seite),
+  // - die Seite wurde mit „Zurück“/„Vor“ geöffnet,
   // - die andere Seite hat in diesem Tab gerade erst hierher geschickt (Schleife, z. B. alter gespeicherter Stand der Rolle).
-  function weiter(nach) {
+  // Würde weiter(nach) jetzt weiterleiten? (ohne Nebenwirkung; die App fragt vorher, um nicht umsonst zu sichern)
+  function weiterMoeglich(nach) {
     if (nach !== "buero" && nach !== "app") return false;
     if (nach === "buero" ? _aufBuero() : !_aufBuero()) return false;
+    // Mit „Zurück“ (oder „Vor“) hierher gekommen: nicht wieder wegschicken, sonst käme man mit Zurück nie mehr von der
+    // anderen Seite weg (Bedienungs-Prüfer W16). Die Seite zeigt sich dann selbst, das nächste Zurück verlässt sie.
+    if (_perZurueck()) return false;
     var m = null;
     try { m = JSON.parse(g.sessionStorage.getItem(WEITER_KEY) || "null"); } catch (e) { m = null; }
     // Der Merker bleibt stehen (er verfällt nach SCHLEIFE_MS): läuft der Start zweimal, verweigert auch der zweite Lauf
     if (m && m.nach && m.nach !== nach && Date.now() - (m.t || 0) < SCHLEIFE_MS) return false;
+    return true;
+  }
+  function weiter(nach) {
+    if (!weiterMoeglich(nach)) return false;
     _merke(nach);
     g.location.replace(nach === "buero" ? "buero.html" : "index.html");
     return true;
@@ -170,5 +182,5 @@
   }
 
   g.KS_START = { erlaubt: erlaubt, standard: standard, hatWahl: hatWahl, lesen: lesen, ziel: lesen, setzen: setzen,
-    weiter: weiter, gehe: gehe, einbauen: einbauen, TEXTE: TEXTE, KEY: KEY, WEITER_KEY: WEITER_KEY, bueroNurBueroseite: BUERO_NUR_BUEROSEITE };
+    weiter: weiter, weiterMoeglich: weiterMoeglich, gehe: gehe, einbauen: einbauen, TEXTE: TEXTE, KEY: KEY, WEITER_KEY: WEITER_KEY, bueroNurBueroseite: BUERO_NUR_BUEROSEITE };
 })(window);
