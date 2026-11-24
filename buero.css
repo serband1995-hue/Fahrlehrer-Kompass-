@@ -34,7 +34,7 @@
     --gelb:#d9a64a; --gelb-soft:rgba(207,154,62,.2);
     --gruen:#5cc283; --gruen-soft:rgba(76,175,114,.18);
     --blau:#7db4f0; --blau-soft:rgba(47,125,209,.2);
-    --pill-gelb:var(--gelb); --pill-gruen:var(--gruen); --pill-rot:#f5a094;
+    --pill-gelb:var(--gelb); --pill-gruen:#8fd6a9; --pill-rot:#f5a094;
     --schatten:none;
     --diagramm:#45a96c;
     color-scheme:dark;
@@ -815,3 +815,6 @@ body.kiosk .rollen-streifen{display:none;}
   .konf-tab .aktionen-box{flex-direction:column;align-items:stretch;max-width:none;margin-left:0;}
   .konf-tab td .knopf{width:100%;min-height:44px;}
 }
+/* Haken hell: kräftigeres Grün, weiße Schrift mindestens 4,5:1 */
+.haken.gruen.an{background:#2c7a4f;border-color:#2c7a4f;}
+@media (prefers-color-scheme:dark){ .haken.gruen.an{background:var(--gruen);border-color:var(--gruen);} }
