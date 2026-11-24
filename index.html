@@ -5348,18 +5348,23 @@ let _schuelerFristen = {};
 /* W15: Regel der Reaktivierung vom Server (rpc reakt_regel: entfällt laut Preisliste heute oder am Vertragstag, Monate). Nur die Regel,
    keine Preise (Fahrlehrer dürfen die Preisliste bald nicht mehr lesen). Dieselbe Regel nutzt die Datenbank für die Sperre und das Büro.
    Fehlt die Funktion (Datenbank-Update noch nicht da): alte Regel, wie der Server. Für offline gemerkt (je Fahrschule). */
-const _REAKT_REGEL_KEY="kompass_reakt_regel";
+const _REAKT_REGEL_KEY="kompass_reakt_regel"; // je Fahrschule: kompass_reakt_regel:<fahrschule>
+let _reaktRegelSoll=null; // für welche Fahrschule die Regel gerade gilt (eigene oder die der Gesamtansicht)
 function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
-function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
-async function _ladeReaktRegel(supa){
-  const fs=_authProfile&&_authProfile.fahrschule_id; if(!fs||!window.KR||!KR.setzeReaktRegel)return;
-  if(!KR.holeReaktRegel()) _reaktRegelAusSpeicher(fs);
+function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY+":"+fs)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
+// fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
+async function _ladeReaktRegel(supa,fsId){
+  if(!window.KR||!KR.setzeReaktRegel)return;
+  const fs=fsId||(_authProfile&&_authProfile.fahrschule_id)||null;
+  if(fs!==_reaktRegelSoll){ _reaktRegelSoll=fs; KR.setzeReaktRegel(null); if(fs) _reaktRegelAusSpeicher(fs); } // Regel einer anderen Fahrschule nie mitnehmen
+  else if(fs&&!KR.holeReaktRegel()) _reaktRegelAusSpeicher(fs);
+  if(!fs)return;
   try{
     const {data,error}=await supa.rpc("reakt_regel",{p_fs:fs});
-    if(!_authProfile||_authProfile.fahrschule_id!==fs)return;
-    if(error){ if(_reaktRegelFehlt(error)){ KR.setzeReaktRegel(null); try{localStorage.removeItem(_REAKT_REGEL_KEY);}catch(e){} } return; }
+    if(_reaktRegelSoll!==fs)return; // inzwischen in eine andere Ansicht gewechselt
+    if(error){ if(_reaktRegelFehlt(error)){ KR.setzeReaktRegel(null); try{localStorage.removeItem(_REAKT_REGEL_KEY+":"+fs);}catch(e){} } return; }
     KR.setzeReaktRegel(data||null);
-    try{ localStorage.setItem(_REAKT_REGEL_KEY,JSON.stringify({fs,regel:data||null})); }catch(e){ /* voll: nur im Speicher */ }
+    try{ localStorage.setItem(_REAKT_REGEL_KEY+":"+fs,JSON.stringify({fs,regel:data||null})); }catch(e){ /* voll: nur im Speicher */ }
   }catch(e){ /* Netz: gemerkte Regel bleibt */ }
 }
 function _merkeFristen(rows){
@@ -6103,6 +6108,9 @@ async function _fsLoadAggData(fahrschuleId){
   }
   if(gen!==_fsAggGen)return false;
   if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
+  // W15 (Prüf-Team): Regel der Reaktivierung für DIESE Fahrschule, bevor die Sperren gezeichnet werden
+  await _ladeReaktRegel(supa,fahrschuleId);
+  if(gen!==_fsAggGen)return false;
   const lehrer=lehrerR.data||[];
   window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||(p.rolle==="entfernt"?"Ehemaliger Fahrlehrer":p.email)||""; });
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
@@ -6147,8 +6155,11 @@ async function _fsEnterAggMode(fahrschuleId){
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
     // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
+    if(!_fsAgg&&meinGen===_fsAggGen) _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
     return false;
   }
+  // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
+  if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6181,6 +6192,7 @@ async function _fsExitAggModeJetzt(){
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
   _zeigeSaStreifen();
+  _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -8000,7 +8012,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.15";
+const APP_VERSION="2026.11.24.16";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

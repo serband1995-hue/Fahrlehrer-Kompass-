@@ -94,7 +94,7 @@ gleich("vor W15: entfällt, trotzdem gesperrt (alter Fehler)", true, await gespe
 // ---------- 2. W15 einspielen (zweimal: muss wiederholbar sein) ----------
 await db.exec(W15);
 const erg = (await db.query(W15.slice(W15.lastIndexOf("select (select count(*)")))).rows[0];
-gleich("Ergebnis-Abfrage", { funktionen: 4, gesperrt_neu: 1, regel_fuer_angemeldete: true }, { funktionen: Number(erg.funktionen), gesperrt_neu: Number(erg.gesperrt_neu), regel_fuer_angemeldete: erg.regel_fuer_angemeldete });
+gleich("Ergebnis-Abfrage", { funktionen: 4, gesperrt_neu: 1, regel_fuer_angemeldete: true, gesperrt_direkt: false }, { funktionen: Number(erg.funktionen), gesperrt_neu: Number(erg.gesperrt_neu), regel_fuer_angemeldete: erg.regel_fuer_angemeldete, gesperrt_direkt: erg.gesperrt_direkt });
 await db.exec(W15);
 gleich("nach W15: entfällt heute → frei", false, await gesperrt("s1"));
 
@@ -197,6 +197,7 @@ await db.exec(RUECK);
 const rk = (await db.query(RUECK.slice(RUECK.lastIndexOf("select (select count(*)")))).rows[0];
 gleich("Rückweg: Ergebnis-Abfrage", { neue_funktionen: 0, gesperrt_alt: 1 }, { neue_funktionen: Number(rk.neue_funktionen), gesperrt_alt: Number(rk.gesperrt_alt) });
 gleich("Rückweg: wieder gesperrt wie vorher", true, await gesperrt("r1"));
+gleich("Rückweg: Standardrecht wieder da", true, (await db.query("select has_function_privilege('authenticated', 'public.schueler_reakt_gesperrt(public.schueler)', 'execute') as x")).rows[0].x);
 await db.exec(W15);
 gleich("nach erneutem Einspielen: frei", false, await gesperrt("r1"));
 

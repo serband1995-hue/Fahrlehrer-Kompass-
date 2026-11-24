@@ -624,7 +624,7 @@ function zaehleFristen() {
 const REAKT_TEXT = {
   gesperrt: ["rot", "überfällig · gesperrt"], pruefen_faellig: ["rot", "fällig · in CCD prüfen"], bald: ["gelb", "bald fällig"],
   demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"],
-  entfaellt: ["", "entfällt (Preisliste)"] // W15: laut Preisliste heute oder am Vertragstag frei – keine Fälligkeit, keine Sperre
+  entfaellt: ["", "entfällt"] // W15: laut Preisliste heute oder am Vertragstag frei – keine Fälligkeit, keine Sperre
 };
 /* W15: Regel der Reaktivierung vom Server (rpc reakt_regel, dieselbe Regel wie die Sperre in der Datenbank, ohne Preise).
    Fehlt die Funktion (Datenbank-Update noch nicht da): alte Regel (12 Monate, „entfällt“ zählt nicht) – wie der Server dann auch.
@@ -700,7 +700,7 @@ function renderFristen() {
     <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in 30 Tagen fällig</div></div>
     <div class="kachel"><div class="wert">${f.ohneDatum}</div><div class="name">ohne Vertragsdatum</div></div>
     <div class="kachel${f.antragAb ? " rot" : (f.antragBald ? " gold" : "")}"><div class="wert">${f.antragAb + f.antragBald}</div><div class="name">Führerscheinanträge abgelaufen oder bald (${f.antragAb} abgelaufen)</div></div>
-    <a class="kachel${f.laeuftAb ? " gold" : ""}" href="#fristen?ansicht=bald" data-kachelbald><div class="wert">${f.laeuftAb}</div><div class="name">läuft bald ab (Schüler und Fahrlehrer)</div></a>
+    <a class="kachel" href="#fristen?ansicht=bald" data-kachelbald><div class="wert">${f.laeuftAb}</div><div class="name">läuft bald ab · ansehen →</div></a>
     ${f.fristAb + f.fristBald + f.umAb + f.umBald ? `<a class="kachel${f.fristAb || f.umAb ? " rot" : " gold"}" href="#fristen?ansicht=${f.fristAb + f.fristBald ? "antrag" : "umschreiber"}"><div class="wert">${f.fristAb + f.fristBald + f.umAb + f.umBald}</div><div class="name">Theorie-Frist oder Umschreiber-Frist abgelaufen oder bald</div></a>` : ""}
   </div>`;
   let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute), tf: KR.theorieFristInfo(s, heute), u: KR.umschreibInfo(s, heute) }));
@@ -732,12 +732,13 @@ function renderFristen() {
   }).join("");
   const baldListe = ansicht !== "bald" ? [] : laeuftBaldListe(heute).filter((x) => !suche || String(x.name || "").toLowerCase().includes(suche)
     || (x.wer === "schueler" && (() => { const s = S.schueler.find((y) => y.id === x.id) || {}; return (s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")) || (s.bewerbernummer || "").toLowerCase().replace(/\s/g, "").includes(suche.replace(/\s/g, "")); })()));
+  // Am Handy wird jede Zeile eine Karte (buero.css, [data-baldliste]): Name und „Noch“ oben, darunter Was und Datum, Knopf über die ganze Breite
   const baldZeilen = baldListe.map((x) => `<tr data-bald="${esc(x.art)}">
-      <td><b>${esc(x.name || "–")}</b><div class="unter">${esc(x.unter || "")}</div></td>
-      <td>${esc(x.was)}</td>
-      <td class="zeitspalte">${esc(datumDE(x.datum))}</td>
-      <td><span class="marke-pill ${x.stufe === "bald" ? "gelb" : "blau"}">${esc(noch(x.tage))}</span></td>
-      <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
+      <td class="bald-wer"><b>${esc(x.name || "–")}</b><div class="unter">${esc(x.unter || "")}</div></td>
+      <td class="bald-was">${esc(x.was)}</td>
+      <td class="zeitspalte bald-am">${esc(datumDE(x.datum))}</td>
+      <td class="bald-noch"><span class="marke-pill ${x.stufe === "bald" ? "gelb" : "blau"}">${esc(noch(x.tage))}</span></td>
+      <td class="aktionen bald-akte"><div class="aktionen-box"><button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
     </tr>`).join("");
   const umschreibZeilen = ansicht !== "umschreiber" ? "" : liste.map(({ s, u }) => {
     const [uf, ut] = UMSCHREIB_TEXT[u.stufe];
@@ -777,7 +778,7 @@ function renderFristen() {
       <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
     ${ansicht === "bald" ? (baldListe.length ? `<table class="tabelle" data-baldliste><thead><tr><th>Wer</th><th>Was</th><th>Am</th><th>Noch</th><th></th></tr></thead><tbody>${baldZeilen}</tbody></table>`
       : `<p class="leer">${suche ? "Keine Treffer." : "In den nächsten Wochen läuft nichts ab."}</p>`)
-      + `<p class="leise klein">Hier steht alles, was bald abläuft: Reaktivierung, Theorie, Führerscheinantrag und Theorie-Frist der Behörde (60 Tage vorher), Umschreiber (30 Tage), Fristen der Fahrlehrer (90 Tage). Schon Abgelaufenes steht unter „Handlungsbedarf“.</p>` : ""}
+      + `<p class="leise klein">Hier steht, was in den nächsten Wochen abläuft. Schon Abgelaufenes steht unter „Handlungsbedarf“.</p>` : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" || ansicht === "bald" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
     <p class="leise klein" data-reaktregel>${KR.reaktFreiAm(undefined, heute)

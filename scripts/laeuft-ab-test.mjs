@@ -117,6 +117,8 @@ try {
     await page.keyboard.press("Escape"); await page.waitForTimeout(200);
     const groesse = await page.locator('[data-baldakte]').first().boundingBox();
     pruefe("L2c Knopf mindestens 44 px hoch", groesse && groesse.height >= 44, groesse && groesse.height);
+    const kachelKlasse = await page.locator("[data-kachelbald]").getAttribute("class");
+    pruefe("L2e Kachel ohne gelbe Fläche (Design-Kritiker)", !/gold|gelb/.test(kachelKlasse || ""), kachelKlasse);
     pruefe("L2d keine Konsolenfehler", konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }
@@ -150,6 +152,19 @@ try {
     await page.waitForTimeout(200);
     const ueber = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     pruefe(`L6 ${b}×${h}: kein waagrechtes Scrollen`, ueber <= 1, "überstand " + ueber + " px");
+    // Prüf-Team W15: jeder Knopf „Akte öffnen“ und jede „Noch“-Pill liegt ganz im Bild (nicht abgeschnitten, ohne Wischen)
+    const imBild = await page.evaluate(() => {
+      const w = document.documentElement.clientWidth, raus = [];
+      document.querySelectorAll("[data-baldliste] [data-baldakte], [data-baldliste] .bald-noch .marke-pill, [data-baldliste] .bald-am").forEach((el) => {
+        const r = el.getBoundingClientRect(); if (r.left < 0 || r.right > w + 0.5 || r.width === 0) raus.push(el.className + ":" + Math.round(r.right));
+      });
+      return raus;
+    });
+    pruefe(`L6 ${b}×${h}: Knopf, Datum und „Noch“ ganz sichtbar`, imBild.length === 0, imBild.slice(0, 4).join(" "));
+    await page.locator("[data-baldakte]").first().scrollIntoViewIfNeeded();
+    await page.locator("[data-baldakte]").first().click({ timeout: 3000 });
+    await page.waitForTimeout(250);
+    pruefe(`L6 ${b}×${h}: „Akte öffnen“ antippbar`, await page.locator("dialog[open]").count() === 1);
     pruefe(`L6 ${b}×${h}: keine Konsolenfehler`, konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }

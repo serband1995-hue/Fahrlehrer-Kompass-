@@ -915,3 +915,20 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-anm-warn{color:var(--pill-gelb);font-weight:600;}
 /* W15: Reiter „Läuft bald ab“ – Knopf „Akte öffnen“ auch am PC mindestens 44 px (Regel für alle neuen Knöpfe) */
 .knopf.klein[data-baldakte]{min-height:44px;}
+/* W15 (Prüf-Team): „Läuft bald ab“ am Handy als Karten statt Tabelle – nichts abgeschnitten, Knopf erreichbar */
+.tabelle[data-baldliste] .marke-pill{white-space:nowrap;}
+@media (max-width:700px){
+  .tabelle[data-baldliste]{display:block;overflow:visible;}
+  .tabelle[data-baldliste] thead{display:none;}
+  .tabelle[data-baldliste] tbody{display:block;}
+  .tabelle[data-baldliste] tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line-soft);}
+  .tabelle[data-baldliste] tr:last-child{border-bottom:none;}
+  .tabelle[data-baldliste] td{display:block;padding:0;border:none;width:auto;min-width:0;}
+  .tabelle[data-baldliste] td.bald-wer{grid-column:1;grid-row:1;}
+  .tabelle[data-baldliste] td.bald-noch{grid-column:2;grid-row:1;justify-self:end;align-self:start;}
+  .tabelle[data-baldliste] td.bald-was{grid-column:1;grid-row:2;}
+  .tabelle[data-baldliste] td.bald-am{grid-column:2;grid-row:2;justify-self:end;}
+  .tabelle[data-baldliste] td.bald-akte{grid-column:1 / -1;grid-row:3;padding-top:6px;}
+  .tabelle[data-baldliste] td.bald-akte .aktionen-box{width:100%;max-width:none;margin-left:0;}
+  .tabelle[data-baldliste] td.bald-akte .knopf{width:100%;}
+}

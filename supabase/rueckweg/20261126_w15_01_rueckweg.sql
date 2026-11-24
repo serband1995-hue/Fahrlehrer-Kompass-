@@ -15,6 +15,8 @@ as $function$
   from (select to_jsonb(s) as j) x;
 $function$;
 
+grant execute on function public.schueler_reakt_gesperrt(public.schueler) to public; -- wie vorher (Standardrecht)
+
 drop function if exists public.reakt_regel(uuid);
 drop function if exists public.reakt_frei_am(uuid, date);
 drop function if exists public.reakt_monate(uuid);

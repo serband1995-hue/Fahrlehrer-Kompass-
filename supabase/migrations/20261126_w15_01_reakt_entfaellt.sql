@@ -88,14 +88,18 @@ begin
   return jsonb_build_object('monate', coalesce(public.reakt_monate(p_fs), 12), 'frei', frei);
 end $function$;
 
+-- schueler_reakt_gesperrt läuft jetzt als security definer: nur noch aus den Sperr-Funktionen (selbst security definer)
+-- aufrufbar, nicht direkt (sonst ließe sich mit einer selbst gebauten Zeile die Preisliste einer fremden Fahrschule abfragen)
+revoke all on function public.schueler_reakt_gesperrt(public.schueler) from public, anon, authenticated;
 revoke all on function public.reakt_monate(uuid) from public, anon, authenticated;
 revoke all on function public.reakt_frei_am(uuid, date) from public, anon, authenticated;
 revoke all on function public.reakt_regel(uuid) from public, anon;
 grant execute on function public.reakt_regel(uuid) to authenticated;
 
--- Ergebnis-Abfrage: erwartet funktionen = 4, gesperrt_neu = 1, regel_fuer_angemeldete = true
+-- Ergebnis-Abfrage: erwartet funktionen = 4, gesperrt_neu = 1, regel_fuer_angemeldete = true, gesperrt_direkt = false
 select (select count(*) from pg_proc where pronamespace = 'public'::regnamespace
           and proname in ('reakt_monate', 'reakt_frei_am', 'schueler_reakt_gesperrt', 'reakt_regel')) as funktionen,
        (select count(*) from pg_proc where pronamespace = 'public'::regnamespace and proname = 'schueler_reakt_gesperrt'
           and prosrc like '%reakt_frei_am%') as gesperrt_neu,
-       has_function_privilege('authenticated', 'public.reakt_regel(uuid)', 'execute') as regel_fuer_angemeldete;
+       has_function_privilege('authenticated', 'public.reakt_regel(uuid)', 'execute') as regel_fuer_angemeldete,
+       has_function_privilege('authenticated', 'public.schueler_reakt_gesperrt(public.schueler)', 'execute') as gesperrt_direkt;

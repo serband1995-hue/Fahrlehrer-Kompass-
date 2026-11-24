@@ -81,7 +81,7 @@ try {
     const { page, ctx, konsole } = await oeffne({ vorbereiten: preise([[tag(-900), 24000], [tag(-1), null]]) });
     const st = await stand(page);
     pruefe("E2a entfällt seit gestern: niemand gesperrt", st.gesperrt.length === 0, st.gesperrt.join(","));
-    pruefe("E2b Seite ohne „überfällig · gesperrt“, mit „entfällt (Preisliste)“", !/überfällig · gesperrt/.test(st.text) && /entfällt \(Preisliste\)/.test(st.text));
+    pruefe("E2b Seite ohne „überfällig · gesperrt“, mit Pill „entfällt“", !/überfällig · gesperrt/.test(st.text) && await page.locator(".marke-pill", { hasText: /^entfällt$/ }).count() > 0);
     pruefe("E2c Hinweis „entfällt laut Preisliste“", /entfällt laut Preisliste/.test(st.regel), st.regel);
     pruefe("E2d Kachel: 0 Reaktivierungen überfällig", /offen: 0 Reaktivierungen überfällig/.test(st.text));
     pruefe("E2e Akte: keine Pill, kein Mail-Knopf Reaktivierung", st.pill9 === "" && !st.zm9.includes("reaktivierung"), st.pill9 + " / " + st.zm9.join(","));
@@ -157,15 +157,15 @@ try {
         { id: "a1", fahrschule_id: "fs-1", fahrlehrer_id: "fl-1", name: "Anna Muster", status: "aktiv", ausbildung: {}, reakt_status: "bezahlt", reakt_bezahlt_bis: vor20, vertrag_am: vor13m },
         { id: "a2", fahrschule_id: "fs-1", fahrlehrer_id: "fl-1", name: "Ben Muster", status: "aktiv", ausbildung: {}, reakt_status: "pruefen", reakt_bezahlt_bis: null, vertrag_am: vor13m },
       ];
-      const bauer = (t) => { const b = { select() { return b; }, eq() { return b; }, in() { return b; }, is() { return b; }, neq() { return b; }, order() { return b; }, gte() { return b; }, lte() { return b; }, limit() { return b; },
+      const bauer = (t) => { const b = { select() { return b; }, eq() { return b; }, in() { return b; }, is() { return b; }, neq() { return b; }, order() { return b; }, gte() { return b; }, lte() { return b; }, limit() { return b; }, range() { return b; },
         maybeSingle() { return Promise.resolve({ data: null, error: null }); }, single() { return Promise.resolve({ data: null, error: null }); },
         then(ok, f) { return Promise.resolve({ data: t === "schueler" ? JSON.parse(JSON.stringify(zeilen)) : [], error: null }).then(ok, f); } }; return b; };
       window.__client = {
         from: bauer,
-        rpc(name) {
-          window.__rpcLog.push(name);
+        rpc(name, args) {
+          window.__rpcLog.push(name + ":" + (args && args.p_fs));
           if (name !== "reakt_regel") return Promise.resolve({ data: null, error: null });
-          const r = window.__regel;
+          const r = (window.__regelJe && args && window.__regelJe[args.p_fs]) || window.__regel;
           if (r.art === "netz") return Promise.reject(new Error("Failed to fetch"));
           if (r.art === "fehlt") return Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.reakt_regel(p_fs)" } });
           return Promise.resolve({ data: r.data, error: null });
@@ -174,14 +174,14 @@ try {
       };
       window.getSupa = () => window.__client;
       _authUser = { id: "fl-1" }; _authProfile = { id: "fl-1", fahrschule_id: "fs-1", rolle: null };
-      try { localStorage.removeItem("kompass_reakt_regel"); } catch (e) {}
+      try { Object.keys(localStorage).filter((k) => k.startsWith("kompass_reakt_regel")).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
       KR.setzeReaktRegel(null);
     }, [HEUTE, tag(-20), tag(-400)]);
     const ziehe = async (regel) => {
       await page.evaluate((r) => { window.__regel = r; _schuelerAbrufLaeuft = false; _fsAgg = null; }, regel);
       await page.evaluate(() => pullSchuelerZuweisungen()).catch(() => {});
       await page.waitForTimeout(150);
-      return page.evaluate(() => ({ a1: _zahlungGesperrt("a1"), a2: _zahlungGesperrt("a2"), regel: KR.holeReaktRegel(), speicher: localStorage.getItem("kompass_reakt_regel") }));
+      return page.evaluate(() => ({ a1: _zahlungGesperrt("a1"), a2: _zahlungGesperrt("a2"), regel: KR.holeReaktRegel(), speicher: localStorage.getItem("kompass_reakt_regel:fs-1") }));
     };
     let st = await ziehe({ art: "ok", data: { monate: 12, frei: [] } });
     pruefe("A1 Regel ohne freie Zeit: a1 gesperrt, a2 (ungeprüft) nicht", st.a1 === true && st.a2 === false, JSON.stringify(st));
@@ -205,6 +205,23 @@ try {
     await page.evaluate(() => { _authProfile = { id: "fl-1", fahrschule_id: "fs-2", rolle: null }; KR.setzeReaktRegel(null); });
     st = await ziehe({ art: "netz" });
     pruefe("A7 andere Fahrschule: gemerkte Regel der ersten gilt nicht", st.regel === null, JSON.stringify(st));
+    // A9 Gesamtansicht (Büro, Leitung, Super-Admin): Regel der gewählten Fahrschule, beim Verlassen wieder die eigene (Prüf-Team W15)
+    await page.evaluate(([vor20, vor13m]) => {
+      _authProfile = { id: "fl-1", fahrschule_id: "fs-1", rolle: "fahrschule_admin" };
+      window.__regelJe = { "fs-1": { art: "ok", data: { monate: 12, frei: [] } }, "fs-9": { art: "ok", data: { monate: 12, frei: [{ ab: "2020-01-01", bis: null }] } } };
+    }, [tag(-20), tag(-400)]);
+    const agg = await page.evaluate(async () => {
+      const ok = await _fsLoadAggData("fs-9");
+      return { ok, soll: _reaktRegelSoll, frei: KR.reaktFreiAm(undefined, todayISO()) };
+    });
+    pruefe("A9a Gesamtansicht fremde Fahrschule: deren Regel (frei)", agg.ok === true && agg.soll === "fs-9" && agg.frei === true, JSON.stringify(agg));
+    const rpcAgg = await page.evaluate(() => window.__rpcLog.filter((x) => x === "reakt_regel:fs-9").length);
+    pruefe("A9b rpc mit der Fahrschule der Gesamtansicht gefragt", rpcAgg >= 1);
+    const zur = await page.evaluate(async () => { try { await _fsExitAggModeJetzt(); } catch (e) { return { fehler: String(e) }; } await new Promise((r) => setTimeout(r, 150)); return { soll: _reaktRegelSoll, frei: KR.reaktFreiAm(undefined, todayISO()), agg: _fsAgg }; });
+    pruefe("A9c Gesamtansicht verlassen: wieder die eigene Regel (nicht frei)", zur.soll === "fs-1" && zur.frei === false && zur.agg === null, JSON.stringify(zur));
+    await page.evaluate(() => { _authProfile = { id: "sa-1", fahrschule_id: null, rolle: "super_admin" }; });
+    const ohne = await page.evaluate(async () => { await _ladeReaktRegel(getSupa()); return { soll: _reaktRegelSoll, regel: KR.holeReaktRegel() }; });
+    pruefe("A9d Super-Admin ohne eigene Fahrschule: keine fremde Regel übrig", ohne.soll === null && ohne.regel === null, JSON.stringify(ohne));
     pruefe("A8 keine Seitenfehler", konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }
