@@ -74,14 +74,14 @@ create policy "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pa
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
   with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));
 
--- Büro: anlegen und ändern (nicht löschen). Leitung („verwaltet eigene Pakete“) und Super-Admin bleiben wie bisher.
+-- Büro: anlegen und ändern (nicht löschen). k5_meine_fahrschule() wie bei K9: gesperrte/entfernte Zugänge zählen nicht. Leitung („verwaltet eigene Pakete“) und Super-Admin bleiben wie bisher.
 drop policy if exists "Buero legt Pakete an" on public.fahrschule_pakete;
 create policy "Buero legt Pakete an" on public.fahrschule_pakete as PERMISSIVE for INSERT to authenticated
-  with check (is_buero(auth.uid()) and fahrschule_id = my_fahrschule_id());
+  with check (is_buero(auth.uid()) and fahrschule_id = k5_meine_fahrschule());
 drop policy if exists "Buero aendert Pakete" on public.fahrschule_pakete;
 create policy "Buero aendert Pakete" on public.fahrschule_pakete as PERMISSIVE for UPDATE to authenticated
-  using (is_buero(auth.uid()) and fahrschule_id = my_fahrschule_id())
-  with check (is_buero(auth.uid()) and fahrschule_id = my_fahrschule_id());
+  using (is_buero(auth.uid()) and fahrschule_id = k5_meine_fahrschule())
+  with check (is_buero(auth.uid()) and fahrschule_id = k5_meine_fahrschule());
 
 -- ===== 2. Preis-Arten Lernapp und Simulator =====
 do $$
@@ -119,20 +119,20 @@ alter table public.schueler_pakete enable row level security;
 drop policy if exists "Pakete Schueler lesen Buero Leitung" on public.schueler_pakete;
 create policy "Pakete Schueler lesen Buero Leitung" on public.schueler_pakete for select to authenticated
   using (is_super_admin(auth.uid())
-         or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
+         or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = k5_meine_fahrschule()));
 drop policy if exists "Pakete Schueler lesen Fahrlehrer" on public.schueler_pakete;
 create policy "Pakete Schueler lesen Fahrlehrer" on public.schueler_pakete for select to authenticated
   using (exists (select 1 from public.schueler s where s.id = schueler_pakete.schueler_id and s.fahrlehrer_id = auth.uid()));
 drop policy if exists "Pakete Schueler verkaufen" on public.schueler_pakete;
 create policy "Pakete Schueler verkaufen" on public.schueler_pakete for insert to authenticated
   with check (is_super_admin(auth.uid())
-              or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
+              or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = k5_meine_fahrschule()));
 drop policy if exists "Pakete Schueler stornieren" on public.schueler_pakete;
 create policy "Pakete Schueler stornieren" on public.schueler_pakete for update to authenticated
   using (is_super_admin(auth.uid())
-         or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()))
+         or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = k5_meine_fahrschule()))
   with check (is_super_admin(auth.uid())
-              or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
+              or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = k5_meine_fahrschule()));
 -- keine delete-Regel: verkaufte Pakete bleiben (Verträge)
 
 -- Schutz: feste Kopie. Beim Anlegen rechnet der Server den Gesamtpreis und setzt Verfasser/Zeit.
