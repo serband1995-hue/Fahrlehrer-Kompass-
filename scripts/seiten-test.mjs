@@ -432,7 +432,7 @@ async function setze(page, sz) {
     _calView = "woche"; _calDate = null; _calFilter = "alle"; window._pruefTab = "termine"; _todoTab = "global"; _todoStudent = null;
     _archFormFilter = []; _archColorFilter = []; _settingsAccOpen = null;
     _navStack = [];
-    if (sz.fsAgg) _fsAgg = sz.fsAgg;
+    if (sz.fsAgg) { _fsAgg = sz.fsAgg; _authProfile = Object.assign({}, _authProfile || {}, { rolle: "fahrschule_admin" }); } // K12: Gesamtansicht nur mit Leitungs-Rolle
     window[sz.start]();
   }, sz);
   await warte(page, 350);
