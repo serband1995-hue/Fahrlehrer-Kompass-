@@ -801,6 +801,49 @@ fall("33 W14b: Gesamtansicht – Löschen ohne Änderung woanders: wird gelösch
   if (hinweis !== "Gespeichert ✓") f("Unerwarteter Hinweis: " + hinweis);
 });
 
+fall("33b W14b: Gesamtansicht – Löschen, Büro hat inzwischen „Kurs bezahlt“ gesetzt: nicht gelöscht (Büro-Prüfer)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { art: "erstehilfe", kurs_bezahlt: false })] });
+  await aendereZeile("kalender_termine", "T1", { kurs_bezahlt: true });
+  await ruf(() => { DB.lessons = []; });
+  await gesamtSpeichern();
+  const t1 = await zeile("kalender_termine", "T1");
+  const ids = await dbIds("lessons");
+  await gesamtEnde();
+  if (t1.geloescht) f("Termin trotz Büro-Änderung gelöscht");
+  if (!ids.includes("T1")) f("Termin erscheint nicht wieder");
+});
+
+fall("33c W14b: Gesamtansicht – hier neu angelegter Termin lässt sich nach dem Speichern wieder löschen", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1")] });
+  await ruf(() => { DB.lessons.push({ id: "T-neu", sid: null, date: "2026-11-05", von: "08:00", bis: "09:30", art: "fahrstunde", status: "geplant", _fahrlehrerId: "fl-1", notiz: "neu" }); });
+  await gesamtSpeichern();
+  const vorher = await zeile("kalender_termine", "T-neu");
+  await ruf(() => { DB.lessons = DB.lessons.filter((l) => l.id !== "T-neu"); });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T-neu");
+  const hinweis = await letzterHinweis();
+  await gesamtEnde();
+  if (!vorher) return f("Neuer Termin nicht angelegt");
+  if (!z.geloescht) f("Neuer Termin ließ sich nicht löschen");
+  if (/nicht gelöscht/.test(hinweis)) f("Falscher Hinweis: " + hinweis);
+  const kopien = Object.keys(vorher.payload || {}).filter((k) => ["kurs_bezahlt", "buero_fc_status", "_fahrlehrerId", "status", "von"].includes(k));
+  if (kopien.length) f("Kopien in der Nutzlast des neuen Termins: " + kopien.join(", "));
+});
+
+fall("33d W14b: Gesamtansicht – alter Status in der Nutzlast fällt beim Schreiben weg (Büro liest ihn vor der Spalte)", async (f) => {
+  await neu();
+  await gesamt({ termine: [serverTermin("T1", { payload: { status: "nicht erschienen", notiz: "bleibt" } })] });
+  await ruf(() => { DB.lessons[0].status = "abgesagt"; });
+  await gesamtSpeichern();
+  const z = await zeile("kalender_termine", "T1");
+  await gesamtEnde();
+  if (z.status !== "abgesagt") f("Status nicht gespeichert: " + z.status);
+  if (z.payload && "status" in z.payload) f("Alter Status steht noch in der Nutzlast: " + z.payload.status);
+  if (!z.payload || z.payload.notiz !== "bleibt") f("Nutzlast verloren: " + JSON.stringify(z.payload));
+});
+
 fall("34 W14b: Gesamtansicht – Zeile ändert sich zwischen Lesen und Schreiben: neu gelesen, nichts zurückgedreht", async (f) => {
   await neu();
   await gesamt({ termine: [serverTermin("T1")] });

@@ -8106,15 +8106,16 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
         upd[k]=mein[k];
       });
       const mP=mein.payload, bP=basis.payload, fP=frT.payload;
+      let neuP=null;
       if(_fsStab(mP)!==_fsStab(bP)){
         if(Object.keys(Object.assign({},mP,bP,fP)).some(n=>{ const m=_fsStab(mP[n]),b=_fsStab(bP[n]),f=_fsStab(fP[n]); return m!==b&&f!==b&&m!==f; })) erg.woanders.add(mein.id);
         const r=_snapDrei(mP,fP,_snapBaum(bP,2),2,true);   // dasselbe Feld an beiden Orten: Stand von woanders bleibt
-        if(_fsStab(r.wert)!==_fsStab(fP)){
-          // Felder, die die Ansicht nicht als Nutzlast kennt (z. B. alte Spalten-Kopien), bleiben wie auf dem Server
-          const voll={}; Object.keys(fr.payload||{}).forEach(k=>{ if(a.kern.includes(k)||_FS_NUR_SPALTE.includes(k)) voll[k]=fr.payload[k]; });
-          upd.payload=Object.assign(voll,r.wert);
-        }
+        if(_fsStab(r.wert)!==_fsStab(fP)) neuP=r.wert;
       }
+      // Alte Spalten-Kopien in der Nutzlast fallen beim Schreiben weg, wie früher beim Upsert der ganzen Zeile
+      // (z. B. payload.status: das Büro liest ihn vor der Spalte und zeigte sonst den alten Status, Büro-Prüfer 24.11.).
+      const kopienInP=Object.keys(fr.payload||{}).some(k=>a.kern.includes(k)||_FS_NUR_SPALTE.includes(k));
+      if(neuP||(kopienInP&&Object.keys(upd).length)) upd.payload=neuP||fP;
       if(!Object.keys(upd).length){ erg.zeilen[mein.id]=fr; continue; }
       upd.aktualisiert_am=nowIso;
       let q=supa.from(tabelle).update(upd).eq("id",mein.id);
@@ -8129,17 +8130,21 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
   }
   return erg;
 }
-// Löschen nur, was seit dem Laden der Ansicht nirgends geändert wurde. liste: [{id,basis}] (basis je _fsTeile).
+// Löschen nur, was seit dem Laden der Ansicht nirgends geändert wurde. liste: [{id,roh}] (roh = Eintrag im Vergleichsstand).
+// Mitgezählt werden auch die Büro-Spalten (Kurs bezahlt, FC-Status, Theorie …), soweit die Ansicht sie beim Laden kannte
+// (ein hier neu angelegter Eintrag kennt sie nicht und bleibt löschbar). Büro-Prüfer 24.11.2026.
 // Liefert {loeschen:[id], bleibt:[Server-Zeile], weg:[id] (schon gelöscht oder nicht mehr sichtbar)}.
+const _FS_BUERO_SPALTEN=["buero_fc_status","buero_fc_nachgereicht_am","theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
 async function _fsLoeschenPruefen(supa,tabelle,liste){
   const a=_FS_ART[tabelle], erg={loeschen:[],bleibt:[],weg:[]};
   if(!liste.length)return erg;
   const fMap=await _fsLiesZeilen(supa,tabelle,liste.map(x=>x.id));
-  liste.forEach(({id,basis})=>{
+  liste.forEach(({id,roh})=>{
     const fr=fMap[id];
     if(!fr||fr.geloescht){ erg.weg.push(id); return; }
-    const frT=_fsTeile(tabelle,a.map(fr));
-    const anders=a.spalten.some(k=>_fsStab(frT[k])!==_fsStab(basis[k]))||_fsStab(frT.payload)!==_fsStab(basis.payload);
+    const frM=a.map(fr), frT=_fsTeile(tabelle,frM), basis=_fsTeile(tabelle,roh);
+    const anders=a.spalten.some(k=>_fsStab(frT[k])!==_fsStab(basis[k]))||_fsStab(frT.payload)!==_fsStab(basis.payload)
+      ||_FS_BUERO_SPALTEN.some(k=>(k in roh)&&_fsStab(frM[k])!==_fsStab(roh[k]));
     if(anders) erg.bleibt.push(fr); else erg.loeschen.push(id);
   });
   return erg;
@@ -8227,7 +8232,7 @@ async function _fsSyncAggJetztKern(){
       if(termineUpserts.length) _fsPruefe(await supa.from("kalender_termine").upsert(termineUpserts,{onConflict:"id"}));
       const tErg=await _fsZeilenSicher(supa,"kalender_termine",termineAend,nowIso);
       // Löschen nur, was nirgends geändert wurde (sonst bleibt es; der Storno-Wunsch dafür verfällt)
-      const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,basis:_fsTeile("kalender_termine",baseT[id])})));
+      const tDel=await _fsLoeschenPruefen(supa,"kalender_termine",termineDeletes.map(id=>({id,roh:baseT[id]})));
       [...tDel.weg,...tDel.bleibt.map(r=>r.id)].forEach(id=>{ if(_stornoWert(id)) _stornoVergessen(id); });
       // K7: Stornierte Stunden einzeln mit Grund und Vermerk, der Rest wie bisher in den Papierkorb
       const termineStorno=tDel.loeschen.filter(id=>_stornoWert(id));
@@ -8251,7 +8256,7 @@ async function _fsSyncAggJetztKern(){
       const pruefungenDeletes=(_fsBaseline.exams||[]).filter(b=>!curPIds.has(b.id)).map(b=>b.id);
       if(pruefungenUpserts.length) _fsPruefe(await supa.from("kalender_pruefungen").upsert(pruefungenUpserts,{onConflict:"id"}));
       const pErg=await _fsZeilenSicher(supa,"kalender_pruefungen",pruefungenAend,nowIso);
-      const pDel=await _fsLoeschenPruefen(supa,"kalender_pruefungen",pruefungenDeletes.map(id=>({id,basis:_fsTeile("kalender_pruefungen",baseP[id])})));
+      const pDel=await _fsLoeschenPruefen(supa,"kalender_pruefungen",pruefungenDeletes.map(id=>({id,roh:baseP[id]})));
       if(pDel.loeschen.length) _fsPruefe(await supa.from("kalender_pruefungen").update({geloescht:true,aktualisiert_am:nowIso}).in("id",pDel.loeschen));
 
       // Baseline auf den geschriebenen Stand heben. Einträge ohne Fahrlehrer wurden NICHT geschrieben:
