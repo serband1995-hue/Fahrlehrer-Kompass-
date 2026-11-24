@@ -8436,9 +8436,26 @@ function _theorieBueroSchreiben(s,wert){
   _theorieZuletzt[s.id]=Date.now(); _theorieHinweisSids.add(s.id);
   _theorieOffenNachholen({sofort:true});
 }
-function _theorieAbgelehntHinweis(sid){
+// Hinweis zurückhalten, solange ein Rückgängig-Hinweis läuft (der Knopf soll sichtbar bleiben), höchstens ~8 s
+function _theorieHinweisZeigen(text,t0){
+  const el=document.getElementById("toast"); t0=t0||Date.now();
+  if(el&&el.classList.contains("undo")&&el.classList.contains("show")&&Date.now()-t0<8000){ setTimeout(()=>_theorieHinweisZeigen(text,t0),400); return; }
+  try{ toast(text); }catch(e){}
+}
+function _theorieAbgelehntHinweis(sid,text){
   const tag=_berlinHeute(); if(_theorieHinweisTag[sid]===tag)return; _theorieHinweisTag[sid]=tag;
-  try{ toast("Im Büro steht das Theorie-Datum weiter. Ändern kann es nur das Büro."); }catch(e){}
+  _theorieHinweisZeigen(text||"Im Büro steht das Theorie-Datum weiter. Ändern kann es nur das Büro.");
+}
+// Abgelehnte Rücknahme: lokal wieder „bestanden“, so wie es das Büro-Datum vorgibt (kein neuer Verlauf, falls der alte noch da ist)
+function _theorieNachAblehnung(sid){
+  const s=(DB.students||[]).find(x=>x.id===sid), datum=_theorieBueroWert(sid); if(!s||!datum)return false;
+  ensure(s); s.theorieBuero=null; _theorieVomBuero(s,datum);
+  if(!s.plan.theorie)s.plan.theorie=true;
+  try{ save(); }catch(e){}
+  try{ const top=_navStack&&_navStack[_navStack.length-1];
+    if(top&&top.name==="routePruefungen")routePruefungen();
+    else if(top&&top.name==="routeDetail"&&top.args&&top.args[0]===sid)routeDetail(sid); }catch(e){}
+  return true;
 }
 let _theorieNachholLaeuft=false, _theorieNochmal=false;
 async function _theorieOffenNachholen(opt){
@@ -8464,7 +8481,10 @@ async function _theorieOffenNachholen(opt){
         }
         if(cur&&cur.v===e.v){ delete neu[sid]; _theorieOffenSchreiben(neu); }
         else if(cur){ _theorieNochmal=true; continue; }
-        if(st==="abgelehnt"&&_theorieHinweisSids.has(sid))_theorieAbgelehntHinweis(sid);
+        if(st==="abgelehnt"){
+          const zurueck=e.v===null&&_theorieNachAblehnung(sid);
+          if(_theorieHinweisSids.has(sid))_theorieAbgelehntHinweis(sid,zurueck?"Theorie bleibt bestanden – das Datum steht im Büro. Ändern kann es nur das Büro.":null);
+        }
         _theorieHinweisSids.delete(sid);
       }
     }while(_theorieNochmal);

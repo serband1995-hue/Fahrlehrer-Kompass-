@@ -218,16 +218,29 @@ const zustand = (page, id) => page.evaluate((id) => { const r = DB.students.find
   await pruefe("N4", "abgelehnte Rücknahme (neue Datenbank): ruhiger Hinweis, theorieVonApp bleibt, Akte ehrlich", async () => {
     await setzeModus("neu");
     await page.evaluate(() => { const s = DB.students.find((x) => x.id === "w3"); theorieBestandenSetzen(s, false, true); });
-    await warte(page, 350);
-    const tx = await toastText(); if (!/Im Büro steht das Theorie-Datum weiter/.test(tx)) return "Hinweis: " + JSON.stringify(tx);
+    let tx = ""; for (let i = 0; i < 25 && !/Theorie bleibt/.test(tx); i++) { await warte(page, 400); tx = await toastText(); } // ein laufendes Rückgängig hält den Hinweis zurück
+    if (!/Theorie bleibt bestanden – das Datum steht im Büro/.test(tx)) return "Hinweis: " + JSON.stringify(tx);
     const z = await page.evaluate(() => { const s = DB.students.find((x) => x.id === "w3"); return { v: s.theorieVonApp, f: _schuelerFristen.w3.theorie_bestanden_am, h: fristenHinweisHTML("w3") }; });
     if (z.v !== "2026-11-20" || z.f !== "2026-11-20") return "Zustand " + JSON.stringify({ v: z.v, f: z.f });
     if (/vom Büro eingetragen/.test(z.h) || !/bestanden am/.test(z.h)) return "Akte: " + z.h.slice(0, 200);
     return (await schlange()) === null ? null : "Schlange " + (await schlange());
   });
+  await pruefe("N4a", "abgelehnte Rücknahme: Schalter wieder an, plan.theorie=true, 20 % da, kein zweiter Verlauf", () => page.evaluate(() => {
+    const s = DB.students.find((x) => x.id === "w3"); const n = (s.hist || []).filter((h) => (h.typ || h.type) === "theorie").length;
+    return s.plan.theorie === true && (s.theoryPassed || "").slice(0, 10) === "2026-11-20" && n <= 1 ? null : JSON.stringify({ t: s.plan.theorie, p: s.theoryPassed, n });
+  }));
   await pruefe("N4b", "am selben Tag für denselben Schüler nur einmal", async () => {
     await page.evaluate(() => { document.getElementById("toast").classList.remove("show"); const s = DB.students.find((x) => x.id === "w3"); theorieBestandenSetzen(s, false, true); });
     await warte(page, 350); const tx = await toastText(); return tx ? "zweiter Hinweis: " + tx : null;
+  });
+  await pruefe("N4c", "Hinweis wartet, solange ein Rückgängig-Hinweis läuft; Knopf bleibt sichtbar, Hinweis kommt danach", async () => {
+    await page.evaluate(() => { delete _theorieHinweisTag.w3; const s = DB.students.find((x) => x.id === "w3"); s.plan.theorie = true; s.theorieVonApp = "2026-11-20"; _schuelerFristen.w3.theorie_bestanden_am = "2026-11-20";
+      toastUndo("Test zurück", () => {}, 5000); window._h = () => _theorieAbgelehntHinweis("w3", "Theorie bleibt bestanden – das Datum steht im Büro. Ändern kann es nur das Büro."); window._h(); });
+    await warte(page, 600);
+    const mitten = await page.evaluate(() => { const e = document.getElementById("toast"); return { undo: e.classList.contains("undo"), knopf: !!e.querySelector("button"), text: e.textContent }; });
+    if (!mitten.undo || !mitten.knopf || /Theorie bleibt/.test(mitten.text)) return "mitten " + JSON.stringify(mitten);
+    await warte(page, 5500);
+    const danach = await toastText(); return /Theorie bleibt bestanden/.test(danach) ? null : "danach " + JSON.stringify(danach);
   });
   await pruefe("N5", "alte Datenbank („Fristen, Reaktivierung … nur das Büro“): kein Hinweis", async () => {
     await setzeModus("buero");
