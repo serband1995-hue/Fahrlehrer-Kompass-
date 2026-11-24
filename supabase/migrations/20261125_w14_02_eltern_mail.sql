@@ -53,7 +53,7 @@ begin
   select x.fahrschule_id into fs from public.schueler x where x.id = new.schueler_id;
   if fs is null then raise exception 'Schüler nicht gefunden' using errcode = '22023'; end if;
   new.fahrschule_id := fs; -- immer die Fahrschule des Schülers (keine fremde Fahrschule unterschieben)
-  new.email := nullif(lower(btrim(regexp_replace(coalesce(new.email, ''), '[[:cntrl:]\u0085  ]+', '', 'g'))), '');
+  new.email := nullif(lower(btrim(regexp_replace(coalesce(new.email, ''), '[[:cntrl:]\u0085\u2028\u2029]+', '', 'g'))), '');
   if new.email is not null and new.email !~ '^[^@\s<>",;]+@[^@\s<>",;]+\.[a-z]{2,}$' then
     raise exception 'E-Mail der Eltern ungültig' using errcode = '22023';
   end if;
