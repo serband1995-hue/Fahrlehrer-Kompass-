@@ -456,16 +456,18 @@ function bkFest(posten, klasse) {
    wenn der Fahrlehrer die App nutzt. */
 function bkVerbrauchQuelle(x, voll) {
   const d = new Date(), heute = KR.todayISO();
-  // Termine: die geladenen (letzte DATEN_TAGE Tage, ggf. frischer) und dazu der ganze Verlauf dieses Schülers (voll), je Nummer einmal
+  // Termine: die geladenen (letzte DATEN_TAGE Tage, die das Büro frisch hält) und aus dem Verlauf dieses Schülers (voll) nur, was
+  // davor liegt. Sonst brächte der beim Öffnen geladene Verlauf einen inzwischen abgesagten Termin zurück (Prüf-Team Daten).
+  const grenze = KR.addDaysISO(heute, -DATEN_TAGE);
   const nachId = new Map();
-  for (const t of (voll && voll.termine) || []) nachId.set(t.id, t);
+  for (const t of (voll && voll.termine) || []) if (t.datum < grenze) nachId.set(t.id, t);
   for (const t of S.termine || []) if (t.schueler_id === x.id) nachId.set(t.id, t);
   const termine = [...nachId.values()].filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
     const pl = t.payload || {};
     return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, tatsaechlicheDauer: pl.tatsaechlicheDauer };
   });
   const pruefDaten = typeof pruefErgebnisse === "function" ? pruefErgebnisse("praxis").filter((e) => e.schueler_id === x.id).map((e) => e.datum) : [];
-  for (const p of (voll && voll.tafel) || []) if (p.art === "praxis" && (p.status === "bestanden" || p.status === "nicht_bestanden") && p.datum) pruefDaten.push(p.datum);
+  for (const p of (voll && voll.tafel) || []) if (p.art === "praxis" && (p.status === "bestanden" || p.status === "nicht_bestanden") && p.datum && p.datum < grenze) pruefDaten.push(p.datum);
   const fl = (S.lehrer || []).find((l) => l.id === x.fahrlehrer_id);
   const plan = fl && fl.ohne_app ? null : x.ausbildung && x.ausbildung.plan;
   return KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes(), { pruefDaten, plan });
@@ -556,7 +558,7 @@ function bkAnmeldungBinden(dlg, x, id) {
     vollStand = "laden";
     bkVerlaufLaden(id).then((v) => {
       voll = v; vollStand = v ? "ok" : "fehler";
-      if (dlg.open && wahl === "bleibt" && anfang) zeige();
+      if (wahl === "bleibt" && anfang) zeige(); // auch bei geparktem Fenster (Fable W3)
     });
   }
   const schuelerKlasse = () => (form.klasse && form.klasse.value) || x.klasse || null;
@@ -577,8 +579,9 @@ function bkAnmeldungBinden(dlg, x, id) {
     if (wahl === "bleibt" && anfang) {
       ladeVoll();
       h = `<p class="bk-anm-verkauft">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}</p>
-        ${bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x, voll)))}
-        ${vollStand === "fehler" ? `<p class="leise klein" data-bk-voll-fehlt>Gezählt sind nur die Termine der letzten ${DATEN_TAGE} Tage. Ältere ließen sich gerade nicht laden.</p>` : ""}
+        ${bkPostenListeHTML(bkPosten(anfang), vollStand === "laden" ? null : KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x, voll)))}
+        ${vollStand === "laden" ? `<p class="leise klein" data-bk-voll-laedt>„Noch offen“ wird gezählt …</p>` : ""}
+        ${vollStand === "fehler" ? `<p class="bk-anm-warn" data-bk-voll-fehlt>Ältere Termine fehlen: „noch offen“ kann zu hoch sein. Bitte die Akte später noch einmal öffnen.</p>` : ""}
         <p class="bk-anm-summe"><span>Gesamt</span><b>${esc(prEuro(anfang.gesamt_cent))}</b></p>
         <p class="leise klein">Die Preise bleiben so, auch wenn sich die Preisliste ändert. Gezählt wird in Einheiten à 45 Min.</p>
         <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
@@ -668,7 +671,7 @@ function bkAnmeldungBinden(dlg, x, id) {
       }
       if (wahl === "normal") {
         const fertig = () => { anfang = null; zugeordnet = null; neu = null; optionen(); zeige(); };
-        if (!alt) { bkLokal(sid, null); zeichne(); fertig(); toast("Das Paket war schon storniert (zum Beispiel in einem anderen Fenster)."); return; } // inzwischen schon storniert
+        if (!alt) { bkLokal(sid, null); zeichne(); fertig(); toast("Das Paket war schon storniert."); return; } // inzwischen schon storniert
         const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: null });
         if (r.error) { toast("Das Paket wurde nicht storniert: " + dbFehlerText(r.error), true); return; }
         bkLokal(sid, null); zeichne(); fertig();

@@ -384,6 +384,14 @@ try {
     const x = await d.locator("header [data-schliessen]").boundingBox();
     pruefe("V18c ✕ im Fenster mindestens 44×44 px", x && x.width >= 44 && x.height >= 44, x);
     pruefe("V18d keine Konsolenfehler", !konsole.length, konsole.join(" | "));
+    // V18h (Prüf-Team Daten) Termin im geladenen Zeitraum inzwischen abgesagt (aus S.termine weg): der beim Öffnen geladene Verlauf bringt ihn nicht zurück
+    const nachAbsage = await page.evaluate(() => {
+      const x = S.schueler.find((y) => y.id === "s1"), t = S.termine.find((y) => y.id === "kt-neu");
+      const voll = { termine: [Object.assign({}, t)], tafel: [] };
+      S.termine = S.termine.filter((y) => y.id !== "kt-neu");
+      return bkVerbrauchQuelle(x, voll).fahrstunden;
+    });
+    pruefe("V18h abgesagter Termin zählt nicht mehr (Verlauf nur vor der 400-Tage-Grenze)", nachAbsage === 0, nachAbsage);
     await ctx.close();
   }
   {
@@ -392,7 +400,26 @@ try {
     const d = await oeffneAkte(page, S1);
     await page.waitForTimeout(300);
     const t = await d.locator("[data-bk-anm-info]").innerText();
-    pruefe("V18e nicht ladbar: Stand der letzten Tage mit Hinweis", /2 von 20 gefahren/.test(t) && /nur die Termine der letzten 400 Tage/.test(t), t);
+    pruefe("V18e nicht ladbar: Stand der letzten Tage mit gelbem Hinweis", /2 von 20 gefahren/.test(t) && /Ältere Termine fehlen/.test(t) && await d.locator("[data-bk-voll-fehlt].bk-anm-warn").count() === 1, t);
+    await ctx.close();
+  }
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitAltenTerminen) });
+    await page.evaluate(() => { window.alleSeiten = async () => ({ data: null, error: { message: "Netz weg" } }); }); // echter Fehlerweg (Fable W4)
+    const d = await oeffneAkte(page, S1);
+    await page.waitForTimeout(300);
+    pruefe("V18f Abfrage scheitert: gelber Hinweis, keine Konsolenfehler", await d.locator("[data-bk-voll-fehlt]").count() === 1 && !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitAltenTerminen) });
+    await page.evaluate(() => { const echt = window.bkVerlaufLaden; window.bkVerlaufLaden = async (sid) => { await new Promise((r) => setTimeout(r, 1500)); return echt(sid); }; });
+    const d = await oeffneAkte(page, S1);
+    await page.waitForTimeout(300);
+    const waehrend = await d.locator("[data-bk-anm-info]").innerText();
+    await page.waitForTimeout(1600);
+    const danach = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V18g während des Ladens keine (zu hohe) Zahl, sondern „wird gezählt“; danach die volle Zahl", /wird gezählt/.test(waehrend) && !/von 20 gefahren/.test(waehrend) && /4 von 20 gefahren/.test(danach) && !/wird gezählt/.test(danach), [waehrend, danach]);
     await ctx.close();
   }
   // V19 (Folgeauftrag) Ein anderes Fenster hat das Paket schon storniert: Meldung statt Stille
@@ -404,6 +431,16 @@ try {
     await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
     const t19 = await page.locator("body").innerText();
     pruefe("V19 schon storniert: Meldung „war schon storniert“, kein zweites Stornieren", /war schon storniert/.test(t19) && (await rpcs(page, "schueler_paket_aktivieren")).length === 0, t19.slice(-200));
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    await page.evaluate(() => { window.__FAKE.tabellen.schueler_pakete.find((x) => x.id === "sp-alt").storniert_am = new Date().toISOString(); window.__FAKE.tabellen.schueler.find((s) => s.id === "s1").paket_id = null; });
+    await waehle(d, "Turboboost");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
+    const t19b = await page.locator("body").innerText();
+    pruefe("V19b zuordnen, Paket schon storniert: Meldung, Turboboost zugeordnet", /zugeordnet\. Das verkaufte Paket war schon storniert/.test(t19b) && (await schueler(page, S1)).paket_id === "p-turbo", [t19b.slice(-200), (await schueler(page, S1)).paket_id]);
     await ctx.close();
   }
 } catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }
