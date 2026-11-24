@@ -6,7 +6,7 @@
 window.KOMPASS_NEU = [
   { version: "2026.11.24.13", datum: "2026-11-24", kurz: "Neue Telefonnummer vom Büro bleibt jetzt sicher.",
     punkte: ["Ändert das Büro Name oder Telefon eines Schülers, schreibt die App die alte Nummer nicht mehr zurück. Das gilt auch, wenn du am Schüler etwas anderes geändert hast oder gerade offline warst.",
-             "Änderst du Name oder Telefon selbst in der App, gilt wie bisher deine Eingabe."] },
+             "Änderst du Name oder Telefon selbst in der App, gelten wie bisher beide Angaben vom Handy."] },
   { version: "2026.11.24.12", datum: "2026-11-24", kurz: "Gesamtansicht: Termine überschreiben nichts Neueres mehr.",
     punkte: ["In der Gesamtansicht speichert ein Termin oder eine Prüfung nur noch, was du geändert hast. Was der Fahrlehrer inzwischen eingetragen hat, zum Beispiel „durchgeführt“ oder eine Unterschrift, bleibt.",
              "Hat jemand dieselbe Angabe gleichzeitig geändert, bleibt sein Stand. Ein Hinweis sagt dir das.",

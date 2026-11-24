@@ -562,6 +562,32 @@ fall("20 W14: Büro ändert Telefon, Gerät hat sonst etwas am Schüler geänder
   if (!z || !z.ausbildung || z.ausbildung.notiz !== "offline geschrieben") f("eigene Änderung kam nicht an");
 });
 
+fall("20d W14c: Neuer Büro-Schüler (abgerufen), Büro ändert Telefon vor dem ersten Hochladen – Telefon bleibt (Daten-Prüfer)", async (f) => {
+  await neu();
+  await setzeTabelle("schueler", [serverSchueler("S9", "Uwe Muster", { telefon: "0151 0000000" })]);
+  await ruf(() => pullSchuelerZuweisungen());
+  await aendereZeile("schueler", "S9", { telefon: "0170 9999999", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.students.find((x) => x.id === "S9").notiz = "x"; });
+  await bruecke();
+  const z = await zeile("schueler", "S9");
+  if (z.telefon !== "0170 9999999") f("Telefon zurückgedreht: " + z.telefon);
+  if (!z.ausbildung || z.ausbildung.notiz !== "x") f("eigene Änderung kam nicht an: " + JSON.stringify(z.ausbildung));
+});
+
+fall("20e W14c: Fragebogen geht einmal nicht hoch, dann ändert das Büro das Telefon – Telefon bleibt (Daten-Prüfer)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", bogen: { a: 1 } }]);
+  await ruf(() => { const F = window.__fake; const alt = F.client.from; F.client.from = (t) => { const b = alt(t);
+    if (t === "schueler_privat") { const u = b.upsert; b.upsert = (r, o) => F.privatFehler ? { then(ok) { return Promise.resolve({ data: null, error: { code: "", message: "Failed to fetch" } }).then(ok); } } : u(r, o); }
+    return b; }; F.privatFehler = true; });
+  await bruecke();
+  await ruf(() => { window.__fake.privatFehler = false; });
+  await aendereZeile("schueler", "S1", { telefon: "0170 3333333", aktualisiert_am: "+1s" });
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (z.telefon !== "0170 3333333") f("Telefon zurückgedreht: " + z.telefon);
+});
+
 fall("21 W14: Gerät ändert Telefon selbst – eigener Stand gilt weiter (wie bisher)", async (f) => {
   await neu();
   await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111" }]);

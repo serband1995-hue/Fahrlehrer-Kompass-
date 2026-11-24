@@ -4731,7 +4731,9 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
     // Diese Schüler gehen als „update“: ein Upsert ohne Name scheitert schon vor dem Konflikt-Abgleich an „name not null“,
     // und beim Sammel-Upsert füllt supabase-js fehlende Spalten mit null.
     const memNT = art === "schueler" ? (_abglLaden().nt || {}) : {};
-    const ohneNT = art === "schueler" ? offen.filter(o => merk[o.e.id] && memNT[o.e.id] && memNT[o.e.id] === o.nt) : [];
+    // (Ohne Bedingung auf merk: auch neu vom Büro abgerufene Schüler und solche, deren Fragebogen gerade nicht hochging – Daten-Prüfer.
+    //  Gibt es die Zeile auf dem Server nicht, trifft das update nichts und der Schüler geht als ganze Zeile.)
+    const ohneNT = art === "schueler" ? offen.filter(o => memNT[o.e.id] && memNT[o.e.id] === o.nt) : [];
     const voll = offen.filter(o => ohneNT.indexOf(o) < 0);
     geschrieben = await _upsertRobust(tabelle, voll.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso })), "id");
     if (ohneNT.length) geschrieben = geschrieben.concat(await _schuelerOhneNameTel(ohneNT.map(o => Object.assign({}, o.z, { aktualisiert_am: nowIso }))));
@@ -5598,7 +5600,9 @@ async function pullSchuelerZuweisungen() {
     const memS = _abglLaden(); const neuIds = new Set(neu.map(r => r.id)); let namenNeu = false;
     for (const r of (gen === _abglGen ? (rows||[]) : [])) { // Brücke hat inzwischen geschrieben: Namen erst nächste Runde
       const lok = DB.students.find(x => x.id === r.id); if (!lok) continue;
-      if (neuIds.has(r.id)) continue;
+      // W14c: auch für neu abgerufene Schüler den gemeinsamen Stand von Name/Telefon merken (sonst drehte die Brücke eine
+      // Büro-Änderung vor dem ersten Hochladen zurück)
+      if (neuIds.has(r.id)) { (memS.nt = memS.nt || {})[r.id] = _abglNT(lok.name || "(ohne Namen)", lok.telefon || ""); continue; }
       const bekannt = memS.schueler[r.id];
       const ntServer = _abglNT(r.name || "(ohne Namen)", r.telefon || ""); memS.nt = memS.nt || {};
       if (bekannt && bekannt !== (vorherWert[r.id] !== undefined ? vorherWert[r.id] : _abglWertVon("schueler", lok))) {
