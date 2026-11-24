@@ -120,7 +120,7 @@ create policy "Fahrlehrer loescht eigenes Tafelbild" on public.fahrschule_tafelb
 create policy "Fahrlehrer sieht Tafelbilder seiner Fahrschule" on public.fahrschule_tafelbilder as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrlehrer teilt eigenes Tafelbild" on public.fahrschule_tafelbilder as PERMISSIVE for INSERT to public
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid())));  -- ab 20261124_rechte_01; Trigger trg_tafelbild_eigener_eintrag setzt erstellt_von/ersteller_name
 create policy "Fahrschule-Admin/Buero verwaltet Tafelbilder" on public.fahrschule_tafelbilder as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
   with check ((fahrschule_id = my_fahrschule_id()));
@@ -129,7 +129,7 @@ create policy "Super Admin alles - Tafelbilder" on public.fahrschule_tafelbilder
 create policy "Fahrlehrer sieht Urlaub seiner Fahrschule" on public.fahrschule_urlaub as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrlehrer traegt eigenen Urlaub ein" on public.fahrschule_urlaub as PERMISSIVE for INSERT to public
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid())));  -- ab 20261124_rechte_01; Trigger trg_urlaub_eigener_eintrag setzt erstellt_von/mitarbeiter_name (eigener Profilname)
 create policy "Fahrschule-Admin/Buero verwaltet Urlaub" on public.fahrschule_urlaub as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
   with check ((fahrschule_id = my_fahrschule_id()));
