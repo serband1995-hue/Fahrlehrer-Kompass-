@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.24.9", datum: "2026-11-24", kurz: "Büro: Zahlungs-Mails jetzt auch an die Eltern.",
+    punkte: ["In der Schüler-Akte gibt es ein Feld für die E-Mail der Eltern.",
+             "Darunter wählst du, wer die Zahlungs-Mail bekommt: Schüler und Eltern, nur Eltern oder nur Schüler.",
+             "Schüler und Eltern bekommen je eine eigene Mail. Niemand sieht die Adresse des anderen."] },
   { version: "2026.11.24.8", datum: "2026-11-24", kurz: "Urlaub wird jetzt sicher der richtigen Person zugeordnet.",
     punkte: ["In der Gesamtansicht trägst du Urlaub jetzt in einem Fenster ein: Person aus der Liste wählen, von und bis.",
              "Der Kalender blockiert den Urlaub bei genau dieser Person, auch wenn sie später ihren Namen ändert.",
