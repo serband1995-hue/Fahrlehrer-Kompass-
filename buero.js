@@ -286,6 +286,7 @@ function istSchmal() { return window.matchMedia("(max-width:900px)").matches; }
 function menueOffen(an) {
   document.body.classList.toggle("menue-offen", !!an);
   if ($("menueKnopf")) $("menueKnopf").setAttribute("aria-expanded", an ? "true" : "false");
+  if (an) { const akt = document.querySelector('.nav-punkt[aria-current="page"]'); if (akt && akt.scrollIntoView) akt.scrollIntoView({ block: "nearest" }); }
 }
 function springeZumTitel() {
   const st = $("rollenStreifen");
@@ -3838,10 +3839,10 @@ function renderFlotte() {
   const konf = fahrzeugKonflikte(), gesehenListe = konfGesehenListe();
   const admin = istAdmin() || darfPersonenVerwalten();
   const typName = FZ_TYPEN;
-  return `${konf.length ? `<div class="karte warnkarte"><h2>${konf.length} Doppelbelegung${konf.length === 1 ? "" : "en"} in den nächsten 14 Tagen</h2><table class="tabelle"><tbody>${konf.map(([a, b]) => `<tr>
+  return `${konf.length ? `<div class="karte warnkarte"><h2>${konf.length} Doppelbelegung${konf.length === 1 ? "" : "en"} in den nächsten 14 Tagen</h2><table class="tabelle konf-tab"><tbody>${konf.map(([a, b]) => `<tr>
       <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
       <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}</td><td>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td>${S.konfGesehen ? `<td class="aktionen"><div class="aktionen-box"><button class="knopf" type="button" data-konfgesehen="${esc(konfSchluessel(a, b))}">Gesehen</button></div></td>` : ""}</tr>`).join("")}</tbody></table></div>` : ""}
-    ${gesehenListe.length ? `<details class="fz-weg fz-gesehen"><summary>${gesehenListe.length} als gesehen markiert</summary><table class="tabelle"><tbody>${gesehenListe.map(({ a, b, eintrag }) => `<tr>
+    ${gesehenListe.length ? `<details class="fz-weg fz-gesehen"><summary>${gesehenListe.length} als gesehen markiert</summary><table class="tabelle konf-tab"><tbody>${gesehenListe.map(({ a, b, eintrag }) => `<tr>
       <td class="zeitspalte">${esc(datumDE(a.datum))}</td><td><b>${esc(a.fahrzeug)}</b></td>
       <td>${esc(a.von)}–${esc(a.bis)} ${esc(lehrerName(a.fahrlehrer_id))}<br>${esc(b.von)}–${esc(b.bis)} ${esc(lehrerName(b.fahrlehrer_id))}</td>
       <td class="leise">${esc(eintrag.bearbeiter || "Büro")}${eintrag.gesehen_am ? ", " + esc(datumDE(String(eintrag.gesehen_am).slice(0, 10))) : ""}</td>
@@ -3930,9 +3931,20 @@ async function konfGesehenLoeschen(id, text) {
   zeichne();
   if (text) toast(text);
 }
+let konfBusy = false;
 function bindeFlotte(ziel) {
-  ziel.querySelectorAll("[data-konfgesehen]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; await konfGesehenSetzen(b.dataset.konfgesehen); b.disabled = false; }));
-  ziel.querySelectorAll("[data-konfwieder]").forEach((b) => b.addEventListener("click", async () => { b.disabled = true; await konfGesehenLoeschen(b.dataset.konfwieder, "Wieder in der Warnung"); b.disabled = false; }));
+  // Sperre: Doppeltipp darf keine zweite Zeile erwischen (die nächste rückt sonst unter den Finger)
+  const konfSperre = async (fn) => {
+    if (konfBusy) return;
+    konfBusy = true;
+    ziel.querySelectorAll("[data-konfgesehen],[data-konfwieder]").forEach((x) => { x.disabled = true; });
+    try { await fn(); } finally {
+      ziel.querySelectorAll("[data-konfgesehen],[data-konfwieder]").forEach((x) => { x.disabled = false; });
+      setTimeout(() => { konfBusy = false; }, 800);
+    }
+  };
+  ziel.querySelectorAll("[data-konfgesehen]").forEach((b) => b.addEventListener("click", () => konfSperre(() => konfGesehenSetzen(b.dataset.konfgesehen))));
+  ziel.querySelectorAll("[data-konfwieder]").forEach((b) => b.addEventListener("click", () => konfSperre(() => konfGesehenLoeschen(b.dataset.konfwieder, "Wieder in der Warnung"))));
   const neu = ziel.querySelector("#fzNeu");
   if (neu) neu.addEventListener("click", () => fahrzeugDialog(null));
   ziel.querySelectorAll("[data-fzbearb]").forEach((b) => b.addEventListener("click", () => {

@@ -782,3 +782,17 @@ body.kiosk .rollen-streifen{display:none;}
 .formular .zm-modus-wahl{min-width:0;}
 .formular .zm-wahl{min-width:0;}
 .formular .zm-wahl > span,.formular .zm-wahl .leise{min-width:0;overflow-wrap:anywhere;}
+
+/* K18: Doppelbelegung "Gesehen" – Handy: Zeilen als Karten, Knopf volle Breite; entfernte/gesehene Listen gestaltet */
+.fz-weg{border:1px solid var(--line-soft);border-radius:var(--r);background:var(--surface);margin:0 0 22px;padding:0 16px;}
+.fz-weg > summary{display:flex;align-items:center;min-height:44px;cursor:pointer;font-weight:700;}
+.fz-weg[open] > summary{border-bottom:1px solid var(--line-soft);margin-bottom:4px;}
+@media (max-width:739px){
+  .konf-tab,.konf-tab tbody{display:block;overflow:visible;width:100%;}
+  .konf-tab tr{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-bottom:1px solid var(--line-soft);}
+  .konf-tab tr:last-child{border-bottom:none;}
+  .konf-tab td{display:block;padding:2px 0;border-bottom:none;}
+  .konf-tab td.aktionen{padding-top:8px;}
+  .konf-tab .aktionen-box{flex-direction:column;align-items:stretch;}
+  .konf-tab td .knopf{width:100%;min-height:44px;}
+}

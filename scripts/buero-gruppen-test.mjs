@@ -116,7 +116,7 @@ const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filt
   pruefe("D0", "Warnung zeigt die Doppelbelegung mit Knopf „Gesehen“", (await warnZeilen()) === 1 && (await page.locator("[data-konfgesehen]").count()) === 1 ? null : "Zeilen " + (await warnZeilen()));
   const hoehe = await page.evaluate(() => document.querySelector("[data-konfgesehen]").getBoundingClientRect().height);
   pruefe("D1a", "Knopf „Gesehen“ ist mindestens 44 px hoch und ein type=button", hoehe >= 44 && (await page.getAttribute("[data-konfgesehen]", "type")) === "button" ? null : "Höhe " + hoehe);
-  await page.click("[data-konfgesehen]"); await warte(page, 400);
+  await page.click("[data-konfgesehen]"); await warte(page, 900);
   const erw = ["kg-1|" + tag(2) + "|21:10|21:50|Golf Muster Doppel", "kg-2|" + tag(2) + "|21:30|22:10|Golf Muster Doppel"].sort().join("#");
   const ins = await log(page, "fahrzeug_konflikt_gesehen", "insert");
   pruefe("D1b", "„Gesehen“ schickt POST mit richtigem Schlüssel und fahrschule_id", ins.length === 1 && ins[0].werte[0].schluessel === erw && ins[0].werte[0].fahrschule_id === "fs-test-1" ? null : JSON.stringify(ins.map((x) => x.werte)));
@@ -134,10 +134,10 @@ const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filt
   await page.click(".toast-undo [data-undo]"); await warte(page, 400);
   const del = await log(page, "fahrzeug_konflikt_gesehen", "delete");
   pruefe("D2b", "„Rückgängig“ löscht den Eintrag (DELETE), Warnung wieder da", del.length === 1 && (await warnZeilen()) === 1 && (await page.locator(".fz-gesehen").count()) === 0 ? null : "DELETE " + del.length + " Zeilen " + (await warnZeilen()));
-  await page.click("[data-konfgesehen]"); await warte(page, 400);
-  await page.click(".fz-gesehen summary"); await page.click("[data-konfwieder]"); await warte(page, 400);
+  await page.click("[data-konfgesehen]"); await warte(page, 900);
+  await page.click(".fz-gesehen summary"); await page.click("[data-konfwieder]"); await warte(page, 900);
   pruefe("D3b", "„Wieder anzeigen“ löscht den Eintrag, Warnung wieder da", (await log(page, "fahrzeug_konflikt_gesehen", "delete")).length === 2 && (await warnZeilen()) === 1 ? null : "Zeilen " + (await warnZeilen()));
-  await page.click("[data-konfgesehen]"); await warte(page, 400);
+  await page.click("[data-konfgesehen]"); await warte(page, 900);
   pruefe("D4a", "wieder gesehen: Warnung weg", (await page.locator(".warnkarte").count()) === 0 ? null : "Warnkarte da");
   await page.evaluate(() => { const x = S.termine.find((q) => q.id === "kg-2"); x.von = "21:20"; zeichne(); }); await warte(page, 300);
   pruefe("D4b", "Termin ändert sich (von 21:30 → 21:20): Warnung kommt wieder, alter Eintrag zählt nicht", (await warnZeilen()) === 1 && (await page.locator(".fz-gesehen").count()) === 0 ? null : "Zeilen " + (await warnZeilen()));
@@ -149,6 +149,32 @@ const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filt
   const { page, ctx, konsole } = await oeffne({ hash: "#flotte", code: `F.fehler = { fahrzeug_konflikt_gesehen: 'relation "public.fahrzeug_konflikt_gesehen" does not exist' };` });
   const z = await page.locator(".warnkarte tbody tr").count();
   pruefe("D5", "Tabelle fehlt: Warnung da, kein Knopf „Gesehen“, keine Zeile „gesehen markiert“, keine Fehler", z === 1 && (await page.locator("[data-konfgesehen]").count()) === 0 && (await page.locator(".fz-gesehen").count()) === 0 ? konsole : "Zeilen " + z);
+  await ctx.close();
+}
+// ---- K18 Handy 360, Doppeltipp, Quer ----
+{
+  const zwei = `const t3 = (id, v, b) => ({ id, fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: "s1", datum: t(3), von: v, bis: b, art: "fahrstunde", fahrzeug: "Polo Muster Doppel", status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen" });
+    F.tabellen.kalender_termine.push(t3("kg-3", "10:00", "10:40"), t3("kg-4", "10:20", "11:00"));`;
+  const { page, ctx, konsole } = await oeffne({ hash: "#flotte", breite: 360, hoehe: 740, code: zwei });
+  const m = await page.evaluate(() => { const r = document.querySelector("[data-konfgesehen]").getBoundingClientRect(); return { l: r.left, r: r.right, h: r.height, w: innerWidth, sw: document.documentElement.scrollWidth }; });
+  pruefe("H1", "Handy 360: Knopf „Gesehen“ liegt ohne Wischen im Bild, 44 px hoch, Seite wischt nicht", m.l >= 0 && m.r <= m.w && m.h >= 44 && m.sw <= m.w + 1 ? null : JSON.stringify(m));
+  const kasten = await page.evaluate(() => { const t = document.querySelector(".warnkarte .tabelle"); return t.scrollWidth <= t.clientWidth + 1; });
+  pruefe("H2", "Handy 360: Warn-Tabelle wischt nicht in sich", kasten ? null : "wischbar");
+  await page.click(".fz-gesehen summary").catch(() => {});
+  await page.dblclick("[data-konfgesehen]"); await warte(page, 1200);
+  const ins = await log(page, "fahrzeug_konflikt_gesehen", "insert");
+  pruefe("H3", "Doppeltipp: genau ein Insert, die zweite Doppelbelegung bleibt", ins.length === 1 && (await page.locator(".warnkarte tbody tr").count()) === 1 ? null : "Inserts " + ins.length + " Zeilen " + (await page.locator(".warnkarte tbody tr").count()));
+  await page.click(".fz-gesehen summary");
+  const m2 = await page.evaluate(() => { const r = document.querySelector("[data-konfwieder]").getBoundingClientRect(); return { l: r.left, r: r.right, h: r.height, w: innerWidth, sw: document.documentElement.scrollWidth }; });
+  pruefe("H4", "Handy 360: „Wieder anzeigen“ im Bild, 44 px hoch", m2.l >= 0 && m2.r <= m2.w && m2.h >= 44 && m2.sw <= m2.w + 1 ? null : JSON.stringify(m2));
+  pruefe("H5", "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+{
+  const { page, ctx } = await oeffne({ hash: "#flotte", breite: 740, hoehe: 360 });
+  await page.click("#menueKnopf"); await warte(page, 400);
+  const sicht = await page.evaluate(() => { const r = document.querySelector('.nav-punkt[aria-current="page"]').getBoundingClientRect(); return { t: r.top, b: r.bottom, h: innerHeight }; });
+  pruefe("Q1", "Quer 740x360: aktiver Menüpunkt ist beim Öffnen sichtbar", sicht.t >= 0 && sicht.b <= sicht.h ? null : JSON.stringify(sicht));
   await ctx.close();
 }
 await browser.close(); server.close();
