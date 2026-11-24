@@ -48,22 +48,24 @@ function bkTurbo(v) { return !!v && v.name === "Turboboost"; } // ⚡ in der App
    undefined = steht nicht in der Preisliste, null = dort „entfällt“.
    Reihenfolge: genaue Bezeichnung, dann die übliche Bezeichnung der Art, dann – wenn es genau eine Preisposition dieser Art gibt –
    diese. Erst mit der Klasse des Pakets, dann ohne Klasse (z. B. Lernapp und Simulator gibt es meist nur einmal). */
-function bkListenCent(posten, klasse, datum) {
+function bkListenCent(posten, klasse, datum) { const q = bkListe(posten, klasse, datum); return q === undefined ? undefined : q.cent; }
+// Wie bkListenCent, dazu die Bezeichnung der verwendeten Preisposition (Hinweis „aus: …“, Fehlersucher Daten 24.11.)
+function bkListe(posten, klasse, datum) {
   if (!S.preise || typeof preisAm !== "function") return undefined;
   const art = posten.art, bez = String(posten.bezeichnung || "").trim();
   const klassen = klasse ? [klasse, null] : [null];
   for (const k of klassen) {
-    let e = bez ? preisAm(art, k, bez, datum) : undefined;
+    let e = bez ? preisAm(art, k, bez, datum) : undefined, quelle = bez;
     if (e === undefined && art !== "sonstiges") {
       const std = prArt(art)[4];
-      if (std && std.toLowerCase() !== bez.toLowerCase() && !(art === "sonderfahrt" && PR_SONDER.includes(std))) e = preisAm(art, k, std, datum);
+      if (std && std.toLowerCase() !== bez.toLowerCase() && !(art === "sonderfahrt" && PR_SONDER.includes(std))) { e = preisAm(art, k, std, datum); quelle = std; }
       if (e === undefined) {
         const pos = [...prPositionen().values()].filter((z) => z[0].art === art && (z[0].klasse || null) === k);
         // Sonderfahrten: eine andere Sonderfahrt (z. B. nur „Autobahnfahrt“ eingetragen) gilt nicht für „Überlandfahrt“
-        if (pos.length === 1 && !(art === "sonderfahrt" && PR_SONDER.includes(pos[0][0].bezeichnung))) e = preisAm(art, k, pos[0][0].bezeichnung, datum);
+        if (pos.length === 1 && !(art === "sonderfahrt" && PR_SONDER.includes(pos[0][0].bezeichnung))) { quelle = pos[0][0].bezeichnung; e = preisAm(art, k, quelle, datum); }
       }
     }
-    if (e !== undefined) return e == null ? null : Math.round(e * 100);
+    if (e !== undefined) return { cent: e == null ? null : Math.round(e * 100), bez: quelle, klasse: k };
   }
   return undefined;
 }
@@ -103,7 +105,7 @@ function bkVorlageHTML(v, darf) {
   const posten = bkPosten(v);
   const s = bkSumme(posten, v.klasse);
   const preis = !posten.length ? `<span class="leise">noch leer</span>`
-    : `<span class="bk-v-preis">${esc(prEuro(s.cent))}</span>${s.fehlt ? `<span class="marke-pill gelb">Preis fehlt bei ${s.fehlt} Posten</span>` : ""}`;
+    : `<span class="bk-v-preis">${s.fehlt ? "ab " : ""}${esc(prEuro(s.cent))}</span>${s.fehlt ? `<span class="marke-pill gelb">Preis fehlt bei ${s.fehlt} Posten</span>` : ""}`;
   const knoepfe = !darf ? "" : v.aktiv === false
     ? `<button class="knopf klein" type="button" data-bk-zurueck="${esc(v.id)}">Zurückholen</button>`
     : `<button class="knopf klein" type="button" data-bk-bearbeiten="${esc(v.id)}">Bearbeiten</button><button class="knopf klein" type="button" data-bk-kopie="${esc(v.id)}">Kopieren</button><button class="knopf klein" type="button" data-bk-archiv="${esc(v.id)}">Archivieren</button>`;
@@ -134,19 +136,39 @@ function bindePakete(ziel) {
 }
 
 /* ---------- Speichern ---------- */
-async function bkSchreiben(id, werte) {
-  const q = id ? supa.from("fahrschule_pakete").update(werte).eq("id", id).select()
-    : supa.from("fahrschule_pakete").insert(Object.assign({ fahrschule_id: S.fsId }, werte)).select();
+/* stand (nur beim Ändern): aktualisiert_am beim Öffnen. Hat inzwischen jemand anderes gespeichert, schreibt die Datenbank nichts
+   (0 Zeilen) und das Büro lädt neu, statt die fremde Änderung still zu überschreiben (Fehlersucher Daten 24.11.). */
+async function bkSchreiben(id, werte, stand) {
+  let q;
+  if (id) {
+    q = supa.from("fahrschule_pakete").update(werte).eq("id", id);
+    if (stand !== undefined) q = stand ? q.eq("aktualisiert_am", stand) : q.is("aktualisiert_am", null);
+    q = q.select();
+  } else q = supa.from("fahrschule_pakete").insert(Object.assign({ fahrschule_id: S.fsId }, werte)).select();
+  const fs = S.fsId;
   const res = await q;
   if (res.error || !res.data || !res.data.length) {
     if (res.error && bkSpalteFehlt(res.error)) { S.bkFehlt = true; toast("Die Pakete sind in der Datenbank noch nicht eingerichtet.", true); zeichne(); return null; }
+    if (!res.error && id && stand !== undefined) {
+      toast("Jemand anderes hat dieses Paket gerade geändert. Die Liste wird neu geladen, bitte noch einmal öffnen.", true);
+      if (typeof ladeDaten === "function") ladeDaten();
+      return null;
+    }
     toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true);
     return null;
   }
   const zeile = res.data[0];
+  if (fs !== S.fsId || zeile.fahrschule_id !== S.fsId) return zeile; // inzwischen andere Fahrschule: nicht in deren Liste hängen
   const i = (S.pakete || []).findIndex((p) => p.id === zeile.id);
   if (i >= 0) S.pakete[i] = zeile; else S.pakete = (S.pakete || []).concat(zeile);
   return zeile;
+}
+// Alte Datenbank ohne Vorlagen: bkDa() kann es an den Zeilen nicht erkennen. Dann einmal nach der Spalte fragen.
+async function bkPruefeSpalten() {
+  if ((S.pakete || []).length || S.bkFehlt || !S.fsId) return;
+  const fs = S.fsId;
+  const r = await supa.from("fahrschule_pakete").select("id,posten").eq("fahrschule_id", fs).limit(1);
+  if (fs === S.fsId && r && r.error && bkSpalteFehlt(r.error)) { S.bkFehlt = true; zeichne(); }
 }
 // Archivieren und Zurückholen: ohne Rückfrage, 6 Sekunden Rückgängig
 async function bkAktiv(id, aktiv, knopf) {
@@ -162,7 +184,17 @@ async function bkAktiv(id, aktiv, knopf) {
 }
 
 /* ---------- Der Baukasten (Fenster) ---------- */
-function bkEuroFeld(cent) { return cent == null ? "" : (cent / 100).toFixed(2); }
+function bkEuroFeld(cent) { return cent == null ? "" : (cent / 100).toFixed(2).replace(".", ","); }
+/* Eingabe „65“, „65,5“, „65.50“, „1.299,00“ → Cent. "" → null (Preis aus der Liste), ungültig → NaN */
+function bkCentAusText(t) {
+  let s = String(t || "").replace(/[\s€]/g, "");
+  if (!s) return null;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(s)) return NaN;
+  const c = Math.round(Number(s) * 100);
+  return c > BK_MAX_CENT ? NaN : c;
+}
 function bkPostenZeile(p, i, klasse) {
   const liste = bkListenCent(p, klasse);
   const fest = p.preis_cent_fest != null;
@@ -183,21 +215,26 @@ function bkPostenZeile(p, i, klasse) {
         <input type="number" inputmode="numeric" min="1" max="${BK_MAX_ANZAHL}" step="1" data-bk-anzahl="${i}" aria-label="Anzahl" value="${esc(String(p.anzahl))}">
         <button class="knopf" type="button" data-bk-plus="${i}" aria-label="eins mehr">+</button>
       </span>
-      <span class="bk-mal" aria-hidden="true">×</span>
-      <label class="bk-preisfeld"><span class="nur-leser">Einzelpreis in €</span><input type="number" inputmode="decimal" min="0" max="100000" step="0.01" data-bk-preis="${i}" placeholder="Preis" value="${esc(bkEuroFeld(wert))}"><span aria-hidden="true">€</span></label>
+      <span class="bk-preisgruppe"><span class="bk-mal" aria-hidden="true">×</span>
+      <label class="bk-preisfeld"><span class="nur-leser">Einzelpreis in €</span><input type="text" inputmode="decimal" autocomplete="off" maxlength="12" data-bk-preis="${i}" placeholder="Preis"${fest ? ' class="eigen"' : ""} value="${esc(bkEuroFeld(wert))}"><span aria-hidden="true">€</span></label></span>
       <span class="bk-zeilensumme" data-bk-zsumme="${i}"></span>
     </div>
     <div class="bk-p-hinweis klein" data-bk-hinweis="${i}"></div>
   </li>`;
 }
 function bkHinweisHTML(p, i, klasse) {
-  const liste = bkListenCent(p, klasse);
+  if (p._ungueltig) return `<span class="marke-pill rot">Preis nicht lesbar</span> <span class="leise">So eintragen: 65,00</span>`;
+  const q = bkListe(p, klasse), liste = q === undefined ? undefined : q.cent;
   if (p.preis_cent_fest != null) {
-    return `<span class="marke-pill blau">eigener Preis</span>${liste != null ? ` <span class="leise">Preisliste: ${esc(prEuro(liste))}</span>` : ""} <button class="textknopf" type="button" data-bk-liste="${i}">zurück zur Preisliste</button>`;
+    return `<span class="marke-pill blau">Eigener Preis, bleibt fest</span>${liste != null ? ` <span class="leise">Preisliste: ${esc(prEuro(liste))}</span>` : ""} <button class="textknopf" type="button" data-bk-liste="${i}">Preis aus der Liste nehmen</button>`;
   }
-  if (liste === undefined) return `<span class="marke-pill gelb">Preis fehlt in der Preisliste</span> <span class="leise">Preis hier eintragen oder im Reiter „Preise“.</span>`;
+  if (liste === undefined) {
+    const spaeter = bkListe(p, klasse, "9999-12-31");
+    return `<span class="marke-pill gelb">Preis fehlt in der Preisliste</span> <span class="leise">${spaeter !== undefined ? "Der Preis in der Liste gilt erst später. " : ""}Preis hier eintragen oder im Reiter „Preise“.</span>`;
+  }
   if (liste === null) return `<span class="marke-pill gelb">In der Preisliste: entfällt</span> <span class="leise">Preis hier eintragen.</span>`;
-  return `<span class="leise">aus der Preisliste</span>`;
+  const anders = q.bez && q.bez.toLowerCase() !== String(p.bezeichnung || "").trim().toLowerCase();
+  return `<span class="leise">aus der Preisliste${anders || (klasse && !q.klasse) ? ` (${esc(q.bez)}${klasse && !q.klasse ? ", ohne Klasse" : ""})` : ""}, passt sich an</span>`;
 }
 function bkEditor(vorlage, kopie) {
   const neu = !vorlage || kopie;
@@ -222,6 +259,7 @@ function bkEditor(vorlage, kopie) {
     if (!name) { toast("Bitte einen Namen für das Paket eintragen.", true); return false; }
     if (turbo && name !== "Turboboost") { toast("Der Name „Turboboost“ bleibt so.", true); return false; }
     for (const p of st.posten) {
+      if (p._ungueltig) { toast(`Bitte bei „${p.bezeichnung || bkName(p.art)}“ einen gültigen Preis eintragen, z. B. 65,00.`, true); return false; }
       if (p.art === "sonstiges" && !String(p.bezeichnung || "").trim()) { toast("Bitte bei „Sonstiges“ einen Namen eintragen.", true); return false; }
       if (!(Number.isInteger(p.anzahl) && p.anzahl >= 1 && p.anzahl <= BK_MAX_ANZAHL)) { toast(`Bitte bei „${p.bezeichnung}“ eine Anzahl von 1 bis ${BK_MAX_ANZAHL} eintragen.`, true); return false; }
       if (p.preis_cent_fest != null && !(Number.isInteger(p.preis_cent_fest) && p.preis_cent_fest >= 0 && p.preis_cent_fest <= BK_MAX_CENT)) { toast(`Bitte bei „${p.bezeichnung}“ einen Preis bis 100.000 € eintragen.`, true); return false; }
@@ -239,10 +277,11 @@ function bkEditor(vorlage, kopie) {
       return true;
     }
     const alt = { name: vorlage.name, klasse: vorlage.klasse || null, posten: bkPosten(vorlage) };
-    if (!(await bkSchreiben(vorlage.id, werte))) return false;
+    const z = await bkSchreiben(vorlage.id, werte, vorlage.aktualisiert_am || null);
+    if (!z) return false;
     zeichne();
     toastUndo(`Paket „${name}“ gespeichert`, async () => {
-      if (await bkSchreiben(vorlage.id, alt)) { zeichne(); toast("Rückgängig gemacht"); }
+      if (await bkSchreiben(vorlage.id, alt, z.aktualisiert_am || null)) { zeichne(); toast("Rückgängig gemacht"); }
     });
     return true;
   }, neu ? "Paket speichern" : "Speichern");
@@ -254,11 +293,12 @@ function bkEditor(vorlage, kopie) {
   const klasse = () => form.klasse.value || null;
 
   function rechne() {
-    const s = bkSumme(st.posten, klasse());
-    dlg.querySelector("[data-bk-gesamt]").textContent = prEuro(s.cent);
+    const s = bkSumme(st.posten.filter((p) => !p._ungueltig), klasse());
+    s.fehlt += st.posten.filter((p) => p._ungueltig).length;
+    dlg.querySelector("[data-bk-gesamt]").textContent = (s.fehlt ? "ab " : "") + prEuro(s.cent);
+    dlg.querySelector(".bk-gesamt").hidden = !st.posten.length; // leer: Platz für die Knöpfe zum Hinzufügen
     const h = dlg.querySelector("[data-bk-gesamt-hinweis]");
-    h.textContent = !st.posten.length ? "Noch keine Posten." : s.fehlt ? `Ohne ${s.fehlt} Posten: Preis fehlt.` : "";
-    h.classList.toggle("bk-warn", !!s.fehlt);
+    h.innerHTML = s.fehlt ? `<span class="marke-pill gelb">${s.fehlt} ${s.fehlt === 1 ? "Posten" : "Posten"} ohne Preis, noch nicht eingerechnet</span>` : "";
     st.posten.forEach((p, i) => {
       const e = bkEinzelCent(p, klasse());
       const z = dlg.querySelector(`[data-bk-zsumme="${i}"]`);
@@ -268,7 +308,7 @@ function bkEditor(vorlage, kopie) {
     });
   }
   function zeichneChips() {
-    const da = (art) => st.posten.filter((p) => p.art === art).length;
+    const da = (art) => art === "sonderfahrt" ? new Set(st.posten.filter((p) => p.art === art).map((p) => p.bezeichnung)).size : st.posten.filter((p) => p.art === art).length;
     const voll = st.posten.length >= BK_MAX_POSTEN;
     chipsEl.innerHTML = BK_POSTEN.filter(([art]) => !voll && (art === "sonstiges" || (art === "sonderfahrt" ? da(art) < PR_SONDER.length : !da(art))))
       .map(([art, name]) => `<button class="chip bk-chip" type="button" data-bk-dazu="${art}">+ ${esc(name)}</button>`).join("")
@@ -306,8 +346,8 @@ function bkEditor(vorlage, kopie) {
     if (d.bkMinus != null) { const i = +d.bkMinus; setzeAnzahl(i, st.posten[i].anzahl - 1); }
     else if (d.bkPlus != null) { const i = +d.bkPlus; setzeAnzahl(i, st.posten[i].anzahl + 1); }
     else if (d.bkListe != null) {
-      const i = +d.bkListe, p = st.posten[i]; p.preis_cent_fest = null;
-      const f = listeEl.querySelector(`[data-bk-preis="${i}"]`); if (f) f.value = bkEuroFeld(bkListenCent(p, klasse()));
+      const i = +d.bkListe, p = st.posten[i]; p.preis_cent_fest = null; p._ungueltig = false;
+      const f = listeEl.querySelector(`[data-bk-preis="${i}"]`); if (f) { f.value = bkEuroFeld(bkListenCent(p, klasse())); f.classList.remove("eigen"); f.setAttribute("aria-invalid", "false"); }
       geaendert(); rechne();
     } else if (d.bkWeg != null) {
       const i = +d.bkWeg, weg = st.posten.splice(i, 1)[0];
@@ -320,9 +360,12 @@ function bkEditor(vorlage, kopie) {
     if (d.bkAnzahl != null) { if (t.value !== "") setzeAnzahl(+d.bkAnzahl, t.value, false); }
     else if (d.bkPreis != null) {
       const p = st.posten[+d.bkPreis]; if (!p) return;
-      const roh = String(t.value || "").replace(",", ".").trim(), n = Number(roh);
-      p.preis_cent_fest = roh === "" || !isFinite(n) || n < 0 ? null : Math.min(BK_MAX_CENT, Math.round(n * 100));
-      rechne();
+      const c = bkCentAusText(t.value);
+      p._ungueltig = Number.isNaN(c);
+      if (!p._ungueltig) p.preis_cent_fest = c;
+      t.classList.toggle("eigen", p.preis_cent_fest != null && !p._ungueltig);
+      t.setAttribute("aria-invalid", p._ungueltig ? "true" : "false");
+      geaendert(); rechne();
     } else if (d.bkName != null) { const p = st.posten[+d.bkName]; if (p) p.bezeichnung = t.value; }
   });
   listeEl.addEventListener("change", (e) => {

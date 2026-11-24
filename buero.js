@@ -4213,6 +4213,7 @@ async function ladeDaten() {
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
+    if (typeof bkPruefeSpalten === "function") bkPruefeSpalten(); // Werkstatt 13: alte Datenbank ohne Vorlagen erkennen
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
     holeAbsagenNach();
     zeigeNeueAufgaben(); // neue Aufgabe von einer Kollegin erscheint ohne Neuladen

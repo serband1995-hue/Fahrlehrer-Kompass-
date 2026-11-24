@@ -102,18 +102,18 @@ try {
     await d.locator('[data-bk-anzahl="1"]').fill("20"); await d.locator('[data-bk-anzahl="1"]').dispatchEvent("change");
     pruefe("B2d Anzahl eintippen (20) → 1.650,00 €", /1\.650,00\s*€/.test(await gesamt(page)), await gesamt(page));
     await d.locator('[data-bk-preis="0"]').fill("399");
-    pruefe("B2e eigener Preis 399 → „eigener Preis“, 1.699,00 €", /eigener Preis/.test(await d.locator('[data-bk-hinweis="0"]').innerText()) && /1\.699,00\s*€/.test(await gesamt(page)), await gesamt(page));
+    pruefe("B2e eigener Preis 399 → „eigener Preis“, 1.699,00 €", /Eigener Preis/.test(await d.locator('[data-bk-hinweis="0"]').innerText()) && /1\.699,00\s*€/.test(await gesamt(page)), await gesamt(page));
     await d.locator('[data-bk-liste="0"]').click();
-    pruefe("B2f „zurück zur Preisliste“ → 350 €, 1.650,00 €", (await d.locator('[data-bk-preis="0"]').inputValue()) === "350.00" && /1\.650,00\s*€/.test(await gesamt(page)), await d.locator('[data-bk-preis="0"]').inputValue());
+    pruefe("B2f „zurück zur Preisliste“ → 350 €, 1.650,00 €", (await d.locator('[data-bk-preis="0"]').inputValue()) === "350,00" && /1\.650,00\s*€/.test(await gesamt(page)), await d.locator('[data-bk-preis="0"]').inputValue());
     await chip(page, "Sonderfahrt");
     const s0 = await d.locator('[data-bk-sonder="2"]').inputValue();
     pruefe("B2g erste Sonderfahrt: Überland, 5 Stück, Preis fehlt (nur Autobahn steht in der Liste)", s0 === "Überlandfahrt" && (await d.locator('[data-bk-anzahl="2"]').inputValue()) === "5" && /Preis fehlt/.test(await d.locator('[data-bk-hinweis="2"]').innerText()));
     await chip(page, "Sonderfahrt");
-    pruefe("B2h zweite Sonderfahrt: Autobahn 4 × 80 € aus der Liste", (await d.locator('[data-bk-sonder="3"]').inputValue()) === "Autobahnfahrt" && (await d.locator('[data-bk-preis="3"]').inputValue()) === "80.00");
-    pruefe("B2i Gesamt mit Hinweis „Ohne 1 Posten: Preis fehlt.“", /Ohne 1 Posten/.test(await d.locator("[data-bk-gesamt-hinweis]").innerText()) && /1\.970,00\s*€/.test(await gesamt(page)), await gesamt(page));
-    await d.locator('[data-bk-preis="2"]').fill("85.5");
+    pruefe("B2h zweite Sonderfahrt: Autobahn 4 × 80 € aus der Liste", (await d.locator('[data-bk-sonder="3"]').inputValue()) === "Autobahnfahrt" && (await d.locator('[data-bk-preis="3"]').inputValue()) === "80,00");
+    pruefe("B2i Gesamt „ab 1.970,00 €“ mit Hinweis „1 Posten ohne Preis“", /1 Posten ohne Preis/.test(await d.locator("[data-bk-gesamt-hinweis]").innerText()) && /^ab 1\.970,00\s*€/.test(await gesamt(page)), await gesamt(page));
+    await d.locator('[data-bk-preis="2"]').fill("85,5");
     await chip(page, "Lernapp");
-    pruefe("B2j Lernapp ohne Klasse in der Liste → 79 € (Paket Klasse B)", (await d.locator('[data-bk-preis="4"]').inputValue()) === "79.00");
+    pruefe("B2j Lernapp ohne Klasse in der Liste → 79 € (Paket Klasse B)", (await d.locator('[data-bk-preis="4"]').inputValue()) === "79,00");
     await chip(page, "Sonstiges");
     await page.keyboard.type("Erste-Hilfe-Kurs");
     await d.locator('[data-bk-preis="5"]').fill("45");
@@ -209,7 +209,7 @@ try {
     await page.click('.bk-reiter a:has-text("Pakete")'); await page.waitForTimeout(200);
     await page.click("#bkNeu"); await page.waitForTimeout(150);
     await chip(page, "Simulator");
-    pruefe("B6b Baukasten: Simulator 49 € aus der Preisliste", (await page.locator(dlgSel).last().locator('[data-bk-preis="0"]').inputValue()) === "49.00");
+    pruefe("B6b Baukasten: Simulator 49 € aus der Preisliste", (await page.locator(dlgSel).last().locator('[data-bk-preis="0"]').inputValue()) === "49,00");
     await ctx.close();
   }
   // B7 Speichern scheitert an fehlender Spalte (DB-Stand gemischt): Reiter verschwindet, kein Absturz
@@ -245,6 +245,46 @@ try {
     const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#schueler", vorbereiten: function () { F.tabellen.fahrschule_pakete.push({ id: "p-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, name: "Altes Paket", reihenfolge: 5, aktiv: false, klasse: null, posten: [] }); } });
     const ok1 = await page.evaluate(() => { schuelerDialog(null); const d = [...document.querySelectorAll("dialog[open]")].pop(); const o = [...d.querySelectorAll('select[name="paket_id"] option')].map((x) => x.textContent); return o; });
     pruefe("B9 neuer Schüler: „Altes Paket“ (archiviert) nicht in der Auswahl", !ok1.includes("Altes Paket") && ok1.includes("Turboboost"), ok1.join(","));
+    await ctx.close();
+  }
+  // B11 Zwei Personen an derselben Vorlage: die zweite Speicherung überschreibt nicht still
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: preise });
+    await page.locator('[data-bk-bearbeiten="p-1"]').click(); await page.waitForTimeout(150);
+    const d = page.locator(dlgSel).last();
+    // inzwischen speichert jemand anderes (andere Posten, neuer Zeitstempel)
+    await page.evaluate(() => { const p = window.__FAKE.tabellen.fahrschule_pakete.find((x) => x.id === "p-1"); p.name = "Von Kollegin"; p.posten = [{ art: "simulator", bezeichnung: "Simulator", anzahl: 2, preis_cent_fest: 5000 }]; p.aktualisiert_am = "2026-11-24T09:00:00.000Z"; });
+    await d.locator('input[name="name"]').fill("Meine Änderung");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(400);
+    const p1 = (await pakete(page)).find((p) => p.id === "p-1");
+    pruefe("B11 gleichzeitig geändert: nichts überschrieben, Hinweis, neu geladen", p1.name === "Von Kollegin" && p1.posten.length === 1 && /Jemand anderes/.test(await page.locator("body").innerText()), JSON.stringify([p1.name, p1.posten.length]));
+    await ctx.close();
+  }
+  // B12 Preis mit Komma und Tausenderpunkt, unlesbarer Preis sperrt; B13 Hinweis nennt die verwendete Preisposition
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: preise });
+    await page.click("#bkNeu"); await page.waitForTimeout(150);
+    const d = page.locator(dlgSel).last();
+    await d.locator('input[name="name"]').fill("Komma-Test");
+    await chip(page, "Grundbetrag"); await chip(page, "Übungsstunden");
+    pruefe("B13 Hinweis: „aus der Preisliste (Übungsfahrstunde)“", /aus der Preisliste \(Übungsfahrstunde\)/.test(await d.locator('[data-bk-hinweis="1"]').innerText()), await d.locator('[data-bk-hinweis="1"]').innerText());
+    await d.locator('[data-bk-preis="0"]').fill("abc");
+    pruefe("B12a „abc“: rot markiert, Gesamt mit „ab“", (await d.locator('[data-bk-preis="0"]').getAttribute("aria-invalid")) === "true" && /^ab /.test(await gesamt(page)));
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(200);
+    pruefe("B12b unlesbarer Preis: nicht gespeichert", await page.locator(dlgSel).count() === 1 && !(await pakete(page)).some((p) => p.name === "Komma-Test"));
+    await d.locator('[data-bk-preis="0"]').fill("1.299,00");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(300);
+    const neu = (await pakete(page)).find((p) => p.name === "Komma-Test");
+    pruefe("B12c „1.299,00“ → 129900 Cent", !!neu && neu.posten[0].preis_cent_fest === 129900, neu && JSON.stringify(neu.posten[0]));
+    await ctx.close();
+  }
+  // B14 Alte Datenbank und gar keine Vorlagen: Nachfrage erkennt die fehlende Spalte, kein Reiter
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", vorbereiten: function () { F.tabellen.fahrschule_pakete = []; } });
+    pruefe("B14a ohne Vorlagen (neue DB): Reiter da", await page.locator(".bk-reiter").count() === 1);
+    await page.evaluate(async () => { window.__FAKE.fehler = { fahrschule_pakete: 'column fahrschule_pakete.posten does not exist' }; S.bkFehlt = false; await bkPruefeSpalten(); });
+    await page.waitForTimeout(150);
+    pruefe("B14b ohne Vorlagen (alte DB): Spalte fehlt erkannt, Reiter weg", await page.locator(".bk-reiter").count() === 0);
     await ctx.close();
   }
   // B10 Migration (statisch): Büro ohne Löschrecht, feste Kopie, Rückweg

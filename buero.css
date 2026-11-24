@@ -848,8 +848,11 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-stepper .knopf{min-width:44px;min-height:44px;padding:0;font-size:22px;font-weight:700;}
 .bk-stepper input{width:64px;min-height:44px;text-align:center;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);}
 .bk-mal{color:var(--muted);}
+.bk-preisgruppe{display:inline-flex;align-items:center;gap:8px;}
 .bk-preisfeld{display:inline-flex;align-items:center;gap:6px;}
 .bk-preisfeld input{width:112px;min-height:44px;padding:0 10px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);text-align:right;}
+.bk-preisfeld input.eigen{border:2px solid var(--blau);}
+.bk-preisfeld input[aria-invalid="true"]{border:2px solid var(--rot);}
 .bk-zeilensumme{margin-left:auto;font-weight:700;white-space:nowrap;}
 .bk-p-hinweis{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;}
 .bk-p-hinweis .textknopf{min-height:44px;display:inline-flex;align-items:center;}
@@ -860,10 +863,15 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-gesamt b{font-size:24px;margin-left:auto;white-space:nowrap;}
 .bk-gesamt .klein{flex-basis:100%;text-align:right;color:var(--muted);}
 .bk-gesamt .klein:empty{display:none;}
-.bk-gesamt .bk-warn{color:var(--pill-gelb);font-weight:600;}
+.bk-gesamt .klein .marke-pill{white-space:normal;}
 @media (max-width:520px){
   .bk-dialog .dialog-inhalt{padding:16px 14px;}
   .bk-gesamt{margin:16px -14px -16px;padding:12px 14px;bottom:-16px;}
   .bk-preisfeld input{width:100px;}
-  .bk-zeilensumme{flex-basis:100%;text-align:right;}
+}
+/* Handy quer: wenig Höhe – Gesamtpreis schmal, Hinweis steht dann nur an den Posten (Design-Kritiker 24.11.) */
+@media (max-height:480px){
+  .bk-gesamt{padding-top:6px;padding-bottom:6px;}
+  .bk-gesamt b{font-size:19px;}
+  .bk-gesamt .klein{display:none;}
 }
