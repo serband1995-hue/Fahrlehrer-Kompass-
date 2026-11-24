@@ -435,6 +435,11 @@ function bkEditor(vorlage, opt) {
 function bkVerkaufDa() { return bkDa() && Array.isArray(S.verkauft); }
 function bkIstEinzel(v) { return /ohne paket|einzelabrechnung/i.test(String((v && v.name) || "")); }
 function bkAktivesPaket(sid) { return (S.verkauft || []).find((p) => p.schueler_id === sid && !p.storniert_am) || null; }
+// Schülerliste: das verkaufte Paket (fest), sonst die bloße Zuordnung schueler.paket_id (die kann ein alter App-Stand überschreiben)
+function bkListenPaket(x) {
+  const v = bkAktivesPaket(x.id);
+  return v ? " · " + esc(v.name) : x.paket_id ? " · " + esc(paketName(x.paket_id)) : "";
+}
 function bkVorlagenZumVerkauf() { return bkSortiert((S.pakete || []).filter((p) => p.aktiv !== false && !bkIstEinzel(p))); }
 // Posten mit festem Preis (Cent) für den Verkauf; fehlt ein Preis, steht der Posten in „fehlt“
 function bkFest(posten, klasse) {
@@ -446,31 +451,32 @@ function bkFest(posten, klasse) {
   }
   return { posten: fest, fehlt, gesamt: fest.reduce((a, p) => a + p.anzahl * p.preis_cent, 0) };
 }
-/* Schritt 2: „noch offen“ je Posten. Gleiche Rechnung wie in der App (KR.paketVerbrauch). Quelle: Termine im Büro-Kalender
-   (letzte DATEN_TAGE Tage); Sonderfahrten aus dem Ausbildungsplan der App, wenn der Fahrlehrer die App nutzt (wie der Sonderfahrten-Zähler). */
+/* Schritt 2: „noch offen“ je Posten. Gleiche Rechnung wie in der App (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: Termine im
+   Büro-Kalender (letzte DATEN_TAGE Tage), Praxisprüfungen mit Ergebnis (App und Tafel), Sonderfahrten auch aus dem Ausbildungsplan der App,
+   wenn der Fahrlehrer die App nutzt. */
 function bkVerbrauchQuelle(x) {
   const d = new Date(), heute = KR.todayISO();
   const termine = (S.termine || []).filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
     const pl = t.payload || {};
-    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, tatsaechlicheDauer: pl.tatsaechlicheDauer };
+    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, tatsaechlicheDauer: pl.tatsaechlicheDauer };
   });
-  const q = KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes());
+  const pruefDaten = typeof pruefErgebnisse === "function" ? pruefErgebnisse("praxis").filter((e) => e.schueler_id === x.id).map((e) => e.datum) : [];
   const fl = (S.lehrer || []).find((l) => l.id === x.fahrlehrer_id);
-  const plan = KR.paketSonderAusPlan(x.ausbildung && x.ausbildung.plan);
-  if (plan && !(fl && fl.ohne_app)) q.sonder = plan;
-  return q;
+  const plan = fl && fl.ohne_app ? null : x.ausbildung && x.ausbildung.plan;
+  return KR.paketQuelleAusTerminen(termine, heute, d.getHours() * 60 + d.getMinutes(), { pruefDaten, plan });
 }
 function bkZahl(n) { return (Math.round(Number(n) * 10) / 10).toLocaleString("de-DE"); }
 function bkVerbrauchText(v, art) {
   if (!v || v.verbraucht == null) return "";
   const wort = art === "pruefung_praxis" ? "vorgestellt" : art === "simulator" ? "gemacht" : "gefahren";
-  if (v.offen > 0) return `${bkZahl(v.verbraucht)} von ${bkZahl(v.anzahl)} ${wort} · noch ${bkZahl(v.offen)} offen`;
+  if (v.offen > 0) return `${bkZahl(v.verbraucht)} von ${bkZahl(v.anzahl)} ${wort} · <b>noch ${bkZahl(v.offen)} offen</b>`;
   return `alle ${bkZahl(v.anzahl)} ${wort} ✓${v.mehr > 0 ? ` · ${bkZahl(v.mehr)} mehr als im Paket` : ""}`;
 }
 function bkPostenListeHTML(posten, verbrauch) {
   return `<ul class="bk-anm-posten">${posten.map((p, i) => {
     const vt = verbrauch ? bkVerbrauchText(verbrauch[i], p.art) : "";
-    return `<li><span>${esc(String(p.anzahl))} × ${esc(p.bezeichnung)}${vt ? `<small class="bk-anm-stand${verbrauch[i].offen > 0 ? "" : " fertig"}">${esc(vt)}</small>` : ""}</span>${p.preis_cent != null ? `<span>${esc(prEuro(p.anzahl * p.preis_cent))}</span>` : `<span class="marke-pill gelb">Preis fehlt</span>`}</li>`;
+    // vt enthält nur Zahlen und feste Wörter (bkVerbrauchText), darum ohne esc
+    return `<li><span><span class="bk-anm-menge">${esc(String(p.anzahl))} ×</span> ${esc(p.bezeichnung)}${vt ? `<small class="bk-anm-stand${verbrauch[i].offen > 0 ? "" : " fertig"}">${vt}</small>` : ""}</span>${p.preis_cent != null ? `<span>${esc(prEuro(p.anzahl * p.preis_cent))}</span>` : `<span class="marke-pill gelb">Preis fehlt</span>`}</li>`;
   }).join("")}</ul>`;
 }
 function bkAnmeldungHTML() {
@@ -478,6 +484,13 @@ function bkAnmeldungHTML() {
     <label>Anmeldung<select name="bk_wahl" data-bk-wahl></select></label>
     <div class="bk-anm-info" data-bk-anm-info aria-live="polite"></div>
   </div>`;
+}
+// Ist das im Baukasten Übernommene (werte) dasselbe wie das verkaufte Paket? Dann gibt es nichts neu zu verkaufen.
+function bkGleich(verkauft, werte) {
+  const a = bkPosten(verkauft), b = werte.posten || [];
+  return String(verkauft.name || "").trim() === String(werte.name || "").trim() && (verkauft.klasse || null) === (werte.klasse || null)
+    && a.length === b.length && a.every((p, i) => p.art === b[i].art && String(p.bezeichnung).trim() === String(b[i].bezeichnung).trim()
+      && Number(p.anzahl) === Number(b[i].anzahl) && Number(p.preis_cent) === bkEinzelCent(b[i], werte.klasse));
 }
 // Örtlichen Stand nach Verkauf, Storno oder Rückgängig nachziehen (zeile = jetzt aktives Paket oder null)
 function bkLokal(sid, zeile) {
@@ -487,13 +500,24 @@ function bkLokal(sid, zeile) {
   const v = zeile && zeile.vorlage_id && (S.pakete || []).some((p) => p.id === zeile.vorlage_id) ? zeile.vorlage_id : null;
   if (s) s.paket_id = v;
 }
-async function bkAktivSetzen(sid, alt, text) {
+async function bkAktivSetzen(sid, alt, text, zuordnung) {
   const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: alt ? alt.id : null });
   if (r.error) { toast("Rückgängig ging nicht: " + dbFehlerText(r.error), true); return false; }
   bkLokal(sid, alt);
+  // Vorher nur zugeordnet (ohne Verkauf): die Zuordnung zurückschreiben, sonst fehlt danach z. B. das ⚡ von Turboboost (Fable W2)
+  if (!alt && zuordnung) {
+    const z = await supa.from("schueler").update({ paket_id: zuordnung }).eq("id", sid).select("id");
+    const s = (S.schueler || []).find((y) => y.id === sid);
+    if (!z.error && z.data && z.data.length && s) s.paket_id = zuordnung;
+  }
   zeichne();
   toast(text || "Rückgängig gemacht");
   return true;
+}
+// Das jetzt aktive Paket aus der Datenbank (ein zweites Fenster kann inzwischen verkauft haben). undefined = nicht lesbar.
+async function bkAktivJetzt(sid) {
+  const r = await supa.from("schueler_pakete").select("*").eq("schueler_id", sid).is("storniert_am", null).maybeSingle();
+  return r && !r.error ? r.data || null : undefined;
 }
 function bkAnmeldungBinden(dlg, x, id) {
   const anfang = id ? bkAktivesPaket(id) : null;
@@ -507,7 +531,7 @@ function bkAnmeldungBinden(dlg, x, id) {
   function optionen() {
     const vorl = bkVorlagenZumVerkauf();
     let h = "";
-    if (anfang) h += `<option value="bleibt">Paket „${esc(anfang.name)}“ · verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}</option>`;
+    if (anfang) h += `<option value="bleibt">${esc(anfang.name)} · seit ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)).slice(0, 6))}</option>`;
     else if (zugeordnet) h += `<option value="bleibt">„${esc(zugeordnet.name)}“ (nur zugeordnet, nicht verkauft)</option>`;
     h += `<option value="normal">Normale Anmeldung (ohne Paket)</option>`;
     if (neu && neu.angepasst) h += `<option value="angepasst">Paket „${esc(neu.name)}“ (angepasst)</option>`;
@@ -518,9 +542,10 @@ function bkAnmeldungBinden(dlg, x, id) {
   function zeige() {
     let h = "";
     if (wahl === "bleibt" && anfang) {
-      h = `${bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x)))}
+      h = `<p class="bk-anm-verkauft">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}</p>
+        ${bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), bkVerbrauchQuelle(x)))}
         <p class="bk-anm-summe"><span>Gesamt</span><b>${esc(prEuro(anfang.gesamt_cent))}</b></p>
-        <p class="leise klein">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}. Die Preise bleiben so, auch wenn sich die Preisliste ändert.</p>
+        <p class="leise klein">Die Preise bleiben so, auch wenn sich die Preisliste ändert. Gezählt wird in Einheiten à 45 Min.</p>
         <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
     } else if (wahl === "bleibt") {
       h = `<p class="leise klein">Das Paket ist nur zugeordnet (ohne Preise). Zum Verkaufen oben ein Paket wählen.</p>`;
@@ -552,6 +577,7 @@ function bkAnmeldungBinden(dlg, x, id) {
     const basis = wahl === "neu" ? neu
       : { vorlage_id: anfang.vorlage_id, name: anfang.name, klasse: anfang.klasse, posten: bkPosten(anfang).map((p) => ({ art: p.art, bezeichnung: p.bezeichnung, anzahl: p.anzahl, preis_cent_fest: p.preis_cent })) };
     bkEditor({ name: basis.name, klasse: basis.klasse, posten: basis.posten }, { verkauf: { titel: `Paket für ${x.name || "den Schüler"}`, knopf: "Übernehmen", fertig: (w) => {
+      if (wahl === "bleibt" && anfang && bkGleich(anfang, w)) { toast("Nichts geändert. Das Paket bleibt wie verkauft."); return; } // Fable W7
       neu = { vorlage_id: basis.vorlage_id || null, name: w.name, klasse: w.klasse, posten: w.posten, angepasst: true };
       wahl = "neu"; dlg.dataset.geaendert = "1";
       optionen(); zeige();
@@ -565,27 +591,34 @@ function bkAnmeldungBinden(dlg, x, id) {
   return {
     pruefen() {
       if (wahl !== "neu") return "";
-      if (!neu.posten.length) return `Das Paket „${neu.name}“ hat noch keine Posten. Bitte „Anpassen“.`;
       const f = bkFest(neu.posten, neu.klasse);
-      return f.fehlt.length ? `Beim Paket fehlt der Preis für „${f.fehlt[0]}“. Bitte „Anpassen“ und den Preis eintragen.` : "";
+      const fehler = !neu.posten.length ? `Das Paket „${neu.name}“ hat noch keine Posten. Bitte „Anpassen“.`
+        : f.fehlt.length ? `Beim Paket fehlt der Preis für „${f.fehlt[0]}“. Bitte „Anpassen“ und den Preis eintragen.` : "";
+      if (fehler) dlg.querySelector("[data-bk-anm]").scrollIntoView({ block: "center", behavior: "smooth" }); // Warnung und „Anpassen“ zeigen
+      return fehler;
     },
     // Das Formular schreibt paket_id nicht selbst. Nur „Normale Anmeldung“ bei einem bloß zugeordneten Paket löscht die Zuordnung.
     werte(werte) { delete werte.paket_id; if (wahl === "normal" && zugeordnet) werte.paket_id = null; },
     async nachSpeichern(sid) {
       if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet) bkLokal(sid, null); return; }
+      const vorher = await bkAktivJetzt(sid); // Rückgängig holt das zurück, was wirklich aktiv war (zweites Fenster)
+      const alt = vorher === undefined ? anfang : vorher;
       if (wahl === "normal") {
+        if (!alt) { bkLokal(sid, null); zeichne(); return; } // inzwischen schon storniert
         const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: null });
         if (r.error) { toast("Das Paket wurde nicht storniert: " + dbFehlerText(r.error), true); return; }
         bkLokal(sid, null); zeichne();
-        toastUndo(`Paket „${anfang.name}“ storniert: normale Anmeldung`, () => bkAktivSetzen(sid, anfang));
+        toastUndo(`Paket „${alt.name}“ storniert: normale Anmeldung`, () => bkAktivSetzen(sid, alt));
         return;
       }
       const f = bkFest(neu.posten, neu.klasse);
-      const r = await supa.rpc("schueler_paket_verkaufen", { p_schueler: sid, p_vorlage: neu.vorlage_id || null, p_name: String(neu.name || "").trim(), p_klasse: neu.klasse || null, p_posten: f.posten });
+      // Archivierte oder gelöschte Vorlage: als freies Paket verkaufen, sonst lehnt die Datenbank „Paket ändern“ für immer ab (Fable W1)
+      const vorlage = neu.vorlage_id && (S.pakete || []).some((p) => p.id === neu.vorlage_id && p.aktiv !== false) ? neu.vorlage_id : null;
+      const r = await supa.rpc("schueler_paket_verkaufen", { p_schueler: sid, p_vorlage: vorlage, p_name: String(neu.name || "").trim(), p_klasse: neu.klasse || null, p_posten: f.posten });
       const zeile = r && !r.error ? (Array.isArray(r.data) ? r.data[0] : r.data) : null;
-      if (!zeile) { toast("Der Schüler ist gespeichert, das Paket aber nicht verkauft: " + (r && r.error ? dbFehlerText(r.error) : "keine Antwort") + ". Bitte noch einmal öffnen und speichern.", true); return; }
+      if (!zeile) { toast("Der Schüler ist gespeichert, das Paket aber nicht verkauft: " + (r && r.error ? String(dbFehlerText(r.error)).replace(/[.\s]+$/, "") : "keine Antwort") + ". Bitte noch einmal öffnen und speichern.", true); return; }
       bkLokal(sid, zeile); zeichne();
-      toastUndo(`Paket „${zeile.name}“ verkauft (${prEuro(zeile.gesamt_cent)})`, () => bkAktivSetzen(sid, anfang));
+      toastUndo(`Paket „${zeile.name}“ verkauft (${prEuro(zeile.gesamt_cent)})`, () => bkAktivSetzen(sid, alt, null, !alt && zugeordnet ? zugeordnet.id : null));
     },
   };
 }
