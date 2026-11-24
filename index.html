@@ -12818,11 +12818,12 @@ function _startseiteEinbauen(){
   const k=document.getElementById("ksStartKasten"); if(!k||!window.KS_START)return;
   KS_START.einbauen(k,_authProfile,{hier:_fsAgg?"gesamt":"eigen",wechseln:_startseiteWechseln});
 }
+// Gibt false zurück, wenn der Wechsel abgebrochen wurde (dann gilt in startseite.js wieder die alte Startseite).
 async function _startseiteWechseln(wert){
-  if(!_startHatWahl())return;
+  if(!_startHatWahl())return false;
   if(wert==="buero"){
     if(_fsAgg){ await _fsZurBueroSeite(null); return; } // speichert offene Änderungen der Gesamtansicht vorher
-    if(!_seiteVerlassenOk())return;
+    if(!_seiteVerlassenOk())return false;
     // Eigene Änderungen noch sichern (höchstens 4 s): die Büro-Seite lädt den eigenen Stand nicht
     try{ if(_authUser&&_pullOk) await Promise.race([pushToCloud(),new Promise(r=>setTimeout(r,4000))]); }catch(e){}
     KS_START.gehe("buero"); return;
@@ -12833,7 +12834,7 @@ async function _startseiteWechseln(wert){
     if(!ok&&!_fsAgg){ toast("Fahrschule gerade nicht erreichbar. Beim nächsten Start geht es dort los."); routeSettings(); }
     return;
   }
-  if(wert==="eigen"&&_fsAgg) await _fsExitAggMode();
+  if(wert==="eigen"&&_fsAgg){ await _fsExitAggMode(); if(_fsAgg)return false; } // „Trotzdem wechseln?“ verneint
 }
 // Gesamtansicht: Die Einstellungen der eigenen Ansicht gehören nicht hierher (sie schrieben sonst in den Fahrschul-Stand), nur die Startseite
 function _einstellungenGesamtansicht(){

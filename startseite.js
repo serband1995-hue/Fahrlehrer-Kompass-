@@ -136,16 +136,22 @@
         if (laeuft) return; // Doppeltipp: der erste Wechsel läuft noch
         var wert = b.getAttribute("data-ks-start");
         var hier = o.hier || (_aufBuero() ? "buero" : lesen(profil));
+        var vorher = lesen(profil);
+        var markiere = function (w) { knoepfe.forEach(function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-ks-start") === w)); }); };
         var gemerkt = setzen(profil, wert);
-        knoepfe.forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        markiere(wert);
         meldung.textContent = (gemerkt ? "Startseite: " : "Nicht gemerkt (Gerätespeicher voll): ") + TEXTE[wert].titel + (wert === hier ? (gemerkt ? ". Gemerkt." : ".") : ". Wechsle …");
         if (wert === hier) return;
         laeuft = true;
         knoepfe.forEach(function (x) { x.disabled = true; });
-        var fertig = function () { laeuft = false; knoepfe.forEach(function (x) { x.disabled = false; }); };
+        // wechseln() gibt false zurück, wenn der Wechsel abgebrochen wurde (z. B. ungespeicherte Eingabe): dann gilt die alte Startseite wieder
+        var fertig = function (ergebnis) {
+          laeuft = false; knoepfe.forEach(function (x) { x.disabled = false; });
+          if (ergebnis === false) { setzen(profil, vorher); markiere(vorher); meldung.textContent = "Nicht gewechselt. Startseite bleibt: " + TEXTE[vorher].titel + "."; }
+        };
         try {
           var r = typeof o.wechseln === "function" ? o.wechseln(wert) : (wert === "buero" ? (_aufBuero() ? null : gehe("buero")) : gehe("app"));
-          if (r && typeof r.then === "function") r.then(fertig, fertig); else fertig();
+          if (r && typeof r.then === "function") r.then(fertig, function () { fertig(); }); else fertig(r);
         } catch (e) { fertig(); }
       });
     });

@@ -337,7 +337,19 @@ for (const R of ROLLEN) {
     // W16: Leitung, die selbst fährt, und Super-Admin wechseln über die Startseite in den Einstellungen (statt Streifen und Menü)
     if (R.wahl.includes("eigen") && R.wahl.includes("gesamt")) {
       await maskeWeg();
-      await page.evaluate(() => { try { closeSheet(); } catch (e) {} routeSettings(); }); await warte(page, 300);
+      // Abbruch (z. B. ungespeicherte Eingabe, „Seite verlassen?“ verneint) → die alte Startseite bleibt, keine Weiterleitung
+      await page.evaluate(() => { try { closeSheet(); } catch (e) {} routeSettings(); window.__svo = window._seiteVerlassenOk; window._seiteVerlassenOk = () => false; }); await warte(page, 300);
+      await page.click('#ksStartKasten [data-ks-start="buero"]', { timeout: 5000 }).catch(() => {}); await warte(page, 700);
+      await pruefe("R24", `${P} Wechsel abgebrochen → alte Startseite bleibt, keine Weiterleitung`, () => page.evaluate(() => {
+        const f = [];
+        if (/buero\.html/.test(location.pathname)) f.push("doch weitergeleitet");
+        if (KS_START.lesen(_authProfile) !== "eigen") f.push("gemerkt: " + KS_START.lesen(_authProfile));
+        const an = [...document.querySelectorAll('#ksStartKasten [aria-pressed="true"]')].map((b) => b.dataset.ksStart).join();
+        if (an !== "eigen") f.push("markiert: " + an);
+        window._seiteVerlassenOk = window.__svo;
+        return f;
+      }));
+      await page.evaluate(() => routeSettings()); await warte(page, 300);
       await page.click('#ksStartKasten [data-ks-start="gesamt"]', { timeout: 5000 }).catch(() => {}); await warte(page, 1000);
       await pruefe("R7", `${P} Startseite „Fahrschule“ antippen → ganze Fahrschule, gemerkt`, () => page.evaluate(() => {
         const f = [];
