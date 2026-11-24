@@ -21,7 +21,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); // GitHub: eigener Browser, hier: vorinstalliert
 const ctx = await browser.newContext({ viewport: { width: 390, height: 780 } });
 const page = await ctx.newPage();
 let konsole = [];
@@ -539,6 +539,115 @@ fall("19 Übergebener Schüler, den der vorige Fahrlehrer ausgeblendet hatte, is
   const r = await ruf(() => { const s = DB.students.find((x) => x.id === "S9"); return s ? { aus: s.ausgeblendetAm || null, aktiv: activeStudents().some((x) => x.id === "S9") } : null; });
   if (!r) return f("Schüler nicht übernommen");
   if (r.aus || !r.aktiv) f("Schüler beim neuen Fahrlehrer ausgeblendet: " + JSON.stringify(r));
+});
+
+fall("20 W14: Büro ändert Telefon, Gerät hat sonst etwas am Schüler geändert – Telefon vom Büro bleibt", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", notiz: "" }]);
+  await bruecke();
+  if (!(await zeile("schueler", "S1"))) return f("S1 wurde nicht hochgeladen");
+  await aendereZeile("schueler", "S1", { telefon: "0170 3333333", name: "Anna Beispiel", aktualisiert_am: "+1s" });
+  // Fahrlehrer ändert offline etwas anderes am Schüler (Brücke kam noch nicht dazu)
+  await ruf(() => { DB.students.find((x) => x.id === "S1").notiz = "offline geschrieben"; });
+  await ruf(() => pullSchuelerZuweisungen());
+  const s = await ruf(() => { const x = DB.students.find((y) => y.id === "S1"); return { n: x.name, t: x.telefon, no: x.notiz }; });
+  if (s.t !== "0170 3333333" || s.n !== "Anna Beispiel") f("Gerät hat Name/Telefon vom Büro nicht übernommen: " + JSON.stringify(s));
+  if (s.no !== "offline geschrieben") f("eigene Änderung verloren");
+  await bruecke();
+  const z = await zeile("schueler", "S1");
+  if (!z || z.telefon !== "0170 3333333" || z.name !== "Anna Beispiel") f("Brücke schrieb alten Namen/alte Nummer zurück: " + JSON.stringify(z && { n: z.name, t: z.telefon }));
+  if (!z || !z.ausbildung || z.ausbildung.notiz !== "offline geschrieben") f("eigene Änderung kam nicht an");
+});
+
+fall("21 W14: Gerät ändert Telefon selbst – eigener Stand gilt weiter (wie bisher)", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { name: "Anna Beispiel", aktualisiert_am: "+1s" });
+  await ruf(() => { DB.students.find((x) => x.id === "S1").telefon = "0160 4444444"; });
+  await ruf(() => pullSchuelerZuweisungen());
+  const s = await ruf(() => DB.students.find((y) => y.id === "S1").telefon);
+  if (s !== "0160 4444444") f("eigene Telefonnummer überschrieben: " + s);
+});
+
+fall("22 W14: Behörde-Blatt – Büro hat Bewerbernummer inzwischen geändert: Büro-Stand bleibt, Rückgängig nimmt meine", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111" }]);
+  await bruecke();
+  await aendereZeile("schueler", "S1", { bewerbernummer: "ALT-1", vorbesitz: null });
+  await ruf(() => { _schuelerFristen = { S1: { bewerbernummer: "ALT-1", vorbesitz: null } }; openBehoerdeSheet(DB.students.find((x) => x.id === "S1")); });
+  await page.waitForSelector("#bhNr");
+  await aendereZeile("schueler", "S1", { bewerbernummer: "BUERO-2" }); // Büro ändert, während das Blatt offen ist
+  // Blatt fährt mit Animation ein (Uhr der Seite steht): direkt im DOM tippen
+  await ruf(() => { document.querySelector("#bhNr").value = "APP-3"; document.querySelector('#bhVorbesitz .pill[data-k="AM"]').click(); document.querySelector("#bhSpeichern").click(); });
+  await page.waitForTimeout(150); await page.waitForFunction(() => !window.__fake || window.__fake.stats.inflight === 0);
+  let z = await zeile("schueler", "S1");
+  if (z.bewerbernummer !== "BUERO-2") f("Büro-Änderung überschrieben: " + z.bewerbernummer);
+  if (JSON.stringify(z.vorbesitz) !== JSON.stringify(["AM"])) f("Vorbesitz nicht gespeichert: " + JSON.stringify(z.vorbesitz));
+  const t = await page.textContent("#toast");
+  if (!/Bewerbernummer/.test(t) || !/Meine nehmen/.test(t) || !/Gespeichert/.test(t)) return f("Hinweis fehlt: " + t + " · Server: " + JSON.stringify({ b: z.bewerbernummer, v: z.vorbesitz }));
+  await ruf(() => document.querySelector("#toast .ut-btn").click());
+  await page.waitForTimeout(150); await page.waitForFunction(() => !window.__fake || window.__fake.stats.inflight === 0);
+  z = await zeile("schueler", "S1");
+  if (z.bewerbernummer !== "APP-3") f("Rückgängig hat meine Eingabe nicht gespeichert: " + z.bewerbernummer);
+});
+
+fall("23 W14: Gesamtansicht – Leitung ändert Paket und Notiz, App/Büro haben inzwischen Stand und Telefon geändert: nichts geht verloren", async (f) => {
+  await neu();
+  await setzeTabelle("schueler", [serverSchueler("S9", "Clara Muster", { paket_id: "p1", ausbildung: { notiz: "alt", plan: { a: 1 } } })]);
+  await ruf(() => {
+    const row = window.__fake.T.schueler[0];
+    _fsAgg = { fahrschuleId: "fs-1", fahrschule: { name: "Testfahrschule" }, lehrer: [{ id: "fl-1", name: "Fahr Lehrer" }], fahrzeuge: [], pakete: [] };
+    DB = { students: [_fsMapSchueler(row, () => "Fahr Lehrer")], lessons: [], exams: [], termine: [] };
+    _fsBaseline = { students: JSON.parse(JSON.stringify(DB.students)), lessons: [], exams: [] };
+  });
+  // inzwischen: Fahrlehrer-App ändert den Ausbildungsstand, Büro die Telefonnummer
+  await aendereZeile("schueler", "S9", { telefon: "0170 5555555", ausbildung: { notiz: "alt", plan: { a: 2 } } });
+  await ruf(() => { const s = DB.students[0]; s._paketId = "p2"; s.notiz = "von Leitung"; });
+  const ok = await ruf(() => _fsSyncAggJetzt());
+  const z = await zeile("schueler", "S9");
+  await ruf(() => { _fsAgg = null; _fsBaseline = null; });
+  if (!ok) f("Speichern meldete Fehler");
+  if (z.paket_id !== "p2") f("Paket nicht gespeichert: " + z.paket_id);
+  if (z.telefon !== "0170 5555555") f("Telefon vom Büro überschrieben: " + z.telefon);
+  if (!z.ausbildung || !z.ausbildung.plan || z.ausbildung.plan.a !== 2) f("Ausbildungsstand der App überschrieben: " + JSON.stringify(z.ausbildung && z.ausbildung.plan));
+  if (!z.ausbildung || z.ausbildung.notiz !== "von Leitung") f("Notiz der Leitung fehlt: " + JSON.stringify(z.ausbildung && z.ausbildung.notiz));
+});
+
+fall("24 W14: Büro ändert Klasse – Gerät übernimmt und lädt den Schüler nicht erneut hoch", async (f) => {
+  await neu();
+  await setzeLokal("students", [{ id: "S1", name: "Anna Muster", telefon: "0151 1111111", form: "B" }]);
+  await bruecke();
+  await ruf(() => pullSchuelerZuweisungen());
+  await bruecke();
+  await aendereZeile("schueler", "S1", { klasse: "CE", aktualisiert_am: "+1s" });
+  await ruf(() => pullSchuelerZuweisungen());
+  const form = await ruf(() => DB.students.find((x) => x.id === "S1").form);
+  if (form !== "CE") return f("Klasse vom Büro nicht übernommen: " + form);
+  await zaehlerNull();
+  await bruecke();
+  const n = await zaehler("upserts", "schueler");
+  if (n !== 0) f("Übernahme vom Büro gilt als eigene Änderung: " + n + " Schüler hochgeladen");
+});
+
+fall("25 W14: Gesamtansicht – Leitung und Büro ändern dasselbe Telefon: Büro-Stand bleibt, Anzeige zeigt ihn, Hinweis", async (f) => {
+  await neu();
+  await setzeTabelle("schueler", [serverSchueler("S9", "Clara Muster", { ausbildung: { notiz: "alt" } })]);
+  await ruf(() => {
+    const row = window.__fake.T.schueler[0];
+    _fsAgg = { fahrschuleId: "fs-1", fahrschule: { name: "Testfahrschule" }, lehrer: [{ id: "fl-1", name: "Fahr Lehrer" }], fahrzeuge: [], pakete: [] };
+    DB = { students: [_fsMapSchueler(row, () => "Fahr Lehrer")], lessons: [], exams: [], termine: [] };
+    _fsBaseline = { students: JSON.parse(JSON.stringify(DB.students)), lessons: [], exams: [] };
+  });
+  await aendereZeile("schueler", "S9", { telefon: "0170 BUERO" });
+  await ruf(() => { DB.students[0].telefon = "0160 LEITUNG"; });
+  await ruf(() => _fsSyncAggJetzt());
+  const z = await zeile("schueler", "S9");
+  const r = await ruf(() => ({ t: DB.students[0].telefon, b: _fsBaseline.students[0].telefon, toast: document.getElementById("toast").textContent }));
+  await ruf(() => { _fsAgg = null; _fsBaseline = null; });
+  if (z.telefon !== "0170 BUERO") f("Büro-Stand überschrieben: " + z.telefon);
+  if (r.t !== "0170 BUERO" || r.b !== "0170 BUERO") f("Anzeige/Vergleichsstand zeigt nicht den Server-Stand: " + JSON.stringify(r));
+  if (!/woanders/.test(r.toast)) f("Hinweis fehlt: " + r.toast);
 });
 
 /* ---------- Ausführen ---------- */
