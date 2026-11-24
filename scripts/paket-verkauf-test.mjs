@@ -199,8 +199,9 @@ try {
     const opt = await d.locator("[data-bk-wahl] option").allInnerTexts();
     pruefe("V5a archiviertes Paket nicht in der Auswahl", !opt.some((o) => /Boost-Paket 2/.test(o)), opt.join(" | "));
     await waehle(d, "Turboboost");
-    await d.locator("button[value=ok]").click(); await page.waitForTimeout(250);
-    pruefe("V5b leere Vorlage: Hinweis, Speichern gesperrt", /noch keine Posten/.test(await d.innerText()) && (await rpcs(page, "schueler_paket_verkaufen")).length === 0 && await page.locator(dlgSel).count() === 1);
+    const t5 = await d.innerText();
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(350);
+    pruefe("V5b leere Vorlage (Turboboost): nur zugeordnet wie bisher, kein Verkauf, paket_id gesetzt", /nur zugeordnet/.test(t5) && (await rpcs(page, "schueler_paket_verkaufen")).length === 0 && await page.locator(dlgSel).count() === 0 && (await schueler(page, S1)).paket_id === "p-turbo", [t5.slice(0, 200), (await schueler(page, S1)).paket_id]);
     await ctx.close();
   }
   // V6 Alte Datenbank (Tabelle schueler_pakete fehlt): alte Paket-Auswahl wie bisher
@@ -329,6 +330,19 @@ try {
     if (offen) { await page.locator(dlgSel).last().locator("button[value=ok]").click(); await page.waitForTimeout(500); }
     const n2 = (await rpcs(page, "schueler_paket_verkaufen")).length;
     pruefe("V15 Konflikt beim Telefon: Fenster bleibt offen, Paket einmal verkauft, zweites Speichern verkauft nicht neu", offen === 1 && n1 === 1 && n2 === 1 && (await sp(page)).filter((x) => !x.storniert_am).length === 1, [offen, n1, n2]);
+    await ctx.close();
+  }
+  // V16 Verkauftes Paket, dann Turboboost (ohne Posten) wählen: verkauftes wird storniert, Turboboost zugeordnet; Rückgängig holt das verkaufte zurück
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Turboboost");
+    const t16 = await d.locator("[data-bk-anm-info]").innerText();
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
+    const nachZu = { aktiv: (await sp(page)).filter((x) => !x.storniert_am).length, paket: (await schueler(page, S1)).paket_id };
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(400);
+    const nachUndo = { aktiv: (await sp(page)).filter((x) => !x.storniert_am).map((x) => x.id), paket: (await schueler(page, S1)).paket_id };
+    pruefe("V16 Turboboost statt verkauftem Paket: Hinweis Storno, danach zugeordnet; Rückgängig: verkauftes wieder aktiv", /storniert/.test(t16) && /nur zugeordnet/.test(t16) && nachZu.aktiv === 0 && nachZu.paket === "p-turbo" && nachUndo.aktiv.join() === "sp-alt" && nachUndo.paket === "p-1", [nachZu, nachUndo]);
     await ctx.close();
   }
 } catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }

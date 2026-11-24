@@ -501,16 +501,17 @@ function bkLokal(sid, zeile) {
   const v = zeile && zeile.vorlage_id && (S.pakete || []).some((p) => p.id === zeile.vorlage_id) ? zeile.vorlage_id : null;
   if (s) s.paket_id = v;
 }
-async function bkAktivSetzen(sid, alt, text, zuordnung) {
+async function bkAktivSetzen(sid, alt, text, zuordnung, still) {
   const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: alt ? alt.id : null });
   if (r.error) { toast("Rückgängig ging nicht: " + dbFehlerText(r.error), true); return false; }
   bkLokal(sid, alt);
-  // Vorher nur zugeordnet (ohne Verkauf): die Zuordnung zurückschreiben, sonst fehlt danach z. B. das ⚡ von Turboboost (Fable W2)
+  // Vorher (oder danach) nur zugeordnet (ohne Verkauf): die Zuordnung zurückschreiben, sonst fehlt danach z. B. das ⚡ von Turboboost (Fable W2)
   if (!alt && zuordnung) {
     const z = await supa.from("schueler").update({ paket_id: zuordnung }).eq("id", sid).select("id");
     const s = (S.schueler || []).find((y) => y.id === sid);
     if (!z.error && z.data && z.data.length && s) s.paket_id = zuordnung;
   }
+  if (still) return true;
   zeichne();
   toast(text || "Rückgängig gemacht");
   return true;
@@ -527,8 +528,9 @@ function bkAnmeldungBinden(dlg, x, id) {
   let zugeordnet = !anfang && x.paket_id ? (S.pakete || []).find((p) => p.id === x.paket_id && !bkIstEinzel(p)) || null : null;
   const sel = dlg.querySelector("[data-bk-wahl]"), info = dlg.querySelector("[data-bk-anm-info]");
   const form = dlg.querySelector("form");
-  // wahl: "bleibt" (Stand wie bisher), "normal", "neu" (Paket aus Vorlage oder angepasst, steht in „neu“)
-  let wahl = anfang || zugeordnet ? "bleibt" : "normal", neu = null;
+  // wahl: "bleibt" (Stand wie bisher), "normal", "neu" (Paket aus Vorlage oder angepasst, steht in „neu“),
+  // "zuordnen" (Vorlage noch ohne Posten, z. B. Turboboost: wie bisher nur zuordnen, ohne Preise; steht in „zuVorlage“)
+  let wahl = anfang || zugeordnet ? "bleibt" : "normal", neu = null, zuVorlage = null;
   const schuelerKlasse = () => (form.klasse && form.klasse.value) || x.klasse || null;
   const ausVorlage = (v) => ({ vorlage_id: v.id, name: v.name, klasse: v.klasse || schuelerKlasse(), posten: bkPosten(v).map((p) => Object.assign({}, p)), angepasst: false });
   function optionen() {
@@ -538,9 +540,9 @@ function bkAnmeldungBinden(dlg, x, id) {
     else if (zugeordnet) h += `<option value="bleibt">„${esc(zugeordnet.name)}“ (nur zugeordnet, nicht verkauft)</option>`;
     h += `<option value="normal">Normale Anmeldung (ohne Paket)</option>`;
     if (neu && neu.angepasst) h += `<option value="angepasst">Paket „${esc(neu.name)}“ (angepasst)</option>`;
-    if (vorl.length) h += `<optgroup label="Paket verkaufen">${vorl.map((v) => `<option value="v:${esc(v.id)}">${esc(v.name)}${v.klasse ? " · Klasse " + esc(v.klasse) : ""}</option>`).join("")}</optgroup>`;
+    if (vorl.length) h += `<optgroup label="Paket">${vorl.filter((v) => !(zugeordnet && v.id === zugeordnet.id && !bkPosten(v).length)).map((v) => `<option value="v:${esc(v.id)}">${esc(v.name)}${v.klasse ? " · Klasse " + esc(v.klasse) : ""}${bkPosten(v).length ? "" : " · nur zuordnen"}</option>`).join("")}</optgroup>`;
     sel.innerHTML = h;
-    sel.value = wahl === "neu" ? (neu.angepasst ? "angepasst" : "v:" + neu.vorlage_id) : wahl;
+    sel.value = wahl === "neu" ? (neu.angepasst ? "angepasst" : "v:" + neu.vorlage_id) : wahl === "zuordnen" ? "v:" + zuVorlage.id : wahl;
   }
   function zeige() {
     let h = "";
@@ -552,6 +554,9 @@ function bkAnmeldungBinden(dlg, x, id) {
         <div class="knopfreihe"><button class="knopf klein" type="button" data-bk-anpassen>Paket ändern</button></div>`;
     } else if (wahl === "bleibt") {
       h = `<p class="leise klein">Das Paket ist nur zugeordnet (ohne Preise). Zum Verkaufen oben ein Paket wählen.</p>`;
+    } else if (wahl === "zuordnen") {
+      h = `${anfang ? `<p class="bk-anm-warn">Beim Speichern wird das verkaufte Paket „${esc(anfang.name)}“ storniert. Danach geht „Rückgängig“.</p>` : ""}
+        <p class="leise klein">„${esc(zuVorlage.name)}“ hat noch keine Posten. Es wird nur zugeordnet, ohne Preise und ohne „noch offen“. Zum Verkaufen unter Preisliste › Pakete die Posten anlegen.</p>`;
     } else if (wahl === "normal") {
       h = anfang ? `<p class="bk-anm-warn">Beim Speichern wird das Paket „${esc(anfang.name)}“ storniert. Danach geht „Rückgängig“.</p>`
         : `<p class="leise klein">Ohne Paket. Abgerechnet wird einzeln nach der Preisliste.</p>`;
@@ -568,7 +573,12 @@ function bkAnmeldungBinden(dlg, x, id) {
   }
   sel.addEventListener("change", () => {
     const w = sel.value;
-    if (w.startsWith("v:")) { const v = (S.pakete || []).find((p) => p.id === w.slice(2)); if (!v) return; neu = ausVorlage(v); wahl = "neu"; }
+    zuVorlage = null;
+    if (w.startsWith("v:")) {
+      const v = (S.pakete || []).find((p) => p.id === w.slice(2)); if (!v) return;
+      // Vorlage ohne Posten (alle alten Pakete nach der Umstellung): wie bisher nur zuordnen, statt das Speichern zu sperren
+      if (!bkPosten(v).length) { zuVorlage = v; neu = null; wahl = "zuordnen"; } else { neu = ausVorlage(v); wahl = "neu"; }
+    }
     else if (w === "angepasst") wahl = "neu";
     else { wahl = w; if (neu && !neu.angepasst) neu = null; }
     dlg.dataset.geaendert = "1";
@@ -601,11 +611,25 @@ function bkAnmeldungBinden(dlg, x, id) {
       return fehler;
     },
     // Das Formular schreibt paket_id nicht selbst. Nur „Normale Anmeldung“ bei einem bloß zugeordneten Paket löscht die Zuordnung.
-    werte(werte) { delete werte.paket_id; if (wahl === "normal" && zugeordnet) werte.paket_id = null; },
+    werte(werte) {
+      delete werte.paket_id;
+      if (wahl === "normal" && zugeordnet) werte.paket_id = null;
+      if (wahl === "zuordnen" && !anfang) werte.paket_id = zuVorlage.id; // geht wie jedes Feld durch das sichere Speichern
+    },
     async nachSpeichern(sid) {
       if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet) { bkLokal(sid, null); zugeordnet = null; optionen(); zeige(); } return; }
       const vorher = await bkAktivJetzt(sid); // Rückgängig holt das zurück, was wirklich aktiv war (zweites Fenster)
       const alt = vorher === undefined ? anfang : vorher;
+      if (wahl === "zuordnen") {
+        const zu = zuVorlage;
+        if (alt || anfang) { // verkauftes Paket stornieren, danach zuordnen (die Storno-Funktion leert paket_id)
+          if (!(await bkAktivSetzen(sid, null, null, zu.id, true))) return;
+          zeichne();
+          if (alt) toastUndo(`Paket „${alt.name}“ storniert, „${zu.name}“ zugeordnet`, () => bkAktivSetzen(sid, alt));
+        }
+        anfang = null; zugeordnet = zu; zuVorlage = null; wahl = "bleibt"; optionen(); zeige();
+        return;
+      }
       if (wahl === "normal") {
         const fertig = () => { anfang = null; zugeordnet = null; neu = null; optionen(); zeige(); };
         if (!alt) { bkLokal(sid, null); zeichne(); fertig(); return; } // inzwischen schon storniert
