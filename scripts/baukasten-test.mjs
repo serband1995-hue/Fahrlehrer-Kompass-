@@ -244,7 +244,7 @@ try {
   // B9 Schüler-Dialog: archivierte Pakete nicht mehr zur Auswahl (außer dem, das der Schüler hat)
   {
     const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#schueler", vorbereiten: function () { F.tabellen.fahrschule_pakete.push({ id: "p-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, name: "Altes Paket", reihenfolge: 5, aktiv: false, klasse: null, posten: [] }); } });
-    const ok1 = await page.evaluate(() => { schuelerDialog(null); const d = [...document.querySelectorAll("dialog[open]")].pop(); const o = [...d.querySelectorAll('select[name="paket_id"] option')].map((x) => x.textContent); return o; });
+    const ok1 = await page.evaluate(() => { schuelerDialog(null); const d = [...document.querySelectorAll("dialog[open]")].pop(); const o = [...d.querySelectorAll('select[name="paket_id"] option, [data-bk-wahl] option')].map((x) => x.textContent); return o; });
     pruefe("B9 neuer Schüler: „Altes Paket“ (archiviert) nicht in der Auswahl", !ok1.includes("Altes Paket") && ok1.includes("Turboboost"), ok1.join(","));
     await ctx.close();
   }
