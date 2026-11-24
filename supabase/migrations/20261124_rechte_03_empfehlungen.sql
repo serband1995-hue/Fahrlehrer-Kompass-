@@ -4,7 +4,7 @@
 --   * Anlegen: immer status 'empfohlen', kein betrag, keine aufteilung, fahrlehrer_id = eigene ID.
 --   * Ändern: nur die eigene, noch offene Empfehlung (status 'empfohlen') auf 'storniert'. Alle anderen Felder
 --     bleiben, wie sie sind (vom Server erzwungen).
--- Büro, Leitung und Super-Admin bleiben frei (auch Status wie 'zugangsdaten_ausgegeben').
+-- Büro, Leitung und Super-Admin bleiben frei (auch Status wie 'zugangsdaten_ausgegeben') und dürfen neu auch anlegen.
 -- Live geprüft (Hauptsitzung): 3 Zeilen, alle vom Super-Admin, keine mit Betrag – nichts zu bereinigen.
 -- Idempotent. Rückweg: supabase/rueckweg/20261124_rechte_03_rueckweg.sql
 
@@ -20,6 +20,8 @@ begin
     new.betrag := null;
     new.aufteilung := null;
     new.fahrlehrer_id := auth.uid();
+    new.fahrlehrer_name := coalesce((select nullif(btrim(coalesce(to_jsonb(p)->>'name', to_jsonb(p)->>'email', '')), '')
+                                       from public.profiles p where p.id = auth.uid()), new.fahrlehrer_name);
     return new;
   end if;
   -- UPDATE: nur „eigene offene Empfehlung stornieren“
@@ -49,7 +51,15 @@ drop policy if exists "Fahrlehrer legt eigene Empfehlung an" on public.fahrschul
 create policy "Fahrlehrer legt eigene Empfehlung an" on public.fahrschule_empfehlungen as PERMISSIVE for INSERT to public
   with check ((fahrschule_id = my_fahrschule_id()) and (fahrlehrer_id = auth.uid()) and (status = 'empfohlen') and (betrag is null));
 
--- Ergebnis-Abfrage: erwartet trigger = 1, policy = 1
+-- Büro und Leitung erfassen Verkäufe/Empfehlungen für Fahrlehrer der eigenen Fahrschule (fehlte bisher: „Verkauf erfassen“
+-- im Büro, buero.js, wurde von der Datenbank abgewiesen – Fund Fable 24.11.2026)
+drop policy if exists "Buero/Admin legt Empfehlungen an" on public.fahrschule_empfehlungen;
+create policy "Buero/Admin legt Empfehlungen an" on public.fahrschule_empfehlungen as PERMISSIVE for INSERT to public
+  with check (((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and (fahrschule_id = my_fahrschule_id())));
+
+-- Ergebnis-Abfrage: erwartet trigger = 1, policy = 1, buero_insert = 1
 select (select count(*) from pg_trigger where tgname = 'trg_empfehlung_schutz') as trigger,
        (select count(*) from pg_policies where schemaname = 'public' and tablename = 'fahrschule_empfehlungen'
-          and policyname = 'Fahrlehrer legt eigene Empfehlung an' and with_check like '%betrag IS NULL%') as policy;
+          and policyname = 'Fahrlehrer legt eigene Empfehlung an' and with_check like '%betrag IS NULL%') as policy,
+       (select count(*) from pg_policies where schemaname = 'public' and tablename = 'fahrschule_empfehlungen'
+          and policyname = 'Buero/Admin legt Empfehlungen an') as buero_insert;
