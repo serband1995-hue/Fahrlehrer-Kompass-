@@ -26,6 +26,8 @@ begin
   if p is null or jsonb_typeof(p) <> 'array' or jsonb_array_length(p) > 30 then return false; end if;
   for e in select value from jsonb_array_elements(p) loop
     if jsonb_typeof(e) <> 'object' then return false; end if;
+    -- nur bekannte Felder (kein Ballast im Vertrag)
+    if exists (select 1 from jsonb_object_keys(e) k where k not in ('art','bezeichnung','anzahl','preis_cent_fest','preis_cent')) then return false; end if;
     if coalesce(e->>'art', '') not in ('grundbetrag','lernapp','fahrstunde','sonderfahrt','simulator','pruefung_praxis','sonstiges') then return false; end if;
     if jsonb_typeof(e->'bezeichnung') is distinct from 'string' or length(btrim(e->>'bezeichnung')) not between 1 and 120 then return false; end if;
     if jsonb_typeof(e->'anzahl') is distinct from 'number' or (e->>'anzahl')::numeric <> trunc((e->>'anzahl')::numeric)
@@ -64,6 +66,13 @@ end $function$;
 drop trigger if exists fahrschule_pakete_stempel on public.fahrschule_pakete;
 create trigger fahrschule_pakete_stempel before insert or update on public.fahrschule_pakete
   for each row execute function public.fahrschule_pakete_stempel();
+
+-- Lücke geschlossen (Fable 24.11.): „verwaltet eigene Pakete“ prüfte beim Anlegen nur die Fahrschule, nicht die Rolle –
+-- so konnte jeder Fahrlehrer Vorlagen anlegen. Jetzt nur die Leitung (Super-Admin und Büro haben eigene Regeln).
+drop policy if exists "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pakete;
+create policy "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pakete as PERMISSIVE for ALL to public
+  using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));
 
 -- Büro: anlegen und ändern (nicht löschen). Leitung („verwaltet eigene Pakete“) und Super-Admin bleiben wie bisher.
 drop policy if exists "Buero legt Pakete an" on public.fahrschule_pakete;
@@ -141,7 +150,7 @@ begin
          select 1 from public.fahrschule_pakete p where p.id = new.vorlage_id and p.fahrschule_id = new.fahrschule_id) then
       raise exception 'Paket gehört nicht zu dieser Fahrschule' using errcode = '22023';
     end if;
-    select coalesce(sum((e->>'anzahl')::bigint * (e->>'preis_cent')::bigint), 0) into summe
+    select coalesce(sum((e->>'anzahl')::numeric::bigint * (e->>'preis_cent')::numeric::bigint), 0) into summe
       from jsonb_array_elements(new.posten) e;
     if summe > 100000000 then raise exception 'Gesamtpreis zu hoch' using errcode = '22023'; end if;
     new.gesamt_cent := summe;
@@ -156,7 +165,9 @@ begin
   end if;
   -- UPDATE
   new.id := old.id; new.fahrschule_id := old.fahrschule_id; new.schueler_id := old.schueler_id;
-  new.vorlage_id := old.vorlage_id; new.name := old.name; new.klasse := old.klasse; new.posten := old.posten;
+  -- vorlage_id darf nur leer werden (Leitung löscht eine Vorlage: on delete set null), nie auf eine andere zeigen
+  if new.vorlage_id is not null then new.vorlage_id := old.vorlage_id; end if;
+  new.name := old.name; new.klasse := old.klasse; new.posten := old.posten;
   new.gesamt_cent := old.gesamt_cent; new.verkauft_am := old.verkauft_am; new.verkauft_von := old.verkauft_von;
   new.bearbeiter := old.bearbeiter;
   if new.storniert_am is null then
@@ -198,8 +209,18 @@ create or replace function public.schueler_paket_verkaufen(p_schueler text, p_vo
 as $function$
 declare fs uuid; zeile public.schueler_pakete;
 begin
-  select s.fahrschule_id into fs from public.schueler s where s.id = p_schueler;
+  if not coalesce(is_super_admin(auth.uid()) or is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()), false) then
+    raise exception 'Pakete verkauft nur das Büro oder die Leitung.' using errcode = '42501';
+  end if;
+  if p_posten is null or jsonb_typeof(p_posten) <> 'array' or jsonb_array_length(p_posten) = 0 then
+    raise exception 'Das Paket hat noch keine Posten.' using errcode = '22023';
+  end if;
+  -- sperrt den Schüler bis zum Ende: zwei gleichzeitige Verkäufe laufen nacheinander statt gegeneinander
+  select s.fahrschule_id into fs from public.schueler s where s.id = p_schueler for update;
   if fs is null then raise exception 'Schüler nicht gefunden' using errcode = '22023'; end if;
+  if p_vorlage is not null and exists (select 1 from public.fahrschule_pakete p where p.id = p_vorlage and p.aktiv = false) then
+    raise exception 'Diese Vorlage ist archiviert.' using errcode = '22023';
+  end if;
   update public.schueler_pakete set storniert_am = now() where schueler_id = p_schueler and storniert_am is null;
   insert into public.schueler_pakete (fahrschule_id, schueler_id, vorlage_id, name, klasse, posten)
   values (fs, p_schueler, p_vorlage, p_name, p_klasse, p_posten) returning * into zeile;
@@ -214,9 +235,14 @@ create or replace function public.schueler_paket_aktivieren(p_schueler text, p_p
 as $function$
 declare v uuid;
 begin
+  if not coalesce(is_super_admin(auth.uid()) or is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()), false) then
+    raise exception 'Pakete ändert nur das Büro oder die Leitung.' using errcode = '42501';
+  end if;
+  perform 1 from public.schueler s where s.id = p_schueler for update;
   if p_paket is not null then
-    select vorlage_id into v from public.schueler_pakete where id = p_paket and schueler_id = p_schueler;
+    select sp.vorlage_id into v from public.schueler_pakete sp where sp.id = p_paket and sp.schueler_id = p_schueler;
     if not found then raise exception 'Paket nicht gefunden' using errcode = '22023'; end if;
+    if v is not null and not exists (select 1 from public.fahrschule_pakete p where p.id = v) then v := null; end if;
   end if;
   update public.schueler_pakete set storniert_am = now()
    where schueler_id = p_schueler and storniert_am is null and id is distinct from p_paket;

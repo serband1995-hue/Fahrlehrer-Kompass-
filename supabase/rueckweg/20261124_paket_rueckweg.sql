@@ -9,6 +9,10 @@ drop function if exists public.schueler_pakete_schutz();
 drop function if exists public.schueler_pakete_spur();
 
 drop policy if exists "Buero legt Pakete an" on public.fahrschule_pakete;
+drop policy if exists "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pakete;
+create policy "Fahrschule-Admin verwaltet eigene Pakete" on public.fahrschule_pakete as PERMISSIVE for ALL to public
+  using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
+  with check ((fahrschule_id = my_fahrschule_id()));
 drop policy if exists "Buero aendert Pakete" on public.fahrschule_pakete;
 drop trigger if exists fahrschule_pakete_stempel on public.fahrschule_pakete;
 drop function if exists public.fahrschule_pakete_stempel();
