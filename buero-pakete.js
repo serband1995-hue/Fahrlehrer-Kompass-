@@ -503,7 +503,7 @@ function bkLokal(sid, zeile) {
 }
 async function bkAktivSetzen(sid, alt, text, zuordnung, still) {
   const r = await supa.rpc("schueler_paket_aktivieren", { p_schueler: sid, p_paket: alt ? alt.id : null });
-  if (r.error) { toast("Rückgängig ging nicht: " + dbFehlerText(r.error), true); return false; }
+  if (r.error) { toast((still ? "Das Paket wurde nicht storniert: " : "Rückgängig ging nicht: ") + dbFehlerText(r.error), true); return false; }
   bkLokal(sid, alt);
   // Vorher (oder danach) nur zugeordnet (ohne Verkauf): die Zuordnung zurückschreiben, sonst fehlt danach z. B. das ⚡ von Turboboost (Fable W2)
   if (!alt && zuordnung) {
@@ -616,12 +616,17 @@ function bkAnmeldungBinden(dlg, x, id) {
       if (wahl === "normal" && zugeordnet) werte.paket_id = null;
       if (wahl === "zuordnen" && !anfang) werte.paket_id = zuVorlage.id; // geht wie jedes Feld durch das sichere Speichern
     },
-    async nachSpeichern(sid) {
-      if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet) { bkLokal(sid, null); zugeordnet = null; optionen(); zeige(); } return; }
+    // Gibt es nach dem Speichern etwas am Paket zu tun? (dann kein „Nichts geändert“)
+    tutWas() { return wahl === "neu" || wahl === "zuordnen" || (wahl === "normal" && !!anfang); },
+    // konflikte: aus dem sicheren Speichern (W14). Hat jemand anderes paket_id inzwischen geändert, gilt sein Stand: nichts nachziehen.
+    async nachSpeichern(sid, konflikte) {
+      const paketKonflikt = (konflikte || []).some((c) => c.k === "paket_id");
+      if (wahl === "bleibt" || (wahl === "normal" && !anfang)) { if (wahl === "normal" && zugeordnet && !paketKonflikt) { bkLokal(sid, null); zugeordnet = null; optionen(); zeige(); } return; }
       const vorher = await bkAktivJetzt(sid); // Rückgängig holt das zurück, was wirklich aktiv war (zweites Fenster)
       const alt = vorher === undefined ? anfang : vorher;
       if (wahl === "zuordnen") {
         const zu = zuVorlage;
+        if (paketKonflikt && !(alt || anfang)) return; // woanders geändert: der Kasten zeigt es, „Meine Eingabe nehmen“ bleibt möglich
         if (alt || anfang) { // verkauftes Paket stornieren, danach zuordnen (die Storno-Funktion leert paket_id)
           if (!(await bkAktivSetzen(sid, null, null, zu.id, true))) return;
           zeichne();

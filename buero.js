@@ -2378,11 +2378,12 @@ function schuelerDialog(id) {
     const altBasis = Object.assign({}, basisX);
     akteNachziehen(id, basisX, erg.zeile);
     const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
-    if (!erg.konflikte.length) toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"); // bei Konflikt erklärt der Kasten
+    // Nur ein Paket verkauft, storniert oder zugeordnet: kein „Nichts geändert“, die Meldung dazu kommt von nachSpeichern (Richter W13)
+    if (!erg.konflikte.length && !(erg.leer && bkAnm && bkAnm.tutWas())) toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"); // bei Konflikt erklärt der Kasten
     zeichne();
     if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
-    if (bkAnm) await bkAnm.nachSpeichern(id); // Werkstatt 13: Verkauf oder Storno des Pakets (merkt sich den Stand, bleibt das Fenster offen)
+    if (bkAnm) await bkAnm.nachSpeichern(id, erg.konflikte); // Werkstatt 13: Verkauf oder Storno des Pakets (merkt sich den Stand, bleibt das Fenster offen)
     if (erg.konflikte.length) {
       akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
       akteKonfliktZeigen(dlg, erg.konflikte); // der gelbe Kasten im Fenster erklärt alles

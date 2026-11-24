@@ -345,6 +345,16 @@ try {
     pruefe("V16 Turboboost statt verkauftem Paket: Hinweis Storno, danach zugeordnet; Rückgängig: verkauftes wieder aktiv", /storniert/.test(t16) && /nur zugeordnet/.test(t16) && nachZu.aktiv === 0 && nachZu.paket === "p-turbo" && nachUndo.aktiv.join() === "sp-alt" && nachUndo.paket === "p-1", [nachZu, nachUndo]);
     await ctx.close();
   }
+  // V17 (Richter) Nur das Paket gewählt, sonst nichts geändert: kein „Nichts geändert“ neben „verkauft“
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb() });
+    const d = await oeffneAkte(page, S1);
+    await waehle(d, "Boost-Paket 2");
+    await d.locator("button[value=ok]").click(); await page.waitForTimeout(450);
+    const t17 = await page.locator("body").innerText();
+    pruefe("V17 nur Verkauf: „verkauft“ ja, „Nichts geändert“ nein", /verkauft/.test(t17) && !/Nichts geändert/.test(t17), t17.slice(-300));
+    await ctx.close();
+  }
 } catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }
 
 // App: Karte „Paket“ in der Akte des Fahrlehrers (nur lesen, ohne Preise)
