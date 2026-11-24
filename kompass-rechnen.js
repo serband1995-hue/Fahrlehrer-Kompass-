@@ -320,7 +320,63 @@
     return out;
   }
 
-  const api = { FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+  /* ----- Paket-Baukasten, Schritt 2 (Werkstatt 13): „noch offen“ je Posten eines verkauften Pakets.
+     Gleiche Rechnung in App und Büro. quelle = was der Schüler schon hatte:
+       fahrstunden (Unterrichtseinheiten à 45 Minuten, wie ueOf), sonder { ueberland, autobahn, nacht } (je 45 Minuten),
+       pruefungen (vorbei, Praxis), simulator (Termine). Fehlt ein Wert, bleibt der Posten ohne Zähler.
+     Grundbetrag, Lernapp und Sonstiges haben keinen Zähler (verbraucht null).
+     Gibt es dieselbe Art zweimal (z. B. zwei Zeilen Übungsstunden), wird der Verbrauch der Reihe nach verteilt;
+     was über alle Zeilen hinausgeht, steht als „mehr“ an der letzten Zeile. */
+  const PAKET_SONDER = { "Überlandfahrt": "ueberland", "Autobahnfahrt": "autobahn", "Fahrt bei Dämmerung oder Dunkelheit": "nacht" };
+  function paketSchluessel(p) {
+    if (!p) return null;
+    if (p.art === "sonderfahrt") return PAKET_SONDER[p.bezeichnung] || null;
+    return ["fahrstunde", "pruefung_praxis", "simulator"].includes(p.art) ? p.art : null;
+  }
+  function paketVerbrauch(posten, quelle) {
+    const q = quelle || {}, sd = q.sonder || {};
+    const ist = { fahrstunde: q.fahrstunden, pruefung_praxis: q.pruefungen, simulator: q.simulator, ueberland: sd.ueberland, autobahn: sd.autobahn, nacht: sd.nacht };
+    const liste = (posten || []).map((p) => ({ anzahl: Number(p && p.anzahl) || 0, verbraucht: null, offen: null, mehr: 0, schluessel: paketSchluessel(p) }));
+    for (const k of Object.keys(ist)) {
+      if (typeof ist[k] !== "number" || !isFinite(ist[k])) continue;
+      const zeilen = liste.filter((z) => z.schluessel === k);
+      let rest = Math.max(0, Math.round(ist[k] * 100) / 100);
+      zeilen.forEach((z, i) => {
+        const v = Math.min(z.anzahl, rest);
+        rest = Math.round((rest - v) * 100) / 100;
+        z.verbraucht = v; z.offen = Math.round((z.anzahl - v) * 100) / 100;
+        if (i === zeilen.length - 1) z.mehr = rest;
+      });
+    }
+    return liste;
+  }
+  // Unterrichtseinheiten (45 min) und Sonderfahrten aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, tatsaechlicheDauer}),
+  // nur vorbei (heute erst nach dem Ende), ohne „abgebrochen“/„nicht erschienen“/abgesagt. jetztMin = Minuten seit Mitternacht.
+  function paketQuelleAusTerminen(termine, heute, jetztMin) {
+    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0 };
+    for (const t of termine || []) {
+      if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
+      if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
+      if (["abgebrochen", "nicht erschienen", "abgesagt"].includes(t.status)) continue;
+      const dauer = hm2min(t.bis) - hm2min(t.von);
+      if (t.art === "fahrstunde") q.fahrstunden += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer);
+      else if (t.art === "nacht") q.sonder.nacht += Math.floor(dauer / 45);
+      else if (t.art === "sonder" && q.sonder[t.sonderArt] != null) q.sonder[t.sonderArt] += Math.floor(dauer / 45);
+      else if (t.art === "pruefung") q.pruefungen += 1;
+      else if (t.art === "simulator") q.simulator += 1;
+    }
+    q.fahrstunden = Math.round(q.fahrstunden * 100) / 100;
+    return q;
+  }
+  // Sonderfahrten aus dem Ausbildungsplan der App (plan.sonder: je Art Felder, ein ausgefülltes Feld = 45 Minuten); null = kein Plan
+  function paketSonderAusPlan(plan) {
+    const sd = plan && plan.sonder;
+    if (!sd || typeof sd !== "object") return null;
+    const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso)).length : 0);
+    return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
+  }
+
+  const api = { paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);

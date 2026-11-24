@@ -9871,13 +9871,26 @@ async function _ladePakete(supa, ids){
     for(const sid in neu){ if((_paketNrJe[sid]||0)<=nr){ _paketVerkauft[sid]=neu[sid]; _paketNrJe[sid]=nr; } }
   }catch(e){ /* offline: alten Stand behalten */ }
 }
+/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketVerbrauch). Quelle: eigene Termine dieses Geräts
+   (vorbei, ohne abgebrochen/nicht erschienen) und die Sonderfahrten aus dem Ausbildungsplan. */
+function _paketQuelle(s){
+  if(!window.KR||!KR.paketQuelleAusTerminen)return null;
+  const d=new Date();
+  const q=KR.paketQuelleAusTerminen((DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,tatsaechlicheDauer:l.tatsaechlicheDauer})),todayISO(),d.getHours()*60+d.getMinutes());
+  const plan=KR.paketSonderAusPlan(s.plan); if(plan)q.sonder=plan;
+  return q;
+}
 function paketCard(s){
   const p=_paketVerkauft&&_paketVerkauft[s.id];
   if(!p) return "";
+  const q=_paketQuelle(s), v=q?KR.paketVerbrauch(p.posten,q):[];
+  const zahl=n=>(Math.round(Number(n)*10)/10).toLocaleString("de-DE");
+  const rechts=(x,i)=>{ const z=v[i]; if(!z||z.verbraucht==null)return esc(String(x.anzahl));
+    return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓`; };
   return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
     <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
-    ${p.posten.map(x=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${esc(String(x.anzahl))}</b></div>`).join("")}
-    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Ändern geht nur im Büro.</p>
+    ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}
+    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. „12 von 20“ = schon gefahren von gebucht. Ändern geht nur im Büro.</p>
   </div>`;
 }
 function theorieStandFuer(s){

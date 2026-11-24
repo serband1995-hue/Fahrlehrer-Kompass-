@@ -222,6 +222,27 @@ try {
     pruefe("V7 360 px: Block passt, kein Querscrollen, Knopf ≥ 44 px", m.rechts && m.scroll <= 1 && m.knopf >= 43.5, JSON.stringify(m));
     await ctx.close();
   }
+  // V9 Schritt 2: „noch offen“ je Posten aus dem Büro-Kalender (Fahrlehrer ohne App → Sonderfahrten aus dem Kalender)
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(function () {
+      F.tabellen.schueler_pakete.push({ id: "sp-alt", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+        posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }, { art: "sonderfahrt", bezeichnung: "Überlandfahrt", anzahl: 5, preis_cent: 7000 }],
+        gesamt_cent: 185000, verkauft_am: "2026-10-01T10:00:00Z", bearbeiter: "Mia Muster", storniert_am: null });
+      const s = F.tabellen.schueler.find((x) => x.id === "s1"); s.paket_id = "p-1"; s.ausbildung = {};
+      const fl = F.tabellen.profiles.find((p) => p.id === s.fahrlehrer_id); if (fl) fl.ohne_app = true;
+      const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+      F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1").concat([
+        { id: "kt-a", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(5), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+        { id: "kt-b", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(4), von: "10:00", bis: "10:45", status: "geplant", geloescht: false, payload: { status: "abgebrochen" } },
+        { id: "kt-c", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "sonder", datum: tag(3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: { sonderArt: "ueberland" } },
+        { id: "kt-d", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(-3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+      ]);
+    }) });
+    const d = await oeffneAkte(page, S1);
+    const t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V9 Akte: „2 von 20 gefahren · noch 18 offen“ und „2 von 5 gefahren · noch 3 offen“, Grundbetrag ohne Zähler", /2 von 20 gefahren · noch 18 offen/.test(t) && /2 von 5 gefahren · noch 3 offen/.test(t) && !/1 Grundbetrag[^\n]*gefahren/.test(t), t);
+    await ctx.close();
+  }
   // V8 Fahrschulwechsel setzt die verkauften Pakete zurück (keine fremden Pakete in der neuen Schule)
   {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
@@ -266,12 +287,20 @@ try {
     await _ladePakete({ from: () => q(true) }, ["a1"]);
     routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
     const k3 = !!document.querySelector(".paket-karte");
-    return { t1, k2, k3, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
+    // Schritt 2: Termine des Geräts → „2 von 20“
+    const gestern = KR.addDaysISO(KR.todayISO(), -1);
+    DB.lessons = [{ id: "l1", sid: "a1", art: "fahrstunde", date: gestern, von: "10:00", bis: "11:30", status: "" }];
+    DB.students.find((x) => x.id === "a1").plan.sonder = { ueberland: [{ iso: gestern }], autobahn: [], nacht: [] };
+    _paketVerkauft = null; await _ladePakete({ from: () => q(false) }, ["a1"]);
+    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
+    const k4 = (document.querySelector(".paket-karte") || {}).textContent || "";
+    return { t1, k2, k3, k4, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
   });
-  pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Anzahl", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*20/.test(erg.t1) && /Überlandfahrt\s*5/.test(erg.t1), erg.t1);
+  pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Stand (noch nichts gefahren: „0 von 20“)", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*0 von 20/.test(erg.t1) && /Überlandfahrt\s*0 von 5/.test(erg.t1), erg.t1);
   pruefe("A2 App: keine Preise für den Fahrlehrer", !/€|65|80,00/.test(erg.t1), erg.t1);
   pruefe("A3 App: Schüler ohne Paket → keine Karte", erg.k2 === false);
   pruefe("A4 App: alte Datenbank (Tabelle fehlt) → keine Karte, kein Fehler", erg.k3 === false && !jsF.length, jsF.join(" | "));
+  pruefe("A5 App Schritt 2: „Übungsstunden 2 von 20“, „Überlandfahrt 1 von 5“", /Übungsstunden\s*2 von 20/.test(erg.k4) && /Überlandfahrt\s*1 von 5/.test(erg.k4), erg.k4);
   await ctx.close(); appServer.close();
 } catch (e) { schlecht++; console.log("FEHLER  App-Test-Ausnahme: " + (e && e.stack || e)); }
 await browser.close(); server.close();
