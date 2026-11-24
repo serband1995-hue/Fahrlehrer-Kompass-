@@ -4227,7 +4227,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -5424,7 +5424,8 @@ function fristenHinweisHTML(sid){
   stopp.forEach(n=>teile.push(`<b>STOPP vom Büro:</b> ${esc(n.text)}`));
   infos.forEach(n=>teile.push(`<b>Büro:</b> ${esc(n.text)}`));
   const gut=[];
-  if(f.theorie_bestanden_am) gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)} (vom Büro eingetragen)`);
+  if(f.theorie_bestanden_am){ const _sT=(DB.students||[]).find(x=>x.id===sid); const _app=!!(_sT&&_sT.theorieVonApp&&_sT.theorieVonApp===f.theorie_bestanden_am);
+    gut.push(`✓ Theorieprüfung bestanden am ${isoDE(f.theorie_bestanden_am)}${_app?"":" (vom Büro eingetragen)"}`); }
   if(f.praxis_bestanden_am) gut.push(`✓ Praxisprüfung bestanden am ${isoDE(f.praxis_bestanden_am)} (Büro)`);
   const gutHTML=gut.length?`<div style="margin:10px 0;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;background:rgba(76,175,114,.14);border:1px solid rgba(76,175,114,.4);">${gut.join("<br>")}</div>`:"";
   if(!teile.length)return gutHTML;
@@ -5513,7 +5514,7 @@ async function pullSchuelerZuweisungen() {
       // Schalter an, „wartet auf Theorie“ beendet (T1). Schaltet der Fahrlehrer danach selbst um, gilt das.
       // Geändert wird hier der Ausbildungsstand – der soll ins Büro (ausbildung.ready usw.), darum nicht als „abgeglichen“ merken.
       let theorieNeu = false;
-      if (lokaleIds.has(r.id) && "theorie_bestanden_am" in r) { const lok = DB.students.find(x => x.id === r.id); if (lok && _theorieVomBuero(lok, r.theorie_bestanden_am)) { umschreiberNeu = true; theorieNeu = true; } }
+      if (lokaleIds.has(r.id) && "theorie_bestanden_am" in r) { const lok = DB.students.find(x => x.id === r.id); if (lok && !_theorieJung(r.id) && _theorieVomBuero(lok, r.theorie_bestanden_am)) { umschreiberNeu = true; theorieNeu = true; } }
       if (lokaleIds.has(r.id) && !theorieNeu) { const l1 = DB.students.find(x => x.id === r.id); if (l1) { const w = _abglWertVon("schueler", l1); if (w !== vorherWert[r.id]) nachherWert[r.id] = w; } }
     }
     // Erst jetzt die neuen Schüler (mit Netzabrufen): alle Übernahmen oben laufen ohne Pause, damit eine Eingabe
@@ -7874,7 +7875,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.3";
+const APP_VERSION="2026.11.24.4";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8116,6 +8117,7 @@ function _syncSchuelerBridge(warte){
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
     }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
+    try{ _theorieOffenNachholen(); }catch(e3){} // erst nach der Schüler-Brücke: ein neuer Schüler ist jetzt auf dem Server
   },warte===0?0:4000);
 }
 
@@ -8130,7 +8132,7 @@ function _syncTermineBridge(warte){
   _termineSyncDebounce=setTimeout(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
     if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return; }
-    try{ _absagenNachholen(); _stornoAufraeumen(); }catch(e){}
+    try{ _absagenNachholen(); _stornoAufraeumen(); _theorieOffenNachholen(); }catch(e){}
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false), loeschWertFuer:_stornoWert });
@@ -8380,13 +8382,122 @@ function _backupHerunterladen(zusatz){
 /* K14: EIN Weg für „Theorie bestanden“ (Schalter in der Akte und grüner Knopf in „Wartet auf Theorie“).
    an=true: bestanden (Datum heute, „wartet“ aus, 20 % zählen sofort); an=false: zurücknehmen. Speichert NICHT (der Aufrufer ruft save()). */
 const _THEORIE_FELDER=["theoryPassed","theorieWait","theorieWaitBis","ready","wartelisteRaus"];
-function theorieStandMerken(s){ const o={plan:!!(s.plan&&s.plan.theorie),histLen:(s.hist||[]).length,hatteHist:Array.isArray(s.hist)}; _THEORIE_FELDER.forEach(k=>{ o[k]=s[k]; }); return o; }
+function theorieStandMerken(s){ const o={plan:!!(s.plan&&s.plan.theorie),histLen:(s.hist||[]).length,hatteHist:Array.isArray(s.hist)}; _THEORIE_FELDER.forEach(k=>{ o[k]=s[k]; }); o.tbAlt=_theorieBueroWert(s.id); o.tbApp=s.theorieVonApp; return o; }
 // Rückgängig: nur den dabei angefügten Verlaufs-Eintrag entfernen (alles andere im Verlauf bleibt)
 function theorieStandZurueck(s,o){ ensure(s); s.plan.theorie=o.plan; _THEORIE_FELDER.forEach(k=>{ if(o[k]===undefined)delete s[k]; else s[k]=o[k]; });
   if(Array.isArray(s.hist)&&s.hist.length>o.histLen){ const i=s.hist.findIndex((h,j)=>j>=o.histLen&&(h.typ==="theorie"||h.type==="theorie")); if(i>=0)s.hist.splice(i,1); }
-  if(!o.hatteHist&&Array.isArray(s.hist)&&!s.hist.length)delete s.hist; }
+  if(!o.hatteHist&&Array.isArray(s.hist)&&!s.hist.length)delete s.hist;
+  // Büro-Häkchen mit zurücknehmen: der vorherige Wert geht zurück (nur wenn die App ihn geändert hatte)
+  if("tbAlt" in o&&(_theorieBueroWert(s.id)!==o.tbAlt||s.id in _theorieOffenLesen()||s.theorieVonApp!==o.tbApp)){ _theorieBueroSchreiben(s,o.tbAlt); if(o.tbApp===undefined)delete s.theorieVonApp; else s.theorieVonApp=o.tbApp; } }
+/* Werkstatt 12: „Theorie bestanden“ der App setzt auch das Häkchen im Büro (schueler.theorie_bestanden_am).
+   Bewusst NICHT im normalen Abgleich (_schuelerZeile): dort würde die App Büro-Werte überschreiben und der ganze Upsert
+   scheitern, wenn die Migration fehlt. Stattdessen ein einzelnes Update; offline in kompass-theorie-offen {sid: wert}
+   (nur der letzte Wert je Schüler). „nur das Büro“/P0001 = alte Datenbank oder kein Recht: still verwerfen. */
+const _THEO_KEY="kompass-theorie-offen";
+/* Schlange: {sid: {v: Datum|null, uid: Nutzer-ID, t: erster Versuch, n: Versuche, l: letzter Versuch}}.
+   Altes Format {sid: wert} wird weiter gelesen und gilt als eigener Eintrag. */
+function _theorieOffenLesen(){ try{ const o=JSON.parse(localStorage.getItem(_THEO_KEY)||"{}"); if(!o||typeof o!=="object"||Array.isArray(o))return {};
+  const out={}; Object.keys(o).forEach(k=>{ const e=o[k]; out[k]=(e&&typeof e==="object"&&!Array.isArray(e)&&"v" in e)?e:{v:(e===undefined?null:e),uid:null,t:Date.now(),n:0,l:0}; }); return out; }catch(e){ return {}; } }
+function _theorieOffenSchreiben(o){ try{ if(Object.keys(o).length)localStorage.setItem(_THEO_KEY,JSON.stringify(o)); else localStorage.removeItem(_THEO_KEY); }catch(e){} }
+function _theorieBueroWert(sid){ const f=typeof _schuelerFristen!=="undefined"?_schuelerFristen[sid]:null; return (f&&f.theorie_bestanden_am)||null; }
+function _theorieBueroLokal(s,wert){ s.theorieBuero=wert; if(_schuelerFristen[s.id])_schuelerFristen[s.id].theorie_bestanden_am=wert; }
+// Heutiges Datum nach Berliner Zeit (so rechnet der Server)
+function _berlinHeute(){ try{ const d=new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Berlin"}).format(new Date()); if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d; }catch(e){} return todayISO(); }
+const _theorieZuletzt={}, _theorieHinweisSids=new Set(), _theorieHinweisTag={};
+// Gerade eigene Änderung offen oder eben gesendet: ein älterer Abruf darf sie nicht überschreiben
+function _theorieJung(sid){ return (sid in _theorieOffenLesen())||(Date.now()-(_theorieZuletzt[sid]||0)<120000); }
+async function _theorieSenden(sid,wert){
+  // "ok" = vom Server bestätigt · "leer" = keine Zeile getroffen (später nochmal) · "netz" = später nochmal
+  // "abgelehnt" = Server sagt „nur das Büro“ (neue Datenbank) · "alt" = alte Datenbank / kein Recht: still verwerfen
+  try{
+    const supa=getSupa(); if(!supa)return "netz";
+    let q=supa.from("schueler").update({theorie_bestanden_am:wert}).eq("id",sid);
+    if(q&&typeof q.select==="function")q=q.select("id");
+    const r=await q;
+    const e=r&&r.error;
+    if(!e){
+      if(r&&Array.isArray(r.data)&&!r.data.length)return "leer";
+      _theorieZuletzt[sid]=Date.now();
+      const neu=_theorieOffenLesen()[sid]; const nochNeuer=neu&&neu.v!==wert; // inzwischen neuer Wert (Rückgängig): der setzt später selbst
+      const s=(DB.students||[]).find(x=>x.id===sid);
+      if(s&&!nochNeuer){ _theorieBueroLokal(s,wert); if(wert===null)delete s.theorieVonApp; }
+      return "ok";
+    }
+    if(e.code==="P0001"||/nur das B(ü|ue)ro/i.test(String(e.message||""))){
+      console.info("[Kompass] Theorie-Häkchen im Büro nicht gesetzt (alte Datenbank oder kein Recht).");
+      return /Theorie bestanden/i.test(String(e.message||""))?"abgelehnt":"alt";
+    }
+    return "netz";
+  }catch(e){ return "netz"; }
+}
+function _theorieBueroSchreiben(s,wert){
+  if(!s||!s.id)return; wert=wert||null;
+  const o=_theorieOffenLesen(); o[s.id]={v:wert,uid:_authUser?_authUser.id:null,t:Date.now(),n:0,l:0}; _theorieOffenSchreiben(o);
+  _theorieZuletzt[s.id]=Date.now(); _theorieHinweisSids.add(s.id);
+  _theorieOffenNachholen({sofort:true});
+}
+// Hinweis zurückhalten, solange ein Rückgängig-Hinweis läuft (der Knopf soll sichtbar bleiben), höchstens ~8 s
+function _theorieHinweisZeigen(text,t0){
+  const el=document.getElementById("toast"); t0=t0||Date.now();
+  if(el&&el.classList.contains("undo")&&el.classList.contains("show")&&Date.now()-t0<8000){ setTimeout(()=>_theorieHinweisZeigen(text,t0),400); return; }
+  try{ toast(text); }catch(e){}
+}
+function _theorieAbgelehntHinweis(sid,text){
+  const tag=_berlinHeute(); if(_theorieHinweisTag[sid]===tag)return; _theorieHinweisTag[sid]=tag;
+  _theorieHinweisZeigen(text||"Im Büro steht das Theorie-Datum weiter. Ändern kann es nur das Büro.");
+}
+// Abgelehnte Rücknahme: lokal wieder „bestanden“, so wie es das Büro-Datum vorgibt (kein neuer Verlauf, falls der alte noch da ist)
+function _theorieNachAblehnung(sid){
+  const s=(DB.students||[]).find(x=>x.id===sid), datum=_theorieBueroWert(sid); if(!s||!datum)return false;
+  ensure(s); s.theorieBuero=null; _theorieVomBuero(s,datum);
+  if(!s.plan.theorie)s.plan.theorie=true;
+  try{ save(); }catch(e){}
+  try{ const top=_navStack&&_navStack[_navStack.length-1];
+    if(top&&top.name==="routePruefungen")routePruefungen();
+    else if(top&&top.name==="routeDetail"&&top.args&&top.args[0]===sid)routeDetail(sid); }catch(e){}
+  return true;
+}
+let _theorieNachholLaeuft=false, _theorieNochmal=false;
+async function _theorieOffenNachholen(opt){
+  if(!_authUser)return;
+  if(_theorieNachholLaeuft){ _theorieNochmal=true; return; }
+  _theorieNachholLaeuft=true;
+  try{
+    do{
+      _theorieNochmal=false; const o=_theorieOffenLesen();
+      for(const sid of Object.keys(o)){
+        const e=o[sid];
+        if(!_authUser)break; // abgemeldet mitten im Lauf
+        if(e.uid&&e.uid!==_authUser.id){ console.info("[Kompass] Theorie-Eintrag eines anderen Kontos verworfen."); const n=_theorieOffenLesen(); delete n[sid]; _theorieOffenSchreiben(n); continue; }
+        if(!(opt&&opt.sofort)&&e.n>0&&Date.now()-(e.l||0)<20000)continue; // nicht in jedem Takt hämmern
+        const st=await _theorieSenden(sid,e.v);
+        const neu=_theorieOffenLesen(); const cur=neu[sid];
+        if(st==="netz"||st==="leer"){
+          if(!cur)continue;
+          if(cur.v!==e.v){ _theorieNochmal=true; continue; } // inzwischen neuer Wert: nächste Runde
+          if(st==="leer"){ cur.n=(cur.n||0)+1; cur.l=Date.now();
+            if(cur.n>=20||Date.now()-(cur.t||Date.now())>3*86400000){ console.info("[Kompass] Theorie-Häkchen im Büro nach vielen Versuchen verworfen (Schüler dort nicht gefunden)."); delete neu[sid]; _theorieHinweisSids.delete(sid); }
+            _theorieOffenSchreiben(neu); }
+          continue;
+        }
+        if(cur&&cur.v===e.v){ delete neu[sid]; _theorieOffenSchreiben(neu); }
+        else if(cur){ _theorieNochmal=true; continue; }
+        if(st==="abgelehnt"){
+          const zurueck=e.v===null&&_theorieNachAblehnung(sid);
+          if(_theorieHinweisSids.has(sid))_theorieAbgelehntHinweis(sid,zurueck?"Theorie bleibt bestanden – das Datum steht im Büro. Ändern kann es nur das Büro.":null);
+        }
+        _theorieHinweisSids.delete(sid);
+      }
+    }while(_theorieNochmal);
+  }finally{ _theorieNachholLaeuft=false; }
+}
 function theorieBestandenSetzen(s,an,leise){
   const pl=s.plan; pl.theorie=!!an;
+  try{
+    const alt=_theorieBueroWert(s.id);
+    if(an){ if(!alt){ s.theorieVonApp=_berlinHeute(); _theorieBueroSchreiben(s,s.theorieVonApp); } } // Büro-Datum nie überschreiben
+    else if(s.theorieVonApp&&(!alt||alt===s.theorieVonApp)){ _theorieBueroSchreiben(s,null); } // nur eigenen Wert zurücknehmen; theorieVonApp geht erst, wenn der Server es bestätigt hat
+  }catch(e){}
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
 function toastUndo(msg,onUndo,ms){

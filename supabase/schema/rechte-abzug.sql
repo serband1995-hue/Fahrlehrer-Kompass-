@@ -64,7 +64,9 @@ create policy "Buero/Admin verwaltet Empfehlungen" on public.fahrschule_empfehlu
   using (((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
   with check ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrlehrer legt eigene Empfehlung an" on public.fahrschule_empfehlungen as PERMISSIVE for INSERT to public
-  with check (((fahrschule_id = my_fahrschule_id()) AND (fahrlehrer_id = auth.uid())));
+  with check (((fahrschule_id = my_fahrschule_id()) AND (fahrlehrer_id = auth.uid()) AND (status = 'empfohlen') AND (betrag IS NULL)));  -- ab 20261124_rechte_03
+create policy "Buero/Admin legt Empfehlungen an" on public.fahrschule_empfehlungen as PERMISSIVE for INSERT to public
+  with check (((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261124_rechte_03
 create policy "Fahrlehrer sieht Empfehlungen seiner Fahrschule" on public.fahrschule_empfehlungen as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrlehrer storniert eigene offene Empfehlung" on public.fahrschule_empfehlungen as PERMISSIVE for UPDATE to public
@@ -120,7 +122,7 @@ create policy "Fahrlehrer loescht eigenes Tafelbild" on public.fahrschule_tafelb
 create policy "Fahrlehrer sieht Tafelbilder seiner Fahrschule" on public.fahrschule_tafelbilder as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrlehrer teilt eigenes Tafelbild" on public.fahrschule_tafelbilder as PERMISSIVE for INSERT to public
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid())));  -- ab 20261124_rechte_01; Trigger trg_tafelbild_eigener_eintrag setzt erstellt_von/ersteller_name
 create policy "Fahrschule-Admin/Buero verwaltet Tafelbilder" on public.fahrschule_tafelbilder as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
   with check ((fahrschule_id = my_fahrschule_id()));
@@ -129,7 +131,7 @@ create policy "Super Admin alles - Tafelbilder" on public.fahrschule_tafelbilder
 create policy "Fahrlehrer sieht Urlaub seiner Fahrschule" on public.fahrschule_urlaub as PERMISSIVE for SELECT to public
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrlehrer traegt eigenen Urlaub ein" on public.fahrschule_urlaub as PERMISSIVE for INSERT to public
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid())));  -- ab 20261124_rechte_01; Trigger trg_urlaub_eigener_eintrag setzt erstellt_von/mitarbeiter_name (eigener Profilname)
 create policy "Fahrschule-Admin/Buero verwaltet Urlaub" on public.fahrschule_urlaub as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
   with check ((fahrschule_id = my_fahrschule_id()));
@@ -317,3 +319,10 @@ create policy "Buero Leitung markieren Konflikte" on public.fahrzeug_konflikt_ge
 create policy "Buero Leitung nehmen Konflikt-Vermerke zurueck" on public.fahrzeug_konflikt_gesehen as PERMISSIVE for DELETE to authenticated using (is_super_admin(auth.uid()) or ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id()));
 CREATE TRIGGER trg_konflikt_gesehen_setzen BEFORE INSERT ON public.fahrzeug_konflikt_gesehen FOR EACH ROW EXECUTE FUNCTION konflikt_gesehen_setzen();
 CREATE TRIGGER trg_konflikt_gesehen_spur AFTER INSERT OR DELETE ON public.fahrzeug_konflikt_gesehen FOR EACH ROW EXECUTE FUNCTION konflikt_gesehen_spur();
+
+-- ab 20261124_rechte_01/02/03 (Werkstatt 12):
+CREATE TRIGGER trg_urlaub_eigener_eintrag BEFORE INSERT ON public.fahrschule_urlaub FOR EACH ROW EXECUTE FUNCTION eigener_eintrag_setzen();
+CREATE TRIGGER trg_tafelbild_eigener_eintrag BEFORE INSERT ON public.fahrschule_tafelbilder FOR EACH ROW EXECUTE FUNCTION eigener_eintrag_setzen();
+CREATE TRIGGER trg_empfehlung_schutz BEFORE INSERT OR UPDATE ON public.fahrschule_empfehlungen FOR EACH ROW EXECUTE FUNCTION empfehlung_schutz();
+-- schueler_buero_felder_schutz (02): Ausnahme – der eigene Fahrlehrer setzt theorie_bestanden_am bis heute (Berlin),
+-- zurücknehmen/ändern nur, wenn er den jetzigen Wert selbst heute gesetzt hat (letzter Spur-Eintrag nach id).
