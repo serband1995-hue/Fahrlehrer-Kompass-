@@ -2129,15 +2129,19 @@ function bindeAkademieZugang(dlg, x) {
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
+  // Werkstatt 13: „Normale Anmeldung“ oder Paket verkaufen (buero-pakete.js). Ohne neue Datenbank: die alte Paket-Auswahl
+  const mitVerkauf = typeof bkVerkaufDa === "function" && bkVerkaufDa();
+  let bkAnm = null;
   const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}<div class="formular">
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
       <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
-      <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.filter((p) => p.aktiv !== false || p.id === x.paket_id).map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+      ${mitVerkauf ? "" : `<label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.filter((p) => p.aktiv !== false || p.id === x.paket_id).map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>`}
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
       <label>Klasse<select name="klasse">${klassenOptionen(x.klasse)}</select></label>
       <label>Vertrag abgeschlossen am<input type="date" name="vertrag_am" value="${esc(x.vertrag_am || "")}"></label>
+      ${mitVerkauf ? bkAnmeldungHTML() : ""}
       ${behoerdeHTML(x)}
       <div class="voll b197-feld" id="b197Feld"${x.klasse === "B197" ? "" : " hidden"}>
         <label class="wahl"><input type="checkbox" name="testfahrt"${x.b197_testfahrt_am ? " checked" : ""}> B197: Testfahrt abgegeben</label>
@@ -2160,6 +2164,8 @@ function schuelerDialog(id) {
     const d = Object.fromEntries(new FormData(form).entries());
     const name = (d.name || "").trim();
     if (!name) { toast("Bitte einen Namen eintragen.", true); return false; }
+    const paketFehler = bkAnm ? bkAnm.pruefen() : "";
+    if (paketFehler) { toast(paketFehler, true); return false; }
     const offeneAufgabe = form.querySelector("#agText");
     if (offeneAufgabe && offeneAufgabe.value.trim()) { toast("Die Aufgabe ist noch nicht gespeichert. Bitte „Aufgabe speichern“ oder „Heute zu tun“ tippen oder den Text löschen.", true); return false; }
     const offenerText = form.querySelector("#nzText");
@@ -2172,6 +2178,7 @@ function schuelerDialog(id) {
       buero_notiz: (d.buero_notiz || "").trim() || null,
     };
     Object.assign(werte, behoerdeWerte(form, dlg, d));
+    if (bkAnm) bkAnm.werte(werte); // Paket setzt die Datenbank beim Verkauf (schueler.paket_id), nicht das Formular
     // Nur geänderte Behörde-Felder senden: sonst überschriebe ein länger offenes Fenster neuere Eingaben des Fahrlehrers
     if (id) for (const k of ["bewerbernummer", "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden"]) {
       if ((k in werte) && gleicherWert(werte[k], k === "sehhilfe" ? sehhilfeVon(x) : x[k], k)) delete werte[k];
@@ -2196,6 +2203,7 @@ function schuelerDialog(id) {
       S.schueler.push(res.data[0]);
       toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
       zeichne();
+      if (bkAnm) await bkAnm.nachSpeichern(neueId);
       return true;
     }
     // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
@@ -2206,8 +2214,10 @@ function schuelerDialog(id) {
     if (!(await speichereSchueler(id, werte, wirdArchiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"))) return false;
     if ((x.fahrlehrer_id || null) !== neuerLehrer) await verschiebeSchueler(x, neuerLehrer);
     if (absagen.length) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
+    if (bkAnm) await bkAnm.nachSpeichern(id);
     return true;
   });
+  if (mitVerkauf) bkAnm = bkAnmeldungBinden(dlg, x, id);
   if (id) bindeZahlBlock(dlg, id);
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
@@ -4171,7 +4181,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4195,6 +4205,7 @@ async function ladeDaten() {
       supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", fsId).maybeSingle(),   // Werkstatt 11 (Zahlungsmail); fehlt die Tabelle → Abschnitt „noch nicht eingerichtet“
       supa.from("zahlungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
+      supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).limit(5000),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4221,6 +4232,8 @@ async function ladeDaten() {
     // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
+    // Werkstatt 13: null = Tabelle fehlt (alte Datenbank) → alte Paket-Auswahl im Schüler-Fenster. Anderer Ladefehler: letzten Stand behalten
+    S.verkauft = verkauft && !verkauft.error ? (verkauft.data || []) : (verkauft && verkauft.error && !prTabelleFehlt(verkauft.error) ? S.verkauft : null);
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -4631,7 +4644,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.fsId = e.target.value;
   try { localStorage.setItem("buero-fahrschule", S.fsId); } catch (err) { /* egal */ }
   S.geladenAm = null;
-  S.bkFehlt = false; // Werkstatt 13: neue Fahrschule, Paket-Spalten neu prüfen
+  S.bkFehlt = false; S.verkauft = null; // Werkstatt 13: neue Fahrschule, Paket-Spalten und verkaufte Pakete neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg

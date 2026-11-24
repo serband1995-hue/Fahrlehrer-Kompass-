@@ -877,3 +877,16 @@ body.kiosk .rollen-streifen{display:none;}
   .bk-gesamt b{font-size:19px;}
   .bk-gesamt .klein{display:none;}
 }
+/* Werkstatt 13: Anmeldung im Schüler-Fenster (Normale Anmeldung oder Paket) */
+.bk-anmeldung{display:grid;gap:8px;border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;}
+.bk-anmeldung label{display:grid;gap:6px;font-weight:600;}
+.bk-anm-info{display:grid;gap:6px;}
+.bk-anm-info p{margin:0;}
+.bk-anm-info .knopf.klein{min-height:44px;}
+.bk-anm-posten{list-style:none;margin:0;padding:0;display:grid;gap:2px;}
+.bk-anm-posten li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--line-soft);}
+.bk-anm-posten li span:first-child{overflow-wrap:anywhere;}
+.bk-anm-posten li span:last-child{white-space:nowrap;}
+.bk-anm-summe{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+.bk-anm-summe b{font-size:19px;}
+.bk-anm-warn{color:var(--pill-gelb);font-weight:600;}
