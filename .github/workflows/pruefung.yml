@@ -94,7 +94,7 @@ jobs:
     # Seit 24.11.2026: lief vorher nicht auf GitHub – ein Fehler, der nur abends auftrat (Termin schon vorbei), blieb unbemerkt.
     name: Büro-Seite (Browser)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25   # lokal 8 Minuten, auf GitHub meist langsamer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
