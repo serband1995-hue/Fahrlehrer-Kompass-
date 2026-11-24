@@ -206,6 +206,37 @@ await fall("F3 Fristen: zwei Felder woanders, eins davon auch hier – zweites S
   return f;
 });
 
+await fall("F4 Fristen: Reaktivierung woanders auf „befreit“ – mein „bezahlt bis“ wird nicht dazugemischt", async () => {
+  const f = [];
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  const vorher = (await server_(page, "s9")).reakt_bezahlt_bis || null;
+  await page.evaluate(() => fristenDialog("s9"));
+  await woanders(page, "s9", { reakt_status: "befreit", reakt_notiz: "Härtefall" });
+  await page.locator("dialog[open] input[name=reakt_status][value=bezahlt]").last().check();
+  await page.fill("dialog[open] input[name=reakt_bezahlt_bis]", "2027-03-01");
+  await speichern(page);
+  const s = await server_(page, "s9");
+  if (s.reakt_status !== "befreit") f.push("Status überschrieben: " + s.reakt_status);
+  if ((s.reakt_bezahlt_bis || null) !== vorher) f.push("„bezahlt bis“ dazugemischt: " + s.reakt_bezahlt_bis);
+  const box = await page.textContent("dialog[open] [data-aktekonflikt]").catch(() => "");
+  if (!/Reaktivierung/.test(box)) f.push("Hinweis fehlt: " + box);
+  return f;
+});
+
+await fall("F5 Fristen: „bestanden“ vor dem woanders eingetragenen Unterrichtsende wird nicht gespeichert", async () => {
+  const f = [];
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await page.evaluate(() => fristenDialog("s11"));
+  await woanders(page, "s11", { theorie_abgeschlossen_am: "2026-11-01", theorie_bestanden_am: null });
+  await page.fill("dialog[open] input[name=theorie_bestanden_am]", "2026-10-20");
+  await speichern(page);
+  const s = await server_(page, "s11");
+  if (s.theorie_bestanden_am === "2026-10-20") f.push("unplausibles Datum gespeichert");
+  const box = await page.textContent("dialog[open] [data-aktekonflikt]").catch(() => "");
+  if (!/Theorieprüfung bestanden/.test(box)) f.push("Hinweis fehlt: " + box);
+  return f;
+});
+
 await fall("K1 keine Fehler in der Konsole", async () => konsole.length ? [konsole.slice(0, 3).join(" | ")] : []);
 await ctx.close();
 await browser.close();
