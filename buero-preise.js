@@ -95,7 +95,10 @@ function renderPreise() {
         <td class="pr-tun">${darf ? `<button class="knopf klein" type="button" data-pr-aendern="${esc(k)}">Ändern</button>` : ""}</td>
       </tr>`;
     }).join("");
-    return `<tr class="pr-gruppe"><th colspan="4" scope="colgroup">${esc(artName)}</th></tr>${zeilen}`;
+    // Feste Paketpreise aus der Zeit vor dem Baukasten: zählen beim Verkauf nicht (Richter 24.11.: sonst zwei Preise für ein Paket)
+    const hinweis = art === "paket" && typeof bkDa === "function" && bkDa()
+      ? `<div class="leise klein pr-gruppe-hinweis">Nur zur Übersicht. Beim Verkauf gilt der Gesamtpreis aus dem Reiter „Pakete“.</div>` : "";
+    return `<tr class="pr-gruppe"><th colspan="4" scope="colgroup">${esc(artName)}${hinweis}</th></tr>${zeilen}`;
   }).join("");
   return `<div class="karte">
     <div class="pr-kopf">${darf ? `<button class="knopf haupt" type="button" id="prNeu">Neuer Preis</button>` : `<span class="leise klein">Preise ändern Büro und Leitung.</span>`}

@@ -251,6 +251,18 @@ try {
     pruefe("V8 geladen: 1 aktives Paket; Schulwechsel setzt S.verkauft = null", vorher === 1 && /S\.bkFehlt = false; S\.verkauft = null;/.test(src));
     await ctx.close();
   }
+  // V10 Preisliste: alte feste Paketpreise sind als „nur zur Übersicht“ gekennzeichnet (beim Verkauf gilt der Baukasten)
+  {
+    const paketPreis = function () { const fs = F.tabellen.fahrschulen[0].id; F.tabellen.fahrschule_preise.push({ id: "pp", fahrschule_id: fs, art: "paket", klasse: "B", bezeichnung: "Komfort", einheit: "paket", betrag_cent: 199900, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }); };
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#preise", vorbereiten: vb(paketPreis) });
+    const t = await page.locator("#ansicht").innerText();
+    pruefe("V10a Gruppe „Pakete“: Hinweis, dass der Baukasten gilt", /Beim Verkauf gilt der Gesamtpreis aus dem Reiter „Pakete“/.test(t));
+    await ctx.close();
+    const paketPreisAlt = function () { const fs = F.tabellen.fahrschulen[0].id; F.tabellen.fahrschule_preise.push({ id: "pp", fahrschule_id: fs, art: "paket", klasse: "B", bezeichnung: "Komfort", einheit: "paket", betrag_cent: 199900, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }); F.tabellen.fahrschule_pakete.forEach((p) => { delete p.posten; delete p.klasse; delete p.aktualisiert_am; delete p.bearbeiter; }); };
+    const alt = await oeffne({ nutzer: "ad-1", hash: "#preise", vorbereiten: vb(paketPreisAlt) });
+    pruefe("V10b alte Datenbank: kein Hinweis", !/Beim Verkauf gilt/.test(await alt.page.locator("#ansicht").innerText()));
+    await alt.ctx.close();
+  }
 } catch (e) { schlecht++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }
 
 // App: Karte „Paket“ in der Akte des Fahrlehrers (nur lesen, ohne Preise)
