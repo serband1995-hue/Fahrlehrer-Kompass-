@@ -28,7 +28,7 @@ gleich("betragText 123456789", M.betragText(123456789), "1.234.567,89 €");
   pruefe("W14 an=schueler: wie bisher", t({ an: "schueler" }) === t({}));
   pruefe("W14 an=eltern: „Guten Tag,“ und „Prüfung von Lena“", /^Guten Tag,$/m.test(t({ an: "eltern" })) && /für die Prüfung von Lena/.test(t({ an: "eltern" })) && !/Hallo Lena/.test(t({ an: "eltern" })));
   pruefe("W14 an=beide: neutrale Anrede, „Prüfung von Lena“", /^Guten Tag,$/m.test(t({ an: "beide" })) && /Prüfung von Lena/.test(t({ an: "beide" })) && !/Hallo/.test(t({ an: "beide" })));
-  pruefe("W14 Betreff an Eltern nennt den Schüler", M.betreff({ ...d, an: "eltern" }).endsWith("Zahlungsinformation zur Prüfung von Lena") && M.betreff({ ...d, art: "zahlung_offen", an: "beide" }).endsWith("Wichtige Information zu den Terminen von Lena"));
+  pruefe("W14 Betreff an Eltern ohne „Ihre“ und ohne Namen", M.betreff({ ...d, an: "eltern" }).endsWith(": Zahlungsinformation zur Prüfung") && M.betreff({ ...d, art: "zahlung_offen", an: "beide" }).endsWith(": Wichtige Information zu den Fahrstunden") && !/Lena/.test(M.betreff({ ...d, an: "beide" })));
   pruefe("W14 Betreff an Schüler wie bisher", M.betreff({ ...d, an: "schueler" }) === M.betreff(d));
   pruefe("W14 Reaktivierung an Eltern", /die Reaktivierung von Lena ist fällig/.test(M.mailText({ ...d, art: "reaktivierung", an: "eltern" })));
   pruefe("W14 Zahlung offen an Eltern", /für die Ausbildung von Lena ist noch eine Zahlung offen/.test(M.mailText({ ...d, art: "zahlung_offen", an: "eltern" })));

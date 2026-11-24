@@ -2292,7 +2292,7 @@ function bindeAkademieZugang(dlg, x) {
    Eigene Tabelle schueler_eltern (nur Büro, Leitung, Super-Admin). S.eltern: {schueler_id: Zeile}; null = Tabelle fehlt. */
 function elternTabelleFehlt(err) { return !!err && (["42P01", "PGRST205"].includes(err.code) || err.status === 404 || /does not exist|could not find the table/i.test(String(err.message || ""))); }
 function elternFelderHTML(x) {
-  if (!S.eltern) return "";
+  if (!S.eltern) return S.elternFehler ? `<p class="voll fl-warnung bald" data-elternfehler>Eltern-Angaben konnten nicht geladen werden. Bitte die Seite neu laden.</p>` : "";
   const e = (x.id && S.eltern[x.id]) || {}, an = e.mail_an || "beide";
   return `<div class="voll eltern-block" data-elternblock>
       <label>E-Mail Eltern (optional)<input type="email" name="eltern_email" maxlength="200" autocomplete="off" value="${esc(e.email || "")}"><span class="leise klein">Auch Erziehungsberechtigte. Nur das Büro sieht sie.</span></label>

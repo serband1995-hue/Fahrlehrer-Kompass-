@@ -94,8 +94,7 @@ export function absender(d) {
 export function betreff(d) {
   let text = BETREFF[d.art];
   if (!text) throw new Error("Art unbekannt");
-  const v = einzeilig(d.schueler_name).split(" ")[0];
-  if ((d.an === "eltern" || d.an === "beide") && v) text = BETREFF_ELTERN[d.art](v);
+  if (d.an === "eltern" || d.an === "beide") text = BETREFF_ELTERN[d.art];
   return (d.modus === "test" ? "[TEST] " : "") + fahrschulName(d) + ": " + text;
 }
 // W14: d.an = wer angeschrieben wird ("schueler" | "eltern" | "beide"; fehlt = Schüler, wie bisher)
@@ -119,11 +118,11 @@ function satz(d) {
 }
 // Test-Mail: an wen sie im Echt-Modus ginge
 function echtAn(d) { return d.an === "eltern" ? "die Eltern" : d.an === "beide" ? "Schüler und Eltern" : "den Schüler"; }
-// Betreff, wenn Eltern mitlesen: um wessen Prüfung/Termine es geht
+// Betreff, wenn Eltern mitlesen: ohne „Ihre“, weiter ohne Namen (Regel oben: nie Betrag, IBAN oder Name)
 const BETREFF_ELTERN = {
-  pruefung: (v) => "Zahlungsinformation zur Prüfung von " + v,
-  reaktivierung: (v) => "Zahlungsinformation: Reaktivierung von " + v,
-  zahlung_offen: (v) => "Wichtige Information zu den Terminen von " + v,
+  pruefung: "Zahlungsinformation zur Prüfung",
+  reaktivierung: "Zahlungsinformation: Reaktivierung",
+  zahlung_offen: "Wichtige Information zu den Fahrstunden",
 };
 
 /** Klartext-Fassung. @param {MailDaten} d */
