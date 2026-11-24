@@ -11,6 +11,7 @@
 //   (5) keine JS-Fehler
 //   (6) K8 „Zahlung ausstehend“ (23.11.2026): R12 Hinweis am bestehenden Termin + Sperre für neue Termine, keine Büro-Knöpfe in der App;
 //       R13 Büro-Seite: Büro, Leitung, Super-Admin sehen die Knöpfe, ein Fahrlehrer kommt nicht hinein
+//   (7) Paket-Baukasten (Werkstatt 13, 24.11.2026): R19 Büro, Leitung und Super-Admin legen einen Schüler mit Paket an (Verkauf beim Speichern)
 // Die App läuft lokal mit einer Attrappe statt Datenbank (kein Netz, erfundene Namen „Muster“).
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs        (auch in der GitHub-Prüfung)
 // Gegenprobe: ROLLEN_SEITE=/tmp/alt/index.html … (alter Stand muss bei „Leitung fährt selbst“ durchfallen)
@@ -345,6 +346,9 @@ for (const R of ROLLEN) {
     await page.addInitScript(([d, ses]) => {
       window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: ses };
       const sa = d.tabellen.schueler.find((x) => x.status === "aktiv" && !x.inaktiv_seit); if (sa) { sa.zahlung_gesperrt_seit = new Date().toISOString(); sa.zahlung_gesperrt_grund = "Rechnung offen"; }
+      // Werkstatt 13: eine Vorlage mit festem Preis, damit „Schüler anlegen mit Paket“ ohne Preisliste geht
+      d.tabellen.fahrschule_pakete.push({ id: "p-rolle", fahrschule_id: d.tabellen.fahrschulen[0].id, name: "Rollen-Paket", reihenfolge: 9, aktiv: true, klasse: "B", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent_fest: 30000 }] });
+      d.tabellen.schueler_pakete = [];
     }, [daten, { user: { id: B.id, email: B.id + "@example.org" } }]);
     await page.goto(bBasis + "buero.html#schueler");
     await warte(page, 700);
@@ -357,6 +361,29 @@ for (const R of ROLLEN) {
       else if (r.sperre || r.bezahlt || r.pill) f.push(`Fahrlehrer sieht Knöpfe (${r.sperre}/${r.bezahlt}/${r.pill})`);
       return f.concat(konsole);
     });
+    // R19 (Werkstatt 13): Schüler anlegen mit Paket – Büro, Leitung und Super-Admin verkaufen es beim Speichern (feste Kopie)
+    if (B.knoepfe) {
+      const v = await page.evaluate(async () => {
+        schuelerDialog(null); await new Promise((r) => setTimeout(r, 150));
+        const d = [...document.querySelectorAll("dialog[open]")].pop();
+        const sel = d.querySelector("[data-bk-wahl]"); if (!sel) return { fehler: "keine Auswahl „Anmeldung“" };
+        d.querySelector('input[name="name"]').value = "Rolf Rollentest";
+        sel.value = "v:p-rolle"; sel.dispatchEvent(new Event("change", { bubbles: true }));
+        d.querySelector("footer button[value=ok]").click(); await new Promise((r) => setTimeout(r, 600));
+        const s = window.__FAKE.tabellen.schueler.find((x) => x.name === "Rolf Rollentest");
+        const p = s && (window.__FAKE.tabellen.schueler_pakete || []).find((x) => x.schueler_id === s.id && !x.storniert_am);
+        return { schueler: !!s, paket: p ? p.gesamt_cent : null, paketId: s ? s.paket_id : null, offen: document.querySelectorAll("dialog[open]").length };
+      });
+      await pruefe("R19", `[${B.n}] Schüler anlegen mit Paket: gespeichert, Paket verkauft (300 €), Fenster zu`, () => {
+        if (v.fehler) return v.fehler;
+        const f = [];
+        if (!v.schueler) f.push("Schüler nicht angelegt");
+        if (v.paket !== 30000) f.push("Paket nicht verkauft: " + v.paket);
+        if (v.paketId !== "p-rolle") f.push("paket_id: " + v.paketId);
+        if (v.offen) f.push("Fenster noch offen");
+        return f.concat(konsole);
+      });
+    }
     await ctx.close();
   }
   bServer.close();
