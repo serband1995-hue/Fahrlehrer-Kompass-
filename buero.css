@@ -331,7 +331,8 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 /* Kleinere Bildschirme (Laptop): Menü schmaler; unter 900 px oben statt links */
 @media (max-width:1200px){
   :root{--seite:236px;} .inhalt{padding:24px 26px 50px;}
-  .tabelle td,.tabelle th{padding:10px 8px;}
+  .tabelle td,.tabelle th{padding:10px 6px;}
+  .tabelle th{white-space:normal;letter-spacing:.02em;} /* Kopfzeilen dürfen umbrechen: passt auch mit breiter Ersatzschrift (ohne Barlow) */
   .aktionen-box{flex-direction:column;align-items:stretch;min-width:0;}
   .stand{min-width:96px;gap:6px;}
   .tabelle .marke-pill{white-space:normal;}

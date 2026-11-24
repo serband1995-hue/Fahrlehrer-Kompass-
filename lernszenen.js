@@ -2196,7 +2196,7 @@
   .lz-top{display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px) 12px;padding-top:max(10px,env(safe-area-inset-top));background:rgba(27,31,39,.92);border-bottom:1px solid #38414f;z-index:2;}
   .lz-title{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.02em;font-size:17px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .lz-btn{background:#2b323e;border:1px solid #46505f;color:#eceff4;border-radius:10px;padding:8px 11px;font-size:13.5px;font-weight:600;cursor:pointer;min-height:40px;}
-  .lz-btn.on{background:#3f7f58;border-color:#5b9a70;}
+  .lz-btn.on{background:#336a4a;border-color:#5b9a70;}
   .lz-btn:disabled{opacity:.45;}
   .lz-stage{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;}
   .lz-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
