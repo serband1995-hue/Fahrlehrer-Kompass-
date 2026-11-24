@@ -2,7 +2,7 @@
 // Wird von index.ts (Deno) und scripts/zahlungsmail-mail-test.mjs (Node) geladen.
 // Enthält: Betrag/EPC-Text/PayPal-Link, Betreff, HTML- und Text-Mail, eigener QR-Encoder (Byte-Modus, Fehlerkorrektur M) und PNG-Writer.
 
-/** @typedef {{modus?:string, art:string, betrag_cent:number, wofuer:string, verwendungszweck?:string, schueler_name?:string, fahrschule?:string, kontoinhaber?:string, iban?:string, bic?:string|null, paypal?:string|null, impressum?:string|null}} MailDaten */
+/** @typedef {{modus?:string, art:string, betrag_cent:number, wofuer:string, verwendungszweck?:string, schueler_name?:string, an?:string, fahrschule?:string, kontoinhaber?:string, iban?:string, bic?:string|null, paypal?:string|null, impressum?:string|null}} MailDaten */
 
 export const STANDARD_FAHRSCHULE = "Fahrschule Boost";
 export const ABSENDER_ADRESSE = "termine@fahr-akademie.info";
@@ -92,20 +92,45 @@ export function absender(d) {
 }
 /** Betreff: nie Betrag, IBAN oder Name. */
 export function betreff(d) {
-  const text = BETREFF[d.art];
+  let text = BETREFF[d.art];
   if (!text) throw new Error("Art unbekannt");
+  if (d.an === "eltern" || d.an === "beide") text = BETREFF_ELTERN[d.art];
   return (d.modus === "test" ? "[TEST] " : "") + fahrschulName(d) + ": " + text;
 }
+// W14: d.an = wer angeschrieben wird ("schueler" | "eltern" | "beide"; fehlt = Schüler, wie bisher)
+function vorname(d) { return einzeilig(d.schueler_name).split(" ")[0]; }
 function anrede(d) {
-  const v = einzeilig(d.schueler_name).split(" ")[0];
+  const v = vorname(d);
+  if (d.an === "eltern") return "Guten Tag,";
+  if (d.an === "beide") return "Guten Tag,"; // Eltern lesen mit: neutral, dann „… von Lena“
   return v ? "Hallo " + v + "," : "Hallo,";
 }
+// Eltern lesen mit: dann geht es um die Ausbildung von <Vorname>, nicht um „Ihre“
+const SATZ_ELTERN = {
+  pruefung: (v) => "für die Prüfung von " + v + " bitten wir um folgende Zahlung:",
+  reaktivierung: (v) => "die Reaktivierung von " + v + " ist fällig. Bitte zahlen Sie:",
+  zahlung_offen: (v) => "für die Ausbildung von " + v + " ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
+};
+function satz(d) {
+  const v = vorname(d);
+  if ((d.an === "eltern" || d.an === "beide") && v && SATZ_ELTERN[d.art]) return SATZ_ELTERN[d.art](v);
+  return SATZ[d.art] || "";
+}
+// Test-Mail: an wen sie im Echt-Modus ginge
+function echtAn(d) { return d.an === "eltern" ? "die Eltern" : d.an === "beide" ? "Schüler und Eltern" : "den Schüler"; }
+// Betreff, wenn Eltern mitlesen: ohne „Ihre“, weiter ohne Namen (Regel oben: nie Betrag, IBAN oder Name)
+const BETREFF_ELTERN = {
+  pruefung: "Zahlungsinformation zur Prüfung",
+  reaktivierung: "Zahlungsinformation: Reaktivierung",
+  zahlung_offen: "Wichtige Information zu den Fahrstunden",
+};
 
 /** Klartext-Fassung. @param {MailDaten} d */
 export function mailText(d) {
   const z = [];
   if (d.modus === "test") z.push("TEST-MAIL - NICHT BEZAHLEN", "");
-  z.push(anrede(d), "", SATZ[d.art] || "", "");
+  if (d.modus === "test" && d.an) z.push("Im Echt-Modus geht diese Mail an " + echtAn(d) + ".", "");
+  z.push(anrede(d), "", satz(d), "");
   z.push("Betrag: " + betragText(d.betrag_cent), "Wofür: " + einzeilig(d.wofuer), "");
   z.push("PER ÜBERWEISUNG", "Kontoinhaber: " + einzeilig(d.kontoinhaber), "IBAN: " + ibanGruppiert(d.iban || ""));
   if (d.bic) z.push("BIC: " + einzeilig(d.bic));
@@ -123,7 +148,7 @@ export function mailHtml(d) {
   const font = "font-family:-apple-system,'Segoe UI',Arial,sans-serif;";
   const zeile = (k, v) => `<tr><td style="${font}padding:6px 10px 6px 0;font-size:13px;color:#5a5a50;vertical-align:top;white-space:nowrap;">${esc(k)}</td><td style="${font}padding:6px 0;font-size:16px;color:#2a2a24;font-weight:700;word-break:break-word;">${v}</td></tr>`;
   const test = d.modus === "test"
-    ? `<tr><td style="${font}background:#fff3b0;border:2px solid #d9b800;padding:14px;font-size:17px;font-weight:700;color:#5a4a00;text-align:center;">Test-Mail – nicht bezahlen</td></tr><tr><td style="height:12px;line-height:12px;font-size:12px;">&nbsp;</td></tr>`
+    ? `<tr><td style="${font}background:#fff3b0;border:2px solid #d9b800;padding:14px;font-size:17px;font-weight:700;color:#5a4a00;text-align:center;">Test-Mail – nicht bezahlen${d.an ? `<div style="font-size:14px;font-weight:600;margin-top:6px;">Im Echt-Modus geht diese Mail an ${esc(echtAn(d))}.</div>` : ""}</td></tr><tr><td style="height:12px;line-height:12px;font-size:12px;">&nbsp;</td></tr>`
     : "";
   const pp = paypalLink(d.paypal, d.betrag_cent);
   const paypalBlock = pp
@@ -142,7 +167,7 @@ export function mailHtml(d) {
 ${test}
 <tr><td style="${font}font-size:16px;line-height:1.5;color:#2a2a24;padding:0 0 14px 0;">
   <p style="margin:0 0 12px;">${esc(anrede(d))}</p>
-  <p style="margin:0;">${esc(SATZ[d.art] || "")}</p>
+  <p style="margin:0;">${esc(satz(d))}</p>
 </td></tr>
 <tr><td style="padding:0 0 18px 0;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e8f1ea;border-radius:10px;"><tr><td style="padding:18px;text-align:center;">

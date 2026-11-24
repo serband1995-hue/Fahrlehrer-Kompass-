@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
   let body: any;
   try { body = await req.json(); } catch { return json({ fehler: "ungueltige_anfrage" }, 400); }
-  const { requester_token, buero_sitzung, schueler_id, art, betrag_cent, wofuer, erwarteter_modus } = body || {};
+  const { requester_token, buero_sitzung, schueler_id, art, betrag_cent, wofuer, erwarteter_modus, erwartete_empfaenger } = body || {};
   if (!requester_token) return json({ fehler: "nicht_angemeldet" }, 401);
   if (!schueler_id || !art || !Number.isInteger(betrag_cent) || !["test", "echt"].includes(String(erwarteter_modus))) return json({ fehler: "ungueltige_anfrage" }, 400);
 
@@ -61,6 +61,16 @@ Deno.serve(async (req) => {
     await merke({ status: "fehler", fehler: "Modus geändert, nicht gesendet" });
     return json({ fehler: "modus_geaendert", modus: d.modus }, 409);
   }
+  // W14: Der Bildschirm zeigte andere Empfänger (z. B. Eltern-Wahl an einem anderen PC geändert): nichts senden.
+  // Ältere Büro-Seiten schicken die Liste nicht mit: dann wie bisher.
+  if (d.modus === "echt" && Array.isArray(erwartete_empfaenger)) {
+    const norm = (l: unknown[]) => l.map((x) => String(x).trim().toLowerCase()).sort().join(",");
+    const ist = Array.isArray(d.empfaenger_alle) && d.empfaenger_alle.length ? d.empfaenger_alle : [d.empfaenger];
+    if (norm(erwartete_empfaenger) !== norm(ist)) {
+      await merke({ status: "fehler", fehler: "Empfänger geändert, nicht gesendet" });
+      return json({ fehler: "empfaenger_geaendert" }, 409);
+    }
+  }
   const scheitern = async (kurz: string, status = 500) => {
     await merke({ status: "fehler", fehler: kurz.slice(0, 200) });
     return json({ fehler: "versand_fehlgeschlagen", grund: kurz.split(":")[0].slice(0, 40) }, status);
@@ -72,30 +82,52 @@ Deno.serve(async (req) => {
 
     // Sichere Seite: alles außer „echt“ gilt als Test
     if (d.modus !== "echt") d.modus = "test";
-    let betrf = betreff(d);
-    if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
+    // W14: Empfänger nach der Wahl in der Akte (Schüler, Eltern oder beide); bestimmt hat sie der Server (RPC).
+    // Test: nur die Test-Adresse. Ältere Datenbank ohne empfaenger_alle: wie bisher nur „empfaenger“.
+    const empfaenger: string[] = d.modus === "echt" && Array.isArray(d.empfaenger_alle) && d.empfaenger_alle.length
+      ? d.empfaenger_alle.map(String).slice(0, 2) : [String(d.empfaenger)];
     const png = await qrPng(epcText(d));
-
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      signal: AbortSignal.timeout(15000),
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: absender(d),
-        to: [d.empfaenger],
-        subject: betrf,
-        html: mailHtml(d),
-        text: mailText(d),
-        attachments: [{ filename: "girocode.png", content: base64(png), content_type: "image/png", content_id: "girocode" }],
-      }),
-    });
-    const antwort: any = await res.json().catch(() => ({}));
-    if (!res.ok) return await scheitern("Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120), 502);
+    const kurzVon = (e: string) => e.slice(0, 1) + "***@" + e.split("@")[1];
+    // W14 (Hauptsitzung 24.11.): je Empfänger eine eigene Mail, niemand sieht die Adresse des anderen.
+    // Bei „beide“ liefert der Server zuerst den Schüler, dann die Eltern: jede Mail bekommt die passende Anrede.
+    const anFuer = (i: number) => (d.an === "beide" && empfaenger.length === 2 ? (i === 0 ? "schueler" : "eltern") : d.an);
+    const ids: string[] = [], nichtAn: string[] = [], bedient: string[] = [];
+    let ersterFehler = "";
+    for (let i = 0; i < empfaenger.length; i++) {
+      const dm = { ...d, an: anFuer(i) };
+      let betrf = betreff(dm);
+      if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
+      let grund = "";
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          signal: AbortSignal.timeout(15000),
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: absender(d),
+            to: [empfaenger[i]],
+            subject: betrf,
+            html: mailHtml(dm),
+            text: mailText(dm),
+            attachments: [{ filename: "girocode.png", content: base64(png), content_type: "image/png", content_id: "girocode" }],
+          }),
+        });
+        const antwort: any = await res.json().catch(() => ({}));
+        if (res.ok) { if (antwort?.id) ids.push(String(antwort.id)); bedient.push(empfaenger[i]); continue; }
+        grund = "Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120);
+      } catch (e) {
+        grund = "Versand abgebrochen: " + String(e).slice(0, 100); // Zeitgrenze oder Netz (Fable): wie eine Fehlerantwort behandeln
+      }
+      if (i === 0) return await scheitern(grund, 502); // erste Mail gescheitert: nichts gesendet
+      ersterFehler = grund;
+      nichtAn.push(anFuer(i) === "eltern" ? "Eltern" : "Schüler");
+    }
 
     const gesendetAm = new Date().toISOString();
-    await merke({ status: "gesendet", resend_id: antwort?.id ?? null, gesendet_am: gesendetAm, fehler: null });
-    const e = String(d.empfaenger);
-    return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: e.slice(0, 1) + "***@" + e.split("@")[1] });
+    const kurz = bedient.map(kurzVon).join(", "); // nur, wer die Mail wirklich bekommen hat (Verlauf im Büro)
+    await merke({ status: "gesendet", resend_id: ids.join(",") || null, gesendet_am: gesendetAm, empfaenger_kurz: kurz,
+      fehler: nichtAn.length ? ("Nicht an " + nichtAn.join(", ") + ": " + ersterFehler).slice(0, 200) : null });
+    return json({ ok: true, id: d.id, modus: d.modus, gesendet_am: gesendetAm, empfaenger_kurz: kurz, nicht_an: nichtAn.length ? nichtAn : undefined });
   } catch (e) {
     console.warn("zahlungs-mail:", String(e).slice(0, 200));
     return await scheitern("Fehler beim Versand");

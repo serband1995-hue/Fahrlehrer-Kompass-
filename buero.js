@@ -850,11 +850,14 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
   toast("Nicht gespeichert: keine Berechtigung für diesen Schüler", true);
   return { ok: false };
 }
-const AKTE_FELD_NAMEN = { name: "Name", telefon: "Telefon", email: "E-Mail", paket_id: "Paket", buero_notiz: "Interne Notiz", fahrlehrer_id: "Fahrlehrer", inaktiv_seit: "Aktiv / Archiv" };
+const AKTE_FELD_NAMEN = { name: "Name", telefon: "Telefon", email: "E-Mail", paket_id: "Paket", buero_notiz: "Interne Notiz", fahrlehrer_id: "Fahrlehrer", inaktiv_seit: "Aktiv / Archiv",
+  eltern_email: "E-Mail Eltern", zahlungsmail_an: "Zahlungs-Mails an" };
+const ZAHLUNGSMAIL_AN = [["beide", "Schüler und Eltern"], ["eltern", "nur Eltern"], ["schueler", "nur Schüler"]];
 function akteFeldName(k) { return AKTE_FELD_NAMEN[k] || FELD_NAMEN[k] || k; }
 function akteWertText(k, v) {
   if (k === "inaktiv_seit") return v ? "im Archiv" : "aktiv";
   if (k === "reakt_status") return { pruefen: "noch nicht geprüft", bezahlt: "bezahlt", befreit: "befreit" }[v || "pruefen"] || String(v);
+  if (k === "zahlungsmail_an") return (ZAHLUNGSMAIL_AN.find(([w]) => w === (v || "beide")) || [, String(v)])[1];
   if (v == null || v === "" || (Array.isArray(v) && !v.length)) return "leer";
   if (k === "paket_id") return paketName(v) || "anderes Paket";
   if (k === "fahrlehrer_id") return lehrerName(v);
@@ -875,6 +878,8 @@ function akteFeldSetzen(dlg, k, v) {
   if (k === "inaktiv_seit") { const i = feld("aktiv"); if (i) { i.checked = !v; melde(i); } return; }
   if (k === "b197_testfahrt_am") { const c = feld("testfahrt"), d = feld("testfahrt_am"); if (c) c.checked = !!v; if (d) d.value = v || ""; return; }
   if (k === "reakt_status") { f.querySelectorAll("input[name=reakt_status]").forEach((r) => { r.checked = r.value === (v || "pruefen"); if (r.checked) melde(r); }); return; }
+  if (k === "zahlungsmail_an") { f.querySelectorAll("input[name=zahlungsmail_an]").forEach((r) => { r.checked = r.value === (v || "beide"); }); return; }
+  if (k === "eltern_email") { const i = feld(k); if (i) { i.value = v || ""; i.dispatchEvent(new Event("input", { bubbles: true })); } return; }
   if (k === "sehhilfe") {
     const s = feld(k); if (!s) return;
     if (v == null && !s.querySelector('option[value=""]')) s.insertAdjacentHTML("afterbegin", '<option value="">noch nicht bekannt</option>');
@@ -1031,7 +1036,8 @@ const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsa
   fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse" };
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
-  const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
+  // W14: zum Schüler gehören auch die Eltern-Angaben (eigene Tabelle)
+  const res = await supa.from("aenderungsprotokoll").select("*").in("tabelle", tabelle === "schueler" ? ["schueler", "schueler_eltern"] : [tabelle]).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
   if (!ziel || !ziel.isConnected) return;
   if (res.error) { ziel.innerHTML = ""; return; }
   const zeilen = (res.data || []).map((p) => {
@@ -1040,11 +1046,13 @@ async function ladeProtokoll(tabelle, id) {
     const wann = new Date(p.geaendert_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
     const wert = (v) => {
       if (p.feld === "auslands_fs") return v ? "(Angaben)" : "–"; // Führerscheinnummern nicht im Verlauf ausschreiben
+      if (p.tabelle === "schueler_eltern" && p.feld === "mail_an") return v ? akteWertText("zahlungsmail_an", v) : "–";
       if (v === "true") return "ja"; if (v === "false") return "nein";
       if (/^\{.*\}$/.test(v || "")) return v.slice(1, -1).split(",").join(", ") || "–";
       return /^\d{4}-\d\d-\d\d$/.test(v || "") ? datumDE(v) : (v || "–");
     };
-    return `<li>${esc(wann)} · ${esc(wer)}: ${esc(FELD_NAMEN[p.feld] || p.feld)} ${esc(wert(p.alt))} → ${esc(wert(p.neu))}</li>`;
+    const feld = p.tabelle === "schueler_eltern" ? ({ email: "E-Mail Eltern", mail_an: "Zahlungs-Mails an" }[p.feld] || p.feld) : (FELD_NAMEN[p.feld] || p.feld);
+    return `<li>${esc(wann)} · ${esc(wer)}: ${esc(feld)} ${esc(wert(p.alt))} → ${esc(wert(p.neu))}</li>`;
   }).join("");
   ziel.innerHTML = zeilen ? `<h3>Verlauf</h3><ul>${zeilen}</ul>` : `<p class="leise klein">Noch keine Änderungen protokolliert.</p>`;
 }
@@ -2283,6 +2291,58 @@ function bindeAkademieZugang(dlg, x) {
     melde(`Akademie geöffnet ✓ Die Daten liegen 5 Minuten bereit.${v.klasse ? "" : " Klasse dort bitte selbst wählen."}${x && v.telefon.replace(/\D/g, "") !== String(x.telefon || "").replace(/\D/g, "") ? " Die Telefonnummer ist neu: bitte die Akte auch speichern." : ""}`);
   });
 }
+/* ---------- W14 Eltern-Mail: E-Mail der Eltern/Erziehungsberechtigten und an wen die Zahlungs-Mail geht ----------
+   Eigene Tabelle schueler_eltern (nur Büro, Leitung, Super-Admin). S.eltern: {schueler_id: Zeile}; null = Tabelle fehlt. */
+function elternTabelleFehlt(err) { return !!err && (["42P01", "PGRST205"].includes(err.code) || err.status === 404 || /does not exist|could not find the table/i.test(String(err.message || ""))); }
+function elternFelderHTML(x) {
+  if (!S.eltern) return S.elternFehler ? `<p class="voll fl-warnung bald" data-elternfehler>Eltern-Angaben konnten nicht geladen werden. Bitte die Seite neu laden.</p>` : "";
+  const e = (x.id && S.eltern[x.id]) || {}, an = e.mail_an || "beide";
+  return `<div class="voll eltern-block" data-elternblock>
+      <label>E-Mail Eltern (optional)<input type="email" name="eltern_email" maxlength="200" autocomplete="off" value="${esc(e.email || "")}"><span class="leise klein">Auch Erziehungsberechtigte. Nur das Büro sieht sie.</span></label>
+      ${S.elternFehler ? `<p class="fl-warnung bald" data-elternfehler>Eltern-Angaben konnten nicht geladen werden. Bitte die Seite neu laden.</p>` : ""}
+      <div class="eltern-wahl" id="elternWahl" role="radiogroup" aria-label="Zahlungs-Mails gehen an"${e.email ? "" : " hidden"}><div class="feld-titel">Zahlungs-Mails gehen an</div>
+        ${ZAHLUNGSMAIL_AN.map(([v, t]) => `<label class="wahl"><input type="radio" name="zahlungsmail_an" value="${v}"${an === v ? " checked" : ""}> ${t}</label>`).join("")}</div>
+    </div>`;
+}
+function bindeElternFelder(dlg) {
+  const i = dlg.querySelector("input[name=eltern_email]"), w = dlg.querySelector("#elternWahl");
+  if (i && w) i.addEventListener("input", () => { w.hidden = !i.value.trim(); });
+}
+function elternBasisVon(id) { return S.eltern ? Object.assign({ email: null, mail_an: "beide" }, (id && S.eltern[id]) || {}) : null; }
+const ELTERN_NORM = { email: (v) => String(v || "").trim().toLowerCase() || null, mail_an: (v) => (["schueler", "eltern", "beide"].includes(v) ? v : "beide") };
+const ELTERN_FELD = { email: "eltern_email", mail_an: "zahlungsmail_an" };
+// Wie speichereAkteSicher: nur Geändertes; hat jemand anderes dasselbe inzwischen geändert, bleibt sein Stand (Konflikt)
+async function speichereElternSicher(sid, basis, neu) {
+  const geaendert = {};
+  for (const k of ["email", "mail_an"]) if (ELTERN_NORM[k](neu[k]) !== ELTERN_NORM[k](basis[k])) geaendert[k] = ELTERN_NORM[k](neu[k]);
+  if (!ELTERN_NORM.email(neu.email) && !ELTERN_NORM.email(basis.email)) delete geaendert.mail_an; // ohne Adresse ist die Wahl egal
+  if (!Object.keys(geaendert).length) return { ok: true, leer: true, konflikte: [] };
+  const f = await supa.from("schueler_eltern").select("*").eq("schueler_id", sid).maybeSingle();
+  if (f.error) { toast("E-Mail der Eltern nicht gespeichert: " + dbFehlerText(f.error), true); return { ok: false }; }
+  const frisch = Object.assign({ email: null, mail_an: "beide" }, f.data || {}), senden = {}, konflikte = [];
+  for (const [k, mein] of Object.entries(geaendert)) {
+    const jetzt = ELTERN_NORM[k](frisch[k]);
+    if (jetzt === mein) continue;
+    if (jetzt !== ELTERN_NORM[k](basis[k])) { konflikte.push({ k: ELTERN_FELD[k], frisch: k === "email" ? frisch.email : frisch.mail_an, mein }); continue; }
+    senden[k] = mein;
+  }
+  if (!Object.keys(senden).length) return { ok: true, konflikte, frisch, zeile: frisch };
+  const zeile = Object.assign({ schueler_id: sid, fahrschule_id: S.fsId, email: frisch.email, mail_an: ELTERN_NORM.mail_an(frisch.mail_an) }, senden);
+  const res = await supa.from("schueler_eltern").upsert(zeile, { onConflict: "schueler_id" }).select("*");
+  if (res.error || !res.data || !res.data.length) { toast("E-Mail der Eltern nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return { ok: false }; }
+  if (S.eltern) S.eltern[sid] = res.data[0];
+  return { ok: true, konflikte, frisch, zeile: res.data[0] };
+}
+// Konflikt, Fenster bleibt offen: Eltern-Felder, die hier niemand angefasst hat, auf den neuen Stand; Basis vorrücken
+function elternNachKonflikt(dlg, basis, neu, erg) {
+  if (!basis || !erg || !erg.frisch) return;
+  const kk = new Set((erg.konflikte || []).map((c) => c.k));
+  for (const k of ["email", "mail_an"]) {
+    const vorher = ELTERN_NORM[k](basis[k]), jetzt = ELTERN_NORM[k](erg.frisch[k]);
+    if (!kk.has(ELTERN_FELD[k]) && vorher !== jetzt && ELTERN_NORM[k](neu[k]) === vorher) akteFeldSetzen(dlg, ELTERN_FELD[k], erg.frisch[k]);
+  }
+  Object.assign(basis, { email: (erg.zeile || erg.frisch).email || null, mail_an: (erg.zeile || erg.frisch).mail_an || "beide" });
+}
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
@@ -2293,6 +2353,7 @@ function schuelerDialog(id) {
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
+      ${elternFelderHTML(x)}
       <label>Fahrlehrer (passende Klasse und viel Platz zuerst)<select name="fahrlehrer_id">${lehrerOptionen(x.fahrlehrer_id, true, klasseVon(x) || "B")}</select></label>
       <label>Paket<select name="paket_id"><option value="">– ohne Paket –</option>${S.pakete.filter((p) => p.aktiv !== false || p.id === x.paket_id).map((p) => `<option value="${esc(p.id)}"${p.id === x.paket_id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}${x.paket_id && !S.pakete.some((p) => p.id === x.paket_id) ? `<option value="${esc(x.paket_id)}" selected>(Paket nicht mehr in der Liste)</option>` : ""}</select></label>
       <label>Ausbildungsart<select name="ausbildungsart">${artOptionen(x.ausbildungsart)}</select></label>
@@ -2316,8 +2377,10 @@ function schuelerDialog(id) {
       ${id ? `<div class="voll" id="aufgabenBlock" data-entwurf>${aufgabenBlockHTML(id)}</div>` : ""}
     </div>
     <p class="leise klein">Umschreiber brauchen keine Sonderfahrten. Ein neuer Schüler mit Fahrlehrer erscheint innerhalb einer Minute in dessen App.</p>`;
+  const elternBasis = elternBasisVon(id); // W14: Stand der Eltern-Angaben beim Öffnen (null = Tabelle fehlt)
   const dlg = oeffneDialog(id ? `Schüler: ${x.name}` : "Schüler anlegen", body, async (form) => {
     const d = Object.fromEntries(new FormData(form).entries());
+    const elternNeu = { email: d.eltern_email, mail_an: d.zahlungsmail_an };
     const name = (d.name || "").trim();
     if (!name) { toast("Bitte einen Namen eintragen.", true); return false; }
     const offeneAufgabe = form.querySelector("#agText");
@@ -2351,7 +2414,9 @@ function schuelerDialog(id) {
       const res = await supa.from("schueler").insert(zeile).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
-      toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
+      const elt = elternBasis ? await speichereElternSicher(neueId, elternBasis, elternNeu) : { ok: true };
+      if (!elt.ok) toast(`${name} ist angelegt, aber die E-Mail der Eltern ist nicht gespeichert. Bitte in der Akte nachtragen.`, true); // Fenster zu: sonst legte ein zweites Speichern den Schüler doppelt an
+      else toast(`${name} angelegt${neuerLehrer ? " und " + lehrerName(neuerLehrer) + " zugeordnet" : " (noch ohne Fahrlehrer)"}`);
       zeichne();
       return true;
     }
@@ -2368,16 +2433,21 @@ function schuelerDialog(id) {
     if (!erg.ok) return false;
     const altBasis = Object.assign({}, basisX);
     akteNachziehen(id, basisX, erg.zeile);
+    const elt = elternBasis ? await speichereElternSicher(id, elternBasis, elternNeu) : { ok: true, leer: true, konflikte: [] };
     const archiviert = wirdArchiviert && !erg.konflikte.some((c) => c.k === "inaktiv_seit");
-    if (!erg.konflikte.length) toast(erg.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert"); // bei Konflikt erklärt der Kasten
+    // bei Konflikt erklärt der Kasten; scheitert die Eltern-Adresse, steht deren Meldung
+    if (elt.ok && !erg.konflikte.length && !(elt.konflikte || []).length) toast(erg.leer && elt.leer ? "Nichts geändert" : archiviert ? `${name} liegt jetzt im Archiv.` : "Gespeichert");
     zeichne();
     if ("fahrlehrer_id" in erg.frei) await verschiebeSchueler(Object.assign({}, basisX, { fahrlehrer_id: basisLehrer }), neuerLehrer);
     if (absagen.length && archiviert) await sageTermineAb(absagen, `${name} liegt im Archiv, ${absagen.length === 1 ? "1 Termin" : absagen.length + " Termine"} abgesagt`);
-    if (erg.konflikte.length) {
+    const konflikte = erg.konflikte.concat(elt.konflikte || []);
+    if (konflikte.length) {
       akteFensterAuffrischen(dlg, altBasis, werteAlle, erg.zeile, erg.konflikte, AKTE_FELDER);
-      akteKonfliktZeigen(dlg, erg.konflikte); // der gelbe Kasten im Fenster erklärt alles
+      elternNachKonflikt(dlg, elternBasis, elternNeu, elt);
+      akteKonfliktZeigen(dlg, konflikte); // der gelbe Kasten im Fenster erklärt alles
       return false; // Fenster bleibt offen und zeigt den Unterschied
     }
+    if (!elt.ok) { elternNachKonflikt(dlg, elternBasis, elternNeu, null); return false; } // Eltern-Adresse nicht gespeichert: Fenster bleibt offen (Meldung steht)
     return true;
   });
   if (id) bindeZahlBlock(dlg, id);
@@ -2397,6 +2467,7 @@ function schuelerDialog(id) {
   const aktivBox = dlg.querySelector("input[name=aktiv]");
   if (aktivBox) aktivBox.addEventListener("change", () => { dlg.querySelector("#aktivText").textContent = aktivBox.checked ? "Aktiv" : "Im Archiv"; });
   if (id) bindeAkademieZugang(dlg, x);
+  bindeElternFelder(dlg);
 }
 // Wie schuelerVerschieben in index.html: erst künftige Termine (auf Wunsch), dann Schüler, dann Übergabe-Eintrag
 async function verschiebeSchueler(x, neuerLehrer) {
@@ -4343,7 +4414,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, eltern] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4367,6 +4438,7 @@ async function ladeDaten() {
       supa.from("fahrschule_zahlungsdaten").select("*").eq("fahrschule_id", fsId).maybeSingle(),   // Werkstatt 11 (Zahlungsmail); fehlt die Tabelle → Abschnitt „noch nicht eingerichtet“
       supa.from("zahlungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
+      supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4393,6 +4465,10 @@ async function ladeDaten() {
     // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
+    // W14: Eltern-Adressen je Schüler. null = Tabelle fehlt (alte Datenbank): Feld nicht zeigen. Anderer Ladefehler: letzten Stand behalten
+    if (eltern && !eltern.error) { S.eltern = {}; S.elternFehler = false; (eltern.data || []).forEach((e) => { S.eltern[e.schueler_id] = e; }); }
+    else if (eltern && eltern.error && elternTabelleFehlt(eltern.error)) { S.eltern = null; S.elternFehler = false; }
+    else { S.elternFehler = true; if (!S.eltern) S.eltern = null; } // Ladefehler: Echt-Versand sperren (Empfänger unklar)
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
@@ -4807,6 +4883,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
+  S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule
   zeigeRollenStreifen();
   zeichne();
   ladeDaten();
