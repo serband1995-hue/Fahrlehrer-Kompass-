@@ -20,7 +20,7 @@ begin
     new.betrag := null;
     new.aufteilung := null;
     new.fahrlehrer_id := auth.uid();
-    new.fahrlehrer_name := coalesce((select nullif(btrim(coalesce(to_jsonb(p)->>'name', to_jsonb(p)->>'email', '')), '')
+    new.fahrlehrer_name := coalesce((select coalesce(nullif(btrim(coalesce(to_jsonb(p)->>'name', '')), ''), nullif(btrim(coalesce(to_jsonb(p)->>'email', '')), ''))
                                        from public.profiles p where p.id = auth.uid()), new.fahrlehrer_name);
     return new;
   end if;
