@@ -873,7 +873,8 @@ const FELD_NAMEN = { vertrag_am: "Vertragsdatum", klasse: "Klasse", ausbildungsa
   bewerbernummer: "Bewerbernummer", theorie_frist_bis: "Theorie-Frist", sehhilfe: "Sehhilfe", vorbesitz: "Vorbesitz", auslands_fs: "Ausländischer Führerschein",
   wohnsitz_de_seit: "Wohnsitz in Deutschland seit", uebersetzung_vorhanden: "Übersetzung liegt vor",
   fahrlehrerlaubnis: "Fahrlehrerlaubnis", klassen: "Ausbildungsklassen", fuehrerschein_klassen: "Eigener Führerschein", fuehrerschein_c_bis: "Führerschein C/CE bis",
-  fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse" };
+  fuehrerschein_d_bis: "Führerschein D bis", sz95_bis: "Schlüsselzahl 95 bis", fortbildung_bis: "Fortbildung bis", fahrlehrer_zusatz: "Weitere Erlaubnisse",
+  paket: "Paket" }; // Werkstatt 13: Verkauf, Wechsel und Storno eines Pakets (Spur aus schueler_pakete)
 async function ladeProtokoll(tabelle, id) {
   const ziel = $("protokoll");
   const res = await supa.from("aenderungsprotokoll").select("*").eq("tabelle", tabelle).eq("datensatz_id", id).order("geaendert_am", { ascending: false }).limit(20);
