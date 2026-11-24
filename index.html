@@ -8388,7 +8388,7 @@ function theorieStandZurueck(s,o){ ensure(s); s.plan.theorie=o.plan; _THEORIE_FE
   if(Array.isArray(s.hist)&&s.hist.length>o.histLen){ const i=s.hist.findIndex((h,j)=>j>=o.histLen&&(h.typ==="theorie"||h.type==="theorie")); if(i>=0)s.hist.splice(i,1); }
   if(!o.hatteHist&&Array.isArray(s.hist)&&!s.hist.length)delete s.hist;
   // Büro-Häkchen mit zurücknehmen: der vorherige Wert geht zurück (nur wenn die App ihn geändert hatte)
-  if("tbAlt" in o&&(_theorieBueroWert(s.id)!==o.tbAlt||s.id in _theorieOffenLesen())){ _theorieBueroSchreiben(s,o.tbAlt); if(o.tbApp===undefined)delete s.theorieVonApp; else s.theorieVonApp=o.tbApp; } }
+  if("tbAlt" in o&&(_theorieBueroWert(s.id)!==o.tbAlt||s.id in _theorieOffenLesen()||s.theorieVonApp!==o.tbApp)){ _theorieBueroSchreiben(s,o.tbAlt); if(o.tbApp===undefined)delete s.theorieVonApp; else s.theorieVonApp=o.tbApp; } }
 /* Werkstatt 12: „Theorie bestanden“ der App setzt auch das Häkchen im Büro (schueler.theorie_bestanden_am).
    Bewusst NICHT im normalen Abgleich (_schuelerZeile): dort würde die App Büro-Werte überschreiben und der ganze Upsert
    scheitern, wenn die Migration fehlt. Stattdessen ein einzelnes Update; offline in kompass-theorie-offen {sid: wert}
@@ -8467,6 +8467,7 @@ async function _theorieOffenNachholen(opt){
       _theorieNochmal=false; const o=_theorieOffenLesen();
       for(const sid of Object.keys(o)){
         const e=o[sid];
+        if(!_authUser)break; // abgemeldet mitten im Lauf
         if(e.uid&&e.uid!==_authUser.id){ console.info("[Kompass] Theorie-Eintrag eines anderen Kontos verworfen."); const n=_theorieOffenLesen(); delete n[sid]; _theorieOffenSchreiben(n); continue; }
         if(!(opt&&opt.sofort)&&e.n>0&&Date.now()-(e.l||0)<20000)continue; // nicht in jedem Takt hämmern
         const st=await _theorieSenden(sid,e.v);

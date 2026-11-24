@@ -7,7 +7,7 @@ window.KOMPASS_NEU = [
   { version: "2026.11.24.4", datum: "2026-11-24", kurz: "„Theorie bestanden“ kommt jetzt auch im Büro an.",
     punkte: ["Wenn du in der App „Theorie bestanden“ setzt, sieht das Büro das Häkchen mit dem Datum von heute.",
              "Zurücknehmen kannst du es am selben Tag. Danach ändert es nur noch das Büro.",
-             "Urlaub trägst du nur für dich selbst ein, Tafelbilder teilst du unter deinem eigenen Namen.",
+             "Geteilte Tafelbilder tragen immer deinen eigenen Namen.",
              "Im Büro funktioniert „Verkauf erfassen“ wieder."] },
   { version: "2026.11.24.3", datum: "2026-11-24", kurz: "Büro: ruhigere Seitenleiste, Doppelbelegung „Gesehen“.",
     punkte: ["Im Büro sind die Gruppen der Seitenleiste zu Beginn zugeklappt. Nur die Gruppe der offenen Seite ist auf.",
