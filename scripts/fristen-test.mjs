@@ -44,7 +44,7 @@ const alt = {
   fc(d) { const bis = KR.addMonthsISO(d, 12), tage = KR.daysBetweenISO(H, bis); return { stufe: tage < 0 ? "verfallen" : tage <= 60 ? "bald" : "ok", bis, tage }; },
 };
 let seed = 20261125;
-const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor(seed / 65536) % n; }; // obere Bits: die unteren wiederholen sich (bei % 2 immer abwechselnd)
 const vielleicht = (f) => (zufall(3) ? f() : null);
 KR.setzeFristen(null);
 gleich("Standard: Werte", { reaktivierung: { monate: 12, bald_tage: 30, vorwarn_tage: 60 }, theorie: { monate: 12, bald_tage: 30, vorwarn_tage: 60 }, antrag: { monate: 12, bald_tage: 60 },
