@@ -654,7 +654,7 @@ for (const R of ROLLEN) {
       });
     }
     // W16 Teil 2: Leitung und Super-Admin wählen die Startseite unter Einstellungen › Darstellung & Start (🗣 Serband: nur in den
-    // Einstellungen), ohne Link zur App in der Leiste. Das Büro hat dort keine Wahl; den Link zur App behält es, bis es nur noch die Büro-Seite hat.
+    // Einstellungen), ohne Link zur App in der Leiste. Das Büro hat dort keine Wahl; seit W16 Teil 3 B hat es auch keinen Link zur App mehr (Schalter BUERO_NUR_BUEROSEITE).
     if (B.knoepfe) {
       await page.evaluate(() => { location.hash = "#einstellungen?thema=darstellung"; }); await warte(page, 900);
       const st = await page.evaluate(() => {

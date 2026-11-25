@@ -1,7 +1,7 @@
 /* Kompass Büro – Urlaub, Schichtplan und Backups (Werkstatt 16, 24.11.2026).
    Bisher gab es diese drei nur in der App-Gesamtansicht („Weitere Verwaltung“). Ziel von W16 (🗣 Serband: „je nachdem, wo man
    sich anmeldet, kommt die richtige Seite“): Das Büro soll nur noch die Büro-Seite brauchen. Dafür stehen sie jetzt hier.
-   Die Weiterleitung (startseite.js BUERO_NUR_BUEROSEITE) bleibt aus, bis auch die übrigen Lücken zu sind (Teil 3).
+   Seit Teil 3 B ist die Weiterleitung an (startseite.js BUERO_NUR_BUEROSEITE): das Büro arbeitet nur noch hier.
    Gleiche Tabellen und Regeln wie in der App: fahrschule_urlaub (mit Fahrlehrer-ID, W14), fahrschule_schichten,
    fahrschule_backups. Die Datenbank erlaubt sie Büro, Leitung und Super-Admin (Zugriffsregeln „…/Buero verwaltet …“).
    Eingehängt in BEREICHE (buero.js, Einträge von Werkstatt 11, erscheinen, sobald diese Datei vor buero.js geladen ist).
@@ -118,6 +118,19 @@ async function vwUrlaubAm(lehrerId, datum) {
   vwSchule();
   if (vwVeraltet("urlaub") || !VW.urlaub) { try { await vwLadeUrlaub(); } catch (e) { /* ohne Liste keine Warnung */ } }
   return (VW.urlaub || []).find((u) => u.fahrlehrer_id === lehrerId && u.von <= datum && u.bis >= datum) || null;
+}
+// W16 Teil 3: eine Warnung für alle Stellen (Termin, Prüfung, Fahrlehrerwechsel, Nachweis). daten: ein oder mehrere Tage (JJJJ-MM-TT).
+// true = weiter speichern (kein Urlaub, ohne Netz, oder „Trotzdem …“ gewählt); „Abbrechen“ ist der Hauptknopf.
+// Die Liste reicht ab heute (vwLadeUrlaub): vergangene Tage warnen nicht.
+async function vwUrlaubWarnen(lehrerId, daten, frage, ja) {
+  const tage = [...new Set([].concat(daten || []).filter(Boolean))].sort();
+  if (!lehrerId || !tage.length) return true;
+  const treffer = [];
+  for (const d of tage) { const u = await vwUrlaubAm(lehrerId, d); if (u && !treffer.includes(u)) treffer.push(u); }
+  if (!treffer.length) return true;
+  const kurz = typeof vwDatumKurz === "function" ? vwDatumKurz : datumDE;
+  const zr = treffer.map((u) => (u.von === u.bis ? "am " + kurz(u.von) : "vom " + kurz(u.von) + " bis " + kurz(u.bis))).join(" und ");
+  return bestaetige("Fahrlehrer hat Urlaub", `${lehrerName(lehrerId)} hat ${zr} Urlaub. ${frage || "Trotzdem speichern?"}`, ja || "Trotzdem speichern", "Abbrechen", true);
 }
 function renderUrlaub() {
   vwSchule();
