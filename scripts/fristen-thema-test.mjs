@@ -4,7 +4,7 @@
 // Liste der Themen, Speichern in fahrschule_einstellungen, Rückgängig, Eingaben beim Neuzeichnen behalten, Rückfrage beim Verlassen,
 // „Läuft bald ab“ rechnet mit den gespeicherten Warnzeiten, gespeicherte Werte beim Start, Büro-Rolle, Handy.
 // Teil A (W15 PR 3): die App (index.html) übernimmt die Fristen der Fahrschule aus KE, andere Fahrschule = Standard, Abmelden = Standard.
-// Prüft: Tabelle, gesetzliche Fristen grau, Speichern + Rückgängig, Prüfung der Eingaben, „Standard“, nur Lesen, Fehler beim
+// Prüft: Tabelle, gesetzliche Fristen fest (Paragraf), Speichern + Rückgängig, Prüfung der Eingaben, „Standard“, nur Lesen, Fehler beim
 // Speichern, Warnung wenn der Server andere Monate rechnet, ke:geladen, Handy 360/412 hoch und quer (Tippflächen ≥ 44 px).
 // Aufruf: NODE_PATH=$(npm root -g) node scripts/fristen-thema-test.mjs   (Bilder: FRISTEN_BILDER=/pfad)
 import { createRequire } from "node:module";
@@ -88,7 +88,7 @@ try {
     pruefe("T1b Kopfzeile sichtbar (Frist | Dauer | Warnung | Vorwarnung)", await page.locator(".esf-kopf").isVisible() && /Dauer[\s\S]*Warnung \(gelb\)[\s\S]*Vorwarnung \(blau\)/.test(await page.locator(".esf-kopf").innerText()));
     pruefe("T1c Standardwerte in den Feldern", (await feld(page, "theorie", "monate").inputValue()) === "12" && (await feld(page, "antrag", "bald_tage").inputValue()) === "60" && (await feld(page, "fahrlehrer", "bald_tage").inputValue()) === "90");
     const praxis = page.locator('[data-esf-zeile="theorie-anzeigen"]'), um = page.locator('[data-esf-zeile="umschreiber"]');
-    pruefe("T1d Praxisprüfung grau, 12 Monate, § 18 FeV, ohne Eingabe", /12 Monate/.test(await praxis.innerText()) && /§ 18 FeV/.test(await praxis.innerText()) && (await praxis.locator("input").count()) === 0 && (await praxis.getAttribute("class")).includes("esf-gesetz"));
+    pruefe("T1d Praxisprüfung fest (Paragraf-Marke), 12 Monate, § 18 FeV, ohne Eingabe", /12 Monate/.test(await praxis.innerText()) && /§ 18 FeV/.test(await praxis.innerText()) && (await praxis.locator("input").count()) === 0 && (await praxis.getAttribute("class")).includes("esf-gesetz"));
     pruefe("T1e Umschreiber: 6 Monate § 29 FeV fest, nur Warnzeit einstellbar", /6 Monate/.test(await um.innerText()) && /§ 29 FeV/.test(await um.innerText()) && (await um.locator("input").count()) === 1 && (await um.locator('input[data-feld="bald_tage"]').count()) === 1);
     pruefe("T1f Behörden-Frist ohne Dauer (Datum aus der Akte)", (await page.locator('input[data-art="behoerde"][data-feld="monate"]').count()) === 0 && /Datum aus der Akte/.test(await page.locator('[data-esf-zeile="behoerde"]').innerText()));
     pruefe("T1g Speichern aus, „Nichts geändert.“", await page.locator("[data-esf-speichern]").isDisabled() && (await page.locator("[data-esf-status]").innerText()) === "Nichts geändert.");
@@ -330,6 +330,13 @@ try {
       (await feld(page, "antrag", "bald_tage").inputValue()) === "60" && await page.locator("[data-esf-speichern]").isDisabled() && (await zeilenEinst(page)).length === 0 && (await fristen(page)).antrag.bald_tage === 60);
     await page.click('.es-thema[data-es-thema="preise"]'); await page.waitForTimeout(300);
     pruefe("B9d danach keine Rückfrage beim Verlassen", (await page.locator("dialog[open]").count()) === 0);
+    await page.click('.es-thema[data-es-thema="fristen"]'); await page.waitForTimeout(400);
+    await tippe(page, "theorie", "bald_tage", "25");
+    await page.locator("[data-esf-speichern]").click(); await page.waitForTimeout(400);
+    await tippe(page, "fc_zettel", "bald_tage", "50");
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(500);
+    pruefe("B9f Speichern, in einer anderen Frist weitertippen, Rückgängig: Getipptes bleibt, Gespeichertes ist zurück",
+      (await feld(page, "fc_zettel", "bald_tage").inputValue()) === "50" && (await feld(page, "theorie", "bald_tage").inputValue()) === "30" && await page.locator("[data-esf-speichern]").isEnabled());
     pruefe("B9e keine JS-Fehler", !konsole.length, konsole.join(" | "));
     await ctx.close();
   }
@@ -362,6 +369,15 @@ try {
     await page.evaluate(() => document.getElementById("probeBox")?.remove());
     pruefe("B10b Speichern in Fahrschule 1, Wechsel, Rückgängig: Eintrag in Fahrschule 1 weg, nichts in der anderen", vorUndo === "fs-test-1|fristen.antrag" && nachUndo === "", vorUndo + " → " + nachUndo);
     pruefe("B10c in der anderen Fahrschule rechnet das Büro weiter mit Standard", (await fristen(page)).antrag.bald_tage === 60);
+    await wechsle("fs-test-1"); await page.waitForTimeout(700);
+    await page.evaluate(() => { location.hash = "#fristen"; }); await page.waitForTimeout(300);
+    await page.evaluate(() => { location.hash = "#einstellungen?thema=fristen"; }); await page.waitForTimeout(500);
+    await tippe(page, "theorie", "bald_tage", "20");
+    await page.locator("[data-esf-speichern]").click(); await page.waitForTimeout(400);
+    await page.click('.es-thema[data-es-thema="preise"]'); await page.waitForTimeout(300); // Thema nicht mehr offen
+    await wechsle("fs-andere"); await page.waitForTimeout(500);
+    await page.locator(".toast-undo [data-undo]").click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(500);
+    pruefe("B10f erst anderes Thema, dann Wechsel, Rückgängig: in der neuen Fahrschule weiter Standard, Eintrag der ersten weg", (await fristen(page)).theorie.bald_tage === 30 && (await alle()).indexOf("fristen.theorie") < 0, JSON.stringify((await fristen(page)).theorie) + " " + (await alle()));
     // dasselbe für die Vorlagen
     await wechsle("fs-test-1"); await page.waitForTimeout(700);
     await page.evaluate(() => { location.hash = "#einstellungen?thema=vorlagen"; }); await page.waitForTimeout(500);
@@ -375,6 +391,23 @@ try {
     const vNach = await alle();
     pruefe("B10d Vorlage: Speichern, Wechsel, Rückgängig: Eintrag in Fahrschule 1 weg, nichts in der anderen", vVor === "fs-test-1|vorlagen.pruefung" && vNach === "", vVor + " → " + vNach);
     pruefe("B10e keine JS-Fehler", !konsole.filter((k) => !/fs-andere|Failed to load resource|Fahrschule: keine Zeile/.test(k)).length, konsole.join(" | "));
+    await ctx.close();
+  }
+
+  // B11 (Richter PR 3): Vorlagen am Handy – „Speichern“ liegt direkt unter der offenen Vorlage (nicht erst unter allen anderen)
+  {
+    const { page, ctx, konsole } = await oeffneBuero({ hash: "#einstellungen?thema=vorlagen", breite: 360, hoehe: 740 });
+    await page.click('[data-esv-kopf="pruefung"]'); await page.waitForTimeout(250);
+    const ta = page.locator('[data-esv-feld="text"]');
+    await ta.click(); await ta.press("End"); await ta.pressSequentially(" Danke!");
+    const hier = page.locator('[data-esv-art="pruefung"] [data-esv-speichern-hier]');
+    const lage = await page.evaluate(() => { const h = document.querySelector('[data-esv-art="pruefung"] [data-esv-speichern-hier]').getBoundingClientRect(), n = document.querySelector('[data-esv-kopf="reaktivierung_bald"]').getBoundingClientRect(); return { hier: Math.round(h.bottom), naechste: Math.round(n.top), hoehe: Math.round(h.height) }; });
+    pruefe("B11a 360×740: Speichern in der offenen Vorlage, vor der nächsten Vorlage, frei, ≥ 44 px", (await hier.count()) === 1 && await hier.isEnabled() && lage.hier <= lage.naechste && lage.hoehe >= 44, JSON.stringify(lage));
+    await hier.scrollIntoViewIfNeeded(); await hier.click(); await page.waitForTimeout(400);
+    const z = await page.evaluate(() => (window.__FAKE.tabellen.fahrschule_einstellungen || []).filter((x) => x.schluessel === "vorlagen.pruefung").length);
+    pruefe("B11b Speichern dort speichert (Eintrag da, beide Knöpfe wieder aus)", z === 1 && await hier.isDisabled() && await page.locator("[data-esv-speichern]").isDisabled());
+    if (BILDER) await page.screenshot({ path: join(BILDER, "vorlagen-speichern-360.png") });
+    pruefe("B11c keine JS-Fehler", !konsole.length, konsole.join(" | "));
     await ctx.close();
   }
 

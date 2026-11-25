@@ -1,6 +1,6 @@
 /* W15 Schritt 3 (🗣 Serband 24.11.2026): Thema „Fristen“ in den Einstellungen (Büro, Leitung, Super-Admin).
    „Alles ist einstellbar … der Einstellungsbereich darf nicht unübersichtlich sein … unterteilt in Themen.“
-   Eine Tabelle: Frist | Dauer | Warnung (gelb) | Vorwarnung (blau). Gesetzliche Fristen grau mit Paragraf, nur die Warnzeit
+   Eine Tabelle: Frist | Dauer | Warnung (gelb) | Vorwarnung (blau). Gesetzliche Fristen mit Paragraf-Marke, nur die Warnzeit
    ist einstellbar (Entscheidung 4a). Speichern mit „Rückgängig“, kein Bestätigen-Fenster.
    Rahmen und Ablage von Werkstatt 11: window.BUERO_EINSTELLUNGEN_THEMEN, KE (kompass-einstellungen.js),
    Tabelle fahrschule_einstellungen (Schlüssel „fristen.<art>“, Wert = Objekt). Rechenregeln: KR.setzeFristen (kompass-rechnen.js).
@@ -120,7 +120,7 @@
       const el = this._el, ctx = this._ctx, darf = !!ctx.darfSchreiben;
       const w = eingaben || this._stand;
       el.innerHTML = `<h2 class="es-abschnitt es-doppelt">Fristen</h2><section data-esf>
-        <p class="es-hinweis">Wie lange eine Frist gilt und wann sie in Gelb (bald) oder Blau (demnächst) erscheint, für die ganze Fahrschule. Das gilt im Büro und in der App aller Fahrlehrer. Grau = gesetzlich festgelegt.</p>
+        <p class="es-hinweis">Wie lange eine Frist gilt und wann sie in Gelb (bald) oder Blau (demnächst) erscheint, für die ganze Fahrschule. Das gilt im Büro und in der App aller Fahrlehrer. Mit Paragraf = gesetzlich festgelegt.</p>
         <div class="esf-tabelle" role="table" aria-label="Fristen">
           <div class="esf-kopf" role="row"><span role="columnheader">Frist</span><span role="columnheader">Dauer</span><span role="columnheader">Warnung (gelb)</span><span role="columnheader">Vorwarnung (blau)</span><span role="columnheader"><span class="sr-only">Standard</span></span></div>
           ${ZEILEN.map((z) => {
@@ -222,14 +222,18 @@
         for (const art of geaendert) await this.schreibe(art, vorher[art], ctx); // in die Fahrschule, in der gespeichert wurde
         if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Fristen der vorigen Fahrschule wie vorher.", "ok"); return; }
         const jetzt = Object.assign({}, this._stand); for (const a of geaendert) jetzt[a] = vorher[a];
+        // frisch Getipptes in anderen Fristen behalten (nur im offenen Thema)
+        const behalten = this._el && this._el.isConnected ? [...this._el.querySelectorAll("[data-esf] input")].filter((i) => !geaendert.includes(i.dataset.art) && i.value !== String((this._stand[i.dataset.art] || {})[i.dataset.feld])).map((i) => [i.id, i.value]) : [];
         this.uebernehmen(jetzt, this._stand);
         if (this._el) this.zeichne(); // auch wenn das Thema gerade nicht offen ist: sonst bliebe der alte Wert als „Eingabe“ stehen
+        if (behalten.length) { for (const [id, v] of behalten) { const i = this._el.querySelector("#" + CSS.escape(id)); if (i) i.value = v; } this.pruefen(); }
         melde(this._ctx, "Fristen wie vorher", "ok");
       };
       if (typeof window.toastUndo === "function") window.toastUndo(text, zurueck);
       else melde(ctx, text, "ok");
     },
-    gleicheSchule(ctx) { return !!(this._ctx && ctx && this._ctx.fahrschuleId === ctx.fahrschuleId); },
+    // gleiche Fahrschule wie beim Speichern? Auch wenn das Thema gerade nicht offen ist (dann ist _ctx alt): KE kennt die aktuelle
+    gleicheSchule(ctx) { return !!(this._ctx && ctx && this._ctx.fahrschuleId === ctx.fahrschuleId && (!window.KE || typeof window.KE.fsId !== "function" || window.KE.fsId() === ctx.fahrschuleId)); },
     // Neue Werte gelten sofort im ganzen Büro; die Monate der Reaktivierung zusätzlich vom Server holen und vergleichen
     uebernehmen(neu, vorher) {
       this._stand = KR.normFristen(neu);

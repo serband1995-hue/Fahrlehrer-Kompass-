@@ -217,6 +217,10 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
       ed.append(kopf, mail);
       if (darf) {
         const un = el("div", "esv-unten");
+        // Speichern auch direkt unter der offenen Vorlage (Prüf-Team: sonst liegt der Knopf am Handy unter allen anderen Vorlagen)
+        const hier = el("button", "knopf haupt", "Speichern"); hier.type = "button"; hier.disabled = true; hier.setAttribute("data-esv-speichern-hier", "");
+        hier.addEventListener("click", () => this.speichern());
+        un.appendChild(hier);
         const sb = el("button", "knopf klein", "Standard"); sb.type = "button"; sb.setAttribute("data-esv-standard", art); sb.title = "Beide Texte zurück auf den Standard (Speichern nicht vergessen)";
         un.appendChild(sb); ed.appendChild(un);
       }
@@ -303,9 +307,10 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
         else if (geaendert.includes(a)) m.appendChild(el("span", "esv-marke neu", "nicht gespeichert"));
         else if (gespeichert) m.appendChild(el("span", "esv-marke", "geändert"));
       }
-      const knopf = root.querySelector("[data-esv-speichern]"), status = root.querySelector("[data-esv-status]");
+      const knopf = root.querySelector("[data-esv-speichern]"), status = root.querySelector("[data-esv-status]"), hier = root.querySelector("[data-esv-speichern-hier]");
       const nf = Object.keys(fehler).length;
       if (knopf) knopf.disabled = this._laeuft || nf > 0 || !geaendert.length;
+      if (hier) hier.disabled = this._laeuft || nf > 0 || !geaendert.length;
       if (status) status.textContent = nf ? "Bitte die Fehler prüfen." : geaendert.length ? `${geaendert.length} ${geaendert.length === 1 ? "Vorlage" : "Vorlagen"} geändert, noch nicht gespeichert.` : "Nichts geändert.";
       return { fehler, geaendert };
     },
@@ -316,7 +321,7 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
       if (!Object.keys(obj).length) await KE.zuruecksetzen(ctx.sb, ctx.fahrschuleId, schluessel);
       else await KE.setze(ctx.sb, ctx.fahrschuleId, schluessel, obj);
     },
-    gleicheSchule(ctx) { return !!(this._ctx && ctx && this._ctx.fahrschuleId === ctx.fahrschuleId); },
+    gleicheSchule(ctx) { return !!(this._ctx && ctx && this._ctx.fahrschuleId === ctx.fahrschuleId && (typeof KE.fsId !== "function" || KE.fsId() === ctx.fahrschuleId)); },
     async speichern() {
       const { fehler, geaendert } = this.aktualisiere();
       if (this._laeuft || Object.keys(fehler).length || !geaendert.length) return;
