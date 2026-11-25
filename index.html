@@ -10842,6 +10842,7 @@ function _sfBelegen(s,grp,l,idx0,anzahl){
   liste.forEach(i=>{ arr[i]=_sfKaestchen(l); });
   l.srcSonder=s.id+":"+grp+":"+idx0;
   if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx;
+  if(l.sonderArt&&l.sonderArt!==grp) l.sonderArt=grp; // Fable N2: eine vom Büro gesetzte Art folgt der Wahl im Plan
   l.srcSonderMin=_sfMin(l); // W13 PR 3: Länge beim Belegen; ändert sie sich (z. B. durch das Büro), passt _sfAbgleichen die Kästchen an
   return stand;
 }
@@ -10882,13 +10883,15 @@ function _sfAbgleichen(){
     const n=(min>0&&min!==l.srcSonderMin)?_sfEinh(l.von,l.bis):alt.length;
     // Kästchen, die inzwischen einem anderen Termin gehören oder von Hand abgehakt wurden (z. B. nach „nicht erschienen“
     // und zurück), werden durch die nächsten freien ersetzt (Fable H1)
-    let liste=alt.filter(i=>{ const o=arr[i]; return (o&&o.tid===l.id)||(!sfDone(o)&&!_sfTerminZu(s.id,grp,i,l)); }).slice(0,n);
+    // Ein Kästchen ohne tid mit dem Datum des Termins gehört ihm (so schreibt es ein Gerät vor PR 3; Fable N1) – es bekommt die tid
+    const eigen=o=>!!o&&(o.tid===l.id||(!o.tid&&o.iso===l.date));
+    let liste=alt.filter(i=>{ const o=arr[i]; return eigen(o)||(!sfDone(o)&&!_sfTerminZu(s.id,grp,i,l)); }).slice(0,n);
     const frei=i=>!liste.includes(i)&&!sfDone(arr[i])&&!_sfTerminZu(s.id,grp,i,l);
     const ab=liste.length?liste[liste.length-1]:(alt[0]||0)-1;
     for(let i=ab+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
     for(let i=0;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
     leeren(arr,l,liste); // eigene Kästchen, die nicht mehr dazugehören (z. B. ein anderes Gerät hat gekürzt; Fable H3)
-    liste.forEach(i=>{ const o=arr[i]; if(!sfDone(o)||(o.tid===l.id&&o.iso!==l.date)){ arr[i]=_sfKaestchen(l); geaendert=true; } });
+    liste.forEach(i=>{ const o=arr[i]; if(!sfDone(o)||(o.tid===l.id&&o.iso!==l.date)||(!o.tid&&o.iso===l.date)){ arr[i]=_sfKaestchen(l); geaendert=true; } });
     if(liste.length){ l.srcSonder=sid+":"+grp+":"+liste[0]; if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx; }
     // Länge erst als abgeglichen merken, wenn genug Kästchen frei waren (sonst nächstes Speichern erneut; Prüfer Büro 3)
     if(min>0&&liste.length===n) l.srcSonderMin=min;
@@ -11003,12 +11006,12 @@ function commitSonderZeit(s,grp,idx,date,von){
   }
   const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   if(kandidat){
-    const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
+    const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis,sonderArt:kandidat.sonderArt};
     kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;
     const stand=_sfBelegen(s,grp,kandidat,idx);
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
-      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;delete kandidat.srcSonderIdx;delete kandidat.srcSonderMin;
+      Object.assign(kandidat,vorherLesson);if(vorherLesson.sonderArt===undefined)delete kandidat.sonderArt;delete kandidat.srcSonder;delete kandidat.srcSonderIdx;delete kandidat.srcSonderMin;
       _sfZurueck(s,grp,stand);
       save();refreshPlanRing(s);buildSonder(s);
     });

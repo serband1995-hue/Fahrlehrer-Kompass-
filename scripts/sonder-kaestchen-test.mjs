@@ -782,6 +782,33 @@ await pruefe("K48", "Nachtfahrt heute 22:30–00:00: gilt erst nach Mitternacht 
   return f;
 });
 
+await pruefe("K49", "Gemischte Geräte: Kästchen mit dem Datum des Termins, aber ohne Termin-Nummer (altes Gerät) gehören dem Termin – keine doppelte Zählung (Fable N1)", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(() => {
+    const s = DB.students.find((x) => x.id === "s1");
+    s.plan.sonder.ueberland = [{ d: "01.10.26", iso: "2026-10-01" }, { d: "26.10.26", iso: "2026-10-26" }, { d: "26.10.26", iso: "2026-10-26" }];
+    DB.lessons.push({ id: "MIX", date: "2026-10-26", von: "10:00", bis: "11:30", art: "sonder", sid: "s1", status: "geplant", note: "", fc: null, srcSonder: "s1:ueberland:1", srcSonderIdx: [1, 2], srcSonderMin: 90 });
+    save(); save();
+    const l = DB.lessons.find((x) => x.id === "MIX");
+    return { plan: __t.plan("s1", "ueberland"), key: l.srcSonder, idx: l.srcSonderIdx, tids: s.plan.sonder.ueberland.map((o) => (o && o.tid) || null) };
+  });
+  return JSON.stringify(r.plan) === JSON.stringify(["2026-10-01", "2026-10-26", "2026-10-26"]) && r.key === "s1:ueberland:1" && JSON.stringify(r.tids) === JSON.stringify([null, "MIX", "MIX"]) ? null : JSON.stringify(r);
+});
+
+await pruefe("K50", "Das Büro hatte die Art gesetzt, der Fahrlehrer wählt im Picker eine andere: die Kästchen bleiben bei seiner Wahl (Fable N2)", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(async () => {
+    const l = DB.lessons.find((x) => x.id === "L1"); l.sonderArt = "autobahn"; save();
+    openSFPickerForLesson("L1", "s1", "2026-10-20", "08:00", "09:30", "", "sonder", null);
+    await new Promise((ok) => setTimeout(ok, 150));
+    document.querySelector('.sf-opt[data-grp="nacht"][data-idx="0"]').click();
+    await new Promise((ok) => setTimeout(ok, 150));
+    save();
+    return { nacht: __t.plan("s1", "nacht"), autobahn: __t.plan("s1", "autobahn"), art: DB.lessons.find((x) => x.id === "L1").sonderArt };
+  });
+  return r.nacht[0] === "2026-10-20" && r.nacht[1] === "2026-10-20" && !r.autobahn[0] && r.art === "nacht" ? null : JSON.stringify(r);
+});
+
 await pruefe("K19", "keine JS-Fehler und keine echten Dialogfenster im ganzen Lauf", async () => jsFehler);
 
 await browser.close();
