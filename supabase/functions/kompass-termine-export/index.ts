@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { berlinHeute, termineBauen, mehrdeutigeNummern } from "./termine.ts";
+import { berlinHeute, termineBauen, mehrdeutigeNummern, bestandenBauen, type ExportSchueler } from "./termine.ts";
 
 /*
   kompass-termine-export (10.10.2026)
@@ -17,6 +17,12 @@ import { berlinHeute, termineBauen, mehrdeutigeNummern } from "./termine.ts";
   Sie enthaelt nur Fahrschulen mit eingeschaltetem Akademie-Export. Termine gibt es nur noch fuer Schueler
   in Ausbildung (in_ausbildung = true). Fuer die Pruefung auf doppelte Nummern zaehlen weiter alle aktiv
   gefuehrten Schueler dieser Fahrschulen.
+
+  --- v4, 25.11.2026 (Akademie) ---
+  Zusaetzlich "bestanden": je Telefonnummer die juengste bestandene Praxispruefung der letzten 120 Tage mit Klasse
+  ({telefon, datum, klasse}, keine Namen). Schueler aus der Sicht OHNE Filter in_ausbildung. Eine Nummer, die bei mehr als
+  einem Schueler im Export steht, wird weggelassen (gezaehlt ueber ALLE Schueler der Sicht). Ein Fehler in diesem Teil
+  verhindert nie die Termine: dann bestanden = [].
 */
 function secretsMatch(a: string, b: string): boolean {
   const ea = new TextEncoder().encode(a), eb = new TextEncoder().encode(b);
@@ -38,6 +44,34 @@ async function geheimnisErmitteln(client: ReturnType<typeof createClient> | null
     if (error) { console.error("Vault-Zugriff fehlgeschlagen:", error.message); return null; }
     return typeof data === "string" && data.length >= 16 ? data : null;
   } catch (e) { console.error("Vault-Zugriff fehlgeschlagen:", e instanceof Error ? e.message : String(e)); return null; }
+}
+
+// v4: Bestandene Praxispruefungen. Nur lesen. Jeder Fehler ergibt eine leere Liste (die Termine gehen trotzdem raus).
+async function bestandenLaden(client: ReturnType<typeof createClient>, heute: string): Promise<{ telefon: string; datum: string; klasse: string | null }[]> {
+  try {
+    const ab = berlinHeute(new Date(Date.now() - 120 * 86400000));
+    const { data: pb, error: e2 } = await client.from("pruefungstermine")
+      .select("schueler_id, datum, klasse").eq("art", "praxis").eq("status", "bestanden")
+      .gte("datum", ab).lte("datum", heute).not("schueler_id", "is", null)
+      .order("datum", { ascending: false }).limit(5000);
+    if (e2) { console.error("Datenbankfehler (Bestanden):", e2.message); return []; }
+    if (!(pb || []).length) return [];
+    if ((pb || []).length >= 1000) { console.error("Zu viele bestandene Pruefungen fuer eine Abfrage"); return []; }
+    // ALLE Schueler im Export (seitenweise, PostgREST liefert hoechstens 1000 je Abfrage), damit Geschwister sicher erkannt werden
+    const alle: ExportSchueler[] = [];
+    for (let seite = 0; ; seite++) {
+      if (seite >= 50) { console.error("Zu viele Schueler im Export"); return []; }
+      const { data, error } = await client.from("v_akademie_export_schueler").select("id, telefon, klasse")
+        .order("id", { ascending: true }).range(seite * 1000, seite * 1000 + 999);
+      if (error) { console.error("Datenbankfehler (Bestanden-Schueler):", error.message); return []; }
+      alle.push(...((data || []) as ExportSchueler[]));
+      if ((data || []).length < 1000) break;
+    }
+    return bestandenBauen(pb || [], alle, ab, heute);
+  } catch (e) {
+    console.error("Fehler (Bestanden):", e instanceof Error ? e.message : String(e));
+    return [];
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -80,8 +114,9 @@ Deno.serve(async (req: Request) => {
       gleiche.push(...(data || []));
     }
     const termine = termineBauen(pt || [], schueler, heute, mehrdeutigeNummern(gleiche));
-    console.log("Termine ausgeliefert: " + termine.length);   // nur die Anzahl, keine Daten
-    return antwort(200, { termine });
+    const bestanden = await bestandenLaden(client, heute);
+    console.log("Termine ausgeliefert: " + termine.length + ", bestanden: " + bestanden.length);   // nur Anzahlen, keine Daten
+    return antwort(200, { termine, bestanden });
   } catch (e) {
     console.error("Unerwarteter Fehler:", e instanceof Error ? e.message : String(e));
     return antwort(500, { fehler: "Serverfehler" });

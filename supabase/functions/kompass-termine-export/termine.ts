@@ -31,3 +31,36 @@ export function termineBauen(pruefungen: Pruefung[], schueler: Schueler[], heute
   }
   return Array.from(frueh.entries()).map(([telefon, datum]) => ({ telefon, datum }));
 }
+
+// v4 (Akademie, 25.11.2026): je Telefonnummer die JUENGSTE bestandene Praxispruefung im Zeitraum [ab, heute].
+// alle = ALLE Schueler im Export (Sicht v_akademie_export_schueler, ohne Filter in_ausbildung): eine Nummer, die dort
+// mehr als einmal vorkommt (Geschwister, Familie), wird nie ausgeliefert -- auch wenn nur ein Geschwister bestanden hat.
+// klasse: aus der Pruefung, sonst die Klasse des Schuelers, sonst null. Keine Namen.
+export type BestandenPruefung = { schueler_id: string | null; datum: string; klasse?: string | null };
+export type ExportSchueler = { id: string; telefon: string | null; klasse?: string | null };
+export function telefonNorm(t: string): string { return String(t || "").replace(/\(0\)/g, "").replace(/[\s\-\/().]/g, ""); }
+export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchueler[], ab: string, heute: string): { telefon: string; datum: string; klasse: string | null }[] {
+  const nachId = new Map<string, ExportSchueler>();
+  const zaehl = new Map<string, number>();
+  for (const s of alle) {
+    if (!s || !s.id) continue;
+    nachId.set(String(s.id), s);
+    const n = telefonNorm(String(s.telefon || "").trim());
+    if (n) zaehl.set(n, (zaehl.get(n) || 0) + 1);
+  }
+  const best = new Map<string, { telefon: string; datum: string; klasse: string | null }>();
+  for (const p of pruefungen) {
+    if (!p || !p.schueler_id || !/^\d{4}-\d{2}-\d{2}$/.test(String(p.datum))) continue;
+    if (String(p.datum) < ab || String(p.datum) > heute) continue;
+    const s = nachId.get(String(p.schueler_id));
+    if (!s) continue;                                   // nicht im Export (andere Fahrschule, inaktiv, geloescht)
+    const tel = String(s.telefon || "").trim();
+    const n = telefonNorm(tel);
+    if (!n || (zaehl.get(n) || 0) > 1) continue;        // keine oder mehrdeutige Nummer
+    const alt = best.get(n);
+    if (alt && alt.datum >= String(p.datum)) continue;  // juengste gewinnt
+    const k = String(p.klasse || s.klasse || "").trim();
+    best.set(n, { telefon: tel, datum: String(p.datum), klasse: k || null });
+  }
+  return Array.from(best.values());
+}
