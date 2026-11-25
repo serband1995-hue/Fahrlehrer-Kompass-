@@ -272,7 +272,11 @@ function zeichne() {
   ziel.innerHTML = b.render ? b.render() : renderBald(b);
   ziel.dataset.kontext = kontext;
   // Seitenwechsel: Inhalt blendet ein (nur bei neuer Seite, nicht beim Auffrischen derselben)
-  if (!gleich) { ziel.classList.remove("seite-ein"); void ziel.offsetWidth; ziel.classList.add("seite-ein"); }
+  // Nur beim Wechsel von einer Seite zu einer anderen; nicht beim ersten Zeichnen nach dem Laden (sonst bewegt sich der Inhalt, während man schon tippt)
+  // und nicht, wenn nur Person oder Fahrschule wechseln (derselbe Bereich mit derselben Adresse)
+  const seitenKey = b.id + "|" + location.hash;
+  if (ziel.dataset.seite !== undefined && ziel.dataset.seite !== seitenKey) { ziel.classList.remove("seite-ein"); void ziel.offsetWidth; ziel.classList.add("seite-ein"); }
+  ziel.dataset.seite = seitenKey;
   if (b.nachher) b.nachher(ziel);
   if (gleich) { klappWieder(ziel, klapp); window.scrollTo(0, y); }
 }

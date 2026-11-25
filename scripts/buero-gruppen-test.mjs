@@ -293,6 +293,17 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   pruefe("B1", "Leitung (Administrator) sieht Urlaub, Schichtplan und Backups", leitung.admin && ["#urlaub", "#schichtplan", "#backups"].every((h) => leitung.punkte.includes(h)) ? null : JSON.stringify(leitung));
   pruefe("B2", "Büro (kein Administrator) sieht Urlaub und Schichtplan, aber kein Backups", !buero.admin && buero.punkte.includes("#urlaub") && buero.punkte.includes("#schichtplan") && !buero.punkte.includes("#backups") ? null : JSON.stringify(buero));
 }
+// ---- keine Einblendung beim ersten Zeichnen (CI-Fehler „Text überlappt“: Klick während der Einblendung) ----
+{
+  const { page, ctx } = await oeffne({ hash: "#pruefungen", vorher: `window.__ae = 0; document.addEventListener("animationstart", (e) => { if (e.animationName === "seite-ein") window.__ae++; }, true);` });
+  const nach = () => page.evaluate(() => window.__ae);
+  pruefe("A3", "erstes Zeichnen nach dem Laden blendet nicht ein (nichts bewegt sich, während man schon tippt)", (await nach()) === 0 ? null : "Starts: " + (await nach()));
+  await page.evaluate(() => { S.fsId = S.fsId; zeichne(); zeichne(); }); await warte(page, 250);
+  pruefe("A3b", "dieselbe Seite neu zeichnen: keine Einblendung", (await nach()) === 0 ? null : "Starts: " + (await nach()));
+  await page.evaluate(() => { location.hash = "#kalender"; }); await warte(page, 300);
+  pruefe("A3c", "Wechsel auf eine andere Seite: genau eine Einblendung", (await nach()) === 1 ? null : "Starts: " + (await nach()));
+  await ctx.close();
+}
 // ---- reduzierte Bewegung ----
 {
   const { page, ctx, konsole } = await oeffne({ hash: "#kalender" });
