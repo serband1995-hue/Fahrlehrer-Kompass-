@@ -3,6 +3,8 @@
 // Rolle, Fahrschule, Betrag, Zahlungsdaten, Limit, bestimmt den Empfänger selbst) und verschickt dann über Resend.
 // Deploy mit verify_jwt = false (die Funktion prüft den Anmelde-Token über die Datenbank-Funktion selbst).
 // Nie die volle Empfänger-Adresse zurückgeben. Im Testmodus: [TEST] im Betreff und gelber Kasten in der Mail.
+// W15 S4: Den Satz der Mail füllt mail.js aus der Vorlage der Fahrschule (Rückgabe der RPC: vorlage_art, vorlage, faellig_am,
+// tage). Beim Deploy alle drei Dateien mitgeben: index.ts, mail.js, vorlagen.js (= Kopie von kompass-vorlagen.js).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { absender, base64, betreff, epcText, mailHtml, mailText, qrPng } from "./mail.js";
 

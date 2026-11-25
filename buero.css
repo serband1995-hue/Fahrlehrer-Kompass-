@@ -914,7 +914,7 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-anm-summe b{font-size:19px;}
 .bk-anm-warn{color:var(--pill-gelb);font-weight:600;}
 /* W15: Reiter „Läuft bald ab“ – Knopf „Akte öffnen“ auch am PC mindestens 44 px (Regel für alle neuen Knöpfe) */
-.knopf.klein[data-baldakte]{min-height:44px;}
+.knopf.klein[data-baldakte],.knopf.klein[data-balderinnern]{min-height:44px;}
 /* W15 (Prüf-Team): „Läuft bald ab“ am Handy als Karten statt Tabelle – nichts abgeschnitten, Knopf erreichbar */
 .tabelle[data-baldliste] .marke-pill{white-space:nowrap;}
 @media (max-width:700px){

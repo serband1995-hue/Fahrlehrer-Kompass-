@@ -700,6 +700,18 @@ function laeuftBaldListe(heute) {
   }
   return liste.sort((x, y) => x.datum.localeCompare(y.datum) || String(x.name || "").localeCompare(String(y.name || ""), "de") || x.art.localeCompare(y.art));
 }
+// W15 S4: Reaktivierung in „Läuft bald ab“ – Knopf „Erinnerung schicken“ (öffnet die Akte mit dem Mail-Formular) und
+// der Haken der letzten Erinnerung im aktuellen Modus (Test/Echt), damit niemand doppelt erinnert
+function baldErinnernKnopf(x) {
+  if (x.art !== "reaktivierung" || x.wer !== "schueler" || typeof zmErinnernKann !== "function") return "";
+  const s = S.schueler.find((y) => y.id === x.id);
+  return zmErinnernKann(s) ? `<button class="knopf klein haupt" type="button" data-balderinnern="${esc(x.id)}">Erinnerung schicken</button>` : "";
+}
+function baldErinnert(x) {
+  if (x.art !== "reaktivierung" || x.wer !== "schueler" || typeof zmLetzte !== "function" || typeof zmDarf !== "function" || !zmDarf()) return "";
+  const m = zmLetzte(x.id, "reaktivierung");
+  return m ? `<div class="unter" data-balderinnert>✓ erinnert am ${esc(datumDE(String(m.gesendet_am || m.angelegt_am || "").slice(0, 10)))}${m.modus === "test" ? " (Test)" : ""}</div>` : "";
+}
 function noch(tage) { return tage === 0 ? "heute" : tage === 1 ? "morgen" : `in ${tage} Tagen`; }
 function renderFristen() {
   const heute = KR.todayISO();
@@ -747,10 +759,10 @@ function renderFristen() {
   // Am Handy wird jede Zeile eine Karte (buero.css, [data-baldliste]): Name und „Noch“ oben, darunter Was und Datum, Knopf über die ganze Breite
   const baldZeilen = baldListe.map((x) => `<tr data-bald="${esc(x.art)}">
       <td class="bald-wer"><b>${esc(x.name || "–")}</b><div class="unter">${esc(x.unter || "")}</div></td>
-      <td class="bald-was">${esc(x.was)}</td>
+      <td class="bald-was">${esc(x.was)}${baldErinnert(x)}</td>
       <td class="zeitspalte bald-am">${esc(datumDE(x.datum))}</td>
       <td class="bald-noch"><span class="marke-pill ${x.stufe === "bald" ? "gelb" : "blau"}">${esc(noch(x.tage))}</span></td>
-      <td class="aktionen bald-akte"><div class="aktionen-box"><button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
+      <td class="aktionen bald-akte"><div class="aktionen-box">${baldErinnernKnopf(x)}<button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
     </tr>`).join("");
   const umschreibZeilen = ansicht !== "umschreiber" ? "" : liste.map(({ s, u }) => {
     const [uf, ut] = UMSCHREIB_TEXT[u.stufe];
@@ -848,6 +860,7 @@ function bindeFristen(ziel) {
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
   ziel.querySelectorAll("[data-baldakte]").forEach((b) => b.addEventListener("click", () => (b.dataset.baldwer === "fahrlehrer" ? fahrlehrerAkte(b.dataset.baldakte) : schuelerDialog(b.dataset.baldakte))));
+  ziel.querySelectorAll("[data-balderinnern]").forEach((b) => b.addEventListener("click", () => zmErinnern(b.dataset.balderinnern)));
   ziel.querySelectorAll("[data-umschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.umschueler)));
   ziel.querySelectorAll("[data-antragneu]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;

@@ -29,6 +29,11 @@ const ZM_FEHLER = {
   nicht_gesperrt: null, // Text mit Namen in zmSende
   keine_email: "Keine E-Mail-Adresse in der Akte.",
   keine_testadresse: "Es ist keine Test-Adresse hinterlegt. Bitte unter Einstellungen eine eintragen.",
+  // W15 S4: der Server prüft, ob die Reaktivierung wirklich ansteht (gleiche Regel wie hier im Büro)
+  reakt_befreit: "Der Schüler ist von der Reaktivierung befreit. Es wurde nichts gesendet.",
+  reakt_entfaellt: "Die Reaktivierung entfällt laut Preisliste. Es wurde nichts gesendet.",
+  reakt_ohne_datum: "In der Akte fehlt das Vertragsdatum. Es wurde nichts gesendet.",
+  reakt_nicht_faellig: "Die Reaktivierung ist noch nicht fällig (noch vor der Vorwarnzeit). Es wurde nichts gesendet.",
 };
 const ZM_NICHT_MOEGLICH = ZM_NICHT_MOEGLICH_TEXT;
 const LADEFEHLER_TEXT = "Zahlungsdaten konnten nicht geladen werden. Bitte Seite neu laden.";
@@ -221,8 +226,9 @@ function zmAngebote(x) {
     liste.push({ art: "pruefung", betrag: zmBetragFeld(preis), wofuer: wofuer.slice(0, 80) });
   }
   if (istAktiv(x)) {
-    const r = KR.reaktInfo(x);
-    if (r.gesperrt || r.stufe === "pruefen_faellig") liste.push({ art: "reaktivierung", betrag: zmBetragFeld(reaktBetrag(x)), wofuer: "Reaktivierung" });
+    // W15 S4: auch vor der Fälligkeit (gelb/blau wie in „Läuft bald ab“) als Erinnerung; der Server prüft dieselbe Regel
+    const r = KR.reaktInfo(x), bald = r.stufe === "bald" || r.stufe === "demnaechst";
+    if (r.gesperrt || r.stufe === "pruefen_faellig" || bald) liste.push({ art: "reaktivierung", betrag: zmBetragFeld(reaktBetrag(x)), wofuer: "Reaktivierung", bald, faellig: r.faellig });
   }
   const z = zahlungSperre(x);
   if (z && istAktiv(x)) liste.push({ art: "zahlung_offen", betrag: "", wofuer: (z.grund || "Offene Zahlung").slice(0, 80) });
@@ -264,8 +270,8 @@ function zmBlockHTML(sid) {
     const offen = ZM.offen.has(schluessel);
     const haken = letzte ? `<p class="zm-haken" data-zmhaken="${esc(a.art)}">✓ gesendet am ${esc(zmZeit(letzte.gesendet_am || letzte.angelegt_am))} · ${esc(zmEuroText(letzte.betrag_cent))} · ${esc(letzte.wofuer || "")}${letzte.modus === "test" ? ` <span class="zm-pill-test">Test</span>` : ""}</p>` : "";
     return `<div class="zm-art" data-zmart="${esc(a.art)}">
-      <div class="zm-art-kopf"><b>${esc(k.titel)}</b>${haken}</div>
-      <button type="button" class="knopf" data-zmoeffne="${esc(a.art)}"${grund ? " disabled" : ""}>${esc(letzte ? "Erinnerung schicken" : k.knopf)}</button>
+      <div class="zm-art-kopf"><b>${esc(k.titel)}</b>${a.faellig ? `<span class="leise klein" data-zmfaellig> · ${a.bald ? "fällig am" : "fällig seit"} ${esc(datumDE(a.faellig))}</span>` : ""}${haken}</div>
+      <button type="button" class="knopf" data-zmoeffne="${esc(a.art)}"${grund ? " disabled" : ""}>${esc(letzte || a.bald ? "Erinnerung schicken" : k.knopf)}</button>
       ${grund ? `<p class="leise klein zm-grund" data-zmgrund>${esc(grund)}</p>` : ""}
       <div class="zm-form" data-zmform${offen ? "" : " hidden"}>
         <label>Betrag in €<input type="text" inputmode="decimal" maxlength="10" autocomplete="off" data-zmbetrag value="${esc(betrag)}" placeholder="z. B. 120,00"></label>
@@ -350,7 +356,7 @@ function zmBinde(block, dlg, sid) {
           ZM.laeuft.delete(schluessel);
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
-          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert") && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
+          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert" || /^reakt_/.test(erg.code || "")) && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
           const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
           const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
           if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
@@ -375,6 +381,23 @@ async function zmDatenNeuLaden() {
   if ($("zmEinst")) zeichne();
 }
 
+// W15 S4: „Erinnerung schicken“ aus „Läuft bald ab“ – Akte öffnen, Formular der Reaktivierung aufgeklappt (derselbe Weg mit
+// 5 Sekunden „Rückgängig“ wie in der Akte, kein zweiter Weg zum Senden)
+function zmErinnernKann(x) {
+  if (!zmDarf() || S.zmFehlt || !x || !istAktiv(x)) return false;
+  return zmAngebote(x).some((a) => a.art === "reaktivierung");
+}
+function zmErinnern(sid) {
+  ZM.offen.add(sid + "|reaktivierung");
+  schuelerDialog(sid);
+  requestAnimationFrame(() => {
+    const z = document.querySelector(`#zmBlock[data-zmsid="${CSS.escape(sid)}"] [data-zmart="reaktivierung"]`);
+    if (!z) return;
+    z.scrollIntoView({ block: "center" });
+    const f = z.querySelector("[data-zmbetrag]");
+    if (f && !f.disabled) f.focus({ preventScroll: true });
+  });
+}
 // Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, code, text }
 async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr) {
   let data = null, error = null;
