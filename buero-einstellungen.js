@@ -81,6 +81,7 @@
   }
   const entwurfDa = (id) => !!(Z.entwurf[ek(id)] && Object.keys(Z.entwurf[ek(id)]).length);
   const entwurfWeg = (id) => { delete Z.entwurf[ek(id)]; };
+  const entwurfFeldWeg = (id, name) => { const d = Z.entwurf[ek(id)]; if (d) { delete d[name]; if (!Object.keys(d).length) entwurfWeg(id); } };
 
   // Eine Zahl in fahrschulen.konfiguration speichern: gleicher Weg wie vorher auf der Fristen-Seite
   async function konfigSpeichern(feld, wert, ctx, thema) {
@@ -98,6 +99,53 @@
     ctx.meldung("Gespeichert.", "ok");
     return true;
   }
+  /* ---------- Einstellungen je Fahrschule (fahrschule_einstellungen über KE): eine Zahl je Karte ---------- */
+  const keDa = () => !!(W.KE && typeof KE.zahl === "function");
+  const keGespeichert = (o) => keDa() && Object.prototype.hasOwnProperty.call(KE.wert(o.schluessel, {}), o.feld);
+  const keZahl = (o) => (keDa() ? KE.zahl(o.schluessel, o.feld, o.std, o.min, o.max) : o.std);
+  // KE.setze/zuruecksetzen werfen bei Fehlern einen Error mit deutschem Text (oder liefern {ok:false, fehler}): beides wird zu {ok, fehler}
+  async function keAufruf(f) {
+    try { const r = await f(); return r && r.ok === false ? { ok: false, fehler: r.fehler || "Nicht gespeichert" } : { ok: true }; }
+    catch (e) { return { ok: false, fehler: (e && e.message) || "Nicht gespeichert" }; }
+  }
+  function keKarteHTML(o, darf) {
+    const wert = keZahl(o), id = "es" + o.feld.charAt(0).toUpperCase() + o.feld.slice(1);
+    return `<form class="es-keform" data-es-ke="${o.feld}" autocomplete="off" novalidate>
+      ${zeile(o.name, `<label class="es-wert"><input id="${id}" type="number" name="${o.feld}" inputmode="numeric" min="${o.min}" max="${o.max}" step="1" value="${wert}"${darf ? "" : " disabled"}><span class="es-einheit">${esc(o.einheit)}</span></label>`, { fuer: id, hinweis: o.hinweis })}
+      <div class="es-fuss">${darf ? `${keGespeichert(o) ? `<button class="knopf" type="button" data-es-std>Auf Standard zurück (${o.std})</button>` : ""}<button class="knopf haupt" type="submit">Speichern</button>` : `<span class="leise klein">Das darfst du nicht ändern.</span>`}</div>
+    </form>`;
+  }
+  function keKarteBinden(el, ctx, thema, o) {
+    const f = el.querySelector(`form[data-es-ke="${o.feld}"]`);
+    if (!f || !ctx.darfSchreiben) return;
+    entwurfBinden(f, thema);
+    const fertig = (text) => { entwurfFeldWeg(thema, o.feld); if (o.nach) o.nach(keZahl(o)); toast("Einstellungen gespeichert"); zeichne(); ctx.meldung(text, "ok"); };
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const roh = String(f[o.feld].value).trim(), n = Number(roh);
+      if (!/^[0-9]{1,3}$/.test(roh) || n < o.min || n > o.max) { ctx.meldung(`Bitte eine ganze Zahl von ${o.min} bis ${o.max} eintragen.`, "fehler"); return; }
+      const knoepfe = f.querySelectorAll("button"); knoepfe.forEach((b) => { b.disabled = true; });
+      const r = await keAufruf(() => KE.setze(ctx.sb, ctx.fahrschuleId, o.schluessel, { [o.feld]: n }));
+      if (r.ok) { fertig("Gespeichert."); return; }
+      if (f.isConnected) knoepfe.forEach((b) => { b.disabled = false; });
+      ctx.meldung(r.fehler, "fehler");
+    });
+    const std = f.querySelector("[data-es-std]");
+    if (std) std.addEventListener("click", async () => {
+      const knoepfe = f.querySelectorAll("button"); knoepfe.forEach((b) => { b.disabled = true; });
+      const r = await keAufruf(() => KE.zuruecksetzen(ctx.sb, ctx.fahrschuleId, o.schluessel));
+      if (r.ok) { fertig(`Wieder der Standard (${o.std}).`); return; }
+      if (f.isConnected) knoepfe.forEach((b) => { b.disabled = false; });
+      ctx.meldung(r.fehler, "fehler");
+    });
+  }
+  const KE_SONDER = { schluessel: "fahrstunden.sonderfahrt", feld: "minuten", std: 45, min: 30, max: 90, einheit: "Min.", name: "Länge einer Sonderfahrt",
+    hinweis: "So lang ist ein Kästchen einer Sonderfahrt (Überland, Autobahn, Nacht) im Ausbildungsplan; im Nachweis steht „je N Min.“. Fahrchecks und Unterrichtseinheiten bleiben bei 45 Minuten.",
+    nach: (n) => { if (typeof KR !== "undefined" && KR.setzeSonderMinuten) KR.setzeSonderMinuten(n); } };
+  const KE_PAPIERKORB = { schluessel: "papierkorb.tage", feld: "tage", std: 30, min: 7, max: 90, einheit: "Tage", name: "Papierkorb behalten",
+    hinweis: "Gelöschte Termine liegen so lange im Papierkorb, danach werden sie endgültig gelöscht. Unterschriebene und stornierte Stunden bleiben immer." };
+  const KE_RUECK = { schluessel: "rueckgaengig.sekunden", feld: "sekunden", std: 6, min: 4, max: 30, einheit: "Sek.", name: "„Rückgängig“ zeigen",
+    hinweis: "So lange steht nach dem Löschen der Knopf „Rückgängig“ in der App und im Büro. Absage-Mails gehen erst danach raus." };
   const nurSuper = (was) => `<span class="leise klein">${was} ändert der Super-Admin.</span>`;
 
   /* ---------- Eigene Themen ---------- */
@@ -163,10 +211,20 @@
     { id: "vorlagen", titel: "Nachrichten-Vorlagen", reihenfolge: 50,
       render(el) { el.innerHTML = abschnitt("Nachrichten-Vorlagen") + leer("Hier kommt bald: die Texte der Mails und Nachrichten an Schüler selbst anpassen."); } },
     { id: "kalender", titel: "Fahrstunden & Kalender", reihenfolge: 60,
-      render(el) {
+      verlassen: () => !entwurfDa("kalender"), verwerfen: () => entwurfWeg("kalender"),
+      render(el, ctx) {
         el.innerHTML = `${abschnitt("Fahrstunden & Kalender")}
           ${zeile("Arbeitszeiten", `<div class="es-wert es-text">in der App</div>`, { hinweis: "Arbeitszeiten stellt jeder Fahrlehrer in der App ein (Kalender, Zahnrad)." })}
-          ${leer("Hier kommt bald: die Länge einer Sonderfahrt.")}`;
+          ${abschnitt("Sonderfahrt")}${keKarteHTML(KE_SONDER, ctx.darfSchreiben)}`;
+        keKarteBinden(el, ctx, "kalender", KE_SONDER);
+      } },
+    { id: "loeschen", titel: "Löschen & Rückgängig", reihenfolge: 65,
+      verlassen: () => !entwurfDa("loeschen"), verwerfen: () => entwurfWeg("loeschen"),
+      render(el, ctx) {
+        el.innerHTML = `${abschnitt("Papierkorb")}${keKarteHTML(KE_PAPIERKORB, ctx.darfSchreiben)}
+          ${abschnitt("Rückgängig")}${keKarteHTML(KE_RUECK, ctx.darfSchreiben)}`;
+        keKarteBinden(el, ctx, "loeschen", KE_PAPIERKORB);
+        keKarteBinden(el, ctx, "loeschen", KE_RUECK);
       } },
     { id: "team", titel: "Team & Zugänge", reihenfolge: 70,
       render(el) {
@@ -210,12 +268,27 @@
   const zurueckPfeil = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
   const listeHTML = (T, aktivId) => T.map((t) => `<a class="es-thema" href="${themaHash(t.id)}" data-es-thema="${esc(t.id)}"${t.id === aktivId ? ' aria-current="page"' : ""}><span>${esc(t.titel)}</span>${chevron}</a>`).join("");
   function darfVerlassen(t) { try { return !(t && typeof t.verlassen === "function") || t.verlassen() !== false; } catch (e) { return true; } }
-  function rueckfrage(alt, hash) {
+  // weg: "klick" (Tipp auf ein Thema: neuer Eintrag im Verlauf), "back"/"forward" (so wollte der Nutzer springen: noch einmal so springen),
+  // "ersatz" (kein Sprung möglich: den Eintrag ersetzen). Nach der Zurück-Taste entsteht so nie ein zusätzlicher Verlaufseintrag.
+  function rueckfrage(alt, hash, weg) {
     bestaetige("Änderungen verwerfen?", "Was du hier geändert hast, ist noch nicht gespeichert.", "Ja, verwerfen", "Weiter bearbeiten", true).then((ok) => {
       if (!ok) return;
       if (typeof alt.verwerfen === "function") { try { alt.verwerfen(); } catch (e) { /* weiter */ } }
       Z.frei = true;
-      if (location.hash === hash) { zeichne(); Z.frei = false; } else location.hash = hash;
+      if (location.hash === hash) { zeichne(); Z.frei = false; return; }
+      if (weg === "back" || weg === "forward") {
+        if (weg === "back") history.back(); else history.forward();
+        setTimeout(() => { if (Z.frei) { Z.frei = false; history.replaceState(null, "", hash); zeichne(); } }, 400); // kam kein Sprung an
+      } else if (weg === "ersatz") {
+        // das Rückfrage-Fenster hat einen eigenen Verlaufseintrag; erst wenn er weg ist, den Eintrag der Seite ersetzen
+        let n = 0;
+        const los = () => {
+          if (history.state && history.state.fenster != null && n++ < 20) { setTimeout(los, 30); return; }
+          history.replaceState(null, "", hash); zeichne(); Z.frei = false;
+        };
+        los();
+      }
+      else location.hash = hash;
     });
   }
 
@@ -237,13 +310,16 @@
       else if (dirty) { // Zurück-Taste oder Adresse: beim alten Thema bleiben und fragen
         Z.halte = alt; const neuHash = location.hash;
         const jetzt = typeof buNr === "function" ? buNr() : null;
+        // Richtung nur aus den Verlaufsnummern ableiten, wenn die Seite dieser Sitzung bekannt ist (nach F5 sind alte Nummern fremd: dann gleich ersetzen)
+        const bekannt = jetzt != null && Z.nr != null && !(typeof buUnbekannt !== "undefined" && buUnbekannt);
         aktiv = alt;
-        if (Z.nr != null && jetzt != null && jetzt !== Z.nr) {
+        if (bekannt && jetzt !== Z.nr) {
           // erst zurückspringen, dann fragen (der Sprung schließt offene Fenster); kommt kein Sprung an, wird nach 0,4 s ersatzweise umgeschrieben
-          Z.behalte = true; Z.frage = { alt, hash: neuHash };
-          if (jetzt < Z.nr) history.forward(); else history.back();
-          setTimeout(() => { if (Z.frage) { const q = Z.frage; Z.frage = null; Z.behalte = false; history.replaceState(null, "", themaHash(q.alt.id)); rueckfrage(q.alt, q.hash); } }, 400);
-        } else { history.replaceState(null, "", themaHash(alt.id)); rueckfrage(alt, neuHash); }
+          const wollte = jetzt < Z.nr ? "back" : "forward";
+          Z.behalte = true; Z.frage = { alt, hash: neuHash, weg: wollte };
+          if (wollte === "back") history.forward(); else history.back();
+          setTimeout(() => { if (Z.frage) { const q = Z.frage; Z.frage = null; Z.behalte = false; history.replaceState(null, "", themaHash(q.alt.id)); rueckfrage(q.alt, q.hash, "ersatz"); } }, 400);
+        } else { history.replaceState(null, "", themaHash(alt.id)); rueckfrage(alt, neuHash, "ersatz"); }
       }
     } else {
       Z.frei = false;
@@ -251,7 +327,7 @@
       else if (alt && aktiv && alt.id === aktiv.id && Z.behalte) { // Rückgängig-Sprung: das Feld samt Eingabe behalten, dann fragen
         if (typeof buNr === "function") Z.nr = buNr();
         Z.behalte = false; Z.halte = alt;
-        if (Z.frage) { const q = Z.frage; Z.frage = null; setTimeout(() => rueckfrage(q.alt, q.hash), 0); }
+        if (Z.frage) { const q = Z.frage; Z.frage = null; setTimeout(() => rueckfrage(q.alt, q.hash, q.weg), 0); }
       }
     }
     Z.aktiv = aktiv;
@@ -271,7 +347,7 @@
     const aktiv = Z.aktiv, box = ziel.querySelector("#esBox");
     if (!aktiv || !box) return;
     const es = ziel.querySelector(".es"); if (es) document.body.dataset.esAnsicht = es.dataset.ansicht; // Handy: im Thema steht der Themenname statt „Einstellungen“ oben
-    if (Z.halte && Z.el && !Z.el.isConnected) { box.replaceWith(Z.el); }
+    if (Z.halte && Z.el && !Z.el.isConnected) { box.replaceWith(Z.el); if (!Z.behalte && !Z.frage && typeof buNr === "function") Z.nr = buNr(); }
     else {
       const ctx = kontext();
       const fehler = (e) => { console.error(e); box.innerHTML = leer("Dieses Thema konnte nicht geöffnet werden. Bitte die Seite neu laden."); ctx.meldung("Dieses Thema konnte nicht geladen werden.", "fehler"); };
