@@ -164,6 +164,7 @@ const ICONS = {
   urlaub: NAV_ICON('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>'),
   schichtplan: NAV_ICON('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9.5h16M4 14.5h16M9.5 4v16M14.5 4v16"/>'),
   backups: NAV_ICON('<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/><path d="M12 8.5V12l2.5 1.5"/>'),
+  einstellungen: NAV_ICON('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
   neuigkeiten: NAV_ICON('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'),
 };
 const BEREICHE = [
@@ -182,6 +183,8 @@ const BEREICHE = [
   { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
   { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function" && istAdmin(), render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
+  // Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js), ganz unten in der Leiste; für Büro, Leitung und Super-Admin
+  { id: "einstellungen", titel: "Einstellungen", neben: true, wenn: () => typeof renderEinstellungenSeite === "function" && !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)), render: (...a) => renderEinstellungenSeite(...a), nachher: (...a) => typeof bindeEinstellungenSeite === "function" && bindeEinstellungenSeite(...a) },
   // Unterseiten: per Adresse erreichbar, in der Leiste ist der Elternpunkt markiert
   { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: renderAuslastung },
   // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist); Werkstatt 13: Reiter „Preise | Pakete“ in buero-pakete.js
@@ -278,7 +281,8 @@ function zeichne() {
   // Seitenwechsel: Inhalt blendet ein (nur bei neuer Seite, nicht beim Auffrischen derselben)
   // Nur beim Wechsel von einer Seite zu einer anderen; nicht beim ersten Zeichnen nach dem Laden (sonst bewegt sich der Inhalt, während man schon tippt)
   // und nicht, wenn nur Person oder Fahrschule wechseln (derselbe Bereich mit derselben Adresse)
-  const seitenKey = b.id + "|" + location.hash;
+  // Einstellungen: der Themenwechsel blendet nur das Thema ein (buero-einstellungen.js), nicht die ganze Seite
+  const seitenKey = b.id + "|" + (b.id === "einstellungen" ? "" : location.hash);
   if (ziel.dataset.seite !== undefined && ziel.dataset.seite !== seitenKey) { ziel.classList.remove("seite-ein"); void ziel.offsetWidth; ziel.classList.add("seite-ein"); }
   ziel.dataset.seite = seitenKey;
   if (b.nachher) b.nachher(ziel);
@@ -858,7 +862,8 @@ function renderFristen() {
   const zeilen = liste.map(({ s, r, t, a, tf, u }) => {
     const [rf, rt] = reaktText(s, r);
     const [tfarbe, tt] = THEORIE_TEXT[t.stufe];
-    const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>` : "";
+    const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>`
+      : r.stufe === "entfaellt" && ohneVertragsdatum(s, r) ? '<div class="unter" data-ohnedatum>Vertragsdatum fehlt</div>' : ""; // W15 S3: Grund, warum er unter „Ohne Vertragsdatum“ steht
     const tDatum = t.ablauf ? `<div class="unter">${t.tage < 0 ? "seit " : "bis "}${datumDE(t.ablauf)}${t.grund === "praxis" ? " (Praxisprüfung)" : ""}</div>` : "";
     let zahlen = (r.stufe === "gesperrt" || r.stufe === "pruefen_faellig" || r.stufe === "bald")
       ? `<button class="knopf klein haupt" data-zahlung="${esc(s.id)}" type="button">${euro(reaktBetrag(s))} erhalten</button>` : "";
@@ -884,43 +889,13 @@ function renderFristen() {
       + `<p class="leise klein">Hier steht, was in den nächsten Wochen abläuft. Schon Abgelaufenes steht unter „Handlungsbedarf“.</p>` : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" || ansicht === "bald" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
+    ${ansicht === "ohne" ? `<p class="leise klein" data-ohnehinweis>Hier stehen alle ohne Vertragsdatum, auch wenn die Reaktivierung gerade entfällt. Ändert sich die Preisliste, braucht das Büro das Datum wieder.</p>` : ""}
     <p class="leise klein" data-reaktregel>${KR.reaktFreiAm(undefined, heute)
       ? "Reaktivierung entfällt laut Preisliste. Deshalb wird niemand gesperrt und nichts wird fällig."
       : `Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, ${reaktRegelText()}. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist.`} Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
-  </div>${renderBueroEinstellungen()}${typeof zmEinstellungenHTML === "function" ? zmEinstellungenHTML() : ""}`; // Werkstatt 11: Zahlungsdaten für Mails (buero-zahlungsmail.js)
-}
-function renderBueroEinstellungen() {
-  const k = (S.fs && S.fs.konfiguration) || {};
-  const darf = S.profil && S.profil.rolle === "super_admin";
-  return `<div class="karte nicht-drucken"><div class="karte-kopf"><h2>Einstellungen</h2></div>
-    <form id="einstForm" class="formular">
-      ${reaktInPreisliste() ? `<p class="voll">Reaktivierung heute: <b>${esc(reaktHeuteText())}</b> · steht in der <a href="#preise">Preisliste</a> (dort mit „gültig ab“ ändern).</p>` : ""}
-      <label>${reaktInPreisliste() ? "Reaktivierung für Verträge vor dem ersten Eintrag der Preisliste in €" : "Standardbetrag Reaktivierung in €"}<input type="number" name="betrag" min="1" max="9999" step="0.01" value="${esc(k.reaktivierungBetrag || REAKT_STANDARD)}"${darf ? "" : " disabled"}></label>
-      <label>Unterrichtseinheiten pro Fahrlehrer und Woche (12 pro Tag × 5 Tage)<input type="number" name="ue" min="1" max="200" step="1" value="${esc(ueProWoche())}"${darf ? "" : " disabled"}></label>
-      <div class="voll knopfreihe">${darf ? `<button class="knopf haupt" type="submit">Einstellungen speichern</button>` : `<span class="leise klein">Diese Einstellungen ändert der Super-Admin${reaktInPreisliste() ? " (die Preise ändern Büro und Leitung in der Preisliste)" : ""}. Eine abweichende Zahlung (z. B. Sonderangebot) trägst du direkt beim Eintragen der Zahlung ein.</span>`}</div>
-    </form></div>`;
-}
-function bindeEinstellungen(ziel) {
-  if (typeof zmBindeEinstellungen === "function") zmBindeEinstellungen(ziel); // Werkstatt 11
-  const f = ziel.querySelector("#einstForm");
-  if (!f || !f.ue || f.ue.disabled) return;
-  f.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    // K9: Feld fehlt (keine Berechtigung, siehe oben) → alter Wert bleibt
-    const betrag = f.betrag ? Number(String(f.betrag.value).replace(",", ".")) : reaktBetragAlt();
-    if (!(betrag > 0)) { toast("Bitte einen Betrag eintragen.", true); return; }
-    const ue = Number(f.ue.value);
-    if (!(ue >= 1)) { toast("Bitte die Unterrichtseinheiten pro Woche eintragen.", true); return; }
-    const neu = Object.assign({}, (S.fs && S.fs.konfiguration) || {}, { reaktivierungBetrag: betrag, ueProWoche: ue });
-    const res = await supa.from("fahrschulen").update({ konfiguration: neu }).eq("id", S.fsId).select("id");
-    if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
-    S.fs.konfiguration = neu;
-    toast("Einstellungen gespeichert");
-    zeichne();
-  });
+  </div>${typeof zmEinstellungenHTML === "function" && S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle) ? `<p class="leise klein nicht-drucken" id="fristenEinstHinweis">Die Zahlungsdaten für die Mails an Schüler stehen jetzt in den Einstellungen: <a href="#einstellungen?thema=zahlungen">Zahlungsdaten in den Einstellungen</a>.</p>` : ""}`; // Werkstatt 11 Schritt 2: Formulare sind nach #einstellungen umgezogen
 }
 function bindeFristen(ziel) {
-  bindeEinstellungen(ziel);
   const suche = ziel.querySelector("#fristenSuche");
   if (suche) {
     let t = null;
@@ -4657,6 +4632,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
+  if (window.KE) KE.lade(supa, fsId); // W11: Einstellungen der Fahrschule (wirft nie)
   try {
     const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, erinnerungsMails, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
@@ -5062,6 +5038,7 @@ function zeigeHinweis(titel, text, knoepfe) {
 }
 async function abmelden() {
   verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
+  if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
   // Erst die PIN-Sitzung auf dem Server beenden (höchstens 3 s warten), dann lokal abmelden: sonst ginge der Aufruf ohne Anmeldung raus.
   try { await Promise.race([beendeSitzung(), new Promise((r) => setTimeout(r, 3000))]); } catch (e) { /* egal */ }
   try { await supa.auth.signOut({ scope: "local" }); } catch (e) { /* trotzdem neu laden */ } // nur dieser PC, andere Geräte bleiben angemeldet

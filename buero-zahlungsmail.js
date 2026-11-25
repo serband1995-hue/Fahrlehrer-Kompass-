@@ -257,7 +257,7 @@ function zmBlockHTML(sid) {
   const ohneMail = echt && !empf.length;
   const hinweise = [];
   if (ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmladefehler>${esc(LADEFEHLER_TEXT)}</p>`);
-  else if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#fristen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
+  else if (!daten) hinweise.push(`<p class="zm-hinweis" data-zmohnedaten>Bitte zuerst unter <a href="#einstellungen?thema=zahlungen" data-zmeinst>Einstellungen</a> die Zahlungsdaten eintragen.</p>`);
   else if (echt) hinweise.push(`<p class="zm-echt" data-zmecht>Echt: Mail geht an ${empf.length ? esc(zmEmpfaengerText(empf)) : "den Schüler (E-Mail fehlt)"}</p>`);
   else hinweise.push(`<p class="zm-modus-zeile zm-test" data-zmtest>Test-Modus: Mail geht an die Test-Adresse</p>`);
   if (S.zmVerlaufFehler) hinweise.push(`<p class="zm-hinweis" data-zmverlauf>Verlauf konnte nicht geladen werden. Haken können fehlen.</p>`);
@@ -313,7 +313,7 @@ function zmBindeBlock(dlg, sid) { const b = dlg.querySelector("#zmBlock"); if (b
 function zmBinde(block, dlg, sid) {
   block.querySelectorAll("[data-zmeinst]").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault();
-    versucheSchliessen(dlg).then((ok) => { if (ok) location.hash = "#fristen"; });
+    versucheSchliessen(dlg).then((ok) => { if (ok) location.hash = "#einstellungen?thema=zahlungen"; });
   }));
   block.querySelectorAll("[data-zmart]").forEach((zeile) => {
     const art = zeile.dataset.zmart, schluessel = sid + "|" + art, melde = zeile.querySelector("[data-zmmeldung]");

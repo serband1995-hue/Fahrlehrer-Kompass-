@@ -124,5 +124,14 @@ gleich("Zeilen der Tabelle", { theorie: { monate: 9 }, fahrlehrer: { bald_tage: 
   { schluessel: "fristen.gibtsnicht", wert: { monate: 1 } }, { schluessel: "vorlagen.reaktivierung", wert: { text: "x" } }, { schluessel: "fristen.antrag", wert: "kein Objekt" }, null]));
 gleich("fristZahl wie der Server", [18, 12, 12, 1, 12], [KR.fristZahl("18", 12, 1, 60), KR.fristZahl(" 18", 12, 1, 60), KR.fristZahl(1234567, 12, 1, 60), KR.fristZahl(1, 12, 1, 60), KR.fristZahl(undefined, 12, 1, 60)]);
 
+// ---------- 4. Werte aus den Einstellungen (KE von Werkstatt 11, hier eine Attrappe mit derselben Schnittstelle) ----------
+const ablage = { "fristen.theorie": { monate: 6 }, "fristen.fahrlehrer": { bald_tage: "45" }, "fristen.antrag": { monate: 99 } };
+const KE = { wert: (k, std) => Object.assign({}, std, ablage[k] || {}) };
+const ausKE = KR.normFristen(KR.fristenAusKE(KE));
+gleich("aus KE: Theorie 6, Fahrlehrer 45 (Text-Zahl), Antrag 99 ungültig = 12", [6, 45, 12, 30], [ausKE.theorie.monate, ausKE.fahrlehrer.bald_tage, ausKE.antrag.monate, ausKE.umschreiber.bald_tage]);
+gleich("ohne KE = Standard", KR.normFristen(null), KR.normFristen(KR.fristenAusKE(undefined)));
+gleich("KE wirft bei einem Schlüssel: dort Standard, Rest bleibt", [12, 6], (() => { const k = { wert: (s, std) => { if (s === "fristen.antrag") throw new Error("x"); return Object.assign({}, std, ablage[s] || {}); } }; const f = KR.normFristen(KR.fristenAusKE(k)); return [f.antrag.monate, f.theorie.monate]; })());
+gleich("KE bekommt eine Kopie des Standards (kein eingefrorenes Objekt)", true, (() => { let ok = true; KR.fristenAusKE({ wert: (s, std) => { if (Object.isFrozen(std)) ok = false; return std; } }); return ok; })());
+
 console.log(fehler ? `Fristen-Test: ${fehler} von ${faelle} Fällen weichen ab.` : `Fristen-Test: alle ${faelle} Fälle gleich.`);
 process.exit(fehler ? 1 : 0);
