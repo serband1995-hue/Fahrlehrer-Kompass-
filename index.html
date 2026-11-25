@@ -8019,7 +8019,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.16";
+const APP_VERSION="2026.11.25.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -10258,6 +10258,24 @@ async function _ladeTheorieBesuch(supa, ids){
    keine Verbindung: keine Karte, kein Fehler. Später (Schritt 2) kommt „noch offen“ je Posten dazu. */
 let _paketVerkauft = null; // schueler_id -> {name, posten:[{art, bezeichnung, anzahl}]} oder null (kein Paket); null = nicht geladen
 let _paketLadeNr = 0; const _paketNrJe = {};
+// Termine fürs Paket mit dem Fahrcheck-Haken des Büros (buero_fc_status). Die eigenen Termine des Geräts kennen den Haken nicht;
+// im Paket zählt eine Fahrstunde aber erst mit Haken (🗣 Serband 24.11.). Gesamtansicht: DB.lessons hat ihn schon (_fsMapTermin).
+// Sonst wird beim Öffnen der Akte nur dieser eine Schüler vom Server geholt, höchstens einmal je Minute (Prüf-Team: nicht alle
+// Paket-Schüler im Minutentakt, ohne Unterschriften aus der Nutzlast). schueler_id -> {zeit, rows} bzw. {fehler}
+const _paketTermine = {}, _paketTermineLaeuft = {};
+const _PAKET_TERMINE_MS = 60000;
+async function _paketTermineLaden(sid){
+  if(_paketTermineLaeuft[sid]) return;
+  _paketTermineLaeuft[sid]=true;
+  try{
+    const supa=getSupa(); if(!supa) throw new Error("offline");
+    const rows=await _alleSeiten(()=>supa.from("kalender_termine").select("id,art,datum,von,bis,status,buero_fc_status,pst:payload->>status,sonderArt:payload->>sonderArt,srcSonder:payload->>srcSonder,fc:payload->>fc").eq("schueler_id",sid).eq("geloescht",false));
+    _paketTermine[sid]={zeit:Date.now(),rows:rows.map(r=>({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:r.pst||r.status,sonderArt:r.sonderArt||null,srcSonder:r.srcSonder||null,fc:r.fc||null,bueroFc:r.buero_fc_status||"offen"}))};
+  }catch(e){ _paketTermine[sid]=Object.assign({},_paketTermine[sid],{fehler:Date.now()}); } // alten Stand behalten
+  finally{ delete _paketTermineLaeuft[sid]; }
+  const el=document.querySelector(`.paket-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
+  if(el&&st) el.outerHTML=paketCard(st);
+}
 async function _ladePakete(supa, ids){
   const nr=++_paketLadeNr;
   try{
@@ -10275,26 +10293,43 @@ async function _ladePakete(supa, ids){
     for(const sid in neu){ if((_paketNrJe[sid]||0)<=nr){ _paketVerkauft[sid]=neu[sid]; _paketNrJe[sid]=nr; } }
   }catch(e){ /* offline: alten Stand behalten */ }
 }
-/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: eigene
-   Termine dieses Geräts, Prüfungen mit Ergebnis (DB.exams) und die Sonderfahrten aus dem Ausbildungsplan. */
+/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: Termine mit dem
+   Fahrcheck-Haken des Büros (Gesamtansicht: DB.lessons, sonst _paketTermine) und die Prüfungen mit Ergebnis (DB.exams).
+   Liefert {q} oder {laden:true} bzw. {fehler:true}, solange keine Termine da sind. */
 function _paketQuelle(s){
-  if(!window.KR||!KR.paketQuelleAusTerminen)return null;
+  if(!window.KR||!KR.paketQuelleAusTerminen||!KR.fcFuersBuero||!KR.paketHinweise)return {fehler:true}; // alte kompass-rechnen.js: lieber keine Zahl als eine falsche
+  let termine;
+  if(_fsAgg){
+    termine=(DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,sonderArt:l.sonderArt||null,srcSonder:l.srcSonder||null,fc:l.fc||null,bueroFc:l.buero_fc_status||"offen"}));
+  }else{
+    const x=_paketTermine[s.id]||{};
+    if(!_paketTermineLaeuft[s.id]&&(!x.zeit||Date.now()-x.zeit>_PAKET_TERMINE_MS)&&!(x.fehler&&Date.now()-x.fehler<_PAKET_TERMINE_MS)) setTimeout(()=>_paketTermineLaden(s.id),0);
+    if(!x.rows) return x.fehler&&!_paketTermineLaeuft[s.id]?{fehler:true}:{laden:true};
+    termine=x.rows;
+  }
   const d=new Date();
   const pruefDaten=(DB.exams||[]).filter(ex=>ex.sid===s.id&&istPruefung(ex)&&ex.date&&(ex.result==="pass"||ex.result==="fail")).map(ex=>ex.date);
-  return KR.paketQuelleAusTerminen((DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,srcSonder:l.srcSonder,sonderArt:l.sonderArt,tatsaechlicheDauer:l.tatsaechlicheDauer})),todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten,plan:s.plan});
+  return {q:KR.paketQuelleAusTerminen(termine,todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten})};
 }
 function paketCard(s){
   const p=_paketVerkauft&&_paketVerkauft[s.id];
   if(!p) return "";
-  const q=_paketQuelle(s), v=q?KR.paketVerbrauch(p.posten,q):[];
+  const qq=_paketQuelle(s), q=qq.q||null, v=q?KR.paketVerbrauch(p.posten,q):[];
   const zahl=n=>(Math.round(Number(n)*10)/10).toLocaleString("de-DE");
-  // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“
-  const rechts=(x,i)=>{ const z=v[i]; if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
+  // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“.
+  // Solange der Stand fehlt: bei zählbaren Posten „–“ statt der Paketgröße (sonst sähe „20 ×“ wie ein Stand aus)
+  const zaehlbar=x=>KR.paketVerbrauch([x],{fahrstunden:0,sonder:{ueberland:0,autobahn:0,nacht:0},pruefungen:0,simulator:0})[0].verbraucht!=null;
+  const rechts=(x,i)=>{ const z=v[i];
+    if(!q&&zaehlbar(x)) return "–";
+    if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
     return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`<span style="white-space:nowrap">${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}</span>`; };
-  return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
+  const klein=t=>`<p class="muted-p" style="font-size:12px;margin:6px 0 0;">${t}</p>`;
+  const nurEigene=!_fsAgg&&_authProfile&&_authProfile.rolle==="fahrlehrer"; // sieht nur eigene Termine (Zugriffsregeln)
+  return `<div class="res-block paket-karte" data-sid="${esc(s.id)}" style="animation:none;margin-top:9px;">
     <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
     ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}
-    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Gefahren von gebucht (Einheiten à 45 Min.). Ändern nur im Büro.</p>
+    ${q?KR.paketHinweise(q).map(h=>klein(esc(h))).join(""):klein(qq.laden?"Stand wird gezählt …":"Stand gerade nicht abrufbar (offline?). Die Zahlen kommen, sobald wieder Verbindung da ist.")}
+    ${klein("Vom Büro verkauft. Gezählt wird je Fahrcheck (45 Min.), sobald das Büro ihn abgehakt hat."+(nurEigene?" Du siehst nur deine eigenen Fahrten, den ganzen Stand hat das Büro.":"")+" Ändern nur im Büro.")}
   </div>`;
 }
 function theorieStandFuer(s){
