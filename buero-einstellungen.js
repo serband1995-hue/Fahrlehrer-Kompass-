@@ -188,7 +188,8 @@
     { id: "backups", titel: "Backups", reihenfolge: 85,
       render(el) {
         el.innerHTML = `${abschnitt("Backups")}
-          ${linkZeile("#backups", "Backups ansehen und sichern", "Läuft jeden Sonntag von selbst. Hier sicherst du zusätzlich oder lädst eine Sicherung herunter.")}`;
+          ${typeof W.renderBackups === "function" ? linkZeile("#backups", "Backups ansehen und sichern", "Läuft jeden Sonntag von selbst. Hier sicherst du zusätzlich oder lädst eine Sicherung herunter.")
+            : leer("Backups sind gerade nicht verfügbar. Bitte die Seite neu laden.")}`; // alter Zwischenspeicher ohne buero-verwaltung.js
       } },
     { id: "darstellung", get titel() { return meineRolle() === "buero" ? "Darstellung" : "Darstellung & Start"; }, reihenfolge: 90,
       render(el) {

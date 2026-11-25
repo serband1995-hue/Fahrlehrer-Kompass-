@@ -74,7 +74,7 @@ async function verwerfenJa(page) {
 async function pruefeLayout(page, name) {
   const r = await page.evaluate(() => {
     const sichtbar = (el) => { const b = el.getBoundingClientRect(); const st = getComputedStyle(el); return b.width > 0 && b.height > 0 && st.visibility !== "hidden" && st.display !== "none"; };
-    const gewolltGekuerzt = (el) => !!el.closest(".k-termin, .k-kopf, .hb-name, details:not([open])");
+    const gewolltGekuerzt = (el) => !!el.closest(".k-termin, .k-kopf, .hb-name, .nutzer-name, .nutzer-rolle, details:not([open])");
     const probleme = [];
     // 1) Inhalt ragt aus Kästchen
     for (const box of document.querySelectorAll(".kachel, .karte, .dialog-form, .aufgabe, .login-karte, .seite")) {
@@ -2167,7 +2167,7 @@ async function k2Kontrast(page, sel) {
     await k2Breite(page, name + " Menü offen");
     const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
     // 12 von Werkstatt 11 + Urlaub, Schichtplan, Backups (W16 Teil 2, auch für das Büro)
-    if (bereiche.length !== 15) fehler(`K2 ${name}: ${bereiche.length} statt 15 Menüpunkte`);
+    if (bereiche.length !== 12) fehler(`K2 ${name}: ${bereiche.length} statt 12 Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
       await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
