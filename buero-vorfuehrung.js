@@ -243,11 +243,19 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const z = (F.tabellen.fahrschule_zahlungsdaten || []).find((x) => x.fahrschule_id === ich.fahrschule_id);
     if (!z || !z.kontoinhaber || !z.iban) return { fehler: "zahlungsdaten_fehlen" };
     if (b.art === "zahlung_offen" && !s.zahlung_gesperrt_seit) return { fehler: "nicht_gesperrt" }; // wie der Server (409): die Sperre ist inzwischen weg
+    if (b.art === "reaktivierung" && window.KR && window.KR.reaktInfo) { // W15 S4 wie der Server (20261128_w15_03): gleiche Regel und Warnzeiten wie die Büro-Seite
+      const ri = window.KR.reaktInfo(s, window.KR.todayISO());
+      if (ri.stufe === "befreit") return { fehler: "reakt_befreit" };
+      if (ri.stufe === "entfaellt") return { fehler: "reakt_entfaellt" };
+      if (ri.stufe === "ohne_datum") return { fehler: "reakt_ohne_datum" };
+      if (ri.stufe === "ok") return { fehler: "reakt_nicht_faellig" };
+    }
     if (b.erwarteter_modus !== "test" && b.erwarteter_modus !== "echt") return { fehler: "ungueltige_anfrage" }; // Pflichtfeld seit Commit 963ac7d
     if (b.erwarteter_modus !== z.modus) return { fehler: "modus_geaendert", modus: z.modus }; // wie der Server (409): nichts wird gesendet
     const heute = new Date().toISOString().slice(0, 10);
     const mails = F.tabellen.zahlungs_mails || (F.tabellen.zahlungs_mails = []);
-    const echt = z.modus === "echt", heuteMails = mails.filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute);
+    // W15 S5: gemeinsames Limit mit den Erinnerungs-Mails (mail_limit in der Datenbank); gescheiterte zählen nicht
+    const echt = z.modus === "echt", heuteMails = [...mails, ...(F.tabellen.erinnerungs_mails || [])].filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute && m.status !== "fehler");
     if (heuteMails.length >= 100) return { fehler: "zu_viele_schule" };
     if (heuteMails.filter((m) => m.schueler_id === s.id && m.modus === (echt ? "echt" : "test")).length >= 5) return { fehler: "zu_viele" }; // je Schüler, Test und Echt getrennt
     // W14: Empfänger nach der Wahl in der Akte (schueler_eltern), wie der Server; Test: nur die Test-Adresse
@@ -266,6 +274,50 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const kurz = liste.map((an) => an.slice(0, 1) + "***@" + (an.split("@")[1] || "")).join(", ");
     mails.push({ id, fahrschule_id: ich.fahrschule_id, schueler_id: s.id, art: b.art, betrag_cent: b.betrag_cent, wofuer: w, modus: echt ? "echt" : "test", empfaenger_kurz: kurz, status: "gesendet", gesendet_von: ich.id, bearbeiter: ich.name, angelegt_am: jetzt, gesendet_am: jetzt });
     return { ok: true, id, modus: echt ? "echt" : "test", gesendet_am: jetzt, empfaenger_kurz: kurz, nicht_an: nichtAn };
+  };
+  // W15 S5: Erinnerung ohne Zahlung – ahmt die Funktion erinnerungs-mail nach (Frist wie der Server über dieselben Regeln, kein Versand).
+  // F.fehler["erinnerungs-mail"] = Code → Antwort { fehler: code }; "netz" → nicht erreichbar. Spur: F.tabellen.erinnerungs_mails.
+  if (!F.tabellen.erinnerungs_mails && !(F.fehler && F.fehler.erinnerungs_mails)) F.tabellen.erinnerungs_mails = [];
+  if (!F.functions["erinnerungs-mail"]) F.functions["erinnerungs-mail"] = (b) => {
+    const f = F.fehler && F.fehler["erinnerungs-mail"];
+    if (f === "netz") throw new Error("Failed to fetch");
+    if (f) return { fehler: f };
+    const ich = F.session && (F.tabellen.profiles || []).find((p) => p.id === F.session.user.id);
+    if (!ich) return { fehler: "nicht_angemeldet" };
+    if (!["buero", "fahrschule_admin", "super_admin"].includes(ich.rolle)) return { fehler: "keine_berechtigung" };
+    const s = (F.tabellen.schueler || []).find((x) => x.id === b.schueler_id && x.fahrschule_id === ich.fahrschule_id);
+    if (!s) return { fehler: "kein_schueler" };
+    if (!["theorie", "antrag", "behoerde", "umschreiber"].includes(b.art)) return { fehler: "art_unbekannt" };
+    if (s.inaktiv_seit) return { fehler: "nicht_aktiv" };
+    const KR = window.KR, heute = KR.todayISO();
+    const info = b.art === "theorie" ? KR.theorieInfo(s, heute) : b.art === "antrag" ? KR.antragInfo(s, heute) : b.art === "behoerde" ? KR.theorieFristInfo(s, heute) : KR.umschreibInfo(s, heute);
+    if (["kein", "eu", "land_pruefen"].includes(info.stufe)) return { fehler: "keine_frist" };
+    if (info.stufe === "erledigt") return { fehler: "erledigt" };
+    if (info.stufe === "ohne_datum") return { fehler: "ohne_datum" };
+    if (info.stufe === "abgelaufen") return { fehler: "abgelaufen" };
+    if (info.stufe === "ok" || (info.stufe === "demnaechst" && (b.art === "antrag" || b.art === "umschreiber"))) return { fehler: "nicht_faellig" };
+    const z = (F.tabellen.fahrschule_zahlungsdaten || []).find((x) => x.fahrschule_id === ich.fahrschule_id) || {};
+    const modus = z.modus === "echt" ? "echt" : "test";
+    if (b.erwarteter_modus !== modus) return { fehler: "modus_geaendert", modus };
+    const tag = new Date().toISOString().slice(0, 10), mails = F.tabellen.erinnerungs_mails || (F.tabellen.erinnerungs_mails = []);
+    const heuteAlle = [...(F.tabellen.zahlungs_mails || []), ...mails].filter((m) => String(m.angelegt_am || "").slice(0, 10) === tag && m.status !== "fehler");
+    if (heuteAlle.length >= 100) return { fehler: "zu_viele_schule" };
+    if (heuteAlle.filter((m) => m.schueler_id === s.id && m.modus === modus).length >= 5) return { fehler: "zu_viele" }; // gemeinsames Limit mit den Zahlungs-Mails
+    const anS = String(s.email || (s.ausbildung || {}).email || "").trim().toLowerCase();
+    const el = (F.tabellen.schueler_eltern || []).find((e) => e.schueler_id === s.id) || {}, anE = String(el.email || "").trim().toLowerCase();
+    const wahl = anE ? (["schueler", "eltern", "beide"].includes(el.mail_an) ? el.mail_an : "beide") : "schueler";
+    const alle = [];
+    if ((wahl === "schueler" || wahl === "beide") && anS) alle.push(anS);
+    if ((wahl === "eltern" || wahl === "beide") && anE && !alle.includes(anE)) alle.push(anE);
+    const liste = modus === "echt" ? alle : [z.test_email || "betreiber@example.org"];
+    if (modus === "echt" && !liste.length) return { fehler: "keine_email" };
+    if (modus === "echt" && Array.isArray(b.erwartete_empfaenger) && b.erwartete_empfaenger.map((x) => String(x).toLowerCase()).sort().join(",") !== liste.slice().sort().join(",")) return { fehler: "empfaenger_geaendert" };
+    F.letzteEmpfaenger = liste.slice();
+    const jetzt = new Date().toISOString(), id = "em-" + Math.random().toString(36).slice(2, 10), frist = info.ablauf || info.bis;
+    const kurz = liste.map((an) => an.slice(0, 1) + "***@" + (an.split("@")[1] || "")).join(", ");
+    mails.push({ id, fahrschule_id: ich.fahrschule_id, schueler_id: s.id, art: b.art, vorlage: b.art === "theorie" && info.grund === "praxis" ? "erinnerung_praxis" : "erinnerung_" + b.art,
+      frist_am: frist, modus, empfaenger_kurz: kurz, status: "gesendet", angelegt_am: jetzt, gesendet_am: jetzt });
+    return { ok: true, id, modus, gesendet_am: jetzt, empfaenger_kurz: kurz, frist_am: frist };
   };
   // PIN-Funktionen wie in der Datenbank (vereinfacht). Der Schlüssel kommt hier aus dem Tab-Speicher statt aus der Kopfzeile.
   F.sitzungen = F.sitzungen || {};

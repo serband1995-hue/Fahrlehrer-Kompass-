@@ -1,8 +1,12 @@
 // Zahlungs-Mail: reine Funktionen (keine Deno-/Node-APIs ausser CompressionStream und btoa, die es in beiden gibt).
 // Wird von index.ts (Deno) und scripts/zahlungsmail-mail-test.mjs (Node) geladen.
 // Enthält: Betrag/EPC-Text/PayPal-Link, Betreff, HTML- und Text-Mail, eigener QR-Encoder (Byte-Modus, Fehlerkorrektur M) und PNG-Writer.
+// W15 S4: Der Satz der Mail kommt aus den Nachrichten-Vorlagen der Fahrschule (vorlagen.js = Kopie von kompass-vorlagen.js,
+// Byte für Byte gleich; die Vorschau im Büro nutzt dieselbe Datei). Ohne Vorlage: die Standard-Sätze (= die von vorher).
+import "./vorlagen.js";
+const KV = /** @type {any} */ (globalThis).KV;
 
-/** @typedef {{modus?:string, art:string, betrag_cent:number, wofuer:string, verwendungszweck?:string, schueler_name?:string, an?:string, fahrschule?:string, kontoinhaber?:string, iban?:string, bic?:string|null, paypal?:string|null, impressum?:string|null}} MailDaten */
+/** @typedef {{modus?:string, art:string, vorlage_art?:string, vorlage?:{text?:string,text_eltern?:string}|null, faellig_am?:string|null, tage?:number|null, betrag_cent:number, wofuer:string, verwendungszweck?:string, schueler_name?:string, an?:string, fahrschule?:string, kontoinhaber?:string, iban?:string, bic?:string|null, paypal?:string|null, impressum?:string|null}} MailDaten */
 
 export const STANDARD_FAHRSCHULE = "Fahrschule Boost";
 export const ABSENDER_ADRESSE = "termine@fahr-akademie.info";
@@ -76,11 +80,8 @@ const BETREFF = {
   reaktivierung: "Zahlungsinformation: Reaktivierung",
   zahlung_offen: "Wichtige Information zu Ihren Terminen",
 };
-const SATZ = {
-  pruefung: "für Ihre Prüfung bitten wir um folgende Zahlung:",
-  reaktivierung: "Ihre Reaktivierung ist fällig. Bitte zahlen Sie:",
-  zahlung_offen: "bei Ihnen ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
-};
+// W15 S4: Erinnerung, bevor die Reaktivierung fällig wird (vorlage_art vom Server; die Art der Spur bleibt „reaktivierung“)
+const BETREFF_BALD = "Erinnerung zur Reaktivierung"; // ohne zweiten Doppelpunkt (Prüf-Team Design)
 
 /** Fahrschulname für Absender/Betreff säubern (keine <>",; Zeilenumbrüche). */
 export function fahrschulName(d) {
@@ -95,6 +96,7 @@ export function betreff(d) {
   let text = BETREFF[d.art];
   if (!text) throw new Error("Art unbekannt");
   if (d.an === "eltern" || d.an === "beide") text = BETREFF_ELTERN[d.art];
+  if (d.art === "reaktivierung" && d.vorlage_art === "reaktivierung_bald") text = BETREFF_BALD;
   return (d.modus === "test" ? "[TEST] " : "") + fahrschulName(d) + ": " + text;
 }
 // W14: d.an = wer angeschrieben wird ("schueler" | "eltern" | "beide"; fehlt = Schüler, wie bisher)
@@ -105,16 +107,22 @@ function anrede(d) {
   if (d.an === "beide") return "Guten Tag,"; // Eltern lesen mit: neutral, dann „… von Lena“
   return v ? "Hallo " + v + "," : "Hallo,";
 }
-// Eltern lesen mit: dann geht es um die Ausbildung von <Vorname>, nicht um „Ihre“
-const SATZ_ELTERN = {
-  pruefung: (v) => "für die Prüfung von " + v + " bitten wir um folgende Zahlung:",
-  reaktivierung: (v) => "die Reaktivierung von " + v + " ist fällig. Bitte zahlen Sie:",
-  zahlung_offen: (v) => "für die Ausbildung von " + v + " ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
-};
-function satz(d) {
+// W15 S4: Satz aus der Vorlage (Eltern lesen mit: eigener Text, z. B. „die Prüfung von <Vorname>“). Welche Vorlage, bestimmt
+// der Server (vorlage_art; z. B. reaktivierung_bald vor der Fälligkeit). Fremde vorlage_art = die der Art.
+/** @param {MailDaten} d */
+export function satz(d) {
+  const art = d.vorlage_art && KV.VORLAGEN[d.vorlage_art] && (d.vorlage_art === d.art || (d.art === "reaktivierung" && d.vorlage_art === "reaktivierung_bald")) ? d.vorlage_art : d.art;
+  const vorlage = KV.vorlageAus(art, d.vorlage);
+  if (!vorlage) return "";
   const v = vorname(d);
-  if ((d.an === "eltern" || d.an === "beide") && v && SATZ_ELTERN[d.art]) return SATZ_ELTERN[d.art](v);
-  return SATZ[d.art] || "";
+  return KV.fuelle(KV.textFuer(vorlage, d.an, v), { Vorname: v, Datum: d.faellig_am, Tage: d.tage, Betrag: d.betrag_cent, Fahrschule: fahrschulName(d) });
+}
+// Fälligkeit der Reaktivierung (nur wenn der Server sie mitschickt): „Fällig am“ (bald) oder „Fällig seit“ (überfällig)
+function faelligZeile(d) {
+  if (d.art !== "reaktivierung" || !d.faellig_am) return null;
+  const datum = KV.datumText(d.faellig_am);
+  if (!datum) return null;
+  return [d.vorlage_art === "reaktivierung_bald" ? "Fällig am" : "Fällig seit", datum];
 }
 // Test-Mail: an wen sie im Echt-Modus ginge
 function echtAn(d) { return d.an === "eltern" ? "die Eltern" : d.an === "beide" ? "Schüler und Eltern" : "den Schüler"; }
@@ -131,7 +139,10 @@ export function mailText(d) {
   if (d.modus === "test") z.push("TEST-MAIL - NICHT BEZAHLEN", "");
   if (d.modus === "test" && d.an) z.push("Im Echt-Modus geht diese Mail an " + echtAn(d) + ".", "");
   z.push(anrede(d), "", satz(d), "");
-  z.push("Betrag: " + betragText(d.betrag_cent), "Wofür: " + einzeilig(d.wofuer), "");
+  z.push("Betrag: " + betragText(d.betrag_cent), "Wofür: " + einzeilig(d.wofuer));
+  const fz = faelligZeile(d);
+  if (fz) z.push(fz[0] + ": " + fz[1]);
+  z.push("");
   z.push("PER ÜBERWEISUNG", "Kontoinhaber: " + einzeilig(d.kontoinhaber), "IBAN: " + ibanGruppiert(d.iban || ""));
   if (d.bic) z.push("BIC: " + einzeilig(d.bic));
   z.push("Betrag: " + betragText(d.betrag_cent), "Verwendungszweck: " + einzeilig(d.verwendungszweck), "");
@@ -167,12 +178,13 @@ export function mailHtml(d) {
 ${test}
 <tr><td style="${font}font-size:16px;line-height:1.5;color:#2a2a24;padding:0 0 14px 0;">
   <p style="margin:0 0 12px;">${esc(anrede(d))}</p>
-  <p style="margin:0;">${esc(satz(d))}</p>
+  <p style="margin:0;">${esc(satz(d)).replace(/\n/g, "<br>")}</p>
 </td></tr>
 <tr><td style="padding:0 0 18px 0;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e8f1ea;border-radius:10px;"><tr><td style="padding:18px;text-align:center;">
     <div style="${font}font-size:38px;line-height:1.2;font-weight:800;color:#2f6244;">${esc(betragText(d.betrag_cent))}</div>
     <div style="${font}font-size:16px;color:#2a2a24;margin-top:8px;">Wofür: ${esc(d.wofuer)}</div>
+    ${faelligZeile(d) ? `<div style="${font}font-size:16px;color:#2a2a24;margin-top:4px;">${esc(faelligZeile(d)[0])}: <b>${esc(faelligZeile(d)[1])}</b></div>` : ""}
   </td></tr></table>
 </td></tr>
 <tr><td style="padding:0 0 18px 0;">
