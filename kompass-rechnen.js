@@ -47,21 +47,65 @@
      reakt_bezahlt_bis = nächste Fälligkeit; ist sie vorbei, ist die Reaktivierung offen.
      Eine Zahlung verschiebt die Fälligkeit um genau 12 Monate (auch bei später Zahlung,
      wer zwei Jahre im Rückstand ist, bleibt nach einer Zahlung weiter überfällig). */
-  function reaktFaellig(s) {
+  /* W15 (🗣 Serband 24.11.2026): Regel der Fahrschule vom Server (rpc reakt_regel, gleiche Regel wie die Sperre in der
+     Datenbank, supabase/migrations/20261126_w15_01): { monate, frei: [{ ab, bis }] } – Zeiträume, in denen die Reaktivierung
+     laut Preisliste entfällt oder 0 € kostet (ohne Beträge). Frei heute ODER am Vertragstag = Stufe „entfaellt“ (keine
+     Fälligkeit, keine Sperre). Ohne Regel (null) rechnet alles wie vorher: 12 Monate, nie frei.
+     Büro und App setzen die Regel einmal mit setzeReaktRegel; ein drittes Argument „regel“ geht vor (Tests, Attrappe). */
+  const REAKT_MONATE_STANDARD = 12;
+  const ISO_TAG = /^\d{4}-\d{2}-\d{2}$/;
+  function normReaktRegel(r) {
+    if (!r || typeof r !== "object") return null;
+    const m = Number(r.monate);
+    const frei = (Array.isArray(r.frei) ? r.frei : [])
+      .map((z) => ({ ab: z && String(z.ab || "").slice(0, 10), bis: z && z.bis ? String(z.bis).slice(0, 10) : null }))
+      .filter((z) => ISO_TAG.test(z.ab) && (z.bis === null || ISO_TAG.test(z.bis)));
+    return { monate: Number.isInteger(m) && m >= 1 && m <= 120 ? m : REAKT_MONATE_STANDARD, frei };
+  }
+  let reaktRegelAktiv = null;
+  function setzeReaktRegel(r) { reaktRegelAktiv = normReaktRegel(r); return reaktRegelAktiv; }
+  function holeReaktRegel() { return reaktRegelAktiv; }
+  function reaktRegelVon(regel) { return regel === undefined ? reaktRegelAktiv : normReaktRegel(regel); }
+  function reaktMonate(regel) { const r = reaktRegelVon(regel); return r ? r.monate : REAKT_MONATE_STANDARD; }
+  function reaktFreiAm(regel, tag) {
+    const r = reaktRegelVon(regel), t = tag ? String(tag).slice(0, 10) : "";
+    return !!(r && ISO_TAG.test(t) && r.frei.some((z) => z.ab <= t && (z.bis === null || t <= z.bis)));
+  }
+  /* Gleiche Rechnung wie reakt_regel in der Datenbank, aus Zeilen der Preisliste (Attrappe und SQL-Test).
+     Je „gültig ab“-Tag gilt die zuletzt angelegte Zeile; frei = betrag_cent null (entfällt) oder 0. */
+  function reaktRegelAusPreisen(zeilen, monate) {
+    const zeit = (r) => { const t = Date.parse(r.angelegt_am || ""); return isNaN(t) ? 0 : t; };
+    const eigene = (zeilen || []).filter((r) => r && r.art === "reaktivierung" && !r.klasse && ISO_TAG.test(String(r.gueltig_ab || "").slice(0, 10)))
+      .slice().sort((a, b) => (a.gueltig_ab < b.gueltig_ab ? -1 : a.gueltig_ab > b.gueltig_ab ? 1 : zeit(a) - zeit(b) || String(a.id || "").localeCompare(String(b.id || ""))));
+    const tage = [];
+    for (const r of eigene) {
+      const tag = String(r.gueltig_ab).slice(0, 10), frei = r.betrag_cent == null || Number(r.betrag_cent) === 0;
+      if (tage.length && tage[tage.length - 1].ab === tag) tage[tage.length - 1].frei = frei; else tage.push({ ab: tag, frei });
+    }
+    const frei = tage.map((t, i) => ({ ab: t.ab, bis: tage[i + 1] ? addDaysISO(tage[i + 1].ab, -1) : null, f: t.frei }))
+      .filter((t) => t.f).map((t) => ({ ab: t.ab, bis: t.bis }));
+    return { monate: monate == null ? REAKT_MONATE_STANDARD : monate, frei };
+  }
+  function reaktFaellig(s, regel) {
     if (!s || s.reakt_status === "befreit") return null;
     if (s.reakt_bezahlt_bis) return s.reakt_bezahlt_bis;
-    if (s.vertrag_am) return addMonthsISO(s.vertrag_am, 12);
+    if (s.vertrag_am) return addMonthsISO(s.vertrag_am, reaktMonate(regel));
     return null;
   }
-  function reaktNachZahlung(s) {
-    const f = reaktFaellig(s);
-    return f ? addMonthsISO(f, 12) : null;
+  function reaktNachZahlung(s, regel) {
+    const f = reaktFaellig(s, regel);
+    return f ? addMonthsISO(f, reaktMonate(regel)) : null;
   }
-  // stufe: befreit | ohne_datum | gesperrt | pruefen_faellig | bald (≤30 Tage) | demnaechst (≤60) | ok
-  function reaktInfo(s, heute) {
+  // Reaktivierung für diesen Schüler frei? Frei heute oder am Vertragstag (Entscheidung 1a der Hauptsitzung, 24.11.2026)
+  function reaktEntfaellt(s, heute, regel) {
+    return reaktFreiAm(regel, heute || todayISO()) || !!(s && s.vertrag_am && reaktFreiAm(regel, s.vertrag_am));
+  }
+  // stufe: befreit | entfaellt | ohne_datum | gesperrt | pruefen_faellig | bald (≤30 Tage) | demnaechst (≤60) | ok
+  function reaktInfo(s, heute, regel) {
     heute = heute || todayISO();
     if (s && s.reakt_status === "befreit") return { stufe: "befreit", faellig: null, tage: null, gesperrt: false };
-    const faellig = reaktFaellig(s);
+    if (reaktEntfaellt(s, heute, regel)) return { stufe: "entfaellt", faellig: null, tage: null, gesperrt: false };
+    const faellig = reaktFaellig(s, regel);
     if (!faellig) return { stufe: "ohne_datum", faellig: null, tage: null, gesperrt: false };
     const tage = daysBetweenISO(heute, faellig);
     let stufe;
@@ -398,7 +442,8 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-  const api = { paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+  const api = { paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
