@@ -6206,10 +6206,12 @@ async function _fsEnterAggMode(fahrschuleId){
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
     if(!_fsAgg&&meinGen===_fsAggGen){ _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
       if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); else KE.leeren(); _sonderMinAusKE(); } } // W11: und die Einstellungen der eigenen
+    else if(_fsAgg&&meinGen===_fsAggGen&&window.KE&&KE.fsId()!==_fsAgg.fahrschuleId){ KE.lade(getSupa(),_fsAgg.fahrschuleId); _sonderMinAusKE(); } // Wechsel A→B gescheitert: wieder die Einstellungen von A
     return false;
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
+  if(window.KE&&KE.fsId()!==fahrschuleId){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: ebenso die Einstellungen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();

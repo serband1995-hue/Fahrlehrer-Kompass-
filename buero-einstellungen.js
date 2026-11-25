@@ -144,14 +144,14 @@
       fehlerWeg(); sperren(true);
       const r = await keAufruf(() => KE.setze(ctx.sb, ctx.fahrschuleId, o.schluessel, { [o.feld]: n }));
       if (r.ok) { fertig("Gespeichert."); return; }
-      if (f.isConnected) { sperren(false); fehler(`${o.kurz}: ${r.fehler}`); }
+      if (f.isConnected) { sperren(false); fehler(`${o.kurz}: ${r.fehler}`); } else ctx.meldung(`${o.kurz}: ${r.fehler}`, "fehler"); // Seite inzwischen neu gezeichnet: Fehler trotzdem zeigen
     });
     const std = f.querySelector("[data-es-std]");
     if (std) std.addEventListener("click", async () => {
       fehlerWeg(); sperren(true);
       const r = await keAufruf(() => KE.zuruecksetzen(ctx.sb, ctx.fahrschuleId, o.schluessel));
       if (r.ok) { fertig(`Wieder der Standard (${o.std}).`); return; }
-      if (f.isConnected) { sperren(false); fehler(`${o.kurz}: ${r.fehler}`); }
+      if (f.isConnected) { sperren(false); fehler(`${o.kurz}: ${r.fehler}`); } else ctx.meldung(`${o.kurz}: ${r.fehler}`, "fehler"); // Seite inzwischen neu gezeichnet: Fehler trotzdem zeigen
     });
   }
   const KE_SONDER = { schluessel: "fahrstunden.sonderfahrt", feld: "minuten", std: 45, min: 30, max: 90, einheit: "Min.", name: "Länge", kurz: "Sonderfahrt",

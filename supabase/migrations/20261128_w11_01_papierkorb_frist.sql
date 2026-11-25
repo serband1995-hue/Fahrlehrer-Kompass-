@@ -1,4 +1,4 @@
--- W11 Schritt 3 (25.11.2026): Papierkorb-Frist je Fahrschule einstellbar (Einstellungen › Fahrstunden & Kalender).
+-- W11 Schritt 3 (25.11.2026): Papierkorb-Frist je Fahrschule einstellbar (Einstellungen › Löschen & Rückgängig).
 -- Schlüssel 'papierkorb.tage' in fahrschule_einstellungen, wert {"tage": N}, ganze Zahl 7–90, sonst/ohne Zeile 30 (wie bisher).
 -- Ändert nur papierkorb_leeren(): Frist je Zeile über fahrschule_einstellung_zahl (20261125_einst_01). Alles andere wie K7
 -- (Storno/unterschrieben nie, höchstens 5000 je Lauf, Büro-Aufruf nur eigene Fahrschule, Zeitplan 03:17 unverändert).
