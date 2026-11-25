@@ -188,7 +188,8 @@ const BEREICHE = [
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
   { id: "urlaub", titel: "Urlaub", neben: true, wenn: () => typeof renderUrlaub === "function", render: (...a) => renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
   { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
-  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function" && istAdmin(), render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
+  // W16 Teil 2 (mit W11 abgestimmt): Backups auch für das Büro, wie in der App und laut Datenbank (is_buero darf sichern und lesen)
+  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
   // Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js), ganz unten in der Leiste; für Büro, Leitung und Super-Admin
   { id: "einstellungen", titel: "Einstellungen", neben: true, wenn: () => typeof renderEinstellungenSeite === "function" && !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)), render: (...a) => renderEinstellungenSeite(...a), nachher: (...a) => typeof bindeEinstellungenSeite === "function" && bindeEinstellungenSeite(...a) },
@@ -2898,6 +2899,13 @@ function terminDialog(id, vorgabe) {
     const kollision = S.termine.find((x) => x.id !== id && x.fahrlehrer_id === d.fahrlehrer_id && x.datum === d.datum && x.von && x.bis
       && KR.hm2min(x.von) < KR.hm2min(d.bis) && KR.hm2min(x.bis) > KR.hm2min(d.von));
     if (kollision && !(await bestaetige("Zeit ist schon belegt", `${lehrerName(d.fahrlehrer_id)} hat um ${kollision.von}–${kollision.bis} schon einen Termin. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
+    // W16 Teil 2: Urlaub des Fahrlehrers (buero-verwaltung.js) – in der App sind diese Tage blockiert; hier eine Warnung, wenn Tag oder Fahrlehrer neu sind
+    if (typeof vwUrlaubAm === "function" && (!id || t.datum !== d.datum || t.fahrlehrer_id !== d.fahrlehrer_id)) {
+      const urlaub = await vwUrlaubAm(d.fahrlehrer_id, d.datum);
+      const kurz = typeof vwDatumKurz === "function" ? vwDatumKurz : datumDE;
+      // vorsichtig: „Abbrechen“ ist der Hauptknopf (Design-Kritiker: nicht aus Gewohnheit speichern)
+      if (urlaub && !(await bestaetige("Fahrlehrer hat Urlaub", `${lehrerName(d.fahrlehrer_id)} hat ${urlaub.von === urlaub.bis ? "am " + kurz(urlaub.von) : "vom " + kurz(urlaub.von) + " bis " + kurz(urlaub.bis)} Urlaub. Trotzdem speichern?`, "Trotzdem speichern", "Abbrechen", true))) return false;
+    }
     const werte = { schueler_id: d.schueler_id || null, art: d.art, fahrlehrer_id: d.fahrlehrer_id, datum: d.datum, von: d.von, bis: d.bis, fahrzeug: d.fahrzeug || null, aktualisiert_am: jetzt };
     // Fahrlehrer ohne App: Sonderfahrt-Art und Klasse der Stunde im payload (die App eines Fahrlehrers mit App führt das selbst)
     if (!tdlg.querySelector("#ohneAppFeld").hidden) {
@@ -5040,16 +5048,13 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
-// W16: Fußzeile. Leitung und Super-Admin wählen hier vorläufig ihre Startseite (KS_START aus startseite.js); Werkstatt 11
-// hängt dieselbe Wahl in die Büro-Einstellungen. Das Büro behält den Link zur App, bis es nur noch die Büro-Seite hat
-// (KS_START.bueroNurBueroseite; danach schickte die App es gleich zurück).
-function zeigeStartWahl(profil) {
-  const kasten = $("startWahl"), link = $("zurApp");
-  if (!kasten || !link) return;
+// W16: Link zur App in der Leiste nur noch für das Büro, solange es die App noch braucht (KS_START.bueroNurBueroseite aus).
+// Leitung und Super-Admin wechseln über Einstellungen › Darstellung & Start (buero-einstellungen.js).
+function zeigeAppLink(profil) {
+  const link = $("zurApp");
+  if (!link) return;
   const ks = window.KS_START;
-  const hatWahl = !!(ks && ks.hatWahl(profil));
-  link.hidden = hatWahl || (profil.rolle === "buero" && !!(ks && ks.bueroNurBueroseite));
-  if (hatWahl) ks.einbauen(kasten, profil, { kompakt: true }); else kasten.hidden = true;
+  link.hidden = !(profil.rolle === "buero" && !(ks && ks.bueroNurBueroseite));
 }
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
@@ -5120,7 +5125,7 @@ async function starte(user) {
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
-  zeigeStartWahl(profil);
+  zeigeAppLink(profil);
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();

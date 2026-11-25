@@ -47,7 +47,8 @@ const DATEN = `
   F.tabellen.kalender_termine.push(tt("kg-1", "21:10", "21:50"), tt("kg-2", "21:30", "22:10"));
   window.__dlg = 0; window.confirm = () => { window.__dlg++; return true; }; window.alert = () => { window.__dlg++; };
 `;
-async function oeffne({ hash = "#heute", breite = 1366, hoehe = 900, code = "", vorher = "", nutzer = "ad-1", uhr } = {}) {
+// verwaltung: Inhalt, der statt buero-verwaltung.js geliefert wird ("" = Datei fehlt/leer, z. B. alter Zwischenspeicher)
+async function oeffne({ hash = "#heute", breite = 1366, hoehe = 900, code = "", vorher = "", nutzer = "ad-1", uhr, verwaltung } = {}) {
   const daten = bauDaten(new Date().toISOString().slice(0, 10));
   const session = { user: { id: nutzer, email: nutzer + "@example.org" } };
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
@@ -59,6 +60,7 @@ async function oeffne({ hash = "#heute", breite = 1366, hoehe = 900, code = "", 
   page.on("dialog", (d) => { konsole.push("echtes Browser-Fenster: " + d.type()); d.dismiss().catch(() => {}); });
   await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+  if (typeof verwaltung === "string") await page.route(/buero-verwaltung\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: verwaltung }));
   if (vorher) await page.addInitScript(vorher);
   await page.addInitScript(([d, s, v]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s }; (new Function("F", v))(window.__FAKE); }, [daten, session, DATEN + code]);
   if (uhr) await page.clock.install({ time: new Date(uhr) }); // feste Uhr, läuft ab da weiter
@@ -70,7 +72,8 @@ const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filt
 
 // ---- Werkstatt 11 Schritt 1: flache Leiste ----
 const HAUPT = [["#heute", "Heute"], ["#kalender", "Kalender"], ["#schueler", "Schüler"], ["#pruefungen", "Prüfungen"], ["#fristen", "Fristen"], ["#zahlungen", "Zahlungen"], ["#fahrchecks", "Fahrcheck"], ["#zahlen", "Statistik"]];
-const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#neuigkeiten", "Neuigkeiten"], ["#einstellungen", "Einstellungen"]];
+// W16 Teil 2: Urlaub, Schichtplan, Backups (buero-verwaltung.js) zwischen Fahrzeuge und Neuigkeiten
+const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#urlaub", "Urlaub"], ["#schichtplan", "Schichtplan"], ["#backups", "Backups"], ["#neuigkeiten", "Neuigkeiten"], ["#einstellungen", "Einstellungen"]];
 const punkte = (page) => page.$$eval("#nav .nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.querySelector(".nav-text").textContent.trim(), !!a.querySelector("svg"), Math.round(a.getBoundingClientRect().height), a.getAttribute("aria-current") === "page"]));
 const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (l) => l.map((a) => a.getAttribute("href")).join(","));
 {
@@ -78,7 +81,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const { page, ctx, konsole } = await oeffne({ hash: "#heute", uhr: heuteUm(10, 20) });
   const p = await punkte(page);
   const soll = HAUPT.concat(NEBEN).map((x) => x.join("|")).join(" / ");
-  pruefe("L1", "Leiste: 8 Hauptpunkte + 4 darunter (Einstellungen ganz unten) in der richtigen Reihenfolge, jeder mit Symbol", p.map((x) => x[0] + "|" + x[1]).join(" / ") === soll && p.every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
+  pruefe("L1", "Leiste: 8 Hauptpunkte + 7 darunter (Einstellungen ganz unten) in der richtigen Reihenfolge, jeder mit Symbol", p.map((x) => x[0] + "|" + x[1]).join(" / ") === soll && p.every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
   pruefe("L2", "keine Gruppen mehr (kein Auf-/Zuklappen)", (await page.locator("[data-gruppe], .nav-gruppe").count()) === 0 ? null : "Gruppenknopf da");
   const h = new Set(p.slice(0, 8).map((x) => x[3]));
   pruefe("L3", "alle 8 Hauptpunkte gleich hoch (≥ 40 px)", h.size === 1 && [...h][0] >= 40 ? null : [...h].join(","));
@@ -213,12 +216,13 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   await ctx.close();
 }
 // ---- Werkstatt 16: Urlaub, Schichtplan, Backups nur mit ihren Funktionen ----
+// Seit W16 Teil 2 lädt buero.html buero-verwaltung.js immer; „ohne“ und die Attrappen kommen darum über die ausgetauschte Datei.
 {
-  const { page, ctx, konsole } = await oeffne({ hash: "#urlaub" });
+  const { page, ctx, konsole } = await oeffne({ hash: "#urlaub", verwaltung: "" });
   pruefe("V1", "ohne die Funktionen: kein Eintrag, #urlaub fällt auf Heute zurück", (await page.locator('#nav .nav-punkt[href="#urlaub"], #nav .nav-punkt[href="#schichtplan"], #nav .nav-punkt[href="#backups"]').count()) === 0 && (await page.textContent("#titel")) === "Heute" && (await markiert(page)) === "#heute" ? null : "Titel " + (await page.textContent("#titel")));
   await ctx.close();
   const att = `window.renderUrlaub = () => '<div class="karte" id="attUrlaub">Urlaub-Attrappe</div>'; window.renderSchichtplan = () => '<div class="karte" id="attSchicht">Schichtplan-Attrappe</div>'; window.renderBackups = () => '<div class="karte" id="attBackups">Backups-Attrappe</div>'; window.bindeBackups = () => { window.__backupsGebunden = true; };`;
-  const m = await oeffne({ hash: "#schichtplan", vorher: att });
+  const m = await oeffne({ hash: "#schichtplan", verwaltung: att });
   const p = await punkte(m.page);
   const sollNeben = ["Fahrlehrer & Büro", "Fahrzeuge", "Urlaub", "Schichtplan", "Backups", "Neuigkeiten", "Einstellungen"].join(" / ");
   pruefe("V2", "mit den Funktionen: Urlaub, Schichtplan, Backups unten nach „Fahrzeuge“ und vor „Neuigkeiten“ und „Einstellungen“, mit Symbol", p.slice(8).map((x) => x[1]).join(" / ") === sollNeben && p.length === 15 && p.slice(8).every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
@@ -290,8 +294,10 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const att = `window.renderUrlaub = () => '<div class="karte">U</div>'; window.renderSchichtplan = () => '<div class="karte">S</div>'; window.renderBackups = () => '<div class="karte">B</div>';`;
   const sicht = async (nutzer) => { const m = await oeffne({ nutzer, vorher: att }); const r = await m.page.evaluate(() => ({ admin: istAdmin(), punkte: [...document.querySelectorAll("#nav .nav-punkt")].map((a) => a.getAttribute("href")) })); await m.ctx.close(); return r; };
   const leitung = await sicht("ad-1"), buero = await sicht("bu-1");
-  pruefe("B1", "Leitung (Administrator) sieht Urlaub, Schichtplan und Backups", leitung.admin && ["#urlaub", "#schichtplan", "#backups"].every((h) => leitung.punkte.includes(h)) ? null : JSON.stringify(leitung));
-  pruefe("B2", "Büro (kein Administrator) sieht Urlaub und Schichtplan, aber kein Backups", !buero.admin && buero.punkte.includes("#urlaub") && buero.punkte.includes("#schichtplan") && !buero.punkte.includes("#backups") ? null : JSON.stringify(buero));
+  const drei = (r) => ["#urlaub", "#schichtplan", "#backups"].every((h) => r.punkte.includes(h));
+  pruefe("B1", "Leitung (Administrator) sieht Urlaub, Schichtplan und Backups", leitung.admin && drei(leitung) ? null : JSON.stringify(leitung));
+  // W16 Teil 2 (mit W11 abgestimmt): das Büro sieht Backups wie bisher in der App (Datenbank: is_buero); später hat es nur noch die Büro-Seite
+  pruefe("B2", "Büro (kein Administrator) sieht Urlaub, Schichtplan und Backups", !buero.admin && drei(buero) ? null : JSON.stringify(buero));
 }
 // ---- keine Einblendung beim ersten Zeichnen (CI-Fehler „Text überlappt“: Klick während der Einblendung) ----
 {
@@ -325,7 +331,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const { page, ctx, konsole } = await oeffne({ hash: "#flotte", breite: 375, hoehe: 740 });
   await page.click("#menueKnopf"); await warte(page, 200);
   const m = await page.$$eval("#nav .nav-punkt", (l) => l.filter((a) => a.offsetParent).map((a) => Math.round(a.getBoundingClientRect().height)));
-  pruefe("G4a", "Handy: Menü auf, 12 Punkte, alle ≥ 44 px", m.length === 12 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
+  pruefe("G4a", "Handy: Menü auf, 15 Punkte (mit Urlaub, Schichtplan, Backups), alle ≥ 44 px", m.length === 15 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
   await page.click('.nav-punkt[href="#pruefungen"]'); await warte(page, 400);
   pruefe("G4b", "Handy: Seite wechseln schließt das Menü", !(await page.evaluate(() => document.body.classList.contains("menue-offen"))) && /Prüfungen/.test(await page.textContent("#menueKnopf")) ? null : "Menü offen");
   pruefe("G4c", "Handy: nichts wischt seitlich", (await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)) ? null : "seitlich wischbar");
