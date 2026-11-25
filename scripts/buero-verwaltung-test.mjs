@@ -1,7 +1,7 @@
 // Büro-Verwaltung-Test (Werkstatt 16, 24.11.2026): Urlaub, Schichtplan und Backups auf der Büro-Seite.
 // Anlass: Seit W16 Teil 2 (25.11.2026) kommt das Büro nur noch auf die Büro-Seite. Diese drei gab es bisher nur in der App-Gesamtansicht.
 // Geprüft mit der Attrappe (buero-vorfuehrung.js, erfundene Namen „Muster“), am PC (1366) und am Handy (360):
-//   V1 Urlaub für einen Fahrlehrer: mit Fahrlehrer-ID gespeichert, in der Liste · V2 andere Person: ohne ID, „ohne Kalender“
+//   V1 Urlaub für einen Fahrlehrer: mit Fahrlehrer-ID gespeichert, in der Liste · V2 andere Person: ohne ID, „keine Sperre“
 //   V3 falsche Eingabe (bis vor von): Fenster bleibt offen, nichts gespeichert · V4 Löschen ohne Rückfrage, „Rückgängig“ holt ihn zurück
 //   V5 Schichtplan: 14 Tage, Eintrag mit Status, Löschen · V6 Backups: jetzt sichern, Liste, Herunterladen
 //   V7 Ladefehler: Hinweis mit „Nochmal laden“ · V8 kein seitliches Verrutschen am Handy · V9 keine JS-Fehler
@@ -81,16 +81,16 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
     if (!/Anton Muster/.test(await page.textContent("#ansicht"))) f.push("nicht in der Liste");
     return f;
   });
-  // V2 andere Person (ohne Kalender)
+  // V2 andere Person (keine Sperre)
   await page.click("#vwUrlaubNeu"); await warte(page, 300);
   await page.selectOption("dialog[open] select[name=wer]", "_andere");
   await page.fill("dialog[open] input[name=name]", "Kim Muster");
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 700);
-  await pruefe("V2", `${P} andere Person: ohne Fahrlehrer-ID, „ohne Kalender“`, async () => {
+  await pruefe("V2", `${P} andere Person: ohne Fahrlehrer-ID, „keine Sperre“`, async () => {
     const t = await fs(page, "fahrschule_urlaub");
     const u = t.find((x) => x.mitarbeiter_name === "Kim Muster");
     if (!u || u.fahrlehrer_id !== null) return "gespeichert: " + JSON.stringify(u);
-    return /Kim Muster[\s\S]*ohne Kalender/.test(await page.textContent("#ansicht")) ? null : "Hinweis „ohne Kalender“ fehlt";
+    return /Kim Muster[\s\S]*keine Sperre/.test(await page.textContent("#ansicht")) ? null : "Hinweis „keine Sperre“ fehlt";
   });
   // V3 bis vor von
   await page.click("#vwUrlaubNeu"); await warte(page, 300);
@@ -171,7 +171,7 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
     if (!(await page.locator('[data-vwneu="urlaub"]').count())) return "kein „Nochmal laden“: " + (await page.textContent("#ansicht")).slice(0, 120);
     await page.evaluate(() => { window.__FAKE.fehler = {}; });
     await page.click('[data-vwneu="urlaub"]'); await warte(page, 700);
-    if (!/kein eingetragener Urlaub/.test(await page.textContent("#ansicht"))) f.push("nach „Nochmal laden“ nicht geladen");
+    if (!/Noch nichts eingetragen/.test(await page.textContent("#ansicht"))) f.push("nach „Nochmal laden“ nicht geladen");
     return f.concat(konsole);
   });
   await ctx.close();

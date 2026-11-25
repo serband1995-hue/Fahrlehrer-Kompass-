@@ -2886,7 +2886,9 @@ function terminDialog(id, vorgabe) {
     // W16 Teil 2: Urlaub des Fahrlehrers (buero-verwaltung.js) – in der App sind diese Tage blockiert; hier eine Warnung, wenn Tag oder Fahrlehrer neu sind
     if (typeof vwUrlaubAm === "function" && (!id || t.datum !== d.datum || t.fahrlehrer_id !== d.fahrlehrer_id)) {
       const urlaub = await vwUrlaubAm(d.fahrlehrer_id, d.datum);
-      if (urlaub && !(await bestaetige("Urlaub", `${lehrerName(d.fahrlehrer_id)} hat ${urlaub.von === urlaub.bis ? "am " + datumDE(urlaub.von) : "vom " + datumDE(urlaub.von) + " bis " + datumDE(urlaub.bis)} Urlaub. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
+      const kurz = typeof vwDatumKurz === "function" ? vwDatumKurz : datumDE;
+      // vorsichtig: „Abbrechen“ ist der Hauptknopf (Design-Kritiker: nicht aus Gewohnheit speichern)
+      if (urlaub && !(await bestaetige("Fahrlehrer hat Urlaub", `${lehrerName(d.fahrlehrer_id)} hat ${urlaub.von === urlaub.bis ? "am " + kurz(urlaub.von) : "vom " + kurz(urlaub.von) + " bis " + kurz(urlaub.bis)} Urlaub. Trotzdem speichern?`, "Trotzdem speichern", "Abbrechen", true))) return false;
     }
     const werte = { schueler_id: d.schueler_id || null, art: d.art, fahrlehrer_id: d.fahrlehrer_id, datum: d.datum, von: d.von, bis: d.bis, fahrzeug: d.fahrzeug || null, aktualisiert_am: jetzt };
     // Fahrlehrer ohne App: Sonderfahrt-Art und Klasse der Stunde im payload (die App eines Fahrlehrers mit App führt das selbst)

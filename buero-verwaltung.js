@@ -13,6 +13,36 @@ const VW = { fsId: null, urlaub: null, schichten: null, backups: null, fehler: {
 const VW_FRISCH_MS = 30000;
 const VW_STATUS = { arbeitet: "arbeitet", frei: "frei", krank: "krank" };
 const VW_TAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+// Eigene kleine Stile (Design-Kritiker W16 Teil 2): Schichtplan am Handy Tag oben, Einträge darunter in voller Breite, Zeitraum ohne Umbruch
+(function vwStil() {
+  if (typeof document === "undefined" || document.getElementById("vw-stil")) return;
+  const st = document.createElement("style"); st.id = "vw-stil";
+  st.textContent = `.vw-nowrap{white-space:nowrap}
+.vw-hinweis{white-space:normal}
+.tabelle .marke-pill.vw-nowrap{white-space:nowrap}
+.vw-schicht{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0}
+.vw-schicht .vw-wer{min-width:0;flex:1 1 auto;overflow-wrap:anywhere}
+.vw-plan tr.heute td:first-child{box-shadow:inset 3px 0 0 var(--akzent)}
+@media (max-width:600px){
+  .vw-plan{display:table;overflow:visible}
+  .vw-plan thead{display:none}
+  .vw-plan tr{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;border-bottom:1px solid var(--line-soft)}
+  .vw-plan td{border-bottom:none}
+  .vw-plan td.vw-eintraege{grid-column:1 / -1;grid-row:2;padding-top:0}
+  .vw-plan td.vw-eintraege:empty{display:none}
+  .vw-liste{display:table;overflow:visible}
+  .vw-liste thead{display:none}
+  .vw-liste tr{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;border-bottom:1px solid var(--line-soft);padding:6px 0}
+  .vw-liste td{border-bottom:none;padding:2px 4px}
+  .vw-liste td:nth-child(1){grid-column:1;grid-row:1}
+  .vw-liste td:nth-child(2){grid-column:1;grid-row:2}
+  .vw-liste td.aktionen{grid-column:2;grid-row:1 / span 2}
+}`;
+  document.head.appendChild(st);
+})();
+// Datum kurz: im laufenden Jahr ohne Jahreszahl (28.11.), sonst mit
+function vwDatumKurz(iso) { return iso && iso.slice(0, 4) === KR.todayISO().slice(0, 4) ? datumDE(iso).slice(0, 6) : datumDE(iso); }
+function vwZeitraum(von, bis) { return `<span class="vw-nowrap">${von === bis ? esc(vwDatumKurz(von)) : esc(vwDatumKurz(von)) + " – " + esc(vwDatumKurz(bis))}</span>`; }
 
 // Andere Fahrschule gewählt (Super-Admin): nichts von der vorigen zeigen
 function vwSchule() {
@@ -89,13 +119,15 @@ async function vwUrlaubAm(lehrerId, datum) {
 }
 function renderUrlaub() {
   vwSchule();
-  const kopf = `<div class="karte-kopf"><h2>Urlaub${VW.urlaub ? ` (${VW.urlaub.length})` : ""}</h2><button class="knopf haupt" id="vwUrlaubNeu" type="button">+ Urlaub eintragen</button></div>
-    <p class="leise klein">Bei einem Fahrlehrer sind die Tage in der Fahrschul-Ansicht der App blockiert, und hier warnt das Termin-Fenster. Andere Personen (z. B. Büro) stehen nur in der Liste.</p>`;
+  // Überschrift sagt, was da ist (der Seitentitel heißt schon „Urlaub“)
+  const n = VW.urlaub ? VW.urlaub.length : 0;
+  const kopf = `<div class="karte-kopf"><h2>${VW.urlaub ? (n === 1 ? "1 Eintrag" : n + " Einträge") + " ab heute" : "Ab heute"}</h2><button class="knopf haupt" id="vwUrlaubNeu" type="button">+ Urlaub eintragen</button></div>
+    <p class="leise klein">Urlaub von Fahrlehrern sperrt ihre Tage: In der App sind sie blockiert, hier warnt das Termin-Fenster. Bei anderen Personen (z. B. Büro) gibt es keine Termin-Sperre.</p>`;
   if (!VW.urlaub) return `<div class="karte">${kopf}${vwFehlerKarte("urlaub", "Der Urlaub")}</div>`;
-  if (!VW.urlaub.length) return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<p class="leer">Aktuell kein eingetragener Urlaub.</p></div>`;
-  return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<table class="tabelle"><thead><tr><th>Person</th><th>Zeitraum</th><th></th></tr></thead><tbody>${VW.urlaub.map((u) => `<tr>
-      <td><b>${esc(vwUrlaubName(u))}</b>${vwUrlaubOhneKalender(u) ? '<div class="unter">ohne Kalender (blockiert nichts)</div>' : ""}${u.notiz ? `<div class="unter">${esc(u.notiz)}</div>` : ""}</td>
-      <td>${u.von === u.bis ? esc(datumDE(u.von)) : esc(datumDE(u.von)) + " – " + esc(datumDE(u.bis))}</td>
+  if (!VW.urlaub.length) return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<p class="leer">Noch nichts eingetragen. Tippe auf „+ Urlaub eintragen“.</p></div>`;
+  return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<table class="tabelle vw-liste"><thead><tr><th>Person</th><th>Zeitraum</th><th></th></tr></thead><tbody>${VW.urlaub.map((u) => `<tr>
+      <td><b>${esc(vwUrlaubName(u))}</b>${vwUrlaubOhneKalender(u) ? '<div class="unter"><span class="marke-pill vw-nowrap">keine Sperre</span></div>' : ""}${u.notiz ? `<div class="unter">${esc(u.notiz)}</div>` : ""}</td>
+      <td>${vwZeitraum(u.von, u.bis)}</td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-vwurlaubweg="${esc(u.id)}">Löschen</button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function bindeUrlaub(ziel) {
@@ -163,20 +195,21 @@ function vwLadeSchichten(neu) {
 function vwSchichtenPassen() { if (VW.schichten && VW.zeitraum !== vwSchichtZeitraum().montag) { VW.schichten = null; VW.stand.schichten = 0; } }
 function renderSchichtplan() {
   vwSchule(); vwSchichtenPassen();
-  const kopf = `<div class="karte-kopf"><h2>Schichtplan (2 Wochen)</h2></div><p class="leise klein">Wer im Büro arbeitet, frei hat oder krank ist. Ein Tipp auf „+ Eintrag“ trägt jemanden für den Tag ein.</p>`;
-  if (!VW.schichten) return `<div class="karte">${kopf}${vwFehlerKarte("schichten", "Der Schichtplan")}</div>`;
   const z = vwSchichtZeitraum(), heute = KR.todayISO();
+  // Überschrift: die zwei angezeigten Wochen (der Seitentitel heißt schon „Schichtplan“)
+  const kopf = `<div class="karte-kopf"><h2>${vwZeitraum(z.montag, z.bis)}</h2></div><p class="leise klein">Wer im Büro arbeitet, frei hat oder krank ist. Ein Tipp auf „+ Eintrag“ trägt jemanden für den Tag ein.</p>`;
+  if (!VW.schichten) return `<div class="karte">${kopf}${vwFehlerKarte("schichten", "Der Schichtplan")}</div>`;
   const zeilen = [];
   for (let i = 0; i < 14; i++) {
     const tag = KR.addDaysISO(z.montag, i), d = new Date(tag + "T12:00:00");
     const eintraege = VW.schichten.filter((s) => s.datum === tag);
     zeilen.push(`<tr${tag === heute ? ' class="heute"' : ""}>
-      <td class="zeitspalte"><b>${VW_TAGE[(d.getDay() + 6) % 7]}</b> ${esc(datumDE(tag).slice(0, 6))}</td>
-      <td>${eintraege.length ? eintraege.map((e) => `<div class="vw-schicht" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:2px 0;"><span>${esc(e.mitarbeiter_name)} – <span class="marke-pill${e.status === "krank" ? " rot" : e.status === "arbeitet" ? " gruen" : ""}">${esc(VW_STATUS[e.status] || e.status)}</span>${e.notiz ? ` <span class="leise">(${esc(e.notiz)})</span>` : ""}</span>
-        <button class="knopf klein" type="button" data-vwschichtweg="${esc(e.id)}" aria-label="Eintrag ${esc(e.mitarbeiter_name)} löschen">Löschen</button></div>`).join("") : '<span class="leise" aria-label="Keine Einträge">–</span>'}</td>
+      <td class="zeitspalte"><b>${tag === heute ? "Heute" : VW_TAGE[(d.getDay() + 6) % 7]}</b> ${esc(datumDE(tag).slice(0, 6))}</td>
+      <td class="vw-eintraege">${eintraege.length ? eintraege.map((e) => `<div class="vw-schicht"><span class="vw-wer">${esc(e.mitarbeiter_name)} <span class="marke-pill${e.status === "krank" ? " rot" : e.status === "arbeitet" ? " gruen" : ""}">${esc(VW_STATUS[e.status] || e.status)}</span>${e.notiz ? ` <span class="leise">${esc(e.notiz)}</span>` : ""}</span>
+        <button class="knopf klein" type="button" data-vwschichtweg="${esc(e.id)}" aria-label="Eintrag ${esc(e.mitarbeiter_name)} löschen">Löschen</button></div>`).join("") : ""}</td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-vwschichtneu="${tag}">+ Eintrag</button></div></td></tr>`);
   }
-  return `<div class="karte">${kopf}${vwAltHinweis("schichten")}<table class="tabelle"><thead><tr><th>Tag</th><th>Einträge</th><th></th></tr></thead><tbody>${zeilen.join("")}</tbody></table></div>`;
+  return `<div class="karte">${kopf}${vwAltHinweis("schichten")}<table class="tabelle vw-plan"><thead><tr><th>Tag</th><th>Einträge</th><th></th></tr></thead><tbody>${zeilen.join("")}</tbody></table></div>`;
 }
 function bindeSchichtplan(ziel) {
   vwSchichtenPassen();
@@ -215,11 +248,13 @@ function vwLadeBackups(neu) {
 }
 function renderBackups() {
   vwSchule();
-  const kopf = `<div class="karte-kopf"><h2>Backups</h2><button class="knopf haupt" id="vwBackupJetzt" type="button">Jetzt alles sichern</button></div>
-    <p class="leise klein">Läuft automatisch jeden Sonntag um 23 Uhr. Du kannst jederzeit zusätzlich sichern. Die Datei enthält Personendaten: nur sicher aufbewahren.</p>`;
+  // Überschrift: Stand des letzten Backups (der Seitentitel heißt schon „Backups“)
+  const letztes = VW.backups && VW.backups[0] ? new Date(VW.backups[0].erstellt_am).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }) : "";
+  const kopf = `<div class="karte-kopf"><h2>${letztes ? "Letztes: " + esc(letztes) : VW.backups ? "Noch keins" : "Backups"}</h2><button class="knopf haupt" id="vwBackupJetzt" type="button">Jetzt alles sichern</button></div>
+    <p class="leise klein">Läuft automatisch jeden Sonntag um 23 Uhr. Du kannst jederzeit zusätzlich sichern. <span class="marke-pill gelb vw-hinweis">Die Datei enthält Personendaten: nur sicher aufbewahren.</span></p>`;
   if (!VW.backups) return `<div class="karte">${kopf}${vwFehlerKarte("backups", "Die Liste der Backups")}</div>`;
-  if (!VW.backups.length) return `<div class="karte">${kopf}${vwAltHinweis("backups")}<p class="leer">Noch keine Backups vorhanden.</p></div>`;
-  return `<div class="karte">${kopf}${vwAltHinweis("backups")}<table class="tabelle"><thead><tr><th>Erstellt</th><th>Art</th><th></th></tr></thead><tbody>${VW.backups.map((b) => `<tr>
+  if (!VW.backups.length) return `<div class="karte">${kopf}${vwAltHinweis("backups")}<p class="leer">Noch keine Backups vorhanden. „Jetzt alles sichern“ legt das erste an.</p></div>`;
+  return `<div class="karte">${kopf}${vwAltHinweis("backups")}<table class="tabelle vw-liste"><thead><tr><th>Erstellt</th><th>Art</th><th></th></tr></thead><tbody>${VW.backups.map((b) => `<tr>
       <td>${esc(new Date(b.erstellt_am).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }))}</td>
       <td>${b.automatisch ? "automatisch (wöchentlich)" : "von Hand"}</td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-vwbackuplade="${esc(b.id)}">Herunterladen</button></div></td></tr>`).join("")}</tbody></table></div>`;
