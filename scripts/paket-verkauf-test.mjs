@@ -279,6 +279,42 @@ try {
     pruefe("V9f Haken über den Knopf gesetzt → Akte: nachgereichte zählt voll („3 von 20 gefahren“), kein Warte-Hinweis mehr", st === "abgegeben" && /(^|\D)3 von 20 gefahren · noch 17 offen/.test(t) && !/wartet noch/.test(t), { st, t });
     await ctx.close();
   }
+  // V9h 🗣 Serband 25.11.2026: Bei 90 Minuten wählt Kristina „2 abgegeben“ oder „1 abgegeben“; im Paket zählt genau das.
+  //      V9k: alte Datenbank ohne Spalte buero_fc_anzahl → nur „Abgegeben“ wie bisher, es wird keine Zahl geschrieben.
+  for (const mitSpalte of [true, false]) {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#fahrchecks?ansicht=stunden&von=2000-01-01", vorbereiten: vb(new Function(`const mitSpalte = ${mitSpalte};
+      F.tabellen.schueler_pakete.push({ id: "sp-z", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+        posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }], gesamt_cent: 120000, verkauft_am: "2026-10-01T10:00:00Z", bearbeiter: "Mia Muster", storniert_am: null });
+      const s = F.tabellen.schueler.find((x) => x.id === "s1"); s.paket_id = "p-1"; s.ausbildung = {};
+      const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+      F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1");
+      if (!mitSpalte) F.tabellen.kalender_termine.forEach((t) => { delete t.buero_fc_anzahl; });
+      const z = (id, n, x) => Object.assign({ id, fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(n), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "offen", payload: {} }, mitSpalte ? { buero_fc_anzahl: null } : {}, x);
+      F.tabellen.kalender_termine.push(z("kz-1", 4), z("kz-2", 3, { von: "12:00", bis: "12:45" }));
+    `)) });
+    const zl = () => page.evaluate(() => { const b = document.querySelector('#ansicht [data-fcbearb="kz-1"]'); return b ? b.closest("tr").innerText : ""; });
+    const k2 = page.locator('#ansicht [data-fcstatus="abgegeben"][data-anzahl="2"][data-id="kz-1"]'), k1 = page.locator('#ansicht [data-fcstatus="abgegeben"][data-anzahl="1"][data-id="kz-1"]');
+    const kNorm = page.locator('#ansicht [data-fcstatus="abgegeben"]:not([data-anzahl])[data-id="kz-1"]'), k45 = page.locator('#ansicht [data-fcstatus="abgegeben"][data-id="kz-2"]');
+    if (mitSpalte) {
+      pruefe("V9h 90 Minuten: Knöpfe „2 abgegeben“ und „1 abgegeben“, 45 Minuten nur „Abgegeben“", (await k2.count()) === 1 && (await k1.count()) === 1 && (await kNorm.count()) === 0 && (await k45.count()) === 1 && !(await k45.getAttribute("data-anzahl")));
+      await k1.click(); await page.waitForTimeout(300);
+      const r = await page.evaluate(() => { const t = S.termine.find((x) => x.id === "kz-1"); return { st: t.buero_fc_status, n: t.buero_fc_anzahl }; });
+      const z1 = await zl();
+      pruefe("V9i „1 abgegeben“ gespeichert, Zeile zeigt „1 von 2“ und bietet „2 abgegeben“ an", r.st === "abgegeben" && r.n === 1 && /1 von 2/.test(z1) && (await k2.count()) === 1 && (await k1.count()) === 0, { r, z1 });
+      let d = await oeffneAkte(page, S1); let t = await d.locator("[data-bk-anm-info]").innerText();
+      pruefe("V9j Akte zählt die gewählte Zahl: „1 von 20 gefahren“, die 45-Minuten-Stunde wartet", /(^|\D)1 von 20 gefahren · noch 19 offen/.test(t) && /1 Termin wartet/.test(t), t);
+      await page.evaluate(() => [...document.querySelectorAll("dialog[open]")].forEach((e) => e.close()));
+      await page.locator('#ansicht [data-fcstatus="fehlt"][data-id="kz-1"]').click(); await page.waitForTimeout(300);
+      const r2 = await page.evaluate(() => { const t = S.termine.find((x) => x.id === "kz-1"); return { st: t.buero_fc_status, n: t.buero_fc_anzahl }; });
+      pruefe("V9l „Fehlt“ leert die Zahl", r2.st === "fehlt" && r2.n === null, r2);
+    } else {
+      pruefe("V9k alte Datenbank: nur „Abgegeben“, keine Zahl-Knöpfe", (await kNorm.count()) === 1 && (await k2.count()) === 0 && (await k1.count()) === 0);
+      await kNorm.click(); await page.waitForTimeout(300);
+      const r = await page.evaluate(() => { const t = S.termine.find((x) => x.id === "kz-1"); return { st: t.buero_fc_status, hat: "buero_fc_anzahl" in t }; });
+      pruefe("V9m alte Datenbank: „Abgegeben“ speichert ohne Zahl-Spalte", r.st === "abgegeben" && !r.hat, r);
+    }
+    await ctx.close();
+  }
   // V8 Fahrschulwechsel setzt die verkauften Pakete zurück (keine fremden Pakete in der neuen Schule)
   {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", vorbereiten: vb(mitVerkauftem) });
@@ -506,9 +542,10 @@ try {
     const zeilen = [{ schueler_id: "a1", name: "Boost-Paket B", posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "sonderfahrt", bezeichnung: "Überlandfahrt", anzahl: 5, preis_cent: 8000 }] }];
     // Attrappe: schueler_pakete (für _ladePakete) und kalender_termine (die Akte lädt beim Öffnen diesen einen Schüler über getSupa).
     // Jede Kette gibt sich selbst zurück; kalender_termine liefert nur, was zu den Filtern passt (ohne eq geloescht=false auch Gelöschte).
-    let ktRows = [], ktFehler = false; const ktAufrufe = [];
+    let ktRows = [], ktFehler = false, ktOhneSpalte = false; const ktAufrufe = [];
     const antwort = (tab, a, pak, fehler) => {
       if (fehler) return { data: null, error: { message: 'relation "public.schueler_pakete" does not exist' } };
+      if (tab === "kalender_termine" && ktOhneSpalte && /buero_fc_anzahl/.test(a.sel)) return { data: null, error: { message: "column kalender_termine.buero_fc_anzahl does not exist" } };
       if (tab === "kalender_termine") { ktAufrufe.push(a); return ktFehler ? { data: null, error: { message: "Failed to fetch" } } : { data: ktRows.filter((r) => r.schueler_id === a.eq.schueler_id && (a.eq.geloescht === false ? !r.geloescht : true)), error: null }; }
       return { data: tab === "schueler_pakete" ? pak : [], error: null };
     };
@@ -542,6 +579,15 @@ try {
     const k4 = karte(), aufruf = ktAufrufe[ktAufrufe.length - 1] || { eq: {}, sel: "" };
     const nAufrufe = ktAufrufe.length; routeDetail("a1"); await warte(200);
     const nochmal = ktAufrufe.length - nAufrufe; // frisch geladen: kein zweiter Abruf binnen einer Minute
+    // W13: Zahl vom Büro (buero_fc_anzahl) zählt; alte Datenbank ohne die Spalte → einmal ohne fragen, gleiche Zahlen
+    const ktVorher = ktRows; ktRows = [kt("z1", gestern, "10:00", "11:30", { buero_fc_anzahl: 1 }), kt("z2", gestern, "12:00", "13:30")];
+    delete _paketTermine.a1; routeDetail("a1"); await warte(300); const kZahl = karte(), mitSpalteSel = (ktAufrufe[ktAufrufe.length - 1] || {}).sel || "";
+    ktOhneSpalte = true; ktRows = [kt("z1", gestern, "10:00", "11:30"), kt("z2", gestern, "12:00", "13:30")].map((x) => { delete x.buero_fc_anzahl; return x; });
+    delete _paketTermine.a1; routeDetail("a1"); await warte(300); const kOhne = karte(), spalteDanach = _fcAnzahlFehlt === 0;
+    // Fable Z1: nach 10 Minuten fragt die App wieder mit der Spalte (Migration inzwischen eingespielt)
+    ktOhneSpalte = false; _fcAnzahlFehlt = Date.now() - 700000; delete _paketTermine.a1; routeDetail("a1"); await warte(300);
+    const selSpaeter = (ktAufrufe[ktAufrufe.length - 1] || {}).sel || "";
+    _fcAnzahlFehlt = 0; ktRows = ktVorher;
     // nicht ladbar → Hinweis, „–“ statt Paketgröße
     ktFehler = true; delete _paketTermine.a1; routeDetail("a1"); await warte(300);
     const k4f = karte(); ktFehler = false;
@@ -553,8 +599,10 @@ try {
     DB.lessons = [{ id: "g1", sid: "a1", art: "fahrstunde", date: gestern, von: "10:00", bis: "11:30", status: "geplant", buero_fc_status: "abgegeben" },
       { id: "g2", sid: "a1", art: "fahrstunde", date: gestern, von: "12:00", bis: "12:45", status: "geplant", buero_fc_status: "offen" },
       { id: "g3", sid: "a1", art: "fahrstunde", date: gestern, von: "14:00", bis: "15:30", status: "geplant", buero_fc_status: "abgegeben", fc: "nachgereicht" },
-      { id: "g4", sid: "a2", art: "fahrstunde", date: gestern, von: "16:00", bis: "17:30", status: "geplant", buero_fc_status: "abgegeben" }];
+      { id: "g4", sid: "a2", art: "fahrstunde", date: gestern, von: "16:00", bis: "17:30", status: "geplant", buero_fc_status: "abgegeben" },
+      { id: "g5", sid: "a1", art: "fahrstunde", date: gestern, von: "18:00", bis: "19:30", status: "geplant", buero_fc_status: "abgegeben", buero_fc_anzahl: 1 }];
     const box = document.createElement("div"); box.innerHTML = paketCard(DB.students.find((x) => x.id === "a1")); await warte(150);
+    const nutzlastOhneZahl = !("buero_fc_anzahl" in _fsTeile("kalender_termine", DB.lessons.find((x) => x.id === "g5")).payload); // Fable Z4
     const kAgg = box.textContent, aggAbruf = ktAufrufe.length - nVorAgg; _fsAgg = null; DB.lessons = [];
     // Richter: Gerät hat nach dem Update noch die alte kompass-rechnen.js → keine Zahl statt Absturz
     const kF = KR.fcFuersBuero; delete KR.fcFuersBuero; let kAlt = "";
@@ -573,7 +621,7 @@ try {
     window.getSupa = () => ({ from: () => { geschrieben = true; return { update: () => ({ eq: () => Promise.resolve({}) }) }; } });
     await schuelerPaketSetzen("a1", "v2");
     window.getSupa = altSupa;
-    return { k0, t1, k2, k3, k4, k4f, k4l, kAgg, kAlt, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
+    return { kZahl, mitSpalteSel, kOhne, spalteDanach, selSpaeter, nutzlastOhneZahl, k0, t1, k2, k3, k4, k4f, k4l, kAgg, kAlt, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
   });
   pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Stand (noch nichts gefahren: „0 von 20“)", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*0 von 20/.test(erg.t1) && /Überlandfahrt\s*0 von 5/.test(erg.t1), erg.t1);
   pruefe("A2 App: keine Preise für den Fahrlehrer", !/€|65|80,00/.test(erg.t1), erg.t1);
@@ -586,7 +634,11 @@ try {
   pruefe("A5d App: frisch geladen → kein zweiter Abruf binnen einer Minute", erg.nochmal === 0, erg.nochmal);
   pruefe("A5e App: nicht ladbar → „Stand gerade nicht abrufbar“, „–“ statt Zahlen", /Stand gerade nicht abrufbar/.test(erg.k4f) && /Übungsstunden\s*–/.test(erg.k4f), erg.k4f);
   pruefe("A5f App: Fahrlehrer → Hinweis „Du siehst nur deine eigenen Fahrten“ (Leitung/Büro nicht)", /Du siehst nur deine eigenen Fahrten/.test(erg.k4l) && !/eigenen Fahrten/.test(erg.k4), erg.k4l);
-  pruefe("A5g App-Gesamtansicht: Termine samt Haken aus DB.lessons (1 Std. + 1 nachgereicht = 4, 1 wartet), kein eigener Abruf", /Übungsstunden\s*4 von 20/.test(erg.kAgg) && /1 Termin wartet/.test(erg.kAgg) && erg.aggAbruf === 0 && !/eigenen Fahrten/.test(erg.kAgg), { t: erg.kAgg, n: erg.aggAbruf });
+  pruefe("A5g App-Gesamtansicht: Termine samt Haken aus DB.lessons (2 + nachgereicht 2 + Büro wählt 1 = 5, 1 wartet), kein eigener Abruf", /Übungsstunden\s*5 von 20/.test(erg.kAgg) && /1 Termin wartet/.test(erg.kAgg) && erg.aggAbruf === 0 && !/eigenen Fahrten/.test(erg.kAgg), { t: erg.kAgg, n: erg.aggAbruf });
+  pruefe("A5i App: vom Büro gewählte Zahl zählt (1 + 2 = „3 von 20“), Abfrage fragt buero_fc_anzahl ab", /Übungsstunden\s*3 von 20/.test(erg.kZahl) && /buero_fc_anzahl/.test(erg.mitSpalteSel), { t: erg.kZahl, sel: erg.mitSpalteSel });
+  pruefe("A5j App: alte Datenbank ohne Spalte → zweiter Versuch ohne, Stand trotzdem da („4 von 20“)", /Übungsstunden\s*4 von 20/.test(erg.kOhne) && erg.spalteDanach === false, { t: erg.kOhne, s: erg.spalteDanach });
+  pruefe("A5k App: 10 Minuten nach dem Fehlschlag wird die Spalte wieder abgefragt", /buero_fc_anzahl/.test(erg.selSpaeter), erg.selSpaeter);
+  pruefe("A5l Gesamtansicht: die Zahl vom Büro landet beim Zurückschreiben nie in der Nutzlast", erg.nutzlastOhneZahl === true);
   pruefe("A5h App: alte kompass-rechnen.js im Zwischenspeicher → „nicht abrufbar“, kein Absturz", /Stand gerade nicht abrufbar/.test(erg.kAlt) && !/AUSNAHME/.test(erg.kAlt), erg.kAlt);
   pruefe("A6 App: 22 von 20 Einheiten → „20 von 20 ✓ · +2“", /Übungsstunden\s*20 von 20 ✓ · \+2/.test(erg.k5), erg.k5);
   pruefe("A7 App: verkauftes Paket lässt sich in der App nicht überschreiben", erg.geschrieben === false);
