@@ -5392,6 +5392,8 @@ function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getIte
    beim Start, in der Gesamtansicht und zurück, merkt je Fahrschule und leert beim Abmelden. Gelesen wird der Wert sonst NUR über KR.sonderMinuten(). */
 function _sonderMinAusKE(){ if(window.KR&&KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE&&KE.zahl?KE.zahl("fahrstunden.sonderfahrt","minuten",45,30,90):null); }
 window.addEventListener("ke:geladen",_sonderMinAusKE);
+/* W11 S3: wie lange der „Rückgängig“-Hinweis steht (Einstellung rueckgaengig.sekunden, 4–30, Vorgabe 6). Fehlt KE: 6 s. */
+function _undoMs(){ try{ return (window.KE&&KE.zahl?KE.zahl("rueckgaengig.sekunden","sekunden",6,4,30):6)*1000; }catch(e){ return 6000; } }
 // fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
 async function _ladeReaktRegel(supa,fsId){
   if(!window.KR||!KR.setzeReaktRegel)return;
@@ -6205,17 +6207,20 @@ async function _fsEnterAggMode(fahrschuleId){
   if(neuGesichert){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule gleich holen, unabhängig vom Laden der Daten (offline gilt der Gerätespeicher)
   if(!(await _fsLoadAggData(fahrschuleId))){
     // Nicht in die Gesamtansicht gekommen: die Sicherung der eigenen Daten wieder freigeben, sonst würde
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
     // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
-    if(!_fsAgg&&meinGen===_fsAggGen) _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
+    if(!_fsAgg&&meinGen===_fsAggGen){ _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
+      if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); else KE.leeren(); _sonderMinAusKE(); } } // W11: und die Einstellungen der eigenen
+    else if(_fsAgg&&meinGen===_fsAggGen&&window.KE&&KE.fsId()!==_fsAgg.fahrschuleId){ KE.lade(getSupa(),_fsAgg.fahrschuleId); _sonderMinAusKE(); } // Wechsel A→B gescheitert: wieder die Einstellungen von A
     return false;
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
+  if(window.KE&&KE.fsId()!==fahrschuleId){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: ebenso die Einstellungen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6249,7 +6254,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
-  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
+  if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); } else { KE.leeren(); _sonderMinAusKE(); } } // W11: wieder die Einstellungen der eigenen Fahrschule; ohne eigene Fahrschule (Super-Admin) die fremden loswerden; W13: Einheit sofort
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -6257,6 +6262,7 @@ async function _fsExitAggModeJetzt(){
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
   if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
+  if(window.KE&&_fsAgg) KE.lade(getSupa(),_fsAgg.fahrschuleId); // W11: Einstellungen im Takt mit auffrischen (wirft nie)
   // W14b (Daten-Prüfer): erst ein laufendes Speichern abwarten – sonst läse das Neuladen den Stand davor und das
   // nächste Speichern drehte die eigene Änderung zurück
   if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
@@ -6996,7 +7002,7 @@ async function fsFahrzeugLoeschen(id,name){
   const supa=getSupa();
   const {error}=await supa.from("fahrschule_fahrzeuge").update({aktiv:false}).eq("id",id);
   if(error){toast("Fehler: "+error.message);return;}
-  toastUndo(`${name} entfernt`,async()=>{ const {error:e2}=await supa.from("fahrschule_fahrzeuge").update({aktiv:true}).eq("id",id); if(e2){ toast("Fehler: "+e2.message); return; } toast("Wiederhergestellt ✓"); await _fsRefreshAggData(); if(typeof routeFahrschuleFahrzeuge==="function"&&_navStack.length&&_navStack[_navStack.length-1].name==="routeFahrschuleFahrzeuge")routeFahrschuleFahrzeuge(); },6000);
+  toastUndo(`${name} entfernt`,async()=>{ const {error:e2}=await supa.from("fahrschule_fahrzeuge").update({aktiv:true}).eq("id",id); if(e2){ toast("Fehler: "+e2.message); return; } toast("Wiederhergestellt ✓"); await _fsRefreshAggData(); if(typeof routeFahrschuleFahrzeuge==="function"&&_navStack.length&&_navStack[_navStack.length-1].name==="routeFahrschuleFahrzeuge")routeFahrschuleFahrzeuge(); },_undoMs());
   await _fsRefreshAggData();
   routeFahrschuleFahrzeuge();
 }
@@ -7517,7 +7523,7 @@ async function fsSchichtHinzufuegen(datum){
   toast("Eingetragen ✓");
   _fsLadeSchichtplan();
 }
-/* K7 (🗣 „keine Meldungen, wo ich etwas bestätigen soll“): Zeile sofort löschen, 6 s „Rückgängig“ setzt sie wieder ein */
+/* K7 (🗣 „keine Meldungen, wo ich etwas bestätigen soll“): Zeile sofort löschen, „Rückgängig“ (Einstellung, Vorgabe 6 s) setzt sie wieder ein */
 async function _cloudLoeschenMitRueckgaengig(tabelle,id,text,neuLaden){
   const supa=getSupa();
   const {data:alt,error:e0}=await supa.from(tabelle).select("*").eq("id",id).maybeSingle();
@@ -7526,7 +7532,7 @@ async function _cloudLoeschenMitRueckgaengig(tabelle,id,text,neuLaden){
   const {error}=await supa.from(tabelle).delete().eq("id",id);
   if(error){toast("Fehler: "+error.message);return false;}
   try{ neuLaden&&neuLaden(); }catch(e){}
-  toastUndo(text,async()=>{ const {error:e2}=await supa.from(tabelle).insert(alt); if(e2){ toast("Nicht wiederhergestellt: "+e2.message); return; } toast("Wiederhergestellt ✓"); try{ neuLaden&&neuLaden(); }catch(e){} },6000);
+  toastUndo(text,async()=>{ const {error:e2}=await supa.from(tabelle).insert(alt); if(e2){ toast("Nicht wiederhergestellt: "+e2.message); return; } toast("Wiederhergestellt ✓"); try{ neuLaden&&neuLaden(); }catch(e){} },_undoMs());
   return true;
 }
 async function fsSchichtLoeschen(id){
@@ -8071,7 +8077,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.11";
+const APP_VERSION="2026.11.25.12";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8933,7 +8939,7 @@ function theorieBestandenSetzen(s,an,leise){
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
 function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn nicht mit einem früheren Hinweis zusammengefasst)
-  const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
+  const t=$("#toast"); ms=ms||_undoMs(); t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
   // Hinweise mit eigenem Knopf (z. B. „Meine nehmen“) nie zusammenfassen: ein Tipp darf nur das tun, was dort steht
   if(!knopf&&t._undos&&t._undos.length&&!t._eigenerKnopf&&t.classList.contains("undo")&&t.classList.contains("show")){
@@ -9528,7 +9534,7 @@ function openErgebnisKorrektur(exId,nachher){
     if(s&&geaendert.length)logHist(s,"note",`Prüfungsergebnis korrigiert (${geaendert.join(", ")})`);
     save(); closeSheet(); toastUndo(alt.date!==ex.date&&_authProfile&&_authProfile.fahrschule_id?"Ergebnis geändert – bitte auch die Prüfungstafel im Büro anpassen":"Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
       Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu);
-      if(s&&stAlt){ if(stAlt.ready)s.ready=stAlt.ready; else delete s.ready; if(typeof stAlt.waitOrder==="number")s.waitOrder=stAlt.waitOrder; else delete s.waitOrder; } save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
+      if(s&&stAlt){ if(stAlt.ready)s.ready=stAlt.ready; else delete s.ready; if(typeof stAlt.waitOrder==="number")s.waitOrder=stAlt.waitOrder; else delete s.waitOrder; } save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },_undoMs());
     nachher&&nachher();
   });
   $("#ekLoeschen").addEventListener("click",()=>{
@@ -9582,7 +9588,7 @@ function routeWaitlist(){
       const alt={ready:s.ready,waitOrder:s.waitOrder,raus:s.wartelisteRaus};
       delete s.ready;delete s.waitOrder;s.wartelisteRaus=true;save();routeWaitlist();
       const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],()=>routeWaitlist());
-      toastUndo(s.name+" von der Warteliste entfernt",()=>{ ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+      toastUndo(s.name+" von der Warteliste entfernt",()=>{ ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
     }
   }));
 }
@@ -10482,7 +10488,7 @@ async function _tbEntfernen(sid,lektion,datum,btn){
       _tbBusy=true;
       try{ const r2=await _tbSetzen(sid,datum,[String(lektion)],true); if(r2.erledigt&&r2.erledigt.length)_tbLokal(sid,datum,r2.erledigt,true);
         toast(r2.ok?"Wiederhergestellt ✓":r2.fehler); } finally { _tbBusy=false; }
-      _tbCardNeu(sid); },6000);
+      _tbCardNeu(sid); },_undoMs());
   } finally { _tbBusy=false; }
   _tbCardNeu(sid);
 }
@@ -11327,7 +11333,7 @@ function routePlanVorlagen(){
     if(!DB.ausbildungsplaene.some(x=>x.standard))DB.ausbildungsplaene[0].standard=true;
     save();routePlanVorlagen();
     const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],()=>routePlanVorlagen());
-    toastUndo(`Vorlage „${p.name}“ gelöscht${n?` (${n} Schüler behalten ihren Stand)`:""}`,()=>{ DB.ausbildungsplaene=vorher; vorher.forEach((x,i)=>{ if(stdVorher[i])x.standard=true; else delete x.standard; }); save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+    toastUndo(`Vorlage „${p.name}“ gelöscht${n?` (${n} Schüler behalten ihren Stand)`:""}`,()=>{ DB.ausbildungsplaene=vorher; vorher.forEach((x,i)=>{ if(stdVorher[i])x.standard=true; else delete x.standard; }); save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
   }));
   $("#newPlanBtn").addEventListener("click",()=>{
     const src=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
@@ -11364,7 +11370,7 @@ function wireStufeBlock(p,planId,stKey){
     const itemId=b.dataset.delitem;
     const vorher=st.items.slice();
     st.items=st.items.filter(x=>x.id!==itemId);save();refreshStufeBlock(p,planId,stKey);
-    toastUndo("Punkt gelöscht",()=>{ st.items=vorher; save(); try{ refreshStufeBlock(p,planId,stKey); }catch(e){} toast("Wiederhergestellt ✓"); },6000);
+    toastUndo("Punkt gelöscht",()=>{ st.items=vorher; save(); try{ refreshStufeBlock(p,planId,stKey); }catch(e){} toast("Wiederhergestellt ✓"); },_undoMs());
   }));
   const rowsWrap=block.querySelector(".stufe-rows");
   if(rowsWrap)wireDragReorder(rowsWrap,st,()=>save());
@@ -13572,7 +13578,7 @@ function openBlockEventSheet(l){
   const nachher=()=>routeKalender();
   $("#blAlleWeg").addEventListener("click",()=>{ closeSheet(); const weg=new Set(tage); const vorher=(DB.lessons||[]).slice();
     DB.lessons=(DB.lessons||[]).filter(x=>!weg.has(x)); save(); nachher();
-    toastUndo(`${tage.length>1?tage.length+" Tage":"Eintrag"} gelöscht`,()=>{ tage.forEach(x=>{ delete x._syncedAt; if(!DB.lessons.includes(x))DB.lessons.push(x); }); save(); nachher(); toast("Wiederhergestellt ✓"); },6000); });
+    toastUndo(`${tage.length>1?tage.length+" Tage":"Eintrag"} gelöscht`,()=>{ tage.forEach(x=>{ delete x._syncedAt; if(!DB.lessons.includes(x))DB.lessons.push(x); }); save(); nachher(); toast("Wiederhergestellt ✓"); },_undoMs()); });
   const tw=$("#blTagWeg"); if(tw)tw.addEventListener("click",()=>{ closeSheet(); _loeschenMitRueckgaengig(()=>DB.lessons,l,`${isoDE(l.date)} gelöscht`,nachher); });
   $("#blAendern").addEventListener("click",()=>{
     let typ=l.blockTyp==="urlaub"?"urlaub":"sonstiges";
@@ -13767,7 +13773,7 @@ function openSignatureSheet(lessonId){
     $("#sigClose").addEventListener("click",closeSheet);
     $("#sigUndo").addEventListener("click",()=>{ const alt={signed:l.signed,signatureSnap:l.signatureSnap,signedAt:l.signedAt};
       l.signed=false; l.signatureSnap=null; l.signedAt=null; save(); closeSheet();
-      toastUndo("Unterschrift entfernt",()=>{ Object.assign(l,alt); delete l._syncedAt; save(); toast("Wiederhergestellt ✓"); try{ refreshCurrentView(); }catch(e){} },6000); });
+      toastUndo("Unterschrift entfernt",()=>{ Object.assign(l,alt); delete l._syncedAt; save(); toast("Wiederhergestellt ✓"); try{ refreshCurrentView(); }catch(e){} },_undoMs()); });
     return;
   }
   // Ausbildungsnachweis (21.11.2026): Hat das Büro die Stunde nach der Unterschrift geändert, ist sie ungültig (Datenbank-Trigger).
@@ -15065,7 +15071,7 @@ function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if
 function _undoNeuZeichnen(seite,neuZeichnen){
   return ()=>{ try{ if(_navStack[_navStack.length-1]===seite){ if(neuZeichnen)neuZeichnen(); } else if(!sheetOffen()&&typeof refreshCurrentView==="function")refreshCurrentView(); }catch(e){} };
 }
-/* Paket 2 (A18): Löschen sofort ausführen, 6 s „Rückgängig“. Entfernt eintrag aus der Liste (holen() liefert sie,
+/* Paket 2 (A18): Löschen sofort ausführen, „Rückgängig“ (Dauer aus den Einstellungen, Vorgabe 6 s). Entfernt eintrag aus der Liste (holen() liefert sie,
    weil DB.* neu zugewiesen werden kann) und setzt ihn bei Rückgängig an derselben Stelle wieder ein.
    nachAblauf läuft nur, wenn nicht rückgängig gemacht wurde (z. B. Absage-Mail). */
 function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf, beiRueckgaengig){
@@ -15078,15 +15084,15 @@ function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf,
     // Ohne Merker gilt der Eintrag als „nicht abgeglichen“: der nächste Abruf entfernt ihn nicht, die Brücke lädt ihn wieder hoch
     if(eintrag&&typeof eintrag==="object")delete eintrag._syncedAt;
     try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){}
-    save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+    save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
   // Fehlersucher Bedienung K7: Mehrere Löschungen fasst toastUndo zusammen und verlängert das Rückgängig –
   // dann erst nach dem Ende des Hinweises (sonst ginge z. B. eine Absage raus, obwohl Rückgängig noch angeboten wird)
   if(nachAblauf){ const pruef=()=>{ if(rueck)return; const t=$("#toast");
     if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(pruef,400); return; }
-    try{ nachAblauf(); }catch(e){} }; setTimeout(pruef,6300); }
+    try{ nachAblauf(); }catch(e){} }; setTimeout(pruef,_undoMs()+300); }
 }
 /* K7 Löschen (🗣 Serband 22.11.2026: „Ich will keinen unnötigen Ballast.“ / „keine Meldungen, wo ich etwas bestätigen soll“)
-   Fehleintrag → sofort weg, 6 s „Rückgängig“ (Cloud: Papierkorb, nach 30 Tagen endgültig leer).
+   Fehleintrag → sofort weg, „Rückgängig“ (Dauer einstellbar, Vorgabe 6 s; Cloud: Papierkorb, nach den eingestellten Tagen, Vorgabe 30, endgültig leer).
    Gelaufene oder (je) unterschriebene Nachweis-Stunde → nicht löschen, nur „stornieren“ mit kurzem Grund: sie bleibt
    im Ausbildungsnachweis als storniert aufbewahrt (gleiche Regel wie termin_ist_nachweis in der Datenbank). */
 function istNachweisStunde(l){
@@ -15125,7 +15131,7 @@ async function _stornoSchreiben(id, nowIso){
 function _stornoAufraeumen(){ const o=_stornoLaden(), grenze=Date.now()-14*86400000; let n=0;
   Object.keys(o).forEach(id=>{ const t=Date.parse(o[id]&&o[id].am||""); if(!isNaN(t)&&t<grenze){ delete o[id]; n++; } }); if(n)_stornoSpeichern(o); }
 /* Offene Absagen an online Buchende: bis zum Ablauf des Rückgängig gemerkt, damit sie auch rausgehen,
-   wenn die App in den 6 s geschlossen wird (beim nächsten Abgleich nachgeholt). */
+   wenn die App in der Rückgängig-Zeit geschlossen wird (beim nächsten Abgleich nachgeholt). */
 const _ABSAGE_KEY="kompass-absage-offen";
 function _absagenLesen(){ try{ const a=JSON.parse(localStorage.getItem(_ABSAGE_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function _absagenSchreiben(a){ try{ if(a.length)localStorage.setItem(_ABSAGE_KEY,JSON.stringify(a)); else localStorage.removeItem(_ABSAGE_KEY); }catch(e){} }
@@ -15135,7 +15141,7 @@ function _absageSenden(id){ _absageVergessen(id); _notifyOnlineBookingChange(id,
 function _absagenNachholen(){ if(!_authUser)return; const uid=_authUser.id, jetzt=Date.now();
   // Fable K7: läuft noch ein (zusammengefasstes) Rückgängig, wartet die Absage (sonst Mail trotz „Rückgängig“)
   try{ const t=$("#toast"); if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(_absagenNachholen,1500); return; } }catch(e){}
-  _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>7000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
+  _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>_undoMs()+1000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
 function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig, ohneAbsage){
   // W13: alle Kästchen des Termins leeren (90 Minuten = 2), Rückgängig stellt alle wieder her
   let sonderAlt=null;
@@ -15366,7 +15372,7 @@ function schuelerAusblenden(id){
     ohne.forEach(l=>{ delete l._syncedAt; if(!DB.lessons.some(x=>x.id===l.id))DB.lessons.push(l); });
     plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=id; }); // nur den eigenen Platz zurück
     save(); if(_navStack[_navStack.length-1]&&_navStack[_navStack.length-1].name==="routeHome")routeDetail(id); else if(!sheetOffen())refreshCurrentView(); toast("Wiederhergestellt ✓"+(online.length?` – ${online.length} online gebuchte Termin${online.length===1?"":"e"} bleiben abgesagt`:""));
-  },6000);
+  },_undoMs());
 }
 function schuelerEinblenden(id){ const s=DB.students.find(x=>x.id===id); if(!s)return; delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet"); save(); toast(`${s.name} ist wieder da ✓`); routeDetail(id); }
 function activeStudents(){return DB.students.filter(s=>!s.passed&&!istArchiviert(s));}
@@ -15679,7 +15685,7 @@ function bindExamReady(s,rerender){
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
     const hatTermin=!!terminFor(s.id);
     // Termin lösen: nur den Termin, der Platz auf der Warteliste bleibt. Ohne Termin: von der Warteliste nehmen.
-    // K7: ohne Rückfrage, 6 s Rückgängig
+    // K7: ohne Rückfrage, Rückgängig (Dauer aus den Einstellungen)
     const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===s.id)plaetze.push({t,i}); }));
     const alt={ready:s.ready,waitOrder:s.waitOrder,raus:s.wartelisteRaus};
     if(hatTermin){ clearSlot(s.id); } else { delete s.ready; delete s.waitOrder; s.wartelisteRaus=true; } save();
@@ -15688,7 +15694,7 @@ function bindExamReady(s,rerender){
     toastUndo(hatTermin?"Prüfungstermin gelöst":"Von der Warteliste genommen",()=>{
       if(hatTermin)plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=s.id; });
       else { ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; }
-      save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+      save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
   });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
   const ex=$("#examBtn"); if(ex)ex.addEventListener("click",()=>routeExam(s.id));
@@ -16113,7 +16119,7 @@ function routePruefungen(){
       // Schüler frisch holen (die Liste kann inzwischen neu geladen sein); nur neu zeichnen, wenn die Prüfungen noch offen sind
       const s2=DB.students.find(x=>x.id===sid); if(!s2)return;
       theorieStandZurueck(s2,alt); save(); if(document.querySelector(".pt-tab"))routePruefungen();
-    },6000);
+    },_undoMs());
   }));
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ { const t=DB.termine.find(x=>x.id===b.dataset.del); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routePruefungen()); } }));
@@ -16346,7 +16352,7 @@ function openFCMenu(id){
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  // K7: der Knopf nennt den Grund schon – gelaufene Stunde direkt stornieren (kein zweites Fenster), sonst löschen; je 6 s Rückgängig
+  // K7: der Knopf nennt den Grund schon – gelaufene Stunde direkt stornieren (kein zweites Fenster), sonst löschen; je mit Rückgängig (Dauer aus den Einstellungen)
   document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); const l=(DB.lessons||[]).find(x=>x.id===b.dataset.fcdel);
     if(l&&istNachweisStunde(l))stornoLesson(l.id,"Hat nicht stattgefunden",()=>refreshCurrentView()); else deleteLessonMitRueckgaengig(b.dataset.fcdel,()=>refreshCurrentView()); }));
 }
@@ -17969,7 +17975,7 @@ function routePrueferAkte(nm){
       const daten=DB.prueferData[nm], liste=DB.pruefer.slice(); delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe();
       toastUndo(`Prüfer „${nm}“ gelöscht · Prüfungen bleiben`,async()=>{
         if(window.PW&&PW.aktiv()&&typeof PW.wiederherstellen==="function"&&!(await PW.wiederherstellen(nm))){ toast("Nicht wiederhergestellt – bitte mit Internet nochmal"); return; }
-        if(daten)DB.prueferData[nm]=daten; DB.pruefer=liste; save(); toast("Wiederhergestellt ✓"); if(_navStack.length&&_navStack[_navStack.length-1].name==="routePrueferListe")routePrueferListe(); },6000); } });
+        if(daten)DB.prueferData[nm]=daten; DB.pruefer=liste; save(); toast("Wiederhergestellt ✓"); if(_navStack.length&&_navStack[_navStack.length-1].name==="routePrueferListe")routePrueferListe(); },_undoMs()); } });
   const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()){ const r=await PW.umbenennen(nm,neu); if(r!==true){ toast(r==="keine_berechtigung"?"Umbenennen darf nur, wer ihn angelegt hat, oder das Büro.":"Nicht umbenannt – bitte mit Internet nochmal"); return; } } mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */
