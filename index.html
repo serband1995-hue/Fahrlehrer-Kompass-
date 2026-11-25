@@ -5390,6 +5390,11 @@ function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getIte
    beim Start, in der Gesamtansicht und zurück, merkt je Fahrschule und leert beim Abmelden. Gelesen wird der Wert sonst NUR über KR.sonderMinuten(). */
 function _sonderMinAusKE(){ if(window.KR&&KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE&&KE.zahl?KE.zahl("fahrstunden.sonderfahrt","minuten",45,30,90):null); }
 window.addEventListener("ke:geladen",_sonderMinAusKE);
+/* W15 PR 3: Fristen je Fahrschule (Dauer und Warnzeiten, Büro → Einstellungen → Fristen, Schlüssel fristen.<art>) über KE wie die
+   Sonderfahrt-Einheit; ohne Eintrag gilt der Standard. Kein Neuzeichnen hier: die nächste Ansicht rechnet mit den neuen Werten
+   (wie bei der Regel der Reaktivierung), so geht keine Eingabe verloren. */
+function _fristenAusKE(){ if(window.KR&&KR.setzeFristen) KR.setzeFristen(KR.fristenAusKE?KR.fristenAusKE(window.KE):null); }
+window.addEventListener("ke:geladen",_fristenAusKE);
 // fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
 async function _ladeReaktRegel(supa,fsId){
   if(!window.KR||!KR.setzeReaktRegel)return;
@@ -5560,7 +5565,7 @@ async function pullSchuelerZuweisungen() {
     const supa = getSupa();
     const gen = _abglGen;
     // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
-    if (window.KE) { KE.lade(supa, _authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: Einstellungen der eigenen Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
+    if (window.KE) { KE.lade(supa, _authProfile.fahrschule_id); _sonderMinAusKE(); _fristenAusKE(); } // W11: Einstellungen der eigenen Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
     const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
@@ -5853,6 +5858,7 @@ async function doLogout(opts) {
   if (_syncTimer) clearInterval(_syncTimer);
   _pullOk = false;
   if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
+  _fristenAusKE(); // W15 PR 3: Fristen wieder Standard
   if (!opts.alleGeraete) {
     // Nur dieses Gerät abmelden: signOut() ohne scope meldet in supabase-js v2 ALLE Geräte ab (Handy, PC, Laptop).
     try { if (supa) await Promise.race([supa.auth.signOut({ scope: "local" }), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
@@ -6206,7 +6212,7 @@ async function _fsEnterAggMode(fahrschuleId){
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); _fristenAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6240,7 +6246,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
-  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
+  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); _fristenAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();

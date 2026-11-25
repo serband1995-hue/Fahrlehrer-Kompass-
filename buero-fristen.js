@@ -102,14 +102,24 @@
     _el: null, _ctx: null, _stand: null, _laeuft: false,
     render(el, ctx) {
       stil();
+      // Der Rahmen zeichnet bei jedem Auffrischen der Daten neu: ungespeicherte Eingaben (auch fehlerhafte) mitnehmen
+      let roh = null;
+      if (this._el && this._el !== el && this._ctx && this._ctx.darfSchreiben && this._stand && this._el.querySelector("[data-esf]")) {
+        const { geaendert, fehler } = this.lesen();
+        if (geaendert.length || Object.keys(fehler).length) roh = [...this._el.querySelectorAll("[data-esf] input")].map((i) => [i.id, i.value]);
+      }
       this._el = el; this._ctx = ctx || {};
       this._stand = geladen();
       this.zeichne();
+      if (roh && this._ctx.darfSchreiben) {
+        for (const [id, v] of roh) { const i = el.querySelector("#" + CSS.escape(id)); if (i) i.value = v; }
+        this.pruefen();
+      }
     },
     zeichne(eingaben) {
       const el = this._el, ctx = this._ctx, darf = !!ctx.darfSchreiben;
       const w = eingaben || this._stand;
-      el.innerHTML = `<section class="es-abschnitt" data-esf>
+      el.innerHTML = `<h2 class="es-abschnitt">Fristen</h2><section data-esf>
         <p class="es-hinweis">Wie lange eine Frist gilt und wann sie in Gelb (bald) oder Blau (demnächst) erscheint, für die ganze Fahrschule. Das gilt im Büro und in der App aller Fahrlehrer. Grau = gesetzlich festgelegt.</p>
         <div class="esf-tabelle" role="table" aria-label="Fristen">
           <div class="esf-kopf" role="row"><span role="columnheader">Frist</span><span role="columnheader">Dauer</span><span role="columnheader">Warnung (gelb)</span><span role="columnheader">Vorwarnung (blau)</span><span role="columnheader"><span class="sr-only">Standard</span></span></div>
@@ -227,10 +237,12 @@
       if (KR.holeReaktRegel() && ist !== soll) melde(this._ctx, `Achtung: Die Datenbank rechnet die Reaktivierung noch mit ${ist} Monaten. Das Datenbank-Update fehlt noch, bitte Bescheid geben.`, "warnung");
     },
     verlassen() {
-      if (!this._el || !this._el.isConnected || !this._ctx || !this._ctx.darfSchreiben) return true;
+      if (!this._el || !this._el.isConnected || !this._ctx || !this._ctx.darfSchreiben || !this._el.querySelector("[data-esf]")) return true;
       const { geaendert, fehler } = this.lesen();
       return !geaendert.length && !Object.keys(fehler).length;
     },
+    // „Änderungen verwerfen?“ → Ja: Eingaben weg, gespeicherter Stand (auch beim nächsten Neuzeichnen)
+    verwerfen() { if (this._el && this._el.querySelector("[data-esf]")) this.zeichne(); },
   };
   function melde(ctx, text, art) {
     if (ctx && typeof ctx.meldung === "function") ctx.meldung(text, art);
@@ -238,8 +250,11 @@
   }
   (window.BUERO_EINSTELLUNGEN_THEMEN = window.BUERO_EINSTELLUNGEN_THEMEN || []).push(thema);
   // Einstellungen geladen (KE, auch nach einem Wechsel der Fahrschule): Fristen übernehmen, bei einer Änderung neu zeichnen
-  window.addEventListener("ke:geladen", () => {
+  // Beim eigenen Speichern kommt das Ereignis je Frist: dann zeichnet speichern() selbst am Ende.
+  const ausKE = () => {
     const vorher = JSON.stringify(KR.holeFristen()), neu = KR.setzeFristen(KR.fristenAusKE(window.KE));
-    if (JSON.stringify(neu) !== vorher && typeof window.zeichne === "function") window.zeichne();
-  });
+    if (!thema._laeuft && JSON.stringify(neu) !== vorher && typeof window.zeichne === "function" && typeof S !== "undefined" && S.geladenAm) window.zeichne();
+  };
+  window.addEventListener("ke:geladen", ausKE);
+  if (window.KE) ausKE(); // KE kann schon geladen haben, bevor diese Datei läuft (dann kam das Ereignis zu früh)
 })();

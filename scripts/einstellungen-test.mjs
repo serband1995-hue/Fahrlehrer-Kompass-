@@ -62,7 +62,7 @@ const themenListe = (page) => page.$$eval(".es-thema", (l) => l.map((a) => a.tex
 const aktivesThema = (page) => page.$$eval('.es-thema[aria-current="page"]', (l) => l.map((a) => a.dataset.esThema).join(","));
 const setzeHash = async (page, h) => { await page.evaluate((x) => { location.hash = x; }, h); await warte(page, 400); };
 const konfig = (page) => page.evaluate(() => window.__FAKE.tabellen.fahrschulen.find((f) => f.id === "fs-test-1").konfiguration);
-const SOLL = ["Fahrschule", "Preise & Pakete", "Zahlungen & Mails", "Nachrichten-Vorlagen", "Fahrstunden & Kalender", "Team & Zugänge", "Sicherheit (PIN)", "Darstellung & Start"];
+const SOLL = ["Fahrschule", "Preise & Pakete", "Zahlungen & Mails", "Fristen", "Nachrichten-Vorlagen", "Fahrstunden & Kalender", "Team & Zugänge", "Sicherheit (PIN)", "Darstellung & Start"];
 
 try {
   // E1 Leiste
@@ -85,7 +85,7 @@ try {
   {
     const { page, ctx, konsole } = await oeffne();
     const l = await themenListe(page);
-    pruefe("E2a", "Themen in der Reihenfolge 10–90 (Fristen baut W15b)", l.join(" / ") === SOLL.join(" / ") ? null : l.join(" / "));
+    pruefe("E2a", "Themen in der Reihenfolge 10–90 (mit „Fristen“ und „Nachrichten-Vorlagen“ von W15b)", l.join(" / ") === SOLL.join(" / ") ? null : l.join(" / "));
     pruefe("E2b", "ohne ?thema= ist das erste Thema offen (Fahrschule)", (await aktivesThema(page)) === "fahrschule" && (await page.locator("#esBox .es-abschnitt").first().innerText()) === "Fahrschule" ? null : await aktivesThema(page));
     await page.click('.es-thema[data-es-thema="team"]'); await warte(page, 350);
     pruefe("E2c", "Klick auf ein Thema: Adresse #einstellungen?thema=team, Thema markiert, Inhalt gewechselt", (await page.evaluate(() => location.hash)) === "#einstellungen?thema=team" && (await aktivesThema(page)) === "team" && /Fahrlehrer & Büro/.test(await page.locator("#esBox").innerText()) ? null : await page.evaluate(() => location.hash));
@@ -100,14 +100,14 @@ try {
     pruefe("E2g", "unbekanntes Thema: erstes Thema, kein Fehler", (await aktivesThema(b.page)) === "fahrschule" && !b.konsole.length ? null : b.konsole);
     // alle Themen öffnen, keines leer, Platzhalter nennt „kommt bald“
     const leer = [];
-    for (const id of ["fahrschule", "preise", "zahlungen", "vorlagen", "kalender", "team", "sicherheit", "darstellung"]) {
+    for (const id of ["fahrschule", "preise", "zahlungen", "fristen", "vorlagen", "kalender", "team", "sicherheit", "darstellung"]) {
       await setzeHash(b.page, "#einstellungen?thema=" + id);
       const t = (await b.page.locator("#esBox").innerText()).trim();
       if (t.length < 15 || (await aktivesThema(b.page)) !== id) leer.push(id);
     }
     pruefe("E2h", "jedes Thema zeigt etwas", leer.length ? leer : null);
     await setzeHash(b.page, "#einstellungen?thema=vorlagen");
-    pruefe("E2i", "Platzhalter „Nachrichten-Vorlagen“: „Hier kommt bald …“", /Hier kommt bald/.test(await b.page.locator("#esBox").innerText()) ? null : "kein Hinweis");
+    pruefe("E2i", "Thema „Nachrichten-Vorlagen“ (W15 PR 3): echte Liste mit 9 Vorlagen statt „Hier kommt bald …“", !/Hier kommt bald/.test(await b.page.locator("#esBox").innerText()) && (await b.page.locator("#esBox [data-esv-art]").count()) === 9 ? null : "Platzhalter oder keine 9 Vorlagen");
     pruefe("E12b", "keine Konsolenfehler", b.konsole.length ? b.konsole : null);
     await b.ctx.close();
   }
@@ -121,7 +121,7 @@ try {
     await page.evaluate(() => window.BUERO_EINSTELLUNGEN_THEMEN.push({ id: "fremd2", titel: "Nach dem Laden", reihenfolge: 45, render(el) { el.innerHTML = '<p>nachher da</p>'; } }));
     await warte(page, 150);
     l = await themenListe(page);
-    pruefe("E3b", "Thema, das NACH dem Laden per push kommt, erscheint sofort in der Liste an der richtigen Stelle (nach Zahlungen & Mails, vor Vorlagen)", l.indexOf("Nach dem Laden") === l.indexOf("Zahlungen & Mails") + 1 ? null : l.join(" / "));
+    pruefe("E3b", "Thema, das NACH dem Laden per push kommt, erscheint sofort in der Liste an der richtigen Stelle (45: nach Fristen, vor Vorlagen)", l.indexOf("Nach dem Laden") === l.indexOf("Fristen") + 1 && l.indexOf("Nach dem Laden") + 1 === l.indexOf("Nachrichten-Vorlagen") ? null : l.join(" / "));
     pruefe("E3c", "das offene Thema bleibt offen", (await aktivesThema(page)) === "fremd1" ? null : await aktivesThema(page));
     await page.click('.es-thema[data-es-thema="fremd2"]'); await warte(page, 300);
     pruefe("E3d", "nachträgliches Thema lässt sich öffnen", /nachher da/.test(await page.locator("#esBox").innerText()) ? null : await page.locator("#esBox").innerText());
@@ -279,7 +279,7 @@ try {
     const breit = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     const sicht = await page.evaluate(() => [!!document.querySelector(".es-themen").offsetParent, !!document.querySelector(".es-inhalt").offsetParent]);
     const hoehen = await page.$$eval(".es-thema", (l) => l.map((a) => Math.round(a.getBoundingClientRect().height)));
-    pruefe(`E10a ${b}`, "ohne Thema: Liste aller Themen untereinander (je ≥ 44 px), Inhalt noch zu, kein seitliches Wischen", sicht[0] && !sicht[1] && hoehen.length === 8 && hoehen.every((h) => h >= 44) && (await breit()) <= 0 ? null : JSON.stringify([sicht, hoehen, await breit()]));
+    pruefe(`E10a ${b}`, "ohne Thema: Liste aller Themen untereinander (je ≥ 44 px), Inhalt noch zu, kein seitliches Wischen", sicht[0] && !sicht[1] && hoehen.length === 9 && hoehen.every((h) => h >= 44) && (await breit()) <= 0 ? null : JSON.stringify([sicht, hoehen, await breit()]));
     await page.click('.es-thema[data-es-thema="preise"]'); await warte(page, 400);
     const s2 = await page.evaluate(() => [!!document.querySelector(".es-themen").offsetParent, !!document.querySelector(".es-inhalt").offsetParent, !!document.querySelector(".es-zurueck").offsetParent]);
     pruefe(`E10b ${b}`, "Thema offen: Inhalt statt Liste, „‹ Alle Themen“ da", !s2[0] && s2[1] && s2[2] ? null : JSON.stringify(s2));

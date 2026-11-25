@@ -5092,6 +5092,7 @@ async function abmelden() {
   verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
   try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) { /* egal */ } // W16: Schleifen-Merker gehört zur Sitzung
   if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
+  if (KR.setzeFristen) KR.setzeFristen(null); // W15 PR 3: Fristen wieder Standard
   // Erst die PIN-Sitzung auf dem Server beenden (höchstens 3 s warten), dann lokal abmelden: sonst ginge der Aufruf ohne Anmeldung raus.
   try { await Promise.race([beendeSitzung(), new Promise((r) => setTimeout(r, 3000))]); } catch (e) { /* egal */ }
   try { await supa.auth.signOut({ scope: "local" }); } catch (e) { /* trotzdem neu laden */ } // nur dieser PC, andere Geräte bleiben angemeldet
@@ -5168,6 +5169,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
   KR.setzeSonderMinuten(null); // W13 PR 2: Sonderfahrt-Einheit der vorigen Fahrschule nicht mitnehmen
+  if (KR.setzeFristen) KR.setzeFristen(null); // W15 PR 3: Fristen der vorigen Fahrschule nicht mitnehmen (die neuen kommen mit KE, Ereignis ke:geladen)
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule

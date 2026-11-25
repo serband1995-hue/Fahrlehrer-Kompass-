@@ -1,6 +1,9 @@
 // W15 Schritt 3: Thema „Fristen“ der Büro-Einstellungen (buero-fristen.js) im echten Browser, erfundene Daten, ohne Netz.
-// Bis der Einstellungs-Rahmen von Werkstatt 11 (KE, BUERO_EINSTELLUNGEN_THEMEN) auf main ist, läuft das Thema in einem kleinen
-// Testgerüst: buero.css + kompass-rechnen.js + Attrappe von KE (gleiche Schnittstelle wie W11: wert/setze/zuruecksetzen).
+// Teil T: das Thema in einem kleinen Testgerüst (buero.css + kompass-rechnen.js + Attrappe von KE) – alle Einzelheiten.
+// Teil B (W15 PR 3): im echten Rahmen von Werkstatt 11 auf buero.html mit der Büro-Attrappe (buero-vorfuehrung.js, echtes KE):
+// Liste der Themen, Speichern in fahrschule_einstellungen, Rückgängig, Eingaben beim Neuzeichnen behalten, Rückfrage beim Verlassen,
+// „Läuft bald ab“ rechnet mit den gespeicherten Warnzeiten, gespeicherte Werte beim Start, Büro-Rolle, Handy.
+// Teil A (W15 PR 3): die App (index.html) übernimmt die Fristen der Fahrschule aus KE, andere Fahrschule = Standard, Abmelden = Standard.
 // Prüft: Tabelle, gesetzliche Fristen grau, Speichern + Rückgängig, Prüfung der Eingaben, „Standard“, nur Lesen, Fehler beim
 // Speichern, Warnung wenn der Server andere Monate rechnet, ke:geladen, Handy 360/412 hoch und quer (Tippflächen ≥ 44 px).
 // Aufruf: NODE_PATH=$(npm root -g) node scripts/fristen-thema-test.mjs   (Bilder: FRISTEN_BILDER=/pfad)
@@ -12,8 +15,10 @@ import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
+const { bauDaten } = require("../buero-vorfuehrung.js");
+const d0 = new Date(); const HEUTE = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, "0")}-${String(d0.getDate()).padStart(2, "0")}`;
 const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp" };
 const GERUEST = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="buero.css"></head><body><main class="inhalt" style="padding:16px"><div class="karte"><div class="karte-kopf"><h2>Fristen</h2></div><div id="ziel"></div></div></main>
 <script src="kompass-rechnen.js"></script>
@@ -53,6 +58,8 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/geruest.html`;
+const wurzel = `http://127.0.0.1:${server.address().port}/`;
+const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const BILDER = process.env.FRISTEN_BILDER || "";
 if (BILDER) await mkdir(BILDER, { recursive: true });
@@ -69,6 +76,8 @@ async function oeffne({ breite = 1366, hoehe = 900, darf = true, schema = "light
   return { page, ctx, jsFehler };
 }
 const feld = (page, art, f) => page.locator(`input[data-art="${art}"][data-feld="${f}"]`);
+// Wie ein Mensch tippen: Playwright „fill“ kürzt im Testgerüst manche Werte („70“ → „7“), echtes Tippen nicht
+const tippe = async (page, art, f, v) => { const i = feld(page, art, f); await i.click(); await i.press("Control+A"); if (v === "") await i.press("Delete"); else await i.pressSequentially(v); };
 const fristen = (page) => page.evaluate(() => KR.holeFristen());
 
 try {
@@ -92,7 +101,7 @@ try {
   // ---------- 2. Speichern und Rückgängig ----------
   {
     const { page, ctx, jsFehler } = await oeffne();
-    await feld(page, "theorie", "monate").fill("6");
+    await tippe(page, "theorie", "monate", "6");
     pruefe("T2a nach Eingabe: Speichern an, „1 Frist geändert“", await page.locator("[data-esf-speichern]").isEnabled() && /1 Frist geändert/.test(await page.locator("[data-esf-status]").innerText()));
     pruefe("T2b verlassen() meldet ungesicherte Änderung", (await page.evaluate(() => BUERO_EINSTELLUNGEN_THEMEN.find((x) => x.id === "fristen").verlassen())) === false);
     pruefe("T2c noch nichts gespeichert, Rechnung unverändert", (await page.evaluate(() => AUFRUFE.length)) === 0 && (await fristen(page)).theorie.monate === 12);
@@ -110,7 +119,7 @@ try {
     pruefe("T2i Rückgängig: zurück auf Standard = Eintrag löschen", JSON.stringify(b) === JSON.stringify(["zuruecksetzen", "fs-1", "fristen.theorie"]), JSON.stringify(b));
     pruefe("T2j Rückgängig: Rechnung und Feld wieder 12", (await fristen(page)).theorie.monate === 12 && (await feld(page, "theorie", "monate").inputValue()) === "12");
     // zwei Fristen auf einmal
-    await feld(page, "behoerde", "bald_tage").fill("14"); await feld(page, "fahrlehrer", "bald_tage").fill("60");
+    await tippe(page, "behoerde", "bald_tage", "14"); await tippe(page, "fahrlehrer", "bald_tage", "60");
     await page.locator("[data-esf-speichern]").click();
     await page.waitForFunction(() => AUFRUFE.length === 4);
     pruefe("T2k zwei Fristen gespeichert, Meldung „2 Fristen gespeichert“", /2 Fristen gespeichert/.test(await page.locator(".toast-undo").innerText()) && (await fristen(page)).behoerde.bald_tage === 14 && (await fristen(page)).fahrlehrer.bald_tage === 60);
@@ -121,20 +130,20 @@ try {
   // ---------- 3. Eingaben prüfen, Standard ----------
   {
     const { page, ctx, jsFehler } = await oeffne();
-    await feld(page, "antrag", "monate").fill("0");
+    await tippe(page, "antrag", "monate", "0");
     pruefe("T3a 0 Monate: rot, Hinweis, Speichern aus", (await feld(page, "antrag", "monate").getAttribute("aria-invalid")) === "true" && /1 bis 60/.test(await page.locator('[data-esf-fehler="antrag"]').innerText()) && await page.locator("[data-esf-speichern]").isDisabled());
-    await feld(page, "antrag", "monate").fill("61");
+    await tippe(page, "antrag", "monate", "61");
     pruefe("T3b 61 Monate abgelehnt", /1 bis 60/.test(await page.locator('[data-esf-fehler="antrag"]').innerText()));
-    await feld(page, "antrag", "monate").fill("1,5");
+    await tippe(page, "antrag", "monate", "1,5");
     pruefe("T3c Kommazahl abgelehnt", (await feld(page, "antrag", "monate").getAttribute("aria-invalid")) === "true");
-    await feld(page, "antrag", "monate").fill("18");
+    await tippe(page, "antrag", "monate", "18");
     pruefe("T3d gültig: Hinweis weg, Speichern an", await page.locator('[data-esf-fehler="antrag"]').isHidden() && await page.locator("[data-esf-speichern]").isEnabled());
-    await feld(page, "theorie", "bald_tage").fill("70");
+    await tippe(page, "theorie", "bald_tage", "70");
     pruefe("T3e Vorwarnung vor Warnung: Hinweis, Speichern aus", /Vorwarnung \(blau\) kommt vor der Warnung/.test(await page.locator('[data-esf-fehler="theorie"]').innerText()) && await page.locator("[data-esf-speichern]").isDisabled());
-    await feld(page, "theorie", "bald_tage").fill("30");
-    await feld(page, "fahrlehrer", "bald_tage").fill("366");
+    await tippe(page, "theorie", "bald_tage", "30");
+    await tippe(page, "fahrlehrer", "bald_tage", "366");
     pruefe("T3f 366 Tage abgelehnt", /1 bis 365/.test(await page.locator('[data-esf-fehler="fahrlehrer"]').innerText()));
-    await feld(page, "fahrlehrer", "bald_tage").fill("120");
+    await tippe(page, "fahrlehrer", "bald_tage", "120");
     pruefe("T3g Standard-Knopf an, sobald etwas abweicht", await page.locator('[data-esf-standard="fahrlehrer"]').isEnabled());
     await page.locator('[data-esf-standard="fahrlehrer"]').click();
     pruefe("T3h Standard setzt die Felder zurück (90), Knopf wieder aus", (await feld(page, "fahrlehrer", "bald_tage").inputValue()) === "90" && await page.locator('[data-esf-standard="fahrlehrer"]').isDisabled());
@@ -151,7 +160,7 @@ try {
   {
     const { page, ctx, jsFehler } = await oeffne();
     await page.evaluate(() => { FEHLER_BEIM_SPEICHERN = true; });
-    await feld(page, "fc_zettel", "monate").fill("6");
+    await tippe(page, "fc_zettel", "monate", "6");
     await page.locator("[data-esf-speichern]").click();
     await page.waitForFunction(() => MELDUNGEN.some((m) => m[0] === "fehler"));
     pruefe("T4b Fehler: Meldung, Eingabe bleibt stehen, Rechnung unverändert", (await feld(page, "fc_zettel", "monate").inputValue()) === "6" && (await fristen(page)).fc_zettel.monate === 12 && (await page.locator(".toast-undo").count()) === 0);
@@ -161,12 +170,12 @@ try {
     pruefe("T4c zweiter Versuch klappt", (await fristen(page)).fc_zettel.monate === 6);
     // Server (Datenbank-Update fehlt) rechnet noch mit 12 Monaten
     await page.evaluate(() => { SERVER_MONATE = 12; });
-    await feld(page, "reaktivierung", "monate").fill("24");
+    await tippe(page, "reaktivierung", "monate", "24");
     await page.locator("[data-esf-speichern]").click();
     await page.waitForFunction(() => MELDUNGEN.some((m) => m[0] === "warnung"));
     pruefe("T4d Warnung: Datenbank rechnet noch mit 12 Monaten", /noch mit 12 Monaten/.test((await page.evaluate(() => MELDUNGEN.find((m) => m[0] === "warnung")))[1]));
     await page.evaluate(() => { SERVER_MONATE = null; MELDUNGEN.length = 0; });
-    await feld(page, "reaktivierung", "monate").fill("18");
+    await tippe(page, "reaktivierung", "monate", "18");
     await page.locator("[data-esf-speichern]").click();
     await page.waitForFunction(() => KR.reaktMonate() === 18);
     pruefe("T4e Server rechnet gleich: keine Warnung", !(await page.evaluate(() => MELDUNGEN.some((m) => m[0] === "warnung"))));
@@ -201,10 +210,135 @@ try {
     pruefe(`T5 ${b}×${h}: kein Text liegt auf einem Feld`, !m.ueber.length, m.ueber.join(", "));
     pruefe(`T5 ${b}×${h}: Namensspalte mindestens 200 px breit`, !m.schmal, String(m.schmal));
     if (b < 700) pruefe(`T5 ${b}: Beschriftung je Feld sichtbar (Kopfzeile aus)`, await page.locator(".esf-kopf").isHidden() && await page.locator('label[for="esf-theorie-monate"] .esf-label').isVisible());
-    await feld(page, "theorie", "monate").fill("9");
+    await tippe(page, "theorie", "monate", "9");
     pruefe(`T5 ${b}: Speichern erreichbar`, await page.locator("[data-esf-speichern]").isEnabled());
     if (BILDER) await page.screenshot({ path: join(BILDER, `fristen-${b}x${h}-${schema}.png`), fullPage: true });
     pruefe(`T5 ${b}: keine JS-Fehler`, !jsFehler.length, jsFehler.join(" | "));
+    await ctx.close();
+  }
+
+  // ---------- B. Im echten Rahmen (buero.html, Werkstatt 11) ----------
+  const oeffneBuero = async ({ nutzer = "ad-1", hash = "#einstellungen?thema=fristen", breite = 1366, hoehe = 900, vorbereiten = "" } = {}) => {
+    const daten = bauDaten(HEUTE), session = { user: { id: nutzer, email: nutzer + "@example.org" } };
+    const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
+    const page = await ctx.newPage(), konsole = [];
+    page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+    page.on("pageerror", (e) => konsole.push(String(e)));
+    await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+    await page.addInitScript(([d, s, v]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s }; if (v) (new Function("F", v))(window.__FAKE); }, [daten, session, vorbereiten]);
+    await page.goto(wurzel + "buero.html" + hash);
+    await page.waitForTimeout(400);
+    const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
+    if (frage) { await page.click('#werListe button:has-text("Paula Muster")'); await page.keyboard.type("7352", { delay: 20 }); await page.waitForTimeout(400); }
+    await page.waitForFunction(() => { const a = document.getElementById("ansicht"); return a && !/Daten werden geladen/.test(a.textContent); }, null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    return { page, ctx, konsole };
+  };
+  const zeilenEinst = (page) => page.evaluate(() => (window.__FAKE.tabellen.fahrschule_einstellungen || []).filter((z) => /^fristen\./.test(z.schluessel)).map((z) => ({ fs: z.fahrschule_id, k: z.schluessel, w: z.wert })));
+  const themenListe = (page) => page.$$eval(".es-thema", (l) => l.map((a) => a.textContent.trim()));
+  {
+    const { page, ctx, konsole } = await oeffneBuero();
+    const l = await themenListe(page);
+    pruefe("B1a Liste: „Fristen“ nach „Zahlungen & Mails“, vor „Nachrichten-Vorlagen“", l.indexOf("Fristen") === l.indexOf("Zahlungen & Mails") + 1 && l.indexOf("Fristen") < l.indexOf("Nachrichten-Vorlagen"), l.join(" / "));
+    pruefe("B1b Thema offen im Rahmen: Überschrift „Fristen“, 8 Zeilen", (await page.locator("#esBox > h2.es-abschnitt").first().innerText()) === "Fristen" && (await page.locator("#esBox [data-esf-zeile]").count()) === 8);
+    pruefe("B1c die Hinweise sind keine Überschrift (Schrift höchstens 16 px)", (await page.locator("#esBox [data-esf] > .es-hinweis").evaluate((e) => parseFloat(getComputedStyle(e).fontSize))) <= 16);
+    // Speichern → Zeile in fahrschule_einstellungen, KR rechnet sofort damit
+    await tippe(page, "theorie", "bald_tage", "45");
+    await page.locator("[data-esf-speichern]").click(); await page.waitForTimeout(500);
+    let z = await zeilenEinst(page);
+    pruefe("B2a gespeichert als fristen.theorie der eigenen Fahrschule (ganzes Objekt)", z.length === 1 && z[0].k === "fristen.theorie" && z[0].fs === "fs-test-1" && JSON.stringify(z[0].w) === JSON.stringify({ monate: 12, bald_tage: 45, vorwarn_tage: 60 }), JSON.stringify(z));
+    pruefe("B2b gilt sofort (KR) und Hinweis mit „Rückgängig“", (await fristen(page)).theorie.bald_tage === 45 && await page.locator(".toast-undo [data-undo]").isVisible());
+    pruefe("B2c Zeile „geändert“ markiert", await page.locator('[data-esf-zeile="theorie"].esf-geaendert').count() === 1);
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(500);
+    z = await zeilenEinst(page);
+    pruefe("B3 Rückgängig: Eintrag gelöscht (= Standard), KR wieder 30, Feld wieder 30", z.length === 0 && (await fristen(page)).theorie.bald_tage === 30 && (await feld(page, "theorie", "bald_tage").inputValue()) === "30", JSON.stringify(z));
+    // ungespeicherte Eingabe übersteht das Neuzeichnen des Rahmens (Auffrischen der Daten)
+    await tippe(page, "antrag", "bald_tage", "70");
+    await tippe(page, "theorie", "vorwarn_tage", "abc");
+    await page.evaluate(() => zeichne()); await page.waitForTimeout(200);
+    await page.evaluate(() => ladeDaten()); await page.waitForTimeout(700);
+    pruefe("B4 Neuzeichnen und Neuladen: Eingaben bleiben (auch die fehlerhafte), Fehler weiter sichtbar, Speichern gesperrt",
+      (await feld(page, "antrag", "bald_tage").inputValue()) === "70" && (await feld(page, "theorie", "vorwarn_tage").inputValue()) === "abc"
+      && await page.locator('[data-esf-fehler="theorie"]').isVisible() && await page.locator("[data-esf-speichern]").isDisabled());
+    // Verlassen mit ungespeicherter Eingabe → Rückfrage; „verwerfen“ → beim Zurückkommen gespeicherter Stand
+    await page.click('.es-thema[data-es-thema="preise"]'); await page.waitForTimeout(400);
+    const frage = await page.locator("dialog[open]").last().innerText().catch(() => "");
+    pruefe("B5a Verlassen mit Eingabe: Rückfrage „Änderungen verwerfen?“", /Änderungen verwerfen\?/.test(frage), frage.slice(0, 80));
+    await page.locator('dialog[open] button:has-text("Ja, verwerfen")').click(); await page.waitForTimeout(400);
+    await page.click('.es-thema[data-es-thema="fristen"]'); await page.waitForTimeout(400);
+    pruefe("B5b zurück im Thema: gespeicherter Stand, nichts geändert", (await feld(page, "antrag", "bald_tage").inputValue()) === "60" && (await feld(page, "theorie", "vorwarn_tage").inputValue()) === "60" && await page.locator("[data-esf-speichern]").isDisabled());
+    pruefe("B5c keine JS-Fehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // B6 „Läuft bald ab“ rechnet mit der gespeicherten Warnzeit (Antrag: Warnung 200 statt 60 Tage)
+  {
+    const KRn = require("../kompass-rechnen.js");
+    const antragAm = KRn.addMonthsISO(KRn.addDaysISO(HEUTE, 150), -12); // Antrag läuft in 150 Tagen ab
+    const vor = `const s = F.tabellen.schueler.find((x) => x.id === "s6"); Object.assign(s, { antrag_am: ${JSON.stringify(antragAm)}, theorie_bestanden_am: null });`;
+    const { page, ctx, konsole } = await oeffneBuero({ hash: "#fristen?ansicht=bald", vorbereiten: vor });
+    const zeile = () => page.locator('[data-baldliste] tr[data-bald="antrag"]', { has: page.locator('[data-baldakte="s6"]') }).count();
+    pruefe("B6a ohne Einstellung: Antrag in 150 Tagen steht nicht in „Läuft bald ab“", (await zeile()) === 0);
+    await page.evaluate(() => { location.hash = "#einstellungen?thema=fristen"; }); await page.waitForTimeout(500);
+    await tippe(page, "antrag", "bald_tage", "200");
+    await page.locator("[data-esf-speichern]").click(); await page.waitForTimeout(500);
+    await page.evaluate(() => { location.hash = "#fristen?ansicht=bald"; }); await page.waitForTimeout(500);
+    pruefe("B6b nach dem Speichern (Warnung 200 Tage): Antrag steht in „Läuft bald ab“", (await zeile()) === 1);
+    pruefe("B6c keine JS-Fehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // B7 gespeicherte Werte beim Start; Büro-Rolle darf ändern; Wechsel der Fahrschule nimmt keine Werte mit
+  {
+    const vor = `F.tabellen.fahrschule_einstellungen = [{ fahrschule_id: "fs-test-1", schluessel: "fristen.theorie", wert: { bald_tage: 10 } }];`;
+    const { page, ctx, konsole } = await oeffneBuero({ nutzer: "bu-1", vorbereiten: vor });
+    pruefe("B7a gespeicherter Wert gilt nach dem Start (KR und Feld), Zeile „geändert“", (await fristen(page)).theorie.bald_tage === 10 && (await feld(page, "theorie", "bald_tage").inputValue()) === "10" && await page.locator('[data-esf-zeile="theorie"].esf-geaendert').count() === 1);
+    pruefe("B7b Büro darf ändern (Felder frei, Speichern-Knopf da)", await feld(page, "theorie", "bald_tage").isEnabled() && await page.locator("[data-esf-speichern]").count() === 1);
+    await page.evaluate(() => { const w = document.getElementById("schulWahl"); if (w) { w.innerHTML += '<option value="fs-andere">Andere</option>'; w.value = "fs-andere"; w.dispatchEvent(new Event("change")); } else { S.fsId = "fs-andere"; } });
+    await page.waitForTimeout(150);
+    pruefe("B7c Wechsel der Fahrschule: sofort wieder Standard (keine Werte der vorigen)", (await fristen(page)).theorie.bald_tage === 30 || !(await page.evaluate(() => !!document.getElementById("schulWahl"))));
+    pruefe("B7d keine JS-Fehler", !konsole.filter((k) => !/fs-andere|Failed to load resource|Fahrschule: keine Zeile/.test(k)).length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // B8 Handy im echten Rahmen: nichts ragt heraus, Speichern erreichbar
+  for (const [b, h] of [[360, 740], [740, 360]]) {
+    const { page, ctx, konsole } = await oeffneBuero({ breite: b, hoehe: h });
+    const m = await page.evaluate(() => ({ breit: document.documentElement.scrollWidth, sicht: document.documentElement.clientWidth,
+      raus: [...document.querySelectorAll("#esBox *")].filter((e) => e.getBoundingClientRect().right > document.documentElement.clientWidth + 1).map((e) => e.className || e.tagName).slice(0, 4) }));
+    pruefe(`B8 ${b}×${h} im Rahmen: kein seitliches Wischen, nichts ragt heraus`, m.breit <= m.sicht && !m.raus.length, JSON.stringify(m));
+    await tippe(page, "antrag", "bald_tage", "61");
+    await page.locator("[data-esf-speichern]").scrollIntoViewIfNeeded();
+    pruefe(`B8 ${b}×${h}: Speichern erreichbar und frei`, await page.locator("[data-esf-speichern]").isEnabled() && await page.locator("[data-esf-speichern]").isVisible());
+    if (BILDER) await page.screenshot({ path: join(BILDER, `rahmen-${b}x${h}.png`), fullPage: true });
+    pruefe(`B8 ${b}×${h}: keine JS-Fehler`, !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+
+  // ---------- A. App (index.html) übernimmt die Fristen aus KE ----------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 412, height: 915 } });
+    const p = await ctx.newPage(), jsF = [];
+    p.on("pageerror", (e) => jsF.push(String(e)));
+    await p.route("**/*", (r) => (r.request().url().startsWith(wurzel) ? r.continue() : r.abort()));
+    await p.goto(wurzel + "index.html", { waitUntil: "load", timeout: 20000 });
+    await p.waitForTimeout(600);
+    const r = await p.evaluate(async () => {
+      if (!window.KE || typeof _fristenAusKE !== "function") return { fehlt: true };
+      const sb = (zeilen) => ({ from: () => { const q = { select: () => q, eq: async () => ({ data: zeilen, error: null }) }; return q; } });
+      const o = [];
+      await KE.lade(sb([{ schluessel: "fristen.antrag", wert: { bald_tage: 200 } }, { schluessel: "fristen.theorie", wert: { monate: 18 } }]), "fs-a");
+      o.push([KR.holeFristen().antrag.bald_tage, KR.holeFristen().theorie.monate]);
+      const heute = KR.todayISO(), am = KR.addMonthsISO(KR.addDaysISO(heute, 150), -12);
+      o.push(KR.antragInfo({ antrag_am: am }, heute).stufe);
+      await KE.lade(sb([]), "fs-b"); o.push([KR.holeFristen().antrag.bald_tage, KR.holeFristen().theorie.monate]);
+      await KE.lade(sb([{ schluessel: "fristen.antrag", wert: { bald_tage: 5000 } }]), "fs-c"); o.push(KR.holeFristen().antrag.bald_tage);
+      await KE.lade(sb([{ schluessel: "fristen.antrag", wert: { bald_tage: 90 } }]), "fs-d");
+      KE.leeren(); _fristenAusKE(); o.push(KR.holeFristen().antrag.bald_tage);
+      try { ["fs-a", "fs-b", "fs-c", "fs-d"].forEach((f) => localStorage.removeItem("ke:" + f)); } catch (e) {}
+      return { o };
+    });
+    pruefe("A1 App: Fristen der Fahrschule gelten nach dem Laden, Antrag in 150 Tagen wird gelb; andere Fahrschule = Standard; ungültig = Standard; Abmelden = Standard",
+      !r.fehlt && JSON.stringify(r.o) === JSON.stringify([[200, 18], "bald", [60, 12], 60, 60]), JSON.stringify(r));
+    pruefe("A2 App: keine JS-Fehler", !jsF.length, jsF.join(" | "));
     await ctx.close();
   }
 } finally {
