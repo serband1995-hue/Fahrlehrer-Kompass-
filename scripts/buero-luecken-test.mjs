@@ -338,26 +338,29 @@ if (!NUR || NUR === "L10") for (const [n, opt] of [["PC, Büro", {}], ["Handy, L
   const { page, ctx, konsole, dialoge } = await oeffne(Object.assign({ hash: "#kalender" }, opt));
   // gleich nach dem Laden sichtbar (ohne eigenes Neuzeichnen: die Datei muss vor dem ersten Zeichnen geladen sein)
   await pruefe("L10", `${P} Glocke nach dem Laden im Kopf sichtbar`, async () => (await page.isVisible("#glocke") ? null : "Glocke versteckt"));
-  const erwartet = await page.evaluate((md) => {
-    const x = S.schueler.find((y) => y.id === "s3"); x.ausbildung = Object.assign({}, x.ausbildung, { geburtsdatum: "2008-" + md }); // wie die App: in ausbildung (jsonb) x.telefon = "0170 0000003";
+  const erwartet = await page.evaluate(async (md) => {
+    // in der Attrappe ändern und neu laden (sonst überschreibt das nächste Laden die Änderung)
+    const z = window.__FAKE.tabellen.schueler.find((y) => y.id === "s3");
+    z.ausbildung = Object.assign({}, z.ausbildung, { geburtsdatum: "2008-" + md }); z.telefon = "0170 0000003"; z.inaktiv_seit = null; // wie die App: in ausbildung (jsonb)
+    await ladeDaten();
     const morgen = KR.addDaysISO(KR.todayISO(), 1);
-    const t = S.termine.filter((y) => y.datum === morgen && !y.geloescht && y.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(y.art)).length;
-    const p = S.pruefungstermine.filter((y) => y.datum === morgen && y.status === "geplant").length;
-    zeichne();
-    return { t, p };
+    const aktiv = (id) => S.schueler.some((x) => x.id === id && !x.inaktiv_seit);
+    const t = S.termine.filter((y) => y.datum === morgen && !y.geloescht && y.schueler_id && aktiv(y.schueler_id) && ["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(y.art)).length;
+    return { t };
   }, HEUTE.slice(5));
+  await warte(page, 300);
   const zahl = await page.textContent("#glockeZahl").catch(() => "");
   await page.click("#glocke"); await warte(page, 400);
   const info = await page.evaluate(() => {
     const d = document.querySelector("dialog[open]"); if (!d) return null;
     const links = [...d.querySelectorAll("a[href^='https://wa.me/']")];
-    return { text: d.textContent, links: links.map((a) => ({ href: a.href, ziel: a.target, rel: a.rel, h: a.getBoundingClientRect().height })), breit: d.scrollWidth > d.clientWidth + 1 };
+    return { s3: S.schueler.find((y) => y.id === "s3").name, text: d.textContent, links: links.map((a) => ({ href: a.href, ziel: a.target, rel: a.rel, h: a.getBoundingClientRect().height })), breit: d.scrollWidth > d.clientWidth + 1 };
   });
   await pruefe("L10", `${P} Glocke: Zähler, Geburtstag heute, Termine morgen mit WhatsApp-Link`, () => {
     if (!info) return "kein Fenster";
     const f = [];
     if (Number(zahl) < 1 + erwartet.t) f.push(`Zähler ${zahl}, erwartet mindestens ${1 + erwartet.t}`);
-    if (!/hat heute Geburtstag/.test(info.text) || !/Jonas|s3|Muster|Beispiel|Probe|Vorlage/.test(info.text)) f.push("Geburtstag fehlt");
+    if (!info.text.includes("🎂 " + info.s3)) f.push("Geburtstag fehlt");
     if (erwartet.t && info.links.length < erwartet.t) f.push(`${info.links.length} Links für ${erwartet.t} Termine`);
     const geb = info.links.find((l) => /wa\.me\/491700000003\?text=/.test(l.href));
     if (!geb) f.push("Nummer nicht wie in der App umgeschrieben (0170… → 49170…)");
@@ -367,6 +370,15 @@ if (!NUR || NUR === "L10") for (const [n, opt] of [["PC, Büro", {}], ["Handy, L
     if (info.breit) f.push("Fenster ragt seitlich heraus");
     return f;
   });
+  // „gesendet“: Antippen hakt ab, der Zähler sinkt (nur dieses Gerät)
+  await ctx.route(/wa\.me/, (r) => r.fulfill({ status: 200, body: "ok" }));
+  const neuTab = ctx.waitForEvent("page", { timeout: 3000 }).catch(() => null);
+  await page.locator("dialog[open] [data-lugesendet]").first().click();
+  const tabWa = await neuTab; if (tabWa) await tabWa.close();
+  await warte(page, 300);
+  const zahl2 = await page.textContent("#glockeZahl").catch(() => "");
+  const abgehakt = await page.locator("dialog[open] .lu-gl-zeile.gesendet").count();
+  await pruefe("L10", `${P} WhatsApp antippen: Zeile „gesendet“, Zähler sinkt um 1`, () => (abgehakt === 1 && Number(zahl2) === Number(zahl) - 1 ? null : `abgehakt ${abgehakt}, Zähler ${zahl} → ${zahl2}`));
   await alleZu(page);
   await pruefe("L10", `${P} keine JS-Fehler, keine Browser-Fenster`, () => konsole.concat(dialoge));
   await ctx.close();

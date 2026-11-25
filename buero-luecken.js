@@ -16,6 +16,7 @@ function luTypName(typ) { return typ === "automatik" ? "Automatik" : "Schalter";
 function luInfoFenster(titel, inhalt) {
   const dlg = oeffneDialog(titel, inhalt, async () => true, "Schließen");
   const ab = dlg.querySelector("footer [data-schliessen]"); if (ab) ab.remove();
+  const ok = dlg.querySelector("footer button[value=ok]"); if (ok) ok.focus(); // kein Fokus-Rahmen auf dem ersten Feld
   return dlg;
 }
 async function luKopieren(text) {
@@ -176,10 +177,10 @@ function luZahlenZusatz(f, monate) {
   const pz = Object.entries(jePruefer).filter(([k]) => k).sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0], "de"));
   const ohne = (jePruefer[""] || { n: 0 }).n;
   const pt = pz.length ? `<table class="tabelle"><thead><tr><th>Prüfer</th><th class="zahlspalte">Quote</th></tr></thead><tbody>${pz.map(([k, v]) => `<tr><td><b>${esc(nameVon[k] || k)}</b><div class="unter">zuletzt ${esc(datumDE(v.letzte))}</div></td><td class="zahlspalte"><b>${luQuote(v.ok, v.n)}</b><div class="unter">${v.ok} von ${v.n}</div></td></tr>`).join("")}</tbody></table>`
-    : `<p class="leer">Noch keine Praxisprüfung mit Prüfer in diesem Zeitraum.</p>`;
+    : `<p class="leise">Noch keine Praxisprüfung mit Prüfer in diesem Zeitraum.</p>`;
   return `<div class="raster zwei">
     <div class="karte" id="luQuoteLehrer"><h2>Bestehensquote je Fahrlehrer</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Namen anklicken für die Liste.</p>${lt}</div>
-    <div class="karte" id="luPruefer"><h2>Prüfer-Statistik (Praxis)</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Name aus der App, sonst die Initialen von der Prüfungstafel (dieselbe Person kann so zweimal stehen).${ohne ? ` ${ohne} ${ohne === 1 ? "Prüfung" : "Prüfungen"} ohne Prüfer nicht mitgezählt.` : ""}</p>${pt}</div>
+    <div class="karte" id="luPruefer"><h2>Prüfer-Statistik (Praxis)</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Name oder Initialen, wie eingetragen.${ohne ? ` ${ohne} ohne Prüfer.` : ""}</p>${pt}</div>
   </div>`;
 }
 
@@ -259,8 +260,8 @@ function luMonatsberichtOeffnen(monat) {
 function luMonatsberichtDialog() {
   const monate = letzteMonate(12).reverse();
   const body = `<div class="formular"><label class="voll">Monat<select name="monat">${monate.map((m, i) => `<option value="${m}"${i === 0 ? " selected" : ""}>${esc(monatLang(m))}${i === 0 ? " (läuft noch)" : ""}</option>`).join("")}</select></label></div>
-    <p class="leise klein">Der Bericht öffnet sich in einem neuen Fenster. Dort „Drucken / als PDF speichern“ tippen und als Drucker „Als PDF speichern“ wählen. Er enthält nur Summen, keine Schülernamen.</p>`;
-  oeffneDialog("Monatsbericht", body, async (form) => luMonatsberichtOeffnen(new FormData(form).get("monat")), "Bericht öffnen");
+    <p class="leise klein">Öffnet sich in neuem Fenster; dort als PDF speichern oder drucken. Nur Summen, keine Schülernamen.</p>`;
+  oeffneDialog("Monatsbericht", body, async (form) => luMonatsberichtOeffnen(new FormData(form).get("monat")), "Zeigen");
 }
 document.addEventListener("click", (e) => {
   if (e.target.closest("#kMonatsbericht") && !document.querySelector("dialog[open]")) luMonatsberichtDialog();
@@ -289,7 +290,7 @@ function luGlockeEintraege() {
   for (const t of termine) {
     const x = sx(t.schueler_id); if (!x) continue;
     const pruefung = t.art === "pruefung";
-    morgenListe.push({ x, von: t.von || "", fahrlehrer_id: t.fahrlehrer_id, art: pruefung ? "Prüfung" : (ARTEN[t.art] || "Fahrstunde"), pruefung });
+    morgenListe.push({ key: "t:" + t.id, x, von: t.von || "", fahrlehrer_id: t.fahrlehrer_id, art: pruefung ? "Prüfung" : (ARTEN[t.art] || "Fahrstunde"), pruefung });
   }
   // Prüfungen von der Tafel ohne Kalender-Eintrag (z. B. Theorie oder ohne Uhrzeit/Fahrlehrer)
   for (const p of S.pruefungstermine) {
@@ -297,7 +298,7 @@ function luGlockeEintraege() {
     if (p.kalender_termin_id && S.termine.some((t) => t.id === p.kalender_termin_id && !t.geloescht)) continue;
     if (p.art !== "theorie" && morgenListe.some((m) => m.pruefung && m.x.id === p.schueler_id)) continue; // dieselbe Prüfung schon aus dem Kalender
     const x = sx(p.schueler_id); if (!x) continue;
-    morgenListe.push({ x, von: p.von || "", fahrlehrer_id: p.fahrlehrer_id, art: p.art === "theorie" ? "Theorieprüfung" : "Prüfung", pruefung: true });
+    morgenListe.push({ key: "p:" + p.id, x, von: p.von || "", fahrlehrer_id: p.fahrlehrer_id, art: p.art === "theorie" ? "Theorieprüfung" : "Prüfung", pruefung: true });
   }
   morgenListe.sort((a, b) => (a.von || "99").localeCompare(b.von || "99") || a.x.name.localeCompare(b.x.name, "de"));
   const md = heute.slice(5);
@@ -313,23 +314,45 @@ function luGlockeText(e) {
     ? `Hey ${vn}! Kurze Erinnerung: morgen${zeit} ist deine Prüfung. Viel Erfolg! 🍀🚗`
     : `Hey ${vn}! Kurze Erinnerung: morgen${zeit} ist deine Fahrstunde. Bis dann! 🚗`;
 }
+// „Gesendet“ merkt sich nur dieses Gerät (Gerätespeicher, nur Kennungen und Tag, keine Namen); gilt bis zum Tag danach.
+const LU_GESENDET_KEY = "buero-glocke-gesendet";
+function luGesendet() { try { const m = JSON.parse(localStorage.getItem(LU_GESENDET_KEY) || "{}"); return m && typeof m === "object" ? m : {}; } catch (e) { return {}; } }
+function luGesendetSetzen(k) {
+  const heute = KR.todayISO(), m = luGesendet();
+  for (const x of Object.keys(m)) if (m[x] < heute) delete m[x]; // Altes weg
+  m[k] = heute;
+  try { localStorage.setItem(LU_GESENDET_KEY, JSON.stringify(m)); } catch (e) { /* ohne Speicher: nur nicht abgehakt */ }
+}
+function luGlockeKey(e, tag) { return e.key + "|" + tag; }
 function luGlockeAuffrischen() {
   const k = $("glocke"); if (!k) return;
   if (!S.geladenAm) { k.hidden = true; return; }
-  const e = luGlockeEintraege(), n = e.morgen.length + e.geburtstage.length;
+  const e = luGlockeEintraege(), ges = luGesendet(), heute = KR.todayISO();
+  const n = e.morgen.filter((m) => !ges[luGlockeKey(m, e.tag)]).length + e.geburtstage.filter((x) => !ges["g:" + x.id + "|" + heute]).length;
   k.hidden = false;
   const z = $("glockeZahl");
   if (z) { z.textContent = n ? String(n) : ""; z.hidden = !n; }
-  k.setAttribute("aria-label", n ? `Erinnerungen: ${n}` : "Erinnerungen: nichts anstehend");
+  k.setAttribute("aria-label", n ? `Erinnerungen: ${n} offen` : "Erinnerungen: nichts offen");
 }
 function luGlockeFenster() {
-  const e = luGlockeEintraege();
-  const geb = e.geburtstage.map((x) => `<li class="lu-gl-zeile"><span>🎂 <b>${esc(x.name)}</b> hat heute Geburtstag${x.fahrlehrer_id ? ` <span class="leise">· ${esc(lehrerName(x.fahrlehrer_id))}</span>` : ""}</span>${x.telefon ? `<a class="knopf klein" href="${esc(luWaLink(x.telefon, `Alles Gute zum Geburtstag, ${luVorname(x.name)}! 🎉`))}" target="_blank" rel="noopener">WhatsApp</a>` : ""}</li>`).join("");
-  const mor = e.morgen.map((m) => `<li class="lu-gl-zeile"><span>${m.pruefung ? "🏆 " : ""}<b>${esc(m.x.name)}</b> · ${esc(m.art)}${m.von ? ` · ${esc(m.von)} Uhr` : ""}${m.fahrlehrer_id ? ` <span class="leise">· ${esc(lehrerName(m.fahrlehrer_id))}</span>` : ""}${luWaNummer(m.x.telefon) ? "" : ' <span class="leise">· keine Nummer</span>'}</span><a class="knopf klein" href="${esc(luWaLink(m.x.telefon, luGlockeText(m)))}" target="_blank" rel="noopener">WhatsApp</a></li>`).join("");
-  const inhalt = `<p class="leise klein">„WhatsApp“ öffnet WhatsApp mit fertigem Text. Abgeschickt wird erst dort, von Hand. Ohne Nummer wählt man den Kontakt in WhatsApp selbst.</p>
-    <h3 class="lu-gl-titel">Heute Geburtstag</h3>${geb ? `<ul class="lu-gl-liste">${geb}</ul>` : `<p class="leer">Heute hat niemand Geburtstag.</p>`}
-    <h3 class="lu-gl-titel">Morgen, ${esc(datumDE(e.tag))}</h3>${mor ? `<ul class="lu-gl-liste">${mor}</ul>` : `<p class="leer">Morgen stehen keine Fahrstunden oder Prüfungen an.</p>`}`;
-  luInfoFenster("Erinnerungen", inhalt);
+  const e = luGlockeEintraege(), ges = luGesendet(), heute = KR.todayISO();
+  const zeile = (k, oben, unten, link) => {
+    const war = !!ges[k];
+    return `<li class="lu-gl-zeile${war ? " gesendet" : ""}"><span class="lu-gl-text"><span>${oben}</span><span class="leise klein">${unten}${war ? " · ✓ gesendet" : ""}</span></span>${link ? `<a class="knopf klein" href="${esc(link)}" target="_blank" rel="noopener" data-lugesendet="${esc(k)}">WhatsApp</a>` : ""}</li>`;
+  };
+  const geb = e.geburtstage.map((x) => zeile("g:" + x.id + "|" + heute, `🎂 <b>${esc(x.name)}</b>`, x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : "Geburtstag heute",
+    x.telefon ? luWaLink(x.telefon, `Alles Gute zum Geburtstag, ${luVorname(x.name)}! 🎉`) : "")).join("");
+  const mor = e.morgen.map((m) => zeile(luGlockeKey(m, e.tag), `<b>${esc(m.von || "–")}</b> ${m.pruefung ? "🏆 " : ""}<b>${esc(m.x.name)}</b>`,
+    `${esc(m.art)}${m.fahrlehrer_id ? " · " + esc(lehrerName(m.fahrlehrer_id)) : ""}${luWaNummer(m.x.telefon) ? "" : " · keine Nummer"}`, luWaLink(m.x.telefon, luGlockeText(m)))).join("");
+  const inhalt = `<p class="leise klein">„WhatsApp“ öffnet den fertigen Text; abgeschickt wird dort von Hand.</p>
+    <h3 class="lu-gl-titel">Heute Geburtstag</h3>${geb ? `<ul class="lu-gl-liste">${geb}</ul>` : `<p class="leise">Heute hat niemand Geburtstag.</p>`}
+    <h3 class="lu-gl-titel">Morgen, ${esc(datumDE(e.tag))}</h3>${mor ? `<ul class="lu-gl-liste">${mor}</ul>` : `<p class="leise">Morgen stehen keine Fahrstunden oder Prüfungen an.</p>`}`;
+  const dlg = luInfoFenster("Erinnerungen", inhalt);
+  dlg.querySelectorAll("[data-lugesendet]").forEach((a) => a.addEventListener("click", () => {
+    luGesendetSetzen(a.dataset.lugesendet);
+    const li = a.closest(".lu-gl-zeile"); if (li && !li.classList.contains("gesendet")) { li.classList.add("gesendet"); const u = li.querySelector(".lu-gl-text .klein"); if (u) u.textContent += " · ✓ gesendet"; }
+    luGlockeAuffrischen();
+  }));
 }
 document.addEventListener("click", (e) => {
   if (e.target.closest("#glocke") && !document.querySelector("dialog[open]")) luGlockeFenster();

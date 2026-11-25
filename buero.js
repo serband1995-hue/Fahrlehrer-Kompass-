@@ -2894,10 +2894,10 @@ function terminDialog(id, vorgabe) {
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
       <label>Bis<input type="time" name="bis" required value="${esc(t.bis || "")}"></label>
       <div class="voll raster-zwei" id="beratungFeld" hidden>
-        <label>Name Interessent<input type="text" name="interessent_name" maxlength="80" autocomplete="off" value="${esc(t.interessent_name || "")}"></label>
-        <label>Telefon Interessent<input type="tel" name="interessent_telefon" maxlength="30" autocomplete="off" value="${esc(t.interessent_telefon || "")}"></label>
+        <label>Interessent: Name<input type="text" name="interessent_name" maxlength="80" autocomplete="off" placeholder="Wer hat angefragt?" value="${esc(t.interessent_name || "")}"></label>
+        <label>Interessent: Telefon<input type="tel" name="interessent_telefon" maxlength="30" autocomplete="off" placeholder="für den Rückruf" value="${esc(t.interessent_telefon || "")}"></label>
       </div>
-      <label class="voll wahl" id="kursBezahltFeld" hidden><input type="checkbox" name="kurs_bezahlt"${t.kurs_bezahlt ? " checked" : ""}> Kurs bezahlt</label>
+      <label class="voll wahl gross-wahl" id="kursBezahltFeld" hidden><input type="checkbox" name="kurs_bezahlt"${t.kurs_bezahlt ? " checked" : ""}> Kurs bezahlt</label>
       <div class="voll raster-zwei" id="ohneAppFeld" hidden>
         <label id="sonderArtFeld">Art der Sonderfahrt<select name="sonderArt"><option value="">– bitte wählen –</option>${SONDER_ARTEN.map(([k, n]) => `<option value="${k}"${(t.payload || {}).sonderArt === k ? " selected" : ""}>${n}</option>`).join("")}</select></label>
         <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
@@ -4878,11 +4878,11 @@ function werAuswegZeigen(liste, geladen) {
   const kann = liste.some((p) => p.hat_pin || pinFrei(p));
   let titel = "", text = "";
   if (!geladen) { titel = "Keine Verbindung"; text = "Die Namen konnten nicht geladen werden. Bitte Internet prüfen und auf „Nochmal prüfen“ tippen."; }
-  else if (!liste.length) { titel = "Noch keine Büro-Personen"; text = "Für diese Fahrschule ist noch niemand fürs Büro angelegt. Das macht die Fahrschul-Leitung mit ihrem eigenen Zugang: Büro-Seite öffnen › Fahrlehrer & Büro › Büro-Personen › „+ Person“ und „PIN freigeben“. Oder bei Serband melden."; }
-  else if (!kann) { titel = "Gerade kann sich niemand anmelden"; text = `Niemand hier hat eine PIN oder eine Freigabe dafür. Bitte ${verwalterNamen()} fragen; die Fahrschul-Leitung kann es auch: mit ihrem eigenen Zugang die Büro-Seite öffnen › Fahrlehrer & Büro › bei der Person „PIN freigeben“. Danach hier „Nochmal prüfen“ tippen und eine eigene PIN festlegen.`; }
+  else if (!liste.length) { titel = "Noch keine Büro-Personen"; text = "Bitte die Fahrschul-Leitung bitten, unter „Fahrlehrer & Büro“ eine Person anzulegen und die PIN freizugeben."; }
+  else if (!kann) { titel = "Gerade kann sich niemand anmelden"; text = `Niemand hat eine PIN. Bitte ${verwalterNamen()} oder die Fahrschul-Leitung um „PIN freigeben“ bitten.`; }
   box.hidden = !titel;
   if (!titel) { box.innerHTML = ""; return; }
-  box.innerHTML = `<b>${esc(titel)}</b><p>${esc(text)}</p><button type="button" class="knopf" id="werNochmal">Nochmal prüfen</button>`;
+  box.innerHTML = `<b>${esc(titel)}</b><button type="button" class="knopf" id="werNochmal">Nochmal prüfen</button><p>${esc(text)}</p>`;
 }
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("#werNochmal"); if (!b || b.disabled) return;

@@ -1083,9 +1083,16 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 }
 /* W16 Teil 3: Glocke (buero-luecken.js) */
 .kopf-glocke{position:relative;}
-.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--rot);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
+.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--gelb);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
 .lu-gl-titel{font-size:16px;margin:14px 0 6px;}
 .lu-gl-liste{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
 .lu-gl-zeile{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
 .lu-gl-zeile .knopf{min-height:44px;flex:0 0 auto;}
 @media print{.kopf-glocke{display:none !important;}}
+.formular .wahl.gross-wahl{min-height:44px;}
+.formular .wahl.gross-wahl input[type=checkbox]{width:24px;height:24px;}
+.lu-link input{min-height:44px;}
+.lu-qr .knopfreihe{justify-content:center;}
+.lu-qr-bild{width:min(200px,60vw);}
+.lu-gl-zeile .lu-gl-text{display:grid;gap:2px;min-width:0;}
+.lu-gl-zeile.gesendet{opacity:.65;}
