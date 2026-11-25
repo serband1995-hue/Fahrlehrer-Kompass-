@@ -371,8 +371,8 @@ for (const [b, h, nutzer, ganz] of [[1366, 768, "bu-1", true], [1280, 720, "ad-1
 {
   const titel = async (nutzer) => { const m = await oeffne({ nutzer, hash: "#einstellungen?thema=darstellung" }); const t = [await m.page.textContent('.es-thema[data-es-thema="darstellung"]'), await m.page.textContent("#esBox")]; await m.ctx.close(); return t; };
   const bu = await titel("bu-1"), ad = await titel("ad-1");
-  pruefe("D1", "Büro: Thema heißt „Darstellung“ mit Satz „Das Büro startet, wo es sich anmeldet.“", bu[0].trim() === "Darstellung" && /Das Büro startet, wo es sich anmeldet\./.test(bu[1]) ? null : JSON.stringify(bu));
-  pruefe("D2", "Leitung: Thema heißt „Darstellung & Start“", ad[0].trim() === "Darstellung & Start" && !/Das Büro startet/.test(ad[1]) ? null : JSON.stringify(ad));
+  pruefe("D1", "Büro: Thema heißt „Darstellung“ mit Satz „Das Büro arbeitet nur auf der Büro-Seite.“", bu[0].trim() === "Darstellung" && /Das Büro arbeitet nur auf der Büro-Seite\./.test(bu[1]) ? null : JSON.stringify(bu));
+  pruefe("D2", "Leitung: Thema heißt „Darstellung & Start“", ad[0].trim() === "Darstellung & Start" && !/Das Büro arbeitet/.test(ad[1]) ? null : JSON.stringify(ad));
 }
 // ---- Handy ----
 {

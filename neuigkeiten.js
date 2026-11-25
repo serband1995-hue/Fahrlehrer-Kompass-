@@ -4,6 +4,9 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.13", datum: "2026-11-25", kurz: "Büro: Die Büro-Seite öffnet jetzt immer direkt.",
+    punkte: ["Wer im Büro arbeitet, landet nach der Anmeldung immer direkt auf der Büro-Seite, auch wenn die Kompass-App geöffnet wird. Alles, was das Büro braucht, steht jetzt dort.",
+             "Kann sich gerade niemand mit PIN anmelden, zeigt die Büro-Seite, wer helfen kann, und den Knopf „Nochmal prüfen“."] },
   { version: "2026.11.25.12", datum: "2026-11-25", kurz: "Büro-Seite: Buchungslinks, Erinnerungen, Monatsbericht.",
     punkte: ["Buchungslinks und QR-Code je Fahrlehrer: unter „Fahrlehrer & Büro“ beim Fahrlehrer auf „Buchungslinks“ tippen.",
              "Die Glocke oben zeigt, wer morgen Fahrstunde oder Prüfung hat und wer heute Geburtstag hat. „WhatsApp“ öffnet den fertigen Text, abgeschickt wird erst dort.",

@@ -266,10 +266,10 @@
       } },
     { id: "darstellung", get titel() { return meineRolle() === "buero" ? "Darstellung" : "Darstellung & Start"; }, reihenfolge: 90,
       render(el) {
-        const buero = meineRolle() === "buero"; // das Büro wählt keine Startseite: es startet, wo es sich anmeldet
+        const buero = meineRolle() === "buero"; // das Büro wählt keine Startseite: es arbeitet nur auf der Büro-Seite (W16 Teil 3 B)
         el.innerHTML = `${abschnitt(this.titel)}
           ${zeile("Hell oder dunkel", `<div class="es-wert es-text">folgt dem Gerät</div>`, { hinweis: "Die Büro-Seite richtet sich nach der Einstellung deines Geräts." })}
-          ${buero ? `<p class="es-hinweis es-satz">Das Büro startet, wo es sich anmeldet.</p>` : ""}`;
+          ${buero ? `<p class="es-hinweis es-satz">Das Büro arbeitet nur auf der Büro-Seite.</p>` : ""}`;
         if (buero) return;
         const kasten = document.createElement("div"); kasten.className = "es-kasten";
         el.appendChild(kasten);
