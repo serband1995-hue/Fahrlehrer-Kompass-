@@ -44,7 +44,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); // wie die anderen Tests: in GitHub ohne festen Pfad
 
 let fehlerZahl = 0, okZahl = 0, uebersprungen = 0;
 // fn liefert: nichts/true/[] = ok, Text/Liste = Fehlergrund, { skip: "Grund" } = übersprungen

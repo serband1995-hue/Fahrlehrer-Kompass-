@@ -43,12 +43,13 @@ async function pruefe(id, text, fn) {
 
 // ---------- Rechnung ohne Browser (kompass-rechnen.js) ----------
 const KR = require(join(ROOT, "kompass-rechnen.js"));
-await pruefe("K1", "KR: Vorgabe 45 Minuten; 90 Min = 2, 45 = 1, 60 = 1, 135 = 3, über Mitternacht 22:30–00:00 = 2, ohne Zeit = 1; eigene Einheit 90 → 90 Min = 1; Unsinn → 45", () => {
+await pruefe("K1", "KR: Vorgabe 45 Minuten; volle Einheiten (90 = 2, 45 = 1, 60 = 1, 80 = 1, 120 = 2, 135 = 3), über Mitternacht 22:30–00:00 = 2, Tippfehler 10–09 Uhr und ohne Zeit = 1; eigene Einheit 90 → 90 Min = 1; Unsinn → 45", () => {
   const f = [], e = (v, b) => KR.sonderEinheiten(v, b);
   KR.setzeSonderMinuten(null);
   if (KR.sonderMinuten() !== 45) f.push(`Vorgabe ${KR.sonderMinuten()}`);
-  for (const [v, b, soll] of [["10:00", "11:30", 2], ["10:00", "10:45", 1], ["10:00", "11:00", 1], ["10:00", "12:15", 3], ["22:30", "00:00", 2], ["", "", 1], ["10:00", "10:00", 1]])
+  for (const [v, b, soll] of [["10:00", "11:30", 2], ["10:00", "10:45", 1], ["10:00", "11:00", 1], ["10:00", "12:15", 3], ["10:00", "11:20", 1], ["10:00", "12:00", 2], ["22:30", "00:00", 2], ["23:00", "02:00", 4], ["10:00", "09:00", 1], ["", "", 1], ["10:00", "10:00", 1]])
     if (e(v, b) !== soll) f.push(`${v}–${b}: ${e(v, b)} statt ${soll}`);
+  if (KR.terminMinuten("22:30", "00:00") !== 90 || KR.terminMinuten("10:00", "09:00") !== 0 || KR.terminMinuten("23:00", "05:00") !== 360) f.push("terminMinuten über Mitternacht falsch");
   if (KR.sonderEinheitenAusMinuten(135) !== 3 || KR.sonderEinheitenAusMinuten(80) !== 1 || KR.sonderEinheitenAusMinuten(0) !== 0) f.push("Minuten-Summe abgerundet falsch");
   KR.setzeSonderMinuten(90);
   if (KR.sonderMinuten() !== 90 || e("10:00", "11:30") !== 1 || KR.sonderEinheitenAusMinuten(135) !== 1) f.push("Einheit 90 wirkt nicht");
@@ -228,7 +229,7 @@ await pruefe("K9", "Mehrere Termine planen: 4 Überland offen, 3 Vorschläge à 
   return f;
 });
 
-await pruefe("K10", "Mehrere Termine planen, Suche: Vorschläge reichen genau für die offenen Kästchen (4 offen, 90-Min-Plätze → 2 Vorschläge), Hinweis nennt „2 Kästchen“", async () => {
+await pruefe("K10", "Mehrere Termine planen, Suche: Vorschläge reichen genau für die offenen Kästchen (4 offen, 90-Min-Plätze → 2 Vorschläge), Hinweis nennt „zählt als 2“", async () => {
   const f = [];
   await p.evaluate(() => __t.setze(90));
   const r = await p.evaluate(() => {
@@ -237,12 +238,12 @@ await pruefe("K10", "Mehrere Termine planen, Suche: Vorschläge reichen genau f�
     openMultiTerminErgebnis("s3", cfg, tr);
     const txt = (document.querySelector(".sheet") || document.body).innerText;
     try { closeSheet(); } catch (e) {}
-    return { n: tr.length, einh: tr.map((t) => _sfEinh(t.von, t.bis)), hinweis: /2 Kästchen/.test(txt) };
+    return { n: tr.length, einh: tr.map((t) => _sfEinh(t.von, t.bis)), hinweis: /Noch 4 Überlandfahrten offen/.test(txt) && /zählt als 2/.test(txt) };
   });
   const summe = r.einh.reduce((a, b) => a + b, 0);
   if (!r.n) return "keine Vorschläge gefunden (Arbeitszeiten der Attrappe?)";
   if (summe < 4 || summe - r.einh[r.einh.length - 1] >= 4) f.push(`${r.n} Vorschläge mit ${JSON.stringify(r.einh)} Kästchen für 4 offene`);
-  if (r.einh.some((e) => e > 1) && !r.hinweis) f.push("Hinweis auf 2 Kästchen fehlt");
+  if (r.einh.some((e) => e > 1) && !r.hinweis) f.push("Hinweis „Noch 4 … offen“ / „zählt als 2“ fehlt");
   return f;
 });
 
@@ -340,6 +341,146 @@ await pruefe("K18", "Plan zeichnen (buildSonder) mit 2 belegten Kästchen: Zähl
   await mitTermin();
   const r = await p.evaluate(() => { const s = DB.students.find((x) => x.id === "s1"); try { openStudent && openStudent(s.id); } catch (e) {} return sfCount(s.plan.sonder.ueberland); });
   return r === 3 ? null : `Zähler ${r}`;
+});
+
+await pruefe("K20", "Rückgängig nach einem Neuaufbau des Plans (anderes Kalender-Blatt geöffnet und abgebrochen): neuer Termin, neue Zeit und Verknüpfen stellen die Kästchen richtig zurück (Fable F1)", async () => {
+  const f = [];
+  const zwischendurch = () => p.evaluate(async () => { openSonderKalenderSheet("s1", "autobahn", 3); await new Promise((r) => setTimeout(r, 150)); document.querySelector("#sfkCancel").click(); });
+  // neu
+  await p.evaluate(() => __t.setze(90));
+  await p.evaluate(({ T }) => commitSonderZeit(DB.students.find((x) => x.id === "s1"), "ueberland", 1, T, "10:00"), { T });
+  await zwischendurch();
+  if (!(await p.evaluate(() => __t.rueck()))) f.push("neu: kein Rückgängig");
+  await warte(300);
+  let plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] || plan[2] || (await p.evaluate(() => __t.termine("s1"))).length) f.push(`neu: Plan ${JSON.stringify(plan)}`);
+  // neue Zeit
+  const t = await mitTermin();
+  await p.evaluate(({ T2 }) => commitSonderZeit(DB.students.find((x) => x.id === "s1"), "ueberland", 1, T2, "14:00"), { T2 });
+  await zwischendurch();
+  if (!(await p.evaluate(() => __t.rueck()))) f.push("neue Zeit: kein Rückgängig");
+  await warte(300);
+  plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  const tm = await p.evaluate(() => __t.termine("s1"));
+  if (plan[1] !== T || plan[2] !== T || tm.length !== 1 || tm[0].date !== T || (t && tm[0].id !== t.id)) f.push(`neue Zeit: Plan ${JSON.stringify(plan)} Termine ${JSON.stringify(tm)}`);
+  // Verknüpfen
+  await p.evaluate(() => __t.setze(90));
+  await p.evaluate(() => commitSonderZeit(DB.students.find((x) => x.id === "s2"), "autobahn", 0, "2026-10-22", "10:00"));
+  await p.evaluate(async () => { openSonderKalenderSheet("s2", "nacht", 0); await new Promise((r) => setTimeout(r, 150)); document.querySelector("#sfkCancel").click(); });
+  if (!(await p.evaluate(() => __t.rueck()))) f.push("Verknüpfen: kein Rückgängig");
+  await warte(300);
+  plan = await p.evaluate(() => __t.plan("s2", "autobahn"));
+  if (plan[0] || plan[1] || (await p.evaluate(() => __t.lesson("L2").art)) !== "fahrstunde") f.push(`Verknüpfen: Plan ${JSON.stringify(plan)}`);
+  return f;
+});
+
+await pruefe("K21", "Zwei Sonderfahrten kurz nacheinander, ein Tipp auf „Rückgängig“ (zusammengefasst): beide Termine weg, alle Kästchen leer", async () => {
+  await p.evaluate(() => __t.setze(90));
+  await p.evaluate(({ T, T2 }) => { const s = DB.students.find((x) => x.id === "s1"); commitSonderZeit(s, "ueberland", 1, T, "10:00"); commitSonderZeit(s, "autobahn", 0, T2, "10:00"); }, { T, T2 });
+  const f = [];
+  if (!(await p.evaluate(() => __t.rueck()))) f.push("kein Rückgängig");
+  await warte(400);
+  const u = await p.evaluate(() => __t.plan("s1", "ueberland")), a = await p.evaluate(() => __t.plan("s1", "autobahn"));
+  if (u[1] || u[2] || a[0] || a[1]) f.push(`Plan Überland ${JSON.stringify(u)} Autobahn ${JSON.stringify(a)}`);
+  if ((await p.evaluate(() => __t.termine("s1"))).length) f.push("Termine noch da");
+  return f;
+});
+
+await pruefe("K22", "„Welche Sonderfahrt?“: Kästchen, die schon zu einem anderen Termin gehören, sind nicht wählbar und mit „belegt“ markiert; das 2. Kästchen überspringt sie (Fable F2)", async () => {
+  const f = [];
+  await mitTermin(); // Überland [1,2]
+  await p.evaluate(() => { openSFPickerForLesson("L1", "s1", "2026-10-20", "08:00", "09:30", "", "sonder", null); });
+  await warte(200);
+  const r = await p.evaluate(() => [1, 2, 3].map((i) => { const b = document.querySelector(`.sf-opt[data-grp="ueberland"][data-idx="${i}"]`); return b ? { dis: b.disabled, txt: b.textContent } : null; }));
+  if (!r[0] || !r[0].dis || !/belegt/.test(r[0].txt) || !r[1] || !r[1].dis || !r[2] || r[2].dis) f.push(`Knöpfe ${JSON.stringify(r)}`);
+  await p.evaluate(() => { document.querySelector('.sf-opt[data-grp="ueberland"][data-idx="1"]').click(); });
+  await warte(150);
+  if ((await p.evaluate(() => __t.lesson("L1").art)) !== "fahrstunde") f.push("belegtes Kästchen ließ sich wählen");
+  await p.evaluate(() => { const b = document.querySelector('.sf-opt[data-grp="ueberland"][data-idx="3"]'); b && b.click(); });
+  await warte(200);
+  const l = await p.evaluate(() => __t.lesson("L1")), plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (!l || JSON.stringify(l.srcSonderIdx) !== "[3,4]" || plan[3] !== "2026-10-20" || plan[4] !== "2026-10-20" || plan[1] !== T) f.push(`Termin ${JSON.stringify(l && l.srcSonderIdx)} Plan ${JSON.stringify(plan)}`);
+  return f;
+});
+
+await pruefe("K23", "Stornieren einer Sonderfahrt mit 2 Kästchen: beide leer; Rückgängig stellt beide wieder her", async () => {
+  const f = [], t = await mitTermin();
+  if (!t) return "kein Termin angelegt";
+  await p.evaluate((id) => stornoLesson(id, "Erfundener Grund", () => {}), t.id);
+  await warte(200);
+  const plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] || plan[2]) f.push(`nach Storno ${JSON.stringify(plan)}`);
+  if (!(await p.evaluate(() => __t.rueck()))) f.push("kein Rückgängig");
+  await warte(400);
+  const plan2 = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan2[1] !== T || plan2[2] !== T) f.push(`nach Rückgängig ${JSON.stringify(plan2)}`);
+  return f;
+});
+
+await pruefe("K24", "Liste passt nicht zum Schlüssel (ein altes Gerät hat den Termin umgehängt): es gilt nur das Kästchen aus srcSonder, fremde Kästchen bleiben (Fable F3)", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(() => {
+    const s = DB.students.find((x) => x.id === "s1");
+    s.plan.sonder.nacht = [{ d: "26.10.26", iso: "2026-10-26" }, { d: "05.10.26", iso: "2026-10-05" }, { d: "06.10.26", iso: "2026-10-06" }];
+    DB.lessons.push({ id: "UM", date: "2026-10-26", von: "19:30", bis: "21:00", art: "sonder", sid: "s1", name: "", status: "geplant", note: "", fc: null, srcSonder: "s1:nacht:0", srcSonderIdx: [1, 2] });
+    const idx = _sfIdx(DB.lessons.find((l) => l.id === "UM"));
+    deleteLesson("UM");
+    return { idx, plan: __t.plan("s1", "nacht") };
+  });
+  return JSON.stringify(r.idx) === "[0]" && JSON.stringify(r.plan) === JSON.stringify([null, "2026-10-05", "2026-10-06"]) ? null : JSON.stringify(r);
+});
+
+await pruefe("K25", "Laden der Einheit: eine späte Antwort der vorigen Fahrschule wird verworfen (nicht übernommen, nicht gemerkt)", async () => {
+  const r = await p.evaluate(async () => {
+    try { localStorage.removeItem("kompass_sonder_min:fs-x"); localStorage.removeItem("kompass_sonder_min:fs-y"); } catch (e) {}
+    let los; const spaet = new Promise((ok) => { los = ok; });
+    const supaSpaet = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => { await spaet; return { data: { sonderMin: "90" }, error: null }; } }) }) }) };
+    const supaY = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { sonderMin: "60" }, error: null }) }) }) }) };
+    const a = _ladeSonderMin(supaSpaet, "fs-x");
+    await _ladeSonderMin(supaY, "fs-y");
+    los(); await a;
+    const o = { wert: KR.sonderMinuten(), gemerktX: localStorage.getItem("kompass_sonder_min:fs-x") };
+    KR.setzeSonderMinuten(null);
+    return o;
+  });
+  return r.wert === 60 && !r.gemerktX ? null : JSON.stringify(r);
+});
+
+await pruefe("K26", "Fahrcheck-Liste der Leitung in der App (fsFcStatus): „fehlt“ leert Nachreich-Datum und Zahl; „nachträglich“ setzt Datum und alle gebuchten; zweites „Abgegeben“ lässt die Zahl vom Büro stehen", async () => {
+  const r = await p.evaluate(async () => {
+    const upd = [];
+    const kette = { update: (u) => { upd.push(u); return kette; }, eq: async () => ({ error: null }) };
+    const alt = window.getSupa; window.getSupa = () => ({ from: () => kette });
+    const altR = window._fsRefreshAggData; window._fsRefreshAggData = async () => {};
+    DB.lessons.push({ id: "FC1", date: "2026-10-12", von: "10:00", bis: "11:30", art: "sonder", sid: "s1", status: "geplant", buero_fc_status: "abgegeben", buero_fc_anzahl: 1 });
+    try {
+      await fsFcStatus("FC1", "fehlt", false);
+      await fsFcStatus("FC1", "abgegeben", true);
+      await fsFcStatus("FC1", "abgegeben", false);
+    } catch (e) { upd.push({ fehler: String(e.message || e) }); }
+    window.getSupa = alt; window._fsRefreshAggData = altR;
+    DB.lessons = DB.lessons.filter((l) => l.id !== "FC1");
+    return upd;
+  });
+  const f = [];
+  const [a, b, c] = r;
+  if (!a || a.buero_fc_nachgereicht_am !== null || a.buero_fc_anzahl !== null) f.push(`fehlt: ${JSON.stringify(a)}`);
+  if (!b || !b.buero_fc_nachgereicht_am || b.buero_fc_anzahl !== 2) f.push(`nachträglich: ${JSON.stringify(b)}`);
+  if (!c || "buero_fc_anzahl" in c) f.push(`2. Abgegeben: ${JSON.stringify(c)}`);
+  return f;
+});
+
+await pruefe("K27", "Alter Termin (1 Kästchen, 90 Min) bekommt beim Verschieben auf einen anderen Tag (gleiche Länge) kein zweites Kästchen; das von Hand abgehakte Nachbar-Kästchen bleibt allein (Bedienung Fund 2)", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(({ T2 }) => {
+    const s = DB.students.find((x) => x.id === "s1");
+    s.plan.sonder.autobahn = [{ d: "26.10.26", iso: "2026-10-26" }, { d: "26.10.26", iso: "2026-10-26" }];
+    DB.lessons.push({ id: "ALT2", date: "2026-10-26", von: "10:00", bis: "11:30", art: "sonder", sid: "s1", name: "", status: "geplant", note: "Autobahnfahrt", fc: null, srcSonder: "s1:autobahn:0" });
+    commitSonderZeit(s, "autobahn", 0, T2, "10:00");
+    const l = DB.lessons.find((x) => x.id === "ALT2");
+    return { idx: l.srcSonderIdx || null, date: l.date, plan: __t.plan("s1", "autobahn") };
+  }, { T2 });
+  return r.idx === null && r.date === T2 && JSON.stringify(r.plan.slice(0, 3)) === JSON.stringify([T2, "2026-10-26", null]) ? null : JSON.stringify(r);
 });
 
 await pruefe("K19", "keine JS-Fehler und keine echten Dialogfenster im ganzen Lauf", async () => jsFehler);

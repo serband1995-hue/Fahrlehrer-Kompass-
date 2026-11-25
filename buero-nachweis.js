@@ -17,7 +17,8 @@ const NW_SONDER = [["ueberland", "Überlandfahrt"], ["autobahn", "Autobahnfahrt"
 const NW_ART_WAHL = [["fahrstunde", "Übungsfahrt (Grundausbildung)"], ["ueberland", "Sonderfahrt Überland"], ["autobahn", "Sonderfahrt Autobahn"], ["nacht", "Sonderfahrt Dämmerung/Dunkelheit"], ["schalt", "Schaltkompetenz"]];
 
 function nwNeuesRecht(heute) { return String(heute || KR.todayISO()) >= NACHWEIS_NEU_AB; }
-function nwMinuten(t) { if (!t.von || !t.bis) return 0; return Math.max(0, KR.hm2min(t.bis) - KR.hm2min(t.von)); }
+// W13 PR 2: über Mitternacht (22:30–00:00) zählt mit, wie im Ausbildungsplan der App (KR.terminMinuten)
+function nwMinuten(t) { if (!t.von || !t.bis) return 0; return KR.terminMinuten ? KR.terminMinuten(t.von, t.bis) : Math.max(0, KR.hm2min(t.bis) - KR.hm2min(t.von)); }
 // Art der Sonderfahrt: Büro-Eintrag (payload.sonderArt), sonst der Ausbildungsplan der App (srcSonder „sid:gruppe:nr“)
 function nwSonderArt(t) {
   if (t.art === "nacht") return "nacht";
@@ -161,7 +162,7 @@ function nwUebersichtHTML(x, d, st) {
   const termin = (id) => d.aktiv.concat(d.papierkorb).find((t) => t.id === id);
   return `<div class="nw-kacheln">
       <div class="nw-kachel"><span class="leise klein">Übungsfahrten</span><b>${nwMin(st.grundMin)}</b><span class="leise klein">${st.gelaufen.filter((t) => !nwSonderArt(t) && t.art !== "sonder" && t.art !== "schalt").length} Termine</span></div>
-      <div class="nw-kachel nw-sonder"><span class="leise klein">Sonderfahrten (je 45 Min.)</span><b>${sonderSoll ? `${sonderIst}/${sonderSoll}` : "–"}</b><span class="leise klein">${sonderSoll ? esc(sonder) : "keine nötig"}</span></div>
+      <div class="nw-kachel nw-sonder"><span class="leise klein">Sonderfahrten (je ${KR.sonderMinuten()} Min.)</span><b>${sonderSoll ? `${sonderIst}/${sonderSoll}` : "–"}</b><span class="leise klein">${sonderSoll ? esc(sonder) : "keine nötig"}</span></div>
       <div class="nw-kachel"><span class="leise klein">Theorie</span><b>${st.theorie && st.theorie.geladen && st.theorie.pflicht ? `${st.theorie.ist}/${st.theorie.soll}` : "–"}</b><span class="leise klein">${x.theorie_bestanden_am ? "Prüfung bestanden " + esc(datumDE(x.theorie_bestanden_am)) : "Prüfung offen"}</span></div>
       ${alt ? `<div class="nw-kachel"><span class="leise klein">Unterschriften</span><b>${st.gelaufen.length ? `${u.ok}/${st.gelaufen.length}` : "–"}</b><span class="leise klein">${!st.gelaufen.length ? "noch keine Stunde" : u.neu ? `${u.neu} neu nötig` : u.offen ? `${u.offen} offen` : "vollständig"}</span></div>` : ""}
     </div>
@@ -405,7 +406,7 @@ ${th && th.geladen && th.pflicht ? `<p>${th.ist} von ${th.soll} Doppelstunden${t
 ${theorieZeilen.length ? `<table><thead><tr><th>Lektion</th><th>Datum</th><th>Fahrlehrer</th></tr></thead><tbody>${theorieZeilen.map((b) => `<tr><td>${esc(b.lektion)}</td><td>${esc(datumDE(b.datum))}</td><td>${esc(b.bearbeiter || "")}</td></tr>`).join("")}</tbody></table>` : `<p class="klein">Keine Anwesenheit im Kompass erfasst.</p>`}`
     : `<p>${th && th.grund ? esc(th.grund) : "Nicht erfasst"}${x.theorie_bestanden_am ? ` · Theorieprüfung bestanden am ${esc(datumDE(x.theorie_bestanden_am))}` : ""}</p>`}
 <h2>Praktischer Unterricht</h2>
-<div class="summen"><span>Übungsfahrten: <b>${nwMin(st.grundMin)}</b></span>${NW_SONDER.map(([k, n], i) => `<span>${esc(n)}: <b>${st.ist[k]}</b> × 45 Min.${st.soll[i] ? ` (Soll ${st.soll[i]})` : ""}</span>`).join("")}${st.schaltMin ? `<span>Schaltkompetenz: <b>${nwMin(st.schaltMin)}</b></span>` : ""}</div>
+<div class="summen"><span>Übungsfahrten: <b>${nwMin(st.grundMin)}</b></span>${NW_SONDER.map(([k, n], i) => `<span>${esc(n)}: <b>${st.ist[k]}</b> × ${KR.sonderMinuten()} Min.${st.soll[i] ? ` (Soll ${st.soll[i]})` : ""}</span>`).join("")}${st.schaltMin ? `<span>Schaltkompetenz: <b>${nwMin(st.schaltMin)}</b></span>` : ""}</div>
 ${zeilen ? `<div class="breit"><table><thead><tr><th class="r">Nr.</th><th>Datum</th><th>Beginn</th><th class="r">Min.</th><th>Art und Inhalt</th><th class="r">FL</th>${neuRecht ? "" : "<th>Unterschrift Fahrschüler</th>"}</tr></thead><tbody>${zeilen}</tbody></table></div>` : `<p>Noch keine gefahrene Stunde.</p>`}
 <p class="klein">FL = Fahrlehrer: ${lehrer.map((id) => `${lehrerNr[id]} ${esc(lehrerName(id) || "–")}`).join(" · ") || "–"}</p>
 ${x.praxis_bestanden_am ? `<p>Praktische Prüfung bestanden am ${esc(datumDE(x.praxis_bestanden_am))}.</p>` : ""}

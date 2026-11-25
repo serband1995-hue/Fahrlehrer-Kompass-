@@ -21,6 +21,7 @@ if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlas
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
 // W13 PR 2: alte kompass-rechnen.js ohne Sonderfahrt-Einheit → fest 45 Minuten wie bisher
 if (!KR.sonderMinuten) { KR.sonderMinuten = () => 45; KR.setzeSonderMinuten = () => 45; KR.sonderEinheitenAusMinuten = (m) => (m > 0 ? Math.floor(m / 45) : 0); }
+if (!KR.terminMinuten) KR.terminMinuten = (v, b) => (v && b ? Math.max(0, KR.hm2min(b) - KR.hm2min(v)) : 0);
 // W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
 const KR_OHNE_HAKEN = !KR.fcFuersBuero || !KR.fcVomBuero;
 if (!KR.fcFuersBuero) KR.fcFuersBuero = KR.fcErhalten;
@@ -2362,7 +2363,7 @@ function sonderZaehlerHTML(x) {
     if (t.datum === heute && KR.hm2min(t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist
     const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
     const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
-    if (ist[a] != null) ist[a] += KR.sonderEinheitenAusMinuten(KR.hm2min(t.bis) - KR.hm2min(t.von)); // W13: Einheit je Fahrschule
+    if (ist[a] != null) ist[a] += KR.sonderEinheitenAusMinuten(KR.terminMinuten(t.von, t.bis)); // W13: Einheit je Fahrschule, über Mitternacht zählt mit
     else if (t.art === "sonder") ohneArt++;
   }
   return `<h3>Sonderfahrten (aus dem Kalender, je ${KR.sonderMinuten()} Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
@@ -3389,7 +3390,7 @@ function fcAbgabeDialog(lehrerId) {
     const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", buero_fc_nachgereicht_am: null }).in("id", fehlend) : { error: null };
     if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
     else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
-    // Richter W13 (Kann 1): „fehlt“ leert in der Datenbank Zahl und Nachreich-Datum (Trigger), hier gleich mit
+    // Richter W13 (Kann 1): „fehlt“ leert in der Datenbank die Zahl (Trigger) und das Nachreich-Datum (Update oben), hier gleich mit
     S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
     zeichne();
     return true;

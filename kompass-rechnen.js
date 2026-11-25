@@ -179,16 +179,19 @@
   }
   function setzeSonderMinuten(n) { sonderMinAktiv = normSonderMin(n); return sonderMinuten(); }
   function sonderMinuten() { return sonderMinAktiv || SONDER_MIN_STANDARD; }
-  // Dauer eines Termins in Minuten; eine Fahrt über Mitternacht (22:30–00:00) zählt mit.
+  // Dauer eines Termins in Minuten. Eine Fahrt über Mitternacht (22:30–00:00) zählt mit, aber nur bis 6 Stunden:
+  // „10:00–09:00“ ist ein Tippfehler und keine Fahrt von 23 Stunden (dann 0).
   function terminMinuten(von, bis) {
     if (!von || !bis) return 0;
     const d = hm2min(bis) - hm2min(von);
-    return d < 0 ? d + 1440 : d;
+    if (d >= 0) return d;
+    return d + 1440 <= 360 ? d + 1440 : 0;
   }
-  // Wie viele Kästchen ein Sonder-Termin belegt. Mindestens 1, wie bisher auch kurze oder unvollständige Termine.
+  // Wie viele Kästchen ein Sonder-Termin belegt: volle Einheiten (abgerundet wie Büro und Nachweis, Fable F4), mindestens 1
+  // (wie bisher auch kurze oder unvollständige Termine). 90 Min = 2, 80 Min = 1, 135 Min = 3.
   function sonderEinheiten(von, bis) {
     const m = terminMinuten(von, bis);
-    return m > 0 ? Math.max(1, Math.round(m / sonderMinuten())) : 1;
+    return Math.max(1, Math.floor(m / sonderMinuten()));
   }
   // Volle Sonderfahrt-Einheiten in einer Summe von Minuten (Büro: Ausbildungsnachweis, Zähler ohne App). Abgerundet wie bisher.
   function sonderEinheitenAusMinuten(min) { return min > 0 ? Math.floor(min / sonderMinuten()) : 0; }
