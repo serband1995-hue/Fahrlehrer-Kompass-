@@ -119,6 +119,19 @@ async function vwUrlaubAm(lehrerId, datum) {
   if (vwVeraltet("urlaub") || !VW.urlaub) { try { await vwLadeUrlaub(); } catch (e) { /* ohne Liste keine Warnung */ } }
   return (VW.urlaub || []).find((u) => u.fahrlehrer_id === lehrerId && u.von <= datum && u.bis >= datum) || null;
 }
+// W16 Teil 3: eine Warnung für alle Stellen (Termin, Prüfung, Fahrlehrerwechsel, Nachweis). daten: ein oder mehrere Tage (JJJJ-MM-TT).
+// true = weiter speichern (kein Urlaub, ohne Netz, oder „Trotzdem …“ gewählt); „Abbrechen“ ist der Hauptknopf.
+// Die Liste reicht ab heute (vwLadeUrlaub): vergangene Tage warnen nicht.
+async function vwUrlaubWarnen(lehrerId, daten, frage, ja) {
+  const tage = [...new Set([].concat(daten || []).filter(Boolean))].sort();
+  if (!lehrerId || !tage.length) return true;
+  const treffer = [];
+  for (const d of tage) { const u = await vwUrlaubAm(lehrerId, d); if (u && !treffer.includes(u)) treffer.push(u); }
+  if (!treffer.length) return true;
+  const kurz = typeof vwDatumKurz === "function" ? vwDatumKurz : datumDE;
+  const zr = treffer.map((u) => (u.von === u.bis ? "am " + kurz(u.von) : "vom " + kurz(u.von) + " bis " + kurz(u.bis))).join(" und ");
+  return bestaetige("Fahrlehrer hat Urlaub", `${lehrerName(lehrerId)} hat ${zr} Urlaub. ${frage || "Trotzdem speichern?"}`, ja || "Trotzdem speichern", "Abbrechen", true);
+}
 function renderUrlaub() {
   vwSchule();
   // Überschrift sagt, was da ist (der Seitentitel heißt schon „Urlaub“)

@@ -403,6 +403,9 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .wer-liste .knopf{overflow-wrap:anywhere;flex-direction:column;gap:2px;line-height:1.2;padding:8px 12px;}
 .wer-liste .knopf small{font-size:13px;font-weight:500;color:var(--muted);}
 .wer-liste .knopf.gesperrt small{color:var(--rot);}
+.wer-ausweg{border:1px solid var(--line-soft);border-left:4px solid var(--gelb);border-radius:12px;padding:12px 14px;display:grid;gap:8px;justify-items:start;}
+.wer-ausweg p{margin:0;}
+.wer-ausweg .knopf{min-height:44px;}
 .wer-pin{display:grid;gap:12px;justify-items:center;text-align:center;}
 .wer-pin .leise{margin:0;}
 .pin-punkte{display:flex;gap:16px;margin:6px 0;}
@@ -1076,6 +1079,15 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 }
 .es-inhalt .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
 .es-inhalt .formular{grid-template-columns:minmax(0,1fr);}
+/* W16 Teil 3: Buchungslinks und QR (buero-luecken.js) */
+.lu-link{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;margin:8px 0;}
+.lu-link-typ{font-weight:600;min-width:76px;}
+.lu-link input{min-width:0;font-size:13px;}
+.lu-link .knopf,.lu-qr .knopf{min-height:44px;}
+.lu-qr{display:grid;justify-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);}
+.lu-wahl{display:flex;gap:8px;}
+.lu-qr-bild{width:min(260px,70vw);height:auto;background:#fff;border-radius:8px;}
+@media (max-width:520px){.lu-link{grid-template-columns:minmax(0,1fr) auto}.lu-link-typ{grid-column:1/-1}}
 /* PC mit wenig Höhe (1280×720): Kopf und Abstände etwas kleiner, damit alle 12 Punkte ohne Scrollen passen (steht am Dateiende, damit es die Grundregeln und max-height:820 überschreibt) */
 @media screen and (min-width:901px) and (max-height:760px){
   .seite{gap:6px;padding:12px 14px;}
@@ -1083,3 +1095,27 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
   .nav-neben{padding-top:8px;}
   .seite-fuss{padding-top:10px;}
 }
+/* W16 Teil 3: Glocke (buero-luecken.js) */
+.kopf-glocke{position:relative;margin-left:auto;flex:0 0 auto;}
+/* Glocke neben dem Logo: Name und Fahrschule bleiben einzeilig (sonst wird die Leiste höher) */
+.marke{gap:8px;} .marke>div{min-width:0;} .marke-name{font-size:17px;} .marke-name,.marke-schule{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media screen and (min-width:901px) and (max-width:1279px){.marke{padding-left:0;padding-right:0;} .marke img{width:34px;height:34px;} .marke-name{font-size:15px;} .marke-schule{font-size:13px;}} /* Fable: mit echter Schrift gemessen */
+.lu-gl-liste{grid-template-columns:minmax(0,1fr);} .lu-gl-text{overflow-wrap:anywhere;}
+/* Glocke immer nur als Symbol (der Kopf hat am PC sonst keinen Platz für eine Zeile), Zahl als Punkt oben rechts */
+.kopf-glocke .ik-text{display:none;} .kopf-glocke .ik-sym{display:block;}
+.knopf.klein.kopf-glocke{min-width:44px;min-height:44px;padding:0;}
+.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#946616;color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
+@media (prefers-color-scheme:dark){.kopf-glocke .zahl{background:var(--gelb);color:#14211A;}} /* Kontrast ≥ 4,5:1 (Richter) */
+.kopf-glocke .zahl[hidden]{display:none;}
+.lu-gl-titel{font-size:16px;margin:14px 0 6px;}
+.lu-gl-liste{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
+.lu-gl-zeile{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+.lu-gl-zeile .knopf{min-height:44px;flex:0 0 auto;}
+@media print{.kopf-glocke{display:none !important;}}
+.formular .wahl.gross-wahl{min-height:44px;}
+.formular .wahl.gross-wahl input[type=checkbox]{width:24px;height:24px;}
+.lu-link input{min-height:44px;}
+.lu-qr .knopfreihe{justify-content:center;}
+.lu-qr-bild{width:min(200px,60vw);}
+.lu-gl-zeile .lu-gl-text{display:grid;gap:2px;min-width:0;}
+.lu-gl-zeile.gesendet{background:var(--gruen-soft, rgba(46,133,80,.1));border-radius:8px;padding-left:8px;padding-right:8px;}

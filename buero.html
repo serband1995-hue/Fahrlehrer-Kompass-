@@ -28,6 +28,9 @@
 <script src="buero-pakete.js" defer></script>
 <script src="buero-zahlungsmail.js" defer></script>
 <script src="buero-verwaltung.js" defer></script>
+<!-- W16 Teil 3: Lücken zur App (Buchungslinks/QR, Provision von Hand, Monatsbericht, Quote je Fahrlehrer, Prüfer, Glocke); vor buero.js geladen wie buero-verwaltung.js, damit sie beim ersten Zeichnen schon da sind -->
+<script src="quiz-qrcode.js" defer></script>
+<script src="buero-luecken.js" defer></script>
 <script src="buero.js" defer></script>
 <script src="buero-nachweis.js" defer></script>
 <script src="buero-einstellungen.js" defer></script>
@@ -76,6 +79,8 @@
         <div class="marke-name">Kompass Büro</div>
         <div class="marke-schule" id="schulName"></div>
       </div>
+      <!-- W16 Teil 3: Glocke wie in der App (Erinnerungen für morgen per WhatsApp-Link, Geburtstage heute); buero-luecken.js. In der Leiste, nicht im Seitenkopf: der ist am PC voll -->
+      <button class="knopf klein kopf-ik kopf-glocke" id="glocke" type="button" hidden title="Erinnerungen: morgen und Geburtstage" aria-label="Erinnerungen"><svg class="ik-sym" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="ik-text">Erinnerungen</span><span class="zahl" id="glockeZahl" hidden></span></button>
     </div>
     <!-- Handy und kleines Tablet (bis 900 px): Menü als Block zum Aufklappen, damit der Inhalt oben steht -->
     <button type="button" class="knopf menue-knopf" id="menueKnopf" aria-expanded="false" aria-controls="nav">Menü</button>
@@ -125,6 +130,7 @@
       <h2 id="werTitel">Wer bedient gerade?</h2>
       <p class="leise">Tippe deinen Namen an und gib deine PIN ein. Dein Name steht bei jeder Änderung im Protokoll.</p>
       <div class="wer-liste" id="werListe"></div>
+      <div class="wer-ausweg" id="werAusweg" role="status" hidden></div>
     </div>
     <!-- Schritt 2: PIN eingeben (oder beim ersten Mal festlegen) -->
     <div id="werPin" class="wer-pin" hidden>

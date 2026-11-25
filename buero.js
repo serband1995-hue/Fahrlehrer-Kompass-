@@ -260,7 +260,8 @@ function kopfAktionenZeichnen(b) {
   const k = $("kopfAktionen"); if (!k) return;
   // Urlaub und Schichtplan gehören zum Kalender (eigene Unterseiten, kein eigener Leistenpunkt: die Leiste passt so auf jeden PC-Bildschirm)
   const da = (id) => { const x = BEREICHE.find((y) => y.id === id); return !!x && (!x.wenn || x.wenn()); };
-  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a>${da("urlaub") ? `<a class="knopf" id="kUrlaub" href="#urlaub">Urlaub</a>` : ""}<button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>` : "";
+  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a>${da("urlaub") ? `<a class="knopf" id="kUrlaub" href="#urlaub">Urlaub</a>` : ""}<button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>`
+    : b.id === "zahlen" && S.geladenAm && typeof luMonatsberichtDialog === "function" ? `<button type="button" class="knopf haupt" id="kMonatsbericht">Monatsbericht (PDF)</button>` : "";
   if (k.innerHTML !== html) k.innerHTML = html;
   k.hidden = !html;
 }
@@ -287,6 +288,7 @@ function zeichne() {
   document.title = b.titel + " · Kompass Büro";
   zeichneNav();
   kopfAktionenZeichnen(b);
+  if (typeof luGlockeAuffrischen === "function") luGlockeAuffrischen(); // W16 Teil 3: Zähler der Glocke
   const ziel = $("ansicht");
   if (!S.geladenAm) { ziel.innerHTML = `<p class="leer">Daten werden geladen …</p>`; return; }
   // K2/K4 (🗣 22.11.2026): Zeichnet sich derselbe Bereich neu (Speichern, Schalter, Auffrischen), bleiben
@@ -543,6 +545,7 @@ function renderHeute() {
       <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagoeffnen="${esc(a.id)}">Wieder öffnen</button></div></li>`).join("")}</ul></details>` : ""}
     ${vonMir.length ? `<details class="von-mir"><summary>Von dir an andere vergeben, noch offen (${vonMir.length})</summary><ul class="notizliste">${vonMir.map((a) => aufgabeZeile(a, true)).join("")}</ul></details>` : ""}
     <p class="leise klein legende"><span class="punkt-rot"></span> rot = überfällig oder dringend · <span class="punkt-orange"></span> orange = heute fällig · grau = später</p></div>`;
+  if (typeof luHeuteHinweise === "function") aufgaben.push(...luHeuteHinweise()); // W16 Teil 3: Erste Hilfe unbezahlt, lange ohne Fahrstunde
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Fristen und Warnungen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return fuerKarte + todo + liste + kacheln;
 }
@@ -997,7 +1000,7 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
   toast("Nicht gespeichert: keine Berechtigung für diesen Schüler", true);
   return { ok: false };
 }
-const AKTE_FELD_NAMEN = { name: "Name", telefon: "Telefon", email: "E-Mail", paket_id: "Paket", buero_notiz: "Interne Notiz", fahrlehrer_id: "Fahrlehrer", inaktiv_seit: "Aktiv / Archiv",
+const AKTE_FELD_NAMEN = { name: "Name", telefon: "Telefon", email: "E-Mail", paket_id: "Paket", buero_notiz: "Interne Notiz", buero_todo: "To-do / aktueller Stand", fahrlehrer_id: "Fahrlehrer", inaktiv_seit: "Aktiv / Archiv",
   eltern_email: "E-Mail Eltern", zahlungsmail_an: "Zahlungs-Mails an" };
 const ZAHLUNGSMAIL_AN = [["beide", "Schüler und Eltern"], ["eltern", "nur Eltern"], ["schueler", "nur Schüler"]];
 function akteFeldName(k) { return AKTE_FELD_NAMEN[k] || FELD_NAMEN[k] || k; }
@@ -1064,7 +1067,7 @@ function akteKonfliktZeigen(dlg, konflikte) {
 }
 // Konflikt, Fenster bleibt offen: Felder, die hier niemand angefasst hat, auf den neuen Stand bringen. Sonst gälte ein
 // alter Wert im Feld beim nächsten Speichern als „geändert“ und überschriebe den neuen (Prüfer Büro, W14).
-const AKTE_FELDER = ["name", "telefon", "email", "paket_id", "ausbildungsart", "klasse", "vertrag_am", "buero_notiz", "bewerbernummer", "theorie_frist_bis",
+const AKTE_FELDER = ["name", "telefon", "email", "paket_id", "ausbildungsart", "klasse", "vertrag_am", "buero_notiz", "buero_todo", "bewerbernummer", "theorie_frist_bis",
   "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden", "b197_testfahrt_am", "inaktiv_seit", "fahrlehrer_id"];
 function akteFensterAuffrischen(dlg, altBasis, werte, zeile, konflikte, felder) {
   if (!zeile) return;
@@ -1481,6 +1484,10 @@ function pruefungDialog(id) {
       const neuImKalender = !id || !p.kalender_termin_id || d.datum !== p.datum;
       if (d.art === "praxis" && d.datum >= KR.todayISO() && d.fahrlehrer_id && d.von && neuImKalender && sx && bueroGesperrt(sx)) { toast(ZAHLUNG_MELDUNG, true); return false; }
     }
+    // W16 Teil 3: Urlaub des Fahrlehrers auch bei Praxisprüfungen (neu, oder Tag/Fahrlehrer geändert; nicht beim Absagen)
+    if (typeof vwUrlaubWarnen === "function" && d.art === "praxis" && d.fahrlehrer_id && !d.absagen
+      && (!id || d.datum !== p.datum || d.fahrlehrer_id !== (p.fahrlehrer_id || "") || p.art !== "praxis")
+      && !(await vwUrlaubWarnen(d.fahrlehrer_id, d.datum))) return false;
     const werte = {
       schueler_id: d.schueler_id, art: d.art, klasse: d.klasse || null, datum: d.datum, von: d.von || null,
       fahrlehrer_id: d.fahrlehrer_id || null, pruefer: (d.pruefer || "").trim() || null, notiz: (d.notiz || "").trim() || null,
@@ -2521,12 +2528,14 @@ function schuelerDialog(id) {
       ${id && istAktiv(x) ? `<div class="voll zahl-block" id="zahlBlock">${zahlBlockHTML(x)}</div>` : ""}
       ${id ? akademieZugangHTML() : ""}
       ${id ? `<div class="voll nw-akte"><button type="button" class="knopf klein" id="nwOeffnen">Ausbildungsnachweis</button><span class="leise klein">Fahrstunden, Unterschriften, Druck</span></div>` : ""}
+      ${id && typeof luIstTurbo === "function" && luIstTurbo(x) ? `<div class="voll nw-akte"><button type="button" class="knopf klein" data-luserie="${esc(id)}">Serientermine anlegen</button><span class="leise klein">Turboboost: mehrere Termine auf einmal</span></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id && typeof zmBlockHTML === "function" ? zmBlockHTML(id) : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock" data-entwurf>${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
       <label class="voll">Interne Notiz (nur Büro, der Fahrlehrer sieht sie nicht)<input type="text" name="buero_notiz" maxlength="500" value="${esc(x.buero_notiz || "")}"></label>
+      ${schuelerSpalteDa("buero_todo") ? `<label class="voll">To-do / aktueller Stand (nur Büro, wie in der App)<textarea name="buero_todo" rows="2" maxlength="1000">${esc(x.buero_todo || "")}</textarea></label>` : ""}
       ${id ? `<div class="voll" id="aufgabenBlock" data-entwurf>${aufgabenBlockHTML(id)}</div>` : ""}
     </div>
     <p class="leise klein">Umschreiber brauchen keine Sonderfahrten. Ein neuer Schüler mit Fahrlehrer erscheint innerhalb einer Minute in dessen App.</p>`;
@@ -2549,6 +2558,7 @@ function schuelerDialog(id) {
       paket_id: d.paket_id || null, ausbildungsart: d.ausbildungsart || "ersterwerb", klasse: d.klasse || null, vertrag_am: d.vertrag_am || null,
       buero_notiz: (d.buero_notiz || "").trim() || null,
     };
+    if (schuelerSpalteDa("buero_todo")) werte.buero_todo = (d.buero_todo || "").trim() || null; // W16 Teil 3: wie fsDetailExtrasSpeichern in der App
     Object.assign(werte, behoerdeWerte(form, dlg, d));
     if (bkAnm) bkAnm.werte(werte); // Paket setzt die Datenbank beim Verkauf (schueler.paket_id), nicht das Formular
     // Bestehende Akte: gesendet wird nur, was im Fenster geändert wurde (speichereAkteSicher, W14)
@@ -2641,7 +2651,12 @@ async function verschiebeSchueler(x, neuerLehrer) {
   const heute = KR.todayISO();
   if (alter && neuerLehrer) {
     const kuenftig = S.termine.filter((t) => t.schueler_id === x.id && t.fahrlehrer_id === alter && t.datum >= heute);
-    if (kuenftig.length && await bestaetige("Künftige Termine mitnehmen?", `${kuenftig.length} künftige Termine von ${x.name} liegen noch bei ${lehrerName(alter)}. Zu ${lehrerName(neuerLehrer)} übertragen?`, "Ja, übertragen")) {
+    // W16 Teil 3: liegen mitzunehmende Termine im Urlaub des neuen Fahrlehrers, vorher warnen; „Abbrechen“ lässt sie beim alten Fahrlehrer
+    const imUrlaub = kuenftig.length && typeof vwUrlaubAm === "function" && (await Promise.all(kuenftig.map((t) => vwUrlaubAm(neuerLehrer, t.datum)))).some(Boolean);
+    const mitnehmen = kuenftig.length && (imUrlaub
+      ? await vwUrlaubWarnen(neuerLehrer, kuenftig.map((t) => t.datum), `${kuenftig.length === 1 ? "1 künftiger Termin" : kuenftig.length + " künftige Termine"} von ${x.name} liegen noch bei ${lehrerName(alter)}. Trotzdem übertragen? Bei „Abbrechen“ bleiben sie bei ${lehrerName(alter)}.`, "Trotzdem übertragen")
+      : await bestaetige("Künftige Termine mitnehmen?", `${kuenftig.length} künftige Termine von ${x.name} liegen noch bei ${lehrerName(alter)}. Zu ${lehrerName(neuerLehrer)} übertragen?`, "Ja, übertragen"));
+    if (mitnehmen) {
       const res = await supa.from("kalender_termine").update({ fahrlehrer_id: neuerLehrer, aktualisiert_am: new Date().toISOString() }).in("id", kuenftig.map((t) => t.id)).select("id");
       if (res.error) toast("Termine nicht übertragen: " + dbFehlerText(res.error), true);
       else kuenftig.forEach((t) => { t.fahrlehrer_id = neuerLehrer; });
@@ -2868,6 +2883,10 @@ function neuerTerminGesperrt(t, id, d) {
 }
 function zahlHinweisZeigen(dlg, an) { const h = dlg.querySelector("#zahlHinweis"); if (h) { h.textContent = ZAHLUNG_MELDUNG; h.hidden = !an; } }
 function plusMinuten(hm, n) { const m = Math.min(KR.hm2min(hm) + n, 23 * 60 + 59); return KR.pad2(Math.floor(m / 60)) + ":" + KR.pad2(m % 60); }
+// W16 Teil 3: Hat die Tabelle schueler diese Spalte? (select("*") liefert alle Spalten; ohne geladene Schüler: annehmen, ja)
+function schuelerSpalteDa(k) { return !S.schueler.length || S.schueler.some((x) => x && k in x); }
+// Hat die Datenbank diese Spalte? (steht in mindestens einem geladenen Termin; select("*") liefert alle Spalten)
+function terminSpalteDa(k) { return !S.termine.length || S.termine.some((x) => x && k in x); }
 function terminDialog(id, vorgabe) {
   const t = id ? S.termine.find((x) => x.id === id) : Object.assign({ art: "fahrstunde" }, vorgabe, { bis: plusMinuten(vorgabe.von, 90) });
   if (!t) return;
@@ -2880,6 +2899,11 @@ function terminDialog(id, vorgabe) {
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
       <label>Bis<input type="time" name="bis" required value="${esc(t.bis || "")}"></label>
+      <div class="voll raster-zwei" id="beratungFeld" hidden>
+        <label>Interessent: Name<input type="text" name="interessent_name" maxlength="80" autocomplete="off" placeholder="Wer hat angefragt?" value="${esc(t.interessent_name || "")}"></label>
+        <label>Interessent: Telefon<input type="tel" name="interessent_telefon" maxlength="30" autocomplete="off" placeholder="für den Rückruf" value="${esc(t.interessent_telefon || "")}"></label>
+      </div>
+      <label class="voll wahl gross-wahl" id="kursBezahltFeld" hidden><input type="checkbox" name="kurs_bezahlt"${t.kurs_bezahlt ? " checked" : ""}> Kurs bezahlt</label>
       <div class="voll raster-zwei" id="ohneAppFeld" hidden>
         <label id="sonderArtFeld">Art der Sonderfahrt<select name="sonderArt"><option value="">– bitte wählen –</option>${SONDER_ARTEN.map(([k, n]) => `<option value="${k}"${(t.payload || {}).sonderArt === k ? " selected" : ""}>${n}</option>`).join("")}</select></label>
         <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
@@ -2914,13 +2938,16 @@ function terminDialog(id, vorgabe) {
       && KR.hm2min(x.von) < KR.hm2min(d.bis) && KR.hm2min(x.bis) > KR.hm2min(d.von));
     if (kollision && !(await bestaetige("Zeit ist schon belegt", `${lehrerName(d.fahrlehrer_id)} hat um ${kollision.von}–${kollision.bis} schon einen Termin. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
     // W16 Teil 2: Urlaub des Fahrlehrers (buero-verwaltung.js) – in der App sind diese Tage blockiert; hier eine Warnung, wenn Tag oder Fahrlehrer neu sind
-    if (typeof vwUrlaubAm === "function" && (!id || t.datum !== d.datum || t.fahrlehrer_id !== d.fahrlehrer_id)) {
-      const urlaub = await vwUrlaubAm(d.fahrlehrer_id, d.datum);
-      const kurz = typeof vwDatumKurz === "function" ? vwDatumKurz : datumDE;
-      // vorsichtig: „Abbrechen“ ist der Hauptknopf (Design-Kritiker: nicht aus Gewohnheit speichern)
-      if (urlaub && !(await bestaetige("Fahrlehrer hat Urlaub", `${lehrerName(d.fahrlehrer_id)} hat ${urlaub.von === urlaub.bis ? "am " + kurz(urlaub.von) : "vom " + kurz(urlaub.von) + " bis " + kurz(urlaub.bis)} Urlaub. Trotzdem speichern?`, "Trotzdem speichern", "Abbrechen", true))) return false;
-    }
+    // vorsichtig: „Abbrechen“ ist der Hauptknopf (Design-Kritiker: nicht aus Gewohnheit speichern)
+    if (typeof vwUrlaubWarnen === "function" && (!id || t.datum !== d.datum || t.fahrlehrer_id !== d.fahrlehrer_id)
+      && !(await vwUrlaubWarnen(d.fahrlehrer_id, d.datum))) return false;
     const werte = { schueler_id: d.schueler_id || null, art: d.art, fahrlehrer_id: d.fahrlehrer_id, datum: d.datum, von: d.von, bis: d.bis, fahrzeug: d.fahrzeug || null, aktualisiert_am: jetzt };
+    // W16 Teil 3: Büro-Spalten wie in der App (kalender_termine.kurs_bezahlt, interessent_name, interessent_telefon), nur bei der passenden Art
+    // und nur, wenn die Datenbank die Spalte hat (sie steht in den geladenen Terminen); die App lässt diese Spalten beim Abgleich stehen.
+    // Nur, was im Fenster geändert wurde: sonst überschriebe ein altes Fenster einen neueren Wert von einem anderen Gerät.
+    const buero = (k, v) => { const alt = typeof v === "boolean" ? !!t[k] : (t[k] == null ? null : t[k]); if (terminSpalteDa(k) && (!id || v !== alt)) werte[k] = v; };
+    if (d.art === "ersthilfe") buero("kurs_bezahlt", !!d.kurs_bezahlt);
+    if (d.art === "beratung") { buero("interessent_name", (d.interessent_name || "").trim() || null); buero("interessent_telefon", (d.interessent_telefon || "").trim() || null); }
     // Fahrlehrer ohne App: Sonderfahrt-Art und Klasse der Stunde im payload (die App eines Fahrlehrers mit App führt das selbst)
     if (!tdlg.querySelector("#ohneAppFeld").hidden) {
       const zus = {};
@@ -2958,6 +2985,14 @@ function terminDialog(id, vorgabe) {
   };
   ["fahrlehrer_id", "art", "schueler_id"].forEach((n) => tdlg.querySelector(`select[name=${n}]`).addEventListener("change", ohneAppNeu));
   ohneAppNeu();
+  // W16 Teil 3: Felder je Art (Beratung: Interessent; Erste Hilfe: bezahlt). Ohne Spalte in der Datenbank kein Feld.
+  const artFelder = () => {
+    const art = tdlg.querySelector("select[name=art]").value;
+    tdlg.querySelector("#beratungFeld").hidden = art !== "beratung" || !terminSpalteDa("interessent_name");
+    tdlg.querySelector("#kursBezahltFeld").hidden = art !== "ersthilfe" || !terminSpalteDa("kurs_bezahlt");
+  };
+  tdlg.querySelector("select[name=art]").addEventListener("change", artFelder);
+  artFelder();
   // Hinweis „Zahlung ausstehend“: bei neuem Termin als Sperre, bei bestehendem Termin nur zur Information
   const zahlNeu = () => {
     const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
@@ -3486,8 +3521,8 @@ function renderVerkaeufe() {
       ${liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Was</th><th>Stand</th><th class="zahlspalte">Betrag</th><th class="zahlspalte nur-breit">Provision</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>` : `<p class="leer">Keine Verkäufe in dieser Auswahl.</p>`}
       <p class="leise klein">${esc(splitText)}</p>
     </div>
-    <div class="karte"><h2>Offene Provisionen der Fahrlehrer</h2>
-      ${provZeilen ? `<table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Verkäufe</th><th class="zahlspalte">Summe</th><th></th></tr></thead><tbody>${provZeilen}</tbody></table>` : `<p class="leer">Keine offenen Provisionen.</p>`}
+    <div class="karte"><div class="karte-kopf"><h2>Offene Provisionen der Fahrlehrer</h2>${typeof luProvisionDialog === "function" ? '<button class="knopf" id="pvNeu" type="button">+ Provision von Hand</button>' : ""}</div>
+      ${provZeilen ? `<table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Einträge</th><th class="zahlspalte">Summe</th><th></th></tr></thead><tbody>${provZeilen}</tbody></table>` : `<p class="leer">Keine offenen Provisionen.</p>`}
     </div>`;
 }
 function bindeVerkaeufe(ziel) {
@@ -3534,7 +3569,7 @@ function verkaufBezahltDialog(id) {
         const fr = await supa.from("provisionen").select("*").eq("schueler_id", v.schueler_id).eq("typ", v.typ).eq("fahrlehrer_id", v.fahrlehrer_id);
         if (!fr.error && Array.isArray(fr.data)) { const ids = new Set(fr.data.map((p) => p.id)); S.provisionen = fr.data.concat(S.provisionen.filter((p) => !ids.has(p.id) && !(p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id))); }
       } catch (e) {}
-      const gleich = (x) => x.schueler_id === v.schueler_id && x.typ === v.typ && x.fahrlehrer_id === v.fahrlehrer_id;
+      const gleich = (x) => !!x.schueler_id && x.schueler_id === v.schueler_id && x.typ === v.typ && x.fahrlehrer_id === v.fahrlehrer_id;
       const bezahlt = S.verkaeufe.filter((x) => gleich(x) && x.status === "bezahlt" && x.aufteilung && Number(x.aufteilung.fahrlehrer) > 0).length;
       const gueltig = S.provisionen.filter((p) => gleich(p) && p.status !== "storniert").length;
       if (gueltig < bezahlt) {
@@ -3573,7 +3608,7 @@ async function verkaufStorno(id) {
   // Nur eine bezahlte Zahlung hat eine Provision. Davon fällt genau EINE noch nicht ausgezahlte weg (bei zwei
   // Verkäufen gleicher Art bleibt die andere stehen); ist keine mehr offen, aber schon ausgezahlt, wird das gemeldet.
   if (!war || !v.aufteilung || !(Number(v.aufteilung.fahrlehrer) > 0)) return;
-  const passend = S.provisionen.filter((p) => p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id);
+  const passend = S.provisionen.filter((p) => !!p.schueler_id && p.schueler_id === v.schueler_id && p.typ === v.typ && p.fahrlehrer_id === v.fahrlehrer_id);
   const offen = passend.filter((p) => p.status === "offen");
   const eine = offen.find((p) => Number(p.betrag) === Number(v.aufteilung.fahrlehrer)) || offen[0];
   if (eine) {
@@ -3588,7 +3623,7 @@ async function verkaufWiederOeffnen(id) {
 async function provisionAusgezahlt(lehrerId) {
   const offen = S.provisionen.filter((p) => p.status === "offen" && p.fahrlehrer_id === lehrerId);
   const summe = offen.reduce((a, p) => a + Number(p.betrag || 0), 0);
-  if (!(await bestaetige("Provision ausgezahlt?", `${euro(summe)} an ${lehrerName(lehrerId)} (${offen.length} Verkäufe) als ausgezahlt markieren?`, "Ja, ausgezahlt"))) return;
+  if (!(await bestaetige("Provision ausgezahlt?", `${euro(summe)} an ${lehrerName(lehrerId)} (${offen.length === 1 ? "1 Eintrag" : offen.length + " Einträge"}) als ausgezahlt markieren?`, "Ja, ausgezahlt"))) return;
   const res = await supa.from("provisionen").update({ status: "ausgezahlt" }).in("id", offen.map((p) => p.id)).select("id");
   if (res.error) { toast("Nicht gespeichert: " + dbFehlerText(res.error), true); return; }
   offen.forEach((p) => { p.status = "ausgezahlt"; });
@@ -3714,11 +3749,12 @@ function pruefErgebnisse(art) {
   if (art === "praxis") for (const e of S.pruefungen) {
     if ((e.payload || {}).b197) continue; // B197-Schaltkompetenz ist keine Praxisprüfung (wie in der App)
     const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
-    if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok, schueler_id: e.schueler_id, fahrlehrer_id: e.fahrlehrer_id || null, klasse: null, pruefer: null, quelle: "App" };
+    if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok, schueler_id: e.schueler_id, fahrlehrer_id: e.fahrlehrer_id || null, klasse: null, pruefer: String(e.pruefer || (e.payload || {}).pruefer || "").trim() || null, quelle: "App" };
   }
   for (const p of S.pruefungstermine) {
     if (p.art !== art || (p.status !== "bestanden" && p.status !== "nicht_bestanden")) continue;
-    map[p.schueler_id + "|" + p.datum] = { datum: p.datum, ok: p.status === "bestanden", schueler_id: p.schueler_id, fahrlehrer_id: p.fahrlehrer_id, klasse: p.klasse, pruefer: p.pruefer, quelle: "Tafel" };
+    const alt = map[p.schueler_id + "|" + p.datum]; // W16 Teil 3: Prüfer-Name aus der App behalten (die Tafel hat nur Initialen)
+    map[p.schueler_id + "|" + p.datum] = { datum: p.datum, ok: p.status === "bestanden", schueler_id: p.schueler_id, fahrlehrer_id: p.fahrlehrer_id, klasse: p.klasse, pruefer: (alt && alt.pruefer) || p.pruefer, quelle: "Tafel" };
   }
   return Object.values(map);
 }
@@ -3802,6 +3838,7 @@ function renderZahlen() {
         <tr><td><a href="#verkaeufe">Provision an Fahrlehrer offen</a></td><td class="zahlspalte">${euro(provOffen)}</td></tr>
         <tr><td><a href="#verkaeufe">Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</a></td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
       </tbody></table></div>
+  ${typeof luZahlenZusatz === "function" ? luZahlenZusatz(f, monate) : ""}
   <div id="tip" class="tip" hidden></div>`;
 }
 // Detailseite hinter einem Balken oder einer Kachel
@@ -3922,7 +3959,7 @@ function renderTeam() {
       <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.fahrlehrerlaubnis || []).length ? "Fahrlehrerlaubnis " + p.fahrlehrerlaubnis.map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : (p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
-      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
+      <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${mitZahlen && p.slug && typeof luBuchungsDialog === "function" ? `<button class="knopf klein" data-buchlink="${esc(p.id)}" type="button">Buchungslinks</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
         ${S.profil.rolle === "super_admin" ? `<button class="knopf klein" data-sperren="${esc(p.id)}" type="button">${p.aktiv === false ? "Freischalten" : "Sperren"}</button>` : ""}` : ""}${darfZugangAendern(p) ? `<button class="knopf klein" data-zbearb="${esc(p.id)}" type="button">Bearbeiten</button><button class="knopf klein gefahr" data-zloesch="${esc(p.id)}" type="button">Löschen</button>` : ""}</div></td></tr>`;
   const lehrer = S.lehrer;
   const buero = S.team.filter((p) => p.rolle === "buero" || p.rolle === "fahrschule_admin");
@@ -4730,6 +4767,7 @@ async function ladeDaten() {
     else { S.elternFehler = true; if (!S.eltern) S.eltern = null; } // Ladefehler: Echt-Versand sperren (Empfänger unklar)
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
+    $("schulName").title = S.fs ? S.fs.name : ""; // W16 Teil 3: Name kann gekürzt sein (Glocke daneben)
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
     if (typeof bkPruefeSpalten === "function") bkPruefeSpalten(); // Werkstatt 13: alte Datenbank ohne Vorlagen erkennen
@@ -4774,6 +4812,7 @@ async function ladePersonen() {
   if (!S.fsId) return;
   const res = await supa.from("buero_personen").select("id,name,telefon,hat_pin,pin_neu_noetig,pin_frei_bis,darf_verwalten,aktiv,gesperrt_bis").eq("fahrschule_id", S.fsId).order("name");
   if (!res.error) S.personen = res.data || [];
+  return !res.error;
 }
 // Unten links steht die Person, die gerade bedient (nicht der Name des gemeinsamen Kontos)
 function zeigeWerAnzeige() {
@@ -4822,21 +4861,41 @@ function werZeigen(an) {
 }
 function pinFrei(p) { return !p.hat_pin && p.pin_frei_bis && new Date(p.pin_frei_bis).getTime() > Date.now(); }
 function zeitHM(iso) { return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }); }
-async function zeigeWer(abbrechbar) {
+async function zeigeWer(abbrechbar, neuLaden) {
   parkeFenster(); // ein offenes Fenster würde das Overlay verdecken; Eingaben bleiben versteckt erhalten und kommen nach der PIN zurück
   PIN.abbrechbar = !!(abbrechbar && S.sitzung);
   $("werZu").hidden = !PIN.abbrechbar;
   $("werNamen").hidden = false; $("werPin").hidden = true;
   werZeigen(true);
-  if (!(S.personen || []).length) await ladePersonen();
+  let geladen = true;
+  if (neuLaden || !(S.personen || []).length) geladen = await ladePersonen(); // Fehler: alte Liste bleibt
   const liste = aktivePersonen();
   const jetzt = Date.now();
+  werAuswegZeigen(liste, geladen);
   $("werListe").innerHTML = liste.length ? liste.map((p) => {
     const gesperrt = p.gesperrt_bis && new Date(p.gesperrt_bis).getTime() > jetzt;
     const unter = gesperrt ? `gesperrt bis ${esc(zeitHM(p.gesperrt_bis))}` : (p.hat_pin ? "" : (pinFrei(p) ? "neu: PIN festlegen" : "PIN noch nicht freigegeben"));
     return `<button type="button" class="knopf gross${gesperrt ? " gesperrt" : ""}" data-wer="${esc(p.id)}">${esc(p.name)}${unter ? `<small>${unter}</small>` : ""}</button>`;
-  }).join("") : `<p class="leer">Für diese Fahrschule sind noch keine Büro-Personen angelegt. Bitte bei Serband melden.</p>`;
+  }).join("") : "";
 }
+// W16 Teil 3 (Lücke 7): Kann sich gerade niemand anmelden (keine Person, keine PIN und keine Freigabe, oder keine Verbindung),
+// sagt ein Kasten, wer helfen kann und wie, mit „Nochmal prüfen“. Die PIN wird nie umgangen; „ganz abmelden“ steht darunter.
+function werAuswegZeigen(liste, geladen) {
+  const box = $("werAusweg"); if (!box) return;
+  const kann = liste.some((p) => p.hat_pin || pinFrei(p));
+  let titel = "", text = "";
+  if (!geladen) { titel = "Keine Verbindung"; text = "Die Namen konnten nicht geladen werden. Bitte Internet prüfen und auf „Nochmal prüfen“ tippen."; }
+  else if (!liste.length) { titel = "Noch keine Büro-Personen"; text = "Bitte die Fahrschul-Leitung bitten, unter „Fahrlehrer & Büro“ eine Person anzulegen und die PIN freizugeben."; }
+  else if (!kann) { titel = "Gerade kann sich niemand anmelden"; text = `Niemand hat eine PIN. Bitte ${verwalterNamen()} um „PIN freigeben“ bitten; die Fahrschul-Leitung kann das auch.`; }
+  box.hidden = !titel;
+  if (!titel) { box.innerHTML = ""; return; }
+  box.innerHTML = `<b>${esc(titel)}</b><button type="button" class="knopf" id="werNochmal">Nochmal prüfen</button><p>${esc(text)}</p>`;
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("#werNochmal"); if (!b || b.disabled) return;
+  b.disabled = true; b.textContent = "Prüfe …";
+  await zeigeWer(PIN.abbrechbar, true);
+});
 function pinText() {
   const name = PIN.person ? PIN.person.name : "";
   const t = {

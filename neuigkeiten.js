@@ -4,6 +4,14 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.12", datum: "2026-11-25", kurz: "Büro-Seite: Buchungslinks, Erinnerungen, Monatsbericht.",
+    punkte: ["Buchungslinks und QR-Code je Fahrlehrer: unter „Fahrlehrer & Büro“ beim Fahrlehrer auf „Buchungslinks“ tippen.",
+             "Die Glocke oben zeigt, wer morgen Fahrstunde oder Prüfung hat und wer heute Geburtstag hat. „WhatsApp“ öffnet den fertigen Text, abgeschickt wird erst dort.",
+             "Statistik: „Monatsbericht (PDF)“ oben rechts, dazu die Quote je Fahrlehrer und die Prüfer.",
+             "Zahlungen › Verkäufe & Provision: „+ Provision von Hand“.",
+             "Termin-Fenster: bei Erste Hilfe „Kurs bezahlt“, bei Beratung Name und Telefon. Auf „Heute“ stehen offene Erste-Hilfe-Kurse und Schüler, die seit 4 Wochen nicht gefahren sind.",
+             "Schüler-Akte: „To-do / aktueller Stand“ und bei Turboboost „Serientermine anlegen“.",
+             "Urlaub warnt jetzt auch bei Prüfung, Fahrlehrerwechsel und im Ausbildungsnachweis."] },
   { version: "2026.11.25.11", datum: "2026-11-25", kurz: "Einstellungen: Sonderfahrt, Papierkorb und Rückgängig.",
     punkte: ["Büro: Unter Einstellungen › Fahrstunden & Kalender stellst du ein, wie lang eine Sonderfahrt ist (30 bis 90 Minuten, sonst 45).",
              "Neues Thema „Löschen & Rückgängig“: wie viele Tage Gelöschtes im Papierkorb bleibt (7 bis 90, sonst 30) und wie lange „Rückgängig“ zu sehen ist (4 bis 30 Sekunden, sonst 6).",
