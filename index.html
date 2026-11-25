@@ -5354,28 +5354,12 @@ let _reaktRegelSoll=null; // für welche Fahrschule die Regel gerade gilt (eigen
 function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
 function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY+":"+fs)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
 /* W13 PR 2: Länge einer Sonderfahrt-Einheit (ein Kästchen im Plan) je Fahrschule, Vorgabe 45 Minuten (erlaubt 30–90). Quelle:
-   fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten (Hauptsitzung 25.11.2026; Einstellung im Büro baut W11).
-   Gelesen wird der Wert NUR über KR.sonderMinuten(). Für offline gemerkt (je Fahrschule). Fehlt die Tabelle: gemerkter Wert bzw. 45.
-   Geladen in denselben Momenten wie die Regel der Reaktivierung (eigene Fahrschule oder die der Gesamtansicht). */
-const _SONDER_MIN_KEY="kompass_sonder_min"; // je Fahrschule: kompass_sonder_min:<fahrschule>
-let _sonderMinSoll; // für welche Fahrschule der Wert gerade gilt
-async function _ladeSonderMin(supa,fs){
-  if(!window.KR||!KR.setzeSonderMinuten)return;
-  if(fs!==_sonderMinSoll){ _sonderMinSoll=fs; let n=null; // Wert einer anderen Fahrschule nie mitnehmen
-    try{ const o=fs&&JSON.parse(localStorage.getItem(_SONDER_MIN_KEY+":"+fs)||"null"); if(o&&o.fs===fs)n=o.min; }catch(e){ /* kaputter Eintrag: Vorgabe */ }
-    KR.setzeSonderMinuten(n); }
-  if(!fs||!supa)return;
-  try{
-    const {data,error}=await supa.from("fahrschule_einstellungen").select("wert").eq("fahrschule_id",fs).eq("schluessel","fahrstunden.sonderfahrt").maybeSingle();
-    if(_sonderMinSoll!==fs||error)return; // inzwischen gewechselt, oder Fehler (z. B. Tabelle fehlt): gemerkter Wert bleibt
-    const n=data&&data.wert&&data.wert.minuten!=null?data.wert.minuten:null;
-    KR.setzeSonderMinuten(n);
-    try{ localStorage.setItem(_SONDER_MIN_KEY+":"+fs,JSON.stringify({fs,min:n})); }catch(e){ /* voll: nur im Speicher */ }
-  }catch(e){ /* Netz: gemerkter Wert bleibt */ }
-}
+   fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten (Hauptsitzung 25.11.2026), gelesen über KE (W11) – KE lädt
+   beim Start, in der Gesamtansicht und zurück, merkt je Fahrschule und leert beim Abmelden. Gelesen wird der Wert sonst NUR über KR.sonderMinuten(). */
+function _sonderMinAusKE(){ if(window.KR&&KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE&&KE.zahl?KE.zahl("fahrstunden.sonderfahrt","minuten",45,30,90):null); }
+window.addEventListener("ke:geladen",_sonderMinAusKE);
 // fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
 async function _ladeReaktRegel(supa,fsId){
-  _ladeSonderMin(supa,fsId||(_authProfile&&_authProfile.fahrschule_id)||null); // W13 PR 2: läuft nebenher, wartet nicht
   if(!window.KR||!KR.setzeReaktRegel)return;
   const fs=fsId||(_authProfile&&_authProfile.fahrschule_id)||null;
   if(fs!==_reaktRegelSoll){ _reaktRegelSoll=fs; KR.setzeReaktRegel(null); if(fs) _reaktRegelAusSpeicher(fs); } // Regel einer anderen Fahrschule nie mitnehmen
@@ -5544,7 +5528,7 @@ async function pullSchuelerZuweisungen() {
     const supa = getSupa();
     const gen = _abglGen;
     // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
-    if (window.KE) KE.lade(supa, _authProfile.fahrschule_id); // W11: Einstellungen der eigenen Fahrschule (wirft nie)
+    if (window.KE) { KE.lade(supa, _authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: Einstellungen der eigenen Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
     const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
@@ -6188,7 +6172,7 @@ async function _fsEnterAggMode(fahrschuleId){
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE) KE.lade(getSupa(),fahrschuleId); // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht)
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6222,7 +6206,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
-  if(window.KE&&_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); // W11: wieder die Einstellungen der eigenen Fahrschule
+  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();

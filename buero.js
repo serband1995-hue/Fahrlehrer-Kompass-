@@ -19,6 +19,9 @@ if (!KR.setzeReaktRegel) { KR.setzeReaktRegel = () => null; KR.holeReaktRegel = 
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
+// W13 PR 2: Länge einer Sonderfahrt-Einheit (fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten; Vorgabe 45,
+// erlaubt 30–90), gelesen über KE (W11, lädt in ladeDaten). Sonst nur über KR.sonderMinuten() lesen. Einstellung: W11 „Fahrstunden & Kalender“.
+window.addEventListener("ke:geladen", () => { if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE && KE.zahl ? KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90) : null); });
 // W13 PR 2: alte kompass-rechnen.js ohne Sonderfahrt-Einheit → fest 45 Minuten wie bisher
 if (!KR.sonderMinuten) { KR.sonderMinuten = () => 45; KR.setzeSonderMinuten = () => 45; KR.sonderEinheitenAusMinuten = (m) => (m > 0 ? Math.floor(m / 45) : 0); }
 if (!KR.terminMinuten) KR.terminMinuten = (v, b) => (v && b ? Math.max(0, KR.hm2min(b) - KR.hm2min(v)) : 0);
@@ -4631,9 +4634,9 @@ async function ladeDaten() {
   const fsId = S.fsId;
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
-  if (window.KE) KE.lade(supa, fsId); // W11: Einstellungen der Fahrschule (wirft nie)
+  if (window.KE) { KE.lade(supa, fsId); if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90)); } // W11: Einstellungen der Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel, sonderEinst] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4660,13 +4663,9 @@ async function ladeDaten() {
       alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
       holeReaktRegel(fsId),   // W15: Regel der Reaktivierung (entfällt, Monate); fehlt die Funktion → alte Regel
-      supa.from("fahrschule_einstellungen").select("wert").eq("fahrschule_id", fsId).eq("schluessel", "fahrstunden.sonderfahrt").maybeSingle(),   // W13 PR 2: Länge einer Sonderfahrt-Einheit; fehlt Tabelle/Zeile → 45
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
-    // W13 PR 2: Länge einer Sonderfahrt-Einheit (fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten; Vorgabe 45,
-    // erlaubt 30–90). Gelesen wird sie nur über KR.sonderMinuten(). Einstellung im Büro: W11 („Fahrstunden & Kalender“).
-    KR.setzeSonderMinuten(sonderEinst && !sonderEinst.error && sonderEinst.data && sonderEinst.data.wert ? sonderEinst.data.wert.minuten : null);
     S.lehrer = (pruefe(lehrer, "Fahrlehrer") || []).filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
     S.schueler = pruefe(schueler, "Schüler") || [];
     S.termine = pruefe(termine, "Termine") || [];

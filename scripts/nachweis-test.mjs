@@ -240,12 +240,13 @@ const top = (page) => page.locator("dialog[open]").last();
   pruef(r.planIst === 1, "W13: Plan-Kästchen in der Zukunft zählen im Nachweis mit: " + r.planIst);
   // Einstellung fahrstunden.sonderfahrt = 60 Minuten → nach dem Laden gilt 60; Wechsel der Fahrschule setzt zurück
   const r2 = await page.evaluate(async () => {
+    const warte = async (soll) => { for (let i = 0; i < 40 && KR.sonderMinuten() !== soll; i++) await new Promise((r) => setTimeout(r, 50)); return KR.sonderMinuten(); };
     window.__FAKE.tabellen.fahrschule_einstellungen = [{ fahrschule_id: S.fsId, schluessel: "fahrstunden.sonderfahrt", wert: { minuten: 60 } }];
     await ladeDaten();
-    const nach = KR.sonderMinuten();
+    const nach = await warte(60); // KE lädt nebenher, dann Ereignis ke:geladen
     window.__FAKE.tabellen.fahrschule_einstellungen = [];
     await ladeDaten();
-    return { nach, danach: KR.sonderMinuten() };
+    return { nach, danach: await warte(45) };
   });
   pruef(r2.nach === 60 && r2.danach === 45, "W13: Einstellung fahrstunden.sonderfahrt wirkt nicht: " + JSON.stringify(r2));
   pruef(!konsole.length, "Konsole W13: " + konsole.join(" | "));
