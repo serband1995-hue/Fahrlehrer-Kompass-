@@ -480,7 +480,7 @@ await pruefe("K27", "Alter Termin (1 Kästchen, 90 Min) bekommt beim Verschieben
     const l = DB.lessons.find((x) => x.id === "ALT2");
     return { idx: l.srcSonderIdx || null, date: l.date, plan: __t.plan("s1", "autobahn") };
   }, { T2 });
-  return r.idx === null && r.date === T2 && JSON.stringify(r.plan.slice(0, 3)) === JSON.stringify([T2, "2026-10-26", null]) ? null : JSON.stringify(r);
+  return r.idx === null && r.date === T2 && r.plan[0] === T2 && r.plan[1] === "2026-10-26" && !r.plan[2] ? null : JSON.stringify(r);
 });
 
 await pruefe("K19", "keine JS-Fehler und keine echten Dialogfenster im ganzen Lauf", async () => jsFehler);
