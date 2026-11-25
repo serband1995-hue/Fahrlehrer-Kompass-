@@ -583,8 +583,11 @@ try {
     const ktVorher = ktRows; ktRows = [kt("z1", gestern, "10:00", "11:30", { buero_fc_anzahl: 1 }), kt("z2", gestern, "12:00", "13:30")];
     delete _paketTermine.a1; routeDetail("a1"); await warte(300); const kZahl = karte(), mitSpalteSel = (ktAufrufe[ktAufrufe.length - 1] || {}).sel || "";
     ktOhneSpalte = true; ktRows = [kt("z1", gestern, "10:00", "11:30"), kt("z2", gestern, "12:00", "13:30")].map((x) => { delete x.buero_fc_anzahl; return x; });
-    delete _paketTermine.a1; routeDetail("a1"); await warte(300); const kOhne = karte(), spalteDanach = _fcAnzahlSpalte;
-    ktOhneSpalte = false; _fcAnzahlSpalte = true; ktRows = ktVorher;
+    delete _paketTermine.a1; routeDetail("a1"); await warte(300); const kOhne = karte(), spalteDanach = _fcAnzahlFehlt === 0;
+    // Fable Z1: nach 10 Minuten fragt die App wieder mit der Spalte (Migration inzwischen eingespielt)
+    ktOhneSpalte = false; _fcAnzahlFehlt = Date.now() - 700000; delete _paketTermine.a1; routeDetail("a1"); await warte(300);
+    const selSpaeter = (ktAufrufe[ktAufrufe.length - 1] || {}).sel || "";
+    _fcAnzahlFehlt = 0; ktRows = ktVorher;
     // nicht ladbar → Hinweis, „–“ statt Paketgröße
     ktFehler = true; delete _paketTermine.a1; routeDetail("a1"); await warte(300);
     const k4f = karte(); ktFehler = false;
@@ -599,6 +602,7 @@ try {
       { id: "g4", sid: "a2", art: "fahrstunde", date: gestern, von: "16:00", bis: "17:30", status: "geplant", buero_fc_status: "abgegeben" },
       { id: "g5", sid: "a1", art: "fahrstunde", date: gestern, von: "18:00", bis: "19:30", status: "geplant", buero_fc_status: "abgegeben", buero_fc_anzahl: 1 }];
     const box = document.createElement("div"); box.innerHTML = paketCard(DB.students.find((x) => x.id === "a1")); await warte(150);
+    const nutzlastOhneZahl = !("buero_fc_anzahl" in _fsTeile("kalender_termine", DB.lessons.find((x) => x.id === "g5")).payload); // Fable Z4
     const kAgg = box.textContent, aggAbruf = ktAufrufe.length - nVorAgg; _fsAgg = null; DB.lessons = [];
     // Richter: Gerät hat nach dem Update noch die alte kompass-rechnen.js → keine Zahl statt Absturz
     const kF = KR.fcFuersBuero; delete KR.fcFuersBuero; let kAlt = "";
@@ -617,7 +621,7 @@ try {
     window.getSupa = () => ({ from: () => { geschrieben = true; return { update: () => ({ eq: () => Promise.resolve({}) }) }; } });
     await schuelerPaketSetzen("a1", "v2");
     window.getSupa = altSupa;
-    return { kZahl, mitSpalteSel, kOhne, spalteDanach, k0, t1, k2, k3, k4, k4f, k4l, kAgg, kAlt, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
+    return { kZahl, mitSpalteSel, kOhne, spalteDanach, selSpaeter, nutzlastOhneZahl, k0, t1, k2, k3, k4, k4f, k4l, kAgg, kAlt, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
   });
   pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Stand (noch nichts gefahren: „0 von 20“)", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*0 von 20/.test(erg.t1) && /Überlandfahrt\s*0 von 5/.test(erg.t1), erg.t1);
   pruefe("A2 App: keine Preise für den Fahrlehrer", !/€|65|80,00/.test(erg.t1), erg.t1);
@@ -633,6 +637,8 @@ try {
   pruefe("A5g App-Gesamtansicht: Termine samt Haken aus DB.lessons (2 + nachgereicht 2 + Büro wählt 1 = 5, 1 wartet), kein eigener Abruf", /Übungsstunden\s*5 von 20/.test(erg.kAgg) && /1 Termin wartet/.test(erg.kAgg) && erg.aggAbruf === 0 && !/eigenen Fahrten/.test(erg.kAgg), { t: erg.kAgg, n: erg.aggAbruf });
   pruefe("A5i App: vom Büro gewählte Zahl zählt (1 + 2 = „3 von 20“), Abfrage fragt buero_fc_anzahl ab", /Übungsstunden\s*3 von 20/.test(erg.kZahl) && /buero_fc_anzahl/.test(erg.mitSpalteSel), { t: erg.kZahl, sel: erg.mitSpalteSel });
   pruefe("A5j App: alte Datenbank ohne Spalte → zweiter Versuch ohne, Stand trotzdem da („4 von 20“)", /Übungsstunden\s*4 von 20/.test(erg.kOhne) && erg.spalteDanach === false, { t: erg.kOhne, s: erg.spalteDanach });
+  pruefe("A5k App: 10 Minuten nach dem Fehlschlag wird die Spalte wieder abgefragt", /buero_fc_anzahl/.test(erg.selSpaeter), erg.selSpaeter);
+  pruefe("A5l Gesamtansicht: die Zahl vom Büro landet beim Zurückschreiben nie in der Nutzlast", erg.nutzlastOhneZahl === true);
   pruefe("A5h App: alte kompass-rechnen.js im Zwischenspeicher → „nicht abrufbar“, kein Absturz", /Stand gerade nicht abrufbar/.test(erg.kAlt) && !/AUSNAHME/.test(erg.kAlt), erg.kAlt);
   pruefe("A6 App: 22 von 20 Einheiten → „20 von 20 ✓ · +2“", /Übungsstunden\s*20 von 20 ✓ · \+2/.test(erg.k5), erg.k5);
   pruefe("A7 App: verkauftes Paket lässt sich in der App nicht überschreiben", erg.geschrieben === false);

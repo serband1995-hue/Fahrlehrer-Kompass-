@@ -10,8 +10,9 @@
 -- Neu 2: buero_fc_status, buero_fc_anzahl und buero_fc_nachgereicht_am ändern nur Büro, Leitung (fahrschule_admin), Super-Admin.
 --   * Andere (Fahrlehrer, auch gesperrte oder entfernte Zugänge): beim Ändern bleibt der alte Wert stehen, still, ohne
 --     Fehler. Sonst bräche das Hochladen der ganzen Termin-Liste der App ab (Upsert). Alle anderen Spalten speichern normal.
---   * Ändert ein Fahrlehrer an einer abgehakten Stunde Vermerk (payload.fc), Uhrzeit oder Art, springt der Haken auf
---     „offen“ zurück: Das Büro hakt den neuen Stand neu ab (Fable R4, sonst zählte „nachgereicht“ sofort voll).
+--   * Ändert ein Fahrlehrer an einer abgehakten Stunde Vermerk (payload.fc), Uhrzeit, Art oder Schüler, springt der Haken
+--     auf „offen“ zurück (ohne Zahl und Nachreich-Datum): Das Büro hakt den neuen Stand neu ab (Fable R4/Z2).
+--   * Für alle: Ohne „abgegeben“ gibt es keine Zahl (Fable Z3, z. B. Sammelabgabe setzt „fehlt“).
 --   * Neuer Termin eines Fahrlehrers: der Haken startet auf „offen“ (noch nicht geprüft), ohne Nachreich-Datum,
 --     auch wenn etwas anderes mitgeschickt wird. Leer bleibt leer (die App liest leer und „offen“ gleich).
 --   * Server, Nachtläufe, Migrationen (auth.uid() ist leer): unverändert erlaubt.
@@ -33,25 +34,29 @@ as $function$
 declare
   u uuid := auth.uid();
 begin
-  if u is null then return new; end if; -- Server, Nachtläufe, Migrationen
-  if public.is_buero(u) or public.is_fahrschule_admin(u) or public.is_super_admin(u) then return new; end if;
-  if tg_op = 'UPDATE' then
-    new.buero_fc_status := old.buero_fc_status;
-    new.buero_fc_anzahl := old.buero_fc_anzahl;
-    new.buero_fc_nachgereicht_am := old.buero_fc_nachgereicht_am;
-    -- Fable R4: Der Haken gilt für den Stand, den das Büro gesehen hat. Ändert der Fahrlehrer danach Vermerk (payload.fc),
-    -- Uhrzeit oder Art einer abgehakten Stunde, muss das Büro neu abhaken (sonst zählte z. B. „nachgereicht“ sofort voll).
-    if old.buero_fc_status = 'abgegeben' and (
-         (new.payload ->> 'fc') is distinct from (old.payload ->> 'fc')
-         or new.von is distinct from old.von or new.bis is distinct from old.bis or new.art is distinct from old.art) then
-      new.buero_fc_status := 'offen';
-      new.buero_fc_anzahl := null;
+  if u is not null and not (public.is_buero(u) or public.is_fahrschule_admin(u) or public.is_super_admin(u)) then
+    if tg_op = 'UPDATE' then
+      new.buero_fc_status := old.buero_fc_status;
+      new.buero_fc_anzahl := old.buero_fc_anzahl;
+      new.buero_fc_nachgereicht_am := old.buero_fc_nachgereicht_am;
+      -- Fable R4/Z2: Der Haken gilt für den Stand, den das Büro gesehen hat. Ändert der Fahrlehrer danach Vermerk (payload.fc),
+      -- Uhrzeit, Art oder Schüler einer abgehakten Stunde, hakt das Büro neu ab (sonst zählte z. B. „nachgereicht“ sofort voll
+      -- oder die Stunde im Paket eines anderen Schülers).
+      if old.buero_fc_status = 'abgegeben' and (
+           (new.payload ->> 'fc') is distinct from (old.payload ->> 'fc')
+           or new.von is distinct from old.von or new.bis is distinct from old.bis or new.art is distinct from old.art
+           or new.schueler_id is distinct from old.schueler_id) then
+        new.buero_fc_status := 'offen';
+        new.buero_fc_nachgereicht_am := null;
+      end if;
+    else
+      if new.buero_fc_status is not null and new.buero_fc_status <> 'offen' then new.buero_fc_status := 'offen'; end if;
+      new.buero_fc_nachgereicht_am := null;
     end if;
-  else
-    if new.buero_fc_status is not null and new.buero_fc_status <> 'offen' then new.buero_fc_status := 'offen'; end if;
-    new.buero_fc_anzahl := null;
-    new.buero_fc_nachgereicht_am := null;
   end if;
+  -- Für alle (Fable Z3): Die Zahl gilt nur mit „abgegeben“. Setzt z. B. die Sammelabgabe „fehlt“, ist sie weg und kommt beim
+  -- nächsten „abgegeben“ nicht still zurück.
+  if new.buero_fc_status is distinct from 'abgegeben' then new.buero_fc_anzahl := null; end if;
   return new;
 end;
 $function$;

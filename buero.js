@@ -3191,6 +3191,7 @@ async function fcSetzeStatus(id, status, nachAm, anzahl) {
   const upd = { buero_fc_status: status };
   if (nachAm !== undefined) upd.buero_fc_nachgereicht_am = nachAm || null;
   if (fcAnzahlDa()) upd.buero_fc_anzahl = status === "abgegeben" && anzahl != null ? anzahl : null;
+  if (status !== "abgegeben") upd.buero_fc_nachgereicht_am = null; // „fehlt“/„offen“ und zugleich „nachgereicht am …“ passt nicht (Bedienung)
   const res = await supa.from("kalender_termine").update(upd).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const t = S.termine.find((x) => x.id === id);
@@ -3230,19 +3231,25 @@ function renderFcVerlauf() {
     <td>${esc(new Date(q.bestaetigt_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }))}</td>
     <td>${esc(q.notiz || "")}</td></tr>`).join("")}</tbody></table>${!lehrerF && gefiltert.length > 15 && fristenParam("alle") !== "1" ? `<p class="leise klein"><a href="${pLinkFc({ alle: "1" })}">Alle ${gefiltert.length} Quittungen anzeigen</a></p>` : ""}</div>`;
 }
+// Nach einem Klick in der Stundenliste neu zeichnen, ohne dass die (am Handy waagrecht gewischte) Tabelle nach links springt
+function fcNeuZeichnen() {
+  const vorher = [...document.querySelectorAll("#ansicht .tabelle")].map((t) => t.scrollLeft);
+  zeichne();
+  document.querySelectorAll("#ansicht .tabelle").forEach((t, i) => { if (vorher[i]) t.scrollLeft = vorher[i]; });
+}
 function bindeFahrchecks(ziel) {
   bindeFcFilter(ziel);
   ziel.querySelectorAll("[data-fcabgabe]").forEach((b) => b.addEventListener("click", () => fcAbgabeDialog(b.dataset.fcabgabe)));
   ziel.querySelectorAll("[data-fcstatus]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     const n = b.dataset.anzahl ? Number(b.dataset.anzahl) : null;
-    if (await fcSetzeStatus(b.dataset.id, b.dataset.fcstatus, undefined, n)) { toast(b.dataset.fcstatus === "abgegeben" ? (n ? `${n} Fahrcheck${n === 1 ? "" : "s"} als abgegeben markiert ✓` : "Als abgegeben markiert ✓") : "Als fehlend markiert"); zeichne(); } else b.disabled = false;
+    if (await fcSetzeStatus(b.dataset.id, b.dataset.fcstatus, undefined, n)) { toast(b.dataset.fcstatus === "abgegeben" ? (n ? `${n} Fahrcheck${n === 1 ? "" : "s"} als abgegeben markiert ✓` : "Als abgegeben markiert ✓") : "Als fehlend markiert"); fcNeuZeichnen(); } else b.disabled = false;
   }));
   ziel.querySelectorAll("[data-fcnach]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     // Nachgereicht vom Büro: alle gebuchten Fahrchecks sind jetzt da
     const t = S.termine.find((x) => x.id === b.dataset.fcnach), voll = t ? KR.fcGebucht(fcTermin(t)) : null;
-    if (await fcSetzeStatus(b.dataset.fcnach, "abgegeben", KR.todayISO(), voll)) { toast("Als nachgereicht eingetragen ✓"); zeichne(); } else b.disabled = false;
+    if (await fcSetzeStatus(b.dataset.fcnach, "abgegeben", KR.todayISO(), voll)) { toast("Als nachgereicht eingetragen ✓"); fcNeuZeichnen(); } else b.disabled = false;
   }));
   ziel.querySelectorAll("[data-fcbearb]").forEach((b) => b.addEventListener("click", () => fcStundeDialog(b.dataset.fcbearb)));
 }
