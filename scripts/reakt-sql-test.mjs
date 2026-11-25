@@ -53,6 +53,13 @@ await db.exec(`
 `);
 await db.exec(sql("migrations/20261123_k8_01_zahlung_sperre.sql"));
 await db.exec(sql("migrations/20261123_k9_01_preisliste.sql"));
+// W15 S3: Einstellungen von Werkstatt 11 (fahrschule_einstellungen). zm_darf wie in 20261124_zm_01 (Büro, Leitung, Super-Admin).
+await db.exec(`create or replace function public.zm_darf(fs uuid) returns boolean language sql stable security definer set search_path to 'public' as $$
+  select coalesce(exists (select 1 from public.profiles p where p.id = auth.uid() and coalesce(p.aktiv, true)) and (is_super_admin(auth.uid())
+    or (fs is not null and fs = k5_meine_fahrschule() and (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())))), false) $$;`);
+await db.exec(sql("migrations/20261125_einst_01_fahrschule_einstellungen.sql"));
+const W15S3 = sql("migrations/20261127_w15_02_fristen_einstellungen.sql");
+const RUECK_S3 = sql("rueckweg/20261127_w15_02_rueckweg.sql");
 // Zeiten der Preise selbst setzen (der Schutz-Trigger stempelt sonst „jetzt“ und verbietet Vergangenheit)
 await db.exec("alter table public.fahrschule_preise disable trigger fahrschule_preise_schutz");
 const W15 = sql("migrations/20261126_w15_01_reakt_entfaellt.sql");
@@ -180,7 +187,7 @@ await db.exec("delete from public.kalender_termine");
 
 // ---------- 6. Zufallsvergleich Server ↔ kompass-rechnen.js (Regel und Sperre) ----------
 let seed = 20261124;
-const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor(seed / 65536) % n; }; // obere Bits: die unteren wiederholen sich (bei % 2 immer abwechselnd)
 for (let runde = 0; runde < 60; runde++) {
   const zeilen = [];
   for (let i = 0, n = zufall(5); i < n; i++) {
@@ -218,6 +225,85 @@ gleich("Rückweg: wieder gesperrt wie vorher", true, await gesperrt("r1"));
 gleich("Rückweg: Standardrecht wieder da", true, (await db.query("select has_function_privilege('authenticated', 'public.schueler_reakt_gesperrt(public.schueler)', 'execute') as x")).rows[0].x);
 await db.exec(W15);
 gleich("nach erneutem Einspielen: frei", false, await gesperrt("r1"));
+
+// ---------- 8. W15 S3: Monate der Reaktivierung aus den Einstellungen (fristen.reaktivierung.monate) ----------
+const ergS3 = (q) => db.query(q.slice(q.lastIndexOf("select ("))).then((r) => r.rows[0]);
+async function einstellen(fs, wert) {
+  await db.query("delete from public.fahrschule_einstellungen where fahrschule_id = $1 and schluessel = 'fristen.reaktivierung'", [fs]);
+  if (wert !== undefined) await db.query("insert into public.fahrschule_einstellungen (fahrschule_id, schluessel, wert) values ($1, 'fristen.reaktivierung', $2::jsonb)", [fs, JSON.stringify(wert)]);
+}
+async function einstellenRoh(fs, jsonText) {
+  await db.query("delete from public.fahrschule_einstellungen where fahrschule_id = $1 and schluessel = 'fristen.reaktivierung'", [fs]);
+  await db.query("insert into public.fahrschule_einstellungen (fahrschule_id, schluessel, wert) values ($1, 'fristen.reaktivierung', $2::jsonb)", [fs, jsonText]);
+}
+const monateServer = async (fs) => (await db.query("select public.reakt_monate($1::uuid) as m", [fs])).rows[0].m;
+// Wie App und Büro die Zeile lesen (supabase-js liefert jsonb als JavaScript-Wert)
+const monateClient = async (fs) => {
+  const zeilen = (await db.query("select schluessel, wert from public.fahrschule_einstellungen where fahrschule_id = $1", [fs])).rows;
+  return KR.normFristen(KR.fristenAusZeilen(zeilen)).reaktivierung.monate;
+};
+await alsNutzer(BUERO);
+await preiseSetzen(FS, [{ betrag_cent: 24000, gueltig_ab: monate(-40) }]);
+await einstellen(FS, { monate: 24, bald_tage: 30 });
+await schuelerSetzen([{ id: "e1", vertrag_am: monate(-13) }, { id: "e2", vertrag_am: monate(-25) }]);
+gleich("S3 vorher: Einstellung 24 wirkt noch nicht (fest 12)", 12, await monateServer(FS));
+gleich("S3 vorher: nach 13 Monaten gesperrt", true, await gesperrt("e1"));
+await db.exec(W15S3);
+const e3 = await ergS3(W15S3);
+gleich("S3 Ergebnis-Abfrage", { monate_aus_einstellungen: true, ohne_eintrag: 12, monate_direkt: false }, e3);
+await db.exec(W15S3); // zweimal einspielbar
+gleich("S3: Monate aus der Einstellung", 24, await monateServer(FS));
+gleich("S3: nach 13 von 24 Monaten nicht gesperrt", false, await gesperrt("e1"));
+gleich("S3: nach 25 von 24 Monaten gesperrt", true, await gesperrt("e2"));
+gleich("S3: reakt_regel nennt die Monate", { monate: 24, frei: [] }, await regelVomServer(FS));
+gleich("S3: andere Fahrschule bleibt bei 12", 12, await monateServer(FS2));
+for (const s of [{ id: "e1", vertrag_am: monate(-13) }, { id: "e2", vertrag_am: monate(-25) }]) {
+  gleich("S3: Sperre Server = App/Büro (" + s.id + ")", await gesperrt(s.id), KR.reaktInfo(Object.assign({ reakt_status: "bezahlt" }, s), heute, await regelVomServer(FS)).gesperrt);
+}
+gleich("S3: Zahlung schiebt um die eingestellten Monate", KR.addMonthsISO(KR.addMonthsISO(monate(-25), 24), 24),
+  KR.reaktNachZahlung({ reakt_status: "bezahlt", vertrag_am: monate(-25) }, await regelVomServer(FS)));
+// Ungültige Werte = Standard 12, auf dem Server UND im Client
+const WERTE = [["ohne Eintrag", undefined, 12], ["18", { monate: 18 }, 18], ["Text \"18\"", { monate: "18" }, 18], ["1 (Grenze)", { monate: 1 }, 1], ["60 (Grenze)", { monate: 60 }, 60],
+  ["0", { monate: 0 }, 12], ["61", { monate: 61 }, 12], ["-3", { monate: -3 }, 12], ["Text abc", { monate: "abc" }, 12], ["12.5", { monate: 12.5 }, 12],
+  ["null", { monate: null }, 12], ["true", { monate: true }, 12], ["Liste", { monate: [18] }, 12], ["Objekt", { monate: { a: 1 } }, 12], ["ohne Feld", { bald_tage: 40 }, 12],
+  ["Leerzeichen", { monate: " 18" }, 12], ["1234567", { monate: 1234567 }, 12]];
+for (const [name, wert, erwartet] of WERTE) {
+  await einstellen(FS, wert);
+  gleich("S3 Wert " + name + ": Server", erwartet, await monateServer(FS));
+  gleich("S3 Wert " + name + ": Client = Server", await monateServer(FS), await monateClient(FS));
+}
+await einstellenRoh(FS, '{"monate": 18.0}'); // jsonb behält „18.0“: der Server nimmt den Standard; supabase-js liefert 18 (nur Handarbeit in der Datenbank)
+gleich("S3 Wert 18.0 (nur von Hand möglich): Server nimmt Standard", 12, await monateServer(FS));
+// Als echte Rolle: Büro stellt ein (RLS von W11), Fahrlehrer einer anderen Fahrschule nicht; Hilfsfunktion nicht direkt
+await einstellen(FS, undefined);
+await db.exec("set role authenticated");
+gleich("S3 Rolle: Büro speichert die Monate", "ok", await versuch("insert into public.fahrschule_einstellungen (fahrschule_id, schluessel, wert) values ($1, 'fristen.reaktivierung', '{\"monate\": 18}'::jsonb)", [FS]));
+gleich("S3 Rolle: reakt_regel folgt sofort", { monate: 18, frei: [] }, (await db.query("select public.reakt_regel($1::uuid) as r", [FS])).rows[0].r);
+gleich("S3 Rolle: reakt_monate direkt abgelehnt", true, /permission denied/.test(await versuch("select public.reakt_monate($1::uuid)", [FS])));
+gleich("S3 Rolle: fahrschule_einstellung_zahl direkt abgelehnt", true, /permission denied/.test(await versuch("select public.fahrschule_einstellung_zahl($1::uuid, 'fristen.reaktivierung', 'monate', 12, 1, 60)", [FS])));
+await db.exec("reset role");
+await alsNutzer(FREMD);
+await db.exec("set role authenticated");
+gleich("S3 Rolle: fremder Fahrlehrer kann nicht anlegen", true, /row-level security/.test(await versuch("insert into public.fahrschule_einstellungen (fahrschule_id, schluessel, wert) values ($1, 'fristen.theorie', '{\"monate\": 60}'::jsonb)", [FS])));
+await versuch("update public.fahrschule_einstellungen set wert = '{\"monate\": 60}'::jsonb where fahrschule_id = $1", [FS]); // RLS: ändert still nichts
+await db.exec("reset role");
+gleich("S3 Rolle: fremder Fahrlehrer ändert nichts", 18, await monateServer(FS));
+await alsNutzer(BUERO);
+// Zufall: beliebige Werte, Server = Client
+for (let runde = 0; runde < 40; runde++) {
+  const w = [zufall(70) - 5, String(zufall(70)), null, "x" + zufall(9), zufall(2) ? 12 : 60][zufall(5)];
+  await einstellen(FS, zufall(6) ? { monate: w, bald_tage: zufall(400) } : undefined);
+  gleich("S3 Zufall " + runde + ": Monate Server = Client", await monateServer(FS), await monateClient(FS));
+}
+// Rückweg: wieder fest 12, Einstellungen bleiben liegen; danach wieder einspielbar
+await einstellen(FS, { monate: 24 });
+await db.exec(RUECK_S3);
+gleich("S3 Rückweg: Ergebnis-Abfrage", { monate_fest: true, monate_direkt: false }, await ergS3(RUECK_S3));
+gleich("S3 Rückweg: wieder 12", 12, await monateServer(FS));
+gleich("S3 Rückweg: Einstellung bleibt gespeichert", 1, Number((await db.query("select count(*) as n from public.fahrschule_einstellungen where fahrschule_id = $1", [FS])).rows[0].n));
+gleich("S3 Rückweg: nach 13 Monaten wieder gesperrt", true, await gesperrt("e1"));
+await db.exec(W15S3);
+gleich("S3 nach erneutem Einspielen: wieder 24", 24, await monateServer(FS));
 
 console.log(fehler ? `Reaktivierung-SQL-Test: ${fehler} von ${faelle} Fällen weichen ab.` : `Reaktivierung-SQL-Test: alle ${faelle} Fälle gleich.`);
 process.exit(fehler ? 1 : 0);

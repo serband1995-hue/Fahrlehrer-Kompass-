@@ -54,6 +54,67 @@
      Büro und App setzen die Regel einmal mit setzeReaktRegel; ein drittes Argument „regel“ geht vor (Tests, Attrappe). */
   const REAKT_MONATE_STANDARD = 12;
   const ISO_TAG = /^\d{4}-\d{2}-\d{2}$/;
+  /* W15 S3 (🗣 Serband 24.11.2026: „Alles ist einstellbar … unterteilt in Themen“): Dauer und Warnzeiten der Fristen je
+     Fahrschule aus den Einstellungen (Tabelle fahrschule_einstellungen, Schlüssel „fristen.<art>“, Thema „Fristen“ im Büro).
+     Büro und App setzen sie einmal mit setzeFristen({ theorie: { monate, bald_tage, vorwarn_tage }, … }); fehlt etwas oder
+     ist es ungültig, gilt der Standard (= die Zahlen von vorher). Ein Argument „fr“ geht vor (Tests).
+     bald_tage = gelb („bald“), vorwarn_tage = blau („demnächst“, nur wo es zwei Stufen gibt).
+     Die MONATE der Reaktivierung kommen NICHT von hier, sondern aus reakt_regel (danach sperrt der Server;
+     Migration 20261127_w15_02). fristen.reaktivierung.monate steht hier nur für die Anzeige im Büro.
+     Gesetzlich fest (Entscheidung 4a), nur die Warnzeit ist einstellbar: Praxisprüfung 12 Monate nach der
+     Theorieprüfung (§ 18 FeV, gilt auch für den Antrag nach bestandener Theorie), Umschreiber 6 Monate (§ 29 FeV). */
+  const FRISTEN_STANDARD = Object.freeze({
+    reaktivierung: Object.freeze({ monate: 12, bald_tage: 30, vorwarn_tage: 60 }),
+    theorie: Object.freeze({ monate: 12, bald_tage: 30, vorwarn_tage: 60 }),
+    antrag: Object.freeze({ monate: 12, bald_tage: 60 }),
+    fc_zettel: Object.freeze({ monate: 12, bald_tage: 60 }),
+    behoerde: Object.freeze({ bald_tage: 30, vorwarn_tage: 60 }),
+    umschreiber: Object.freeze({ bald_tage: 30 }),
+    fahrlehrer: Object.freeze({ bald_tage: 90 }),
+  });
+  // Grenzen wie der Server (fahrschule_einstellung_zahl: ganze Zahl, sonst oder außerhalb = Standard)
+  const FRISTEN_GRENZEN = Object.freeze({ monate: [1, 60], bald_tage: [1, 365], vorwarn_tage: [1, 365] });
+  const PRAXIS_NACH_THEORIE_MONATE = 12; // § 18 FeV, fest
+  function fristZahl(v, standard, min, max) {
+    if (typeof v !== "number" && typeof v !== "string") return standard;
+    const t = String(v);
+    if (!/^[0-9]{1,6}$/.test(t)) return standard;
+    const n = Number(t);
+    return n >= min && n <= max ? n : standard;
+  }
+  function normFristen(w) {
+    const out = {};
+    for (const art of Object.keys(FRISTEN_STANDARD)) {
+      const std = FRISTEN_STANDARD[art], ein = w && typeof w === "object" && w[art] && typeof w[art] === "object" ? w[art] : {}, f = {};
+      for (const feld of Object.keys(std)) f[feld] = fristZahl(ein[feld], std[feld], FRISTEN_GRENZEN[feld][0], FRISTEN_GRENZEN[feld][1]);
+      if (f.vorwarn_tage !== undefined && f.vorwarn_tage < f.bald_tage) f.vorwarn_tage = f.bald_tage; // blau nie vor gelb
+      out[art] = Object.freeze(f);
+    }
+    return Object.freeze(out);
+  }
+  // Zeilen der Tabelle fahrschule_einstellungen ({ schluessel: "fristen.theorie", wert: {…} }) → Eingabe für setzeFristen
+  function fristenAusZeilen(zeilen) {
+    const w = {};
+    for (const z of zeilen || []) {
+      const m = z && /^fristen\.([a-z_]+)$/.exec(String(z.schluessel || ""));
+      if (m && FRISTEN_STANDARD[m[1]] && z.wert && typeof z.wert === "object") w[m[1]] = z.wert;
+    }
+    return w;
+  }
+  // Aus den Einstellungen von Werkstatt 11 (KE.wert(schluessel, standard)); ohne KE = null (Standard). KE als Argument, damit
+  // diese Datei ohne KE läuft (Tests).
+  function fristenAusKE(ke) {
+    if (!ke || typeof ke.wert !== "function") return null;
+    const w = {};
+    for (const art of Object.keys(FRISTEN_STANDARD)) { try { w[art] = ke.wert("fristen." + art, Object.assign({}, FRISTEN_STANDARD[art])); } catch (e) { /* Standard */ } }
+    return w;
+  }
+  let fristenAktiv = normFristen(null);
+  function setzeFristen(w) { fristenAktiv = normFristen(w); return fristenAktiv; }
+  function holeFristen() { return fristenAktiv; }
+  function fristenVon(fr) { return fr === undefined ? fristenAktiv : normFristen(fr); }
+  // Stufe nach Warnzeiten: bald (≤ bald_tage) | demnaechst (≤ vorwarn_tage, nur mit Vorwarnung) | ok
+  function warnStufe(tage, f) { return tage <= f.bald_tage ? "bald" : (f.vorwarn_tage !== undefined && tage <= f.vorwarn_tage ? "demnaechst" : "ok"); }
   function normReaktRegel(r) {
     if (!r || typeof r !== "object") return null;
     const m = Number(r.monate);
@@ -101,30 +162,28 @@
     return reaktFreiAm(regel, heute || todayISO()) || !!(s && s.vertrag_am && reaktFreiAm(regel, s.vertrag_am));
   }
   // stufe: befreit | entfaellt | ohne_datum | gesperrt | pruefen_faellig | bald (≤30 Tage) | demnaechst (≤60) | ok
-  function reaktInfo(s, heute, regel) {
+  // (Warnzeiten aus den Einstellungen, fristen.reaktivierung)
+  function reaktInfo(s, heute, regel, fr) {
     heute = heute || todayISO();
     if (s && s.reakt_status === "befreit") return { stufe: "befreit", faellig: null, tage: null, gesperrt: false };
     if (reaktEntfaellt(s, heute, regel)) return { stufe: "entfaellt", faellig: null, tage: null, gesperrt: false };
     const faellig = reaktFaellig(s, regel);
     if (!faellig) return { stufe: "ohne_datum", faellig: null, tage: null, gesperrt: false };
     const tage = daysBetweenISO(heute, faellig);
-    let stufe;
-    if (tage < 0) stufe = s.reakt_status === "pruefen" ? "pruefen_faellig" : "gesperrt";
-    else if (tage <= 30) stufe = "bald";
-    else if (tage <= 60) stufe = "demnaechst";
-    else stufe = "ok";
+    const stufe = tage < 0 ? (s.reakt_status === "pruefen" ? "pruefen_faellig" : "gesperrt") : warnStufe(tage, fristenVon(fr).reaktivierung);
     return { stufe, faellig, tage, gesperrt: stufe === "gesperrt" };
   }
-  /* Theorie: gilt 12 Monate nach Abschluss des Unterrichts. Wer in dieser Zeit die
-     Theorieprüfung besteht, hat ab dem Prüfungstag 12 Monate für die Praxisprüfung. */
-  function theorieInfo(s, heute) {
+  /* Theorie: gilt 12 Monate nach Abschluss des Unterrichts (Regel der Fahrschule, einstellbar: fristen.theorie.monate).
+     Wer in dieser Zeit die Theorieprüfung besteht, hat ab dem Prüfungstag 12 Monate für die Praxisprüfung (§ 18 FeV, fest). */
+  function theorieInfo(s, heute, fr) {
     heute = heute || todayISO();
+    const f = fristenVon(fr).theorie;
     let ablauf = null, grund = null;
-    if (s && s.theorie_bestanden_am) { ablauf = addMonthsISO(s.theorie_bestanden_am, 12); grund = "praxis"; }
-    else if (s && s.theorie_abgeschlossen_am) { ablauf = addMonthsISO(s.theorie_abgeschlossen_am, 12); grund = "unterricht"; }
+    if (s && s.theorie_bestanden_am) { ablauf = addMonthsISO(s.theorie_bestanden_am, PRAXIS_NACH_THEORIE_MONATE); grund = "praxis"; }
+    else if (s && s.theorie_abgeschlossen_am) { ablauf = addMonthsISO(s.theorie_abgeschlossen_am, f.monate); grund = "unterricht"; }
     if (!ablauf) return { stufe: "ohne_datum", ablauf: null, tage: null, grund: null };
     const tage = daysBetweenISO(heute, ablauf);
-    const stufe = tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : tage <= 60 ? "demnaechst" : "ok";
+    const stufe = tage < 0 ? "abgelaufen" : warnStufe(tage, f);
     return { stufe, ablauf, tage, grund };
   }
 
@@ -207,27 +266,29 @@
   }
   // Volle Sonderfahrt-Einheiten in einer Summe von Minuten (Büro: Ausbildungsnachweis, Zähler ohne App). Abgerundet wie bisher.
   function sonderEinheitenAusMinuten(min) { return einheitenNachweis(min, sonderMinuten()); }
-  // Führerscheinantrag bei der Führerscheinstelle: 12 Monate ab Antragsdatum; nach bestandener Theorieprüfung gilt er
-  // 12 Monate ab Prüfungsdatum (wie die Theorie; Kristina, 09.10.2026). stufe: ohne_datum | abgelaufen | bald (≤60 Tage) | ok
-  function antragInfo(s, heute) {
+  // Führerscheinantrag bei der Führerscheinstelle: 12 Monate ab Antragsdatum (einstellbar: fristen.antrag.monate); nach
+  // bestandener Theorieprüfung gilt er 12 Monate ab Prüfungsdatum (wie die Theorie, § 18 FeV, fest; Kristina, 09.10.2026).
+  // stufe: ohne_datum | abgelaufen | bald (≤60 Tage, fristen.antrag.bald_tage) | ok
+  function antragInfo(s, heute, fr) {
     heute = heute || todayISO();
     if (!s || !s.antrag_am) return { stufe: "ohne_datum", ablauf: null, tage: null, grund: null };
-    let ablauf = addMonthsISO(s.antrag_am, 12), grund = "antrag";
+    const f = fristenVon(fr).antrag;
+    let ablauf = addMonthsISO(s.antrag_am, f.monate), grund = "antrag";
     if (s.theorie_bestanden_am) {
-      const v = addMonthsISO(s.theorie_bestanden_am, 12);
+      const v = addMonthsISO(s.theorie_bestanden_am, PRAXIS_NACH_THEORIE_MONATE);
       if (v > ablauf) { ablauf = v; grund = "theorie"; }
     }
     const tage = daysBetweenISO(heute, ablauf);
-    return { stufe: tage < 0 ? "abgelaufen" : (tage <= 60 ? "bald" : "ok"), ablauf, tage, grund };
+    return { stufe: tage < 0 ? "abgelaufen" : warnStufe(tage, f), ablauf, tage, grund };
   }
   // Theorie-Frist der Behörde (schueler.theorie_frist_bis, 🗣 Serband 14.10.2026): bis dahin muss die Theorieprüfung bestanden sein.
-  // stufe: ohne_datum | erledigt (Theorie bestanden) | abgelaufen | bald (≤30 Tage) | demnaechst (≤60 Tage) | ok
-  function theorieFristInfo(s, heute) {
+  // stufe: ohne_datum | erledigt (Theorie bestanden) | abgelaufen | bald (≤30 Tage) | demnaechst (≤60 Tage) | ok (fristen.behoerde)
+  function theorieFristInfo(s, heute, fr) {
     heute = heute || todayISO();
     if (s && s.theorie_bestanden_am) return { stufe: "erledigt", ablauf: s.theorie_frist_bis || null, tage: null };
     if (!s || !s.theorie_frist_bis) return { stufe: "ohne_datum", ablauf: null, tage: null };
     const ablauf = String(s.theorie_frist_bis).slice(0, 10), tage = daysBetweenISO(heute, ablauf);
-    return { stufe: tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : tage <= 60 ? "demnaechst" : "ok", ablauf, tage };
+    return { stufe: tage < 0 ? "abgelaufen" : warnStufe(tage, fristenVon(fr).behoerde), ablauf, tage };
   }
   // Umschreiber mit Führerschein aus einem Drittstaat (nicht EU/EWR): Er darf in Deutschland nur 6 Monate ab Wohnsitz
   // mit dem ausländischen Führerschein fahren (§ 29 Abs. 1 FeV). EU/EWR-Führerscheine gelten weiter.
@@ -252,8 +313,8 @@
     "Japan", "Südkorea", "Australien", "Neuseeland", "Südafrika", "Bangladesch", "Thailand", "Kolumbien", "Mexiko", "Argentinien", "Chile", "Peru"];
   function istDrittstaat(land) { const l = landKey(land); return !!l && DRITTSTAATEN.some((x) => landKey(x) === l); }
   // stufe: kein (kein Umschreiber oder ohne Führerschein-Angabe) | eu (EU/EWR, keine Frist) | land_pruefen (Land unbekannt/Tippfehler)
-  //        | ohne_datum (Drittstaat, Wohnsitz fehlt) | abgelaufen | bald (≤30 Tage) | ok
-  function umschreibInfo(s, heute) {
+  //        | ohne_datum (Drittstaat, Wohnsitz fehlt) | abgelaufen | bald (≤30 Tage, fristen.umschreiber) | ok
+  function umschreibInfo(s, heute, fr) {
     heute = heute || todayISO();
     const fs = (s && Array.isArray(s.auslands_fs)) ? s.auslands_fs.filter((f) => f && f.land) : [];
     const umschreiber = s && (s.ausbildungsart === "umschreibung" || !!(s.ausbildung && s.ausbildung.umschreiber)); // auch nur in der App markiert
@@ -262,7 +323,7 @@
     if (!fs.some((f) => istDrittstaat(f.land))) return { stufe: "land_pruefen", bis: null, tage: null, drittstaat: false };
     if (!s.wohnsitz_de_seit) return { stufe: "ohne_datum", bis: null, tage: null, drittstaat: true };
     const bis = addMonthsISO(String(s.wohnsitz_de_seit).slice(0, 10), UMSCHREIB_MONATE), tage = daysBetweenISO(heute, bis);
-    return { stufe: tage < 0 ? "abgelaufen" : tage <= 30 ? "bald" : "ok", bis, tage, drittstaat: true };
+    return { stufe: tage < 0 ? "abgelaufen" : warnStufe(tage, fristenVon(fr).umschreiber), bis, tage, drittstaat: true };
   }
   /* Theorieunterricht: Soll nach FahrschAusbO (🗣 Serband 14.10.2026, Antwort 1a „automatisch nach Gesetz“).
      § 4 Abs. 3: Grundstoff 12 Doppelstunden, mit vorhandener Fahrerlaubnis 6. Anlage 2.8 (Zusatzstoff): B 2, C1 6,
@@ -323,24 +384,26 @@
      Fristen: Führerschein C/CE und D (§ 23 FeV, 5 Jahre), Schlüsselzahl 95 (§ 5 BKrFQG), Fortbildung (FahrlG § 53). */
   const FAHRLEHRERLAUBNIS = { BE: ["B", "BE"], A: ["A"], CE: ["C1", "C1E", "C", "CE"], DE: ["D1", "D1E", "D", "DE"] };
   function ausbildungsKlassen(fl) { return [...new Set((fl || []).flatMap((k) => FAHRLEHRERLAUBNIS[k] || []))]; }
-  // stufe je Frist: abgelaufen | bald (≤90 Tage) | ok
-  function fahrlehrerFristen(p, heute) {
+  // stufe je Frist: abgelaufen | bald (≤90 Tage, fristen.fahrlehrer) | ok
+  function fahrlehrerFristen(p, heute, fr) {
     heute = heute || todayISO();
+    const f = fristenVon(fr).fahrlehrer;
     const liste = [["fuehrerschein_c_bis", "Führerschein C/CE"], ["fuehrerschein_d_bis", "Führerschein D"], ["sz95_bis", "Schlüsselzahl 95"], ["fortbildung_bis", "Fortbildung"]];
     return liste.filter(([k]) => p && p[k]).map(([k, titel]) => {
       const bis = String(p[k]).slice(0, 10), tage = daysBetweenISO(heute, bis);
-      return { key: k, titel, bis, tage, stufe: tage < 0 ? "abgelaufen" : tage <= 90 ? "bald" : "ok" };
+      return { key: k, titel, bis, tage, stufe: tage < 0 ? "abgelaufen" : warnStufe(tage, f) };
     });
   }
-  // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026)
-  function fcGueltigBis(datum) { return datum ? addMonthsISO(datum, 12) : null; }
-  // stufe: verfallen | bald (≤60 Tage) | ok
-  function fcGueltigkeit(datum, heute) {
+  // Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) verfallen 12 Monate nach dem Datum der Stunde (Kristina, 09.10.2026;
+  // einstellbar: fristen.fc_zettel.monate)
+  function fcGueltigBis(datum, fr) { return datum ? addMonthsISO(datum, fristenVon(fr).fc_zettel.monate) : null; }
+  // stufe: verfallen | bald (≤60 Tage, fristen.fc_zettel.bald_tage) | ok
+  function fcGueltigkeit(datum, heute, fr) {
     heute = heute || todayISO();
-    const bis = fcGueltigBis(datum);
+    const f = fristenVon(fr).fc_zettel, bis = fcGueltigBis(datum, fr);
     if (!bis) return { stufe: "ok", bis: null, tage: null };
     const tage = daysBetweenISO(heute, bis);
-    return { stufe: tage < 0 ? "verfallen" : (tage <= 60 ? "bald" : "ok"), bis, tage };
+    return { stufe: tage < 0 ? "verfallen" : warnStufe(tage, f), bis, tage };
   }
   // Halbmonat: 1.–15. und 16.–Monatsende (zwei Abgaben im Monat)
   function fcZeitraum(iso) {
@@ -520,7 +583,8 @@
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
   const api = { paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
-    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
+    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);

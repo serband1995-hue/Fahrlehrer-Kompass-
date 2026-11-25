@@ -319,7 +319,10 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     // W15: wie reakt_regel in der Datenbank (gleiche Rechnung, scripts/reakt-sql-test.mjs vergleicht beide). F.reaktRegelFehlt = true: alte Datenbank
     reakt_regel: ({ p_fs }) => {
       if (F.reaktRegelFehlt) throw new Error("rpc fehlt: reakt_regel");
-      return window.KR.reaktRegelAusPreisen(tabelle("fahrschule_preise").filter((x) => x.fahrschule_id === p_fs), F.reaktMonate || 12);
+      // W15 S3: Monate wie reakt_monate in der Datenbank (20261127_w15_02): Einstellung fristen.reaktivierung.monate, 1–60, sonst 12
+      const ein = (F.tabellen.fahrschule_einstellungen || []).find((x) => x.fahrschule_id === p_fs && x.schluessel === "fristen.reaktivierung");
+      const monate = ein && window.KR.fristZahl ? window.KR.fristZahl(ein.wert && ein.wert.monate, 12, 1, 60) : (F.reaktMonate || 12);
+      return window.KR.reaktRegelAusPreisen(tabelle("fahrschule_preise").filter((x) => x.fahrschule_id === p_fs), monate);
     },
     buero_pin_anmelden: ({ p_person, p_pin, p_erste }) => {
       const p = personen().find((x) => x.id === p_person && x.aktiv !== false);

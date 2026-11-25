@@ -132,6 +132,30 @@ try {
     pruefe("E6d keine Konsolenfehler", konsole.length === 0, konsole.join(" | "));
     await ctx.close();
   }
+  // E8 W15 S3 (Fable-Hinweis): „Ohne Vertragsdatum“ zeigt auch Schüler, bei denen die Reaktivierung entfällt, mit Grund
+  {
+    const { page, ctx, konsole } = await oeffne({ hash: "#fristen?ansicht=ohne", vorbereiten: preise([[tag(-900), 24000], [tag(-1), null]]) });
+    const st = await page.evaluate(() => {
+      const ohne = S.schueler.filter((s) => !s.inaktiv_seit && !s.vertrag_am && !s.reakt_bezahlt_bis && s.reakt_status !== "befreit");
+      return { soll: ohne.length, kachel: zaehleFristen().ohneDatum, zeilen: document.querySelectorAll("#ansicht .tabelle tbody tr").length,
+        grund: document.querySelectorAll("[data-ohnedatum]").length, hinweis: !!document.querySelector("[data-ohnehinweis]") };
+    });
+    pruefe("E8a entfällt heute: „Ohne Vertragsdatum“ zählt trotzdem alle ohne Datum (Kachel = Liste)", st.soll > 0 && st.kachel === st.soll && st.zeilen === st.soll, JSON.stringify(st));
+    pruefe("E8b jede dieser Zeilen sagt „Vertragsdatum fehlt“, dazu der Hinweis unter der Liste", st.grund === st.soll && st.hinweis, JSON.stringify(st));
+    pruefe("E8c keine JS-Fehler", konsole.length === 0, konsole.join(" | "));
+    await ctx.close();
+  }
+  // E9 W15 S3: Hinweis im Reiter „Antrag & Frist“ nennt die eingestellte Dauer (gesetzliche 12 Monate nach der Theorie bleiben)
+  {
+    const { page, ctx, konsole } = await oeffne({ hash: "#fristen?ansicht=antrag" });
+    const text = () => page.evaluate(() => document.getElementById("ansicht").innerText);
+    pruefe("E9a Standard: „gilt 12 Monate“", /Führerscheinstelle gilt 12 Monate\. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum \(§ 18 FeV\)/.test(await text()));
+    await page.evaluate(() => { KR.setzeFristen({ antrag: { monate: 18 } }); zeichne(); });
+    await page.waitForTimeout(150);
+    pruefe("E9b eingestellt 18: „gilt 18 Monate“, nach der Theorie weiter 12", /Führerscheinstelle gilt 18 Monate\. Nach bestandener Theorieprüfung gilt er 12 Monate/.test(await text()));
+    pruefe("E9c keine JS-Fehler", konsole.length === 0, konsole.join(" | "));
+    await ctx.close();
+  }
   // E7 Handy-Breite: Fristen-Seite mit „entfällt“ ohne Überlauf
   {
     const { page, ctx } = await oeffne({ breite: 360, vorbereiten: preise([[tag(-900), 24000], [tag(-1), null]]) });
