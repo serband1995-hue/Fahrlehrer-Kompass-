@@ -19,6 +19,10 @@ if (!KR.setzeReaktRegel) { KR.setzeReaktRegel = () => null; KR.holeReaktRegel = 
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
+// W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
+const KR_OHNE_HAKEN = !KR.fcFuersBuero;
+if (!KR.fcFuersBuero) KR.fcFuersBuero = KR.fcErhalten;
+if (!KR.paketHinweise) KR.paketHinweise = () => [];
 if (!KR.theorieSoll) { KR.theorieSoll = () => ({ pflicht: false, grund: "Seite bitte neu laden", teile: [] }); KR.theorieStand = (soll) => ({ pflicht: false, grund: soll.grund, teile: [], ist: 0, soll: 0, fertig: false }); }
 
 const ARTEN = {
@@ -3186,9 +3190,10 @@ function renderFcStunden() {
   }
   const sicht = f.alle.slice(0, FC_MAX_ZEILEN);
   const nVerfallen = f.alle.filter((x) => x.g.stufe === "verfallen").length, nBald = f.alle.filter((x) => x.g.stufe === "bald").length;
-  const zeilen = sicht.map(({ t, gebucht, erwartet, typ, buero, g }) => {
+  const zeilen = sicht.map(({ t, ft, gebucht, erwartet, typ, buero, g }) => {
     const [tf, tn] = FC_TYP[typ], [bf, bn] = FC_BUERO[buero];
-    const knoepfe = erwartet ? [
+    // Knöpfe, sobald das Büro Fahrchecks bekommen soll, auch für nachgereichte: Am Haken hängt das Paket (🗣 Serband 24.11.2026)
+    const knoepfe = KR.fcFuersBuero(ft) ? [
       buero !== "abgegeben" ? `<button class="knopf klein haupt" data-fcstatus="abgegeben" data-id="${esc(t.id)}" type="button">Abgegeben</button>` : "",
       buero !== "fehlt" ? `<button class="knopf klein" data-fcstatus="fehlt" data-id="${esc(t.id)}" type="button">Fehlt</button>` : "",
       buero === "fehlt" ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
@@ -3198,9 +3203,9 @@ function renderFcStunden() {
       <td><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b><div class="unter nur-unter">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)}</div></td>
       <td class="nur-sehr-breit">${esc(lehrerName(t.fahrlehrer_id))}</td>
       <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
-      <td class="zahlspalte"><b>${erwartet}</b><span class="leise"> von ${gebucht}</span></td>
+      <td class="zahlspalte"><b>${KR.fcFuersBuero(ft)}</b><span class="leise"> von ${gebucht}</span></td>
       <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
-      <td>${erwartet ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
+      <td>${KR.fcFuersBuero(ft) ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
       <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
     </tr>`;
   }).join("");
@@ -3339,8 +3344,9 @@ function fcAbgabeDialog(lehrerId) {
     const res = await supa.from("fc_abgaben").insert({ fahrschule_id: S.fsId, fahrlehrer_id: lehrerId, zeitraum_von: von, zeitraum_bis: bis, soll: r.soll, ist, fehlend, notiz: (form.notiz.value || "").trim() || null, bestaetigt_von: S.user.id }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     S.fcAbgaben.unshift(res.data[0]);
-    // Büro-Status je Termin setzen: angekreuzt = fehlt, Rest = abgegeben
-    const ids = r.posten.filter((p) => p.n && p.fc !== "nachgereicht").map((p) => p.id);
+    // Büro-Status je Termin setzen: angekreuzt = fehlt, Rest = abgegeben. Nachgereichte im Soll (n > 0) auch: Erst mit dem Haken
+    // zählt die Stunde im Paket (🗣 Serband 24.11.2026). Dieselbe Stunde kann zweimal in der Liste stehen (gefahren und nachgereicht).
+    const ids = [...new Set(r.posten.filter((p) => p.n).map((p) => p.id))];
     const ok = ids.filter((id) => !fehlend.includes(id));
     // Bewusst ohne aktualisiert_am: sonst hält die Fahrlehrer-App die Zeile für neuer und überschreibt
     // ihre eigenen, vielleicht noch nicht hochgeladenen Fahrcheck-Vermerke.

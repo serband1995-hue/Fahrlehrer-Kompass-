@@ -4,11 +4,16 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.25.1", datum: "2026-11-25", kurz: "Büro: links jetzt 8 feste Punkte, alles auf einen Blick.",
+  { version: "2026.11.25.2", datum: "2026-11-25", kurz: "Büro: links jetzt 8 feste Punkte, alles auf einen Blick.",
     punkte: ["Links stehen jetzt immer dieselben 8 Punkte: Heute, Kalender, Schüler, Prüfungen, Fristen, Zahlungen, Fahrcheck, Statistik. Nichts mehr auf- und zuklappen.",
              "Im Kalender gibt es oben den Knopf „+ Termin“ und „Wer hat Platz?“.",
              "Unter „Zahlungen“ stehen Preise, Pakete und Verkäufe in einer Reihe.",
              "Fenster und Seiten öffnen und schließen sich jetzt weich."] },
+  { version: "2026.11.25.1", datum: "2026-11-25", kurz: "Paket: Stunden zählen erst mit dem Haken vom Büro.",
+    punkte: ["Im Paket zählt eine Fahrstunde oder Sonderfahrt erst, wenn das Büro abgehakt hat, dass die Fahrchecks da sind. Je Fahrcheck (45 Minuten) zählt eins.",
+             "Fehlt der Haken noch, steht unter dem Paket, wie viele Termine darauf warten. Ausgefallene Termine zählen nie.",
+             "Büro: Auch nachgereichte Fahrchecks lassen sich jetzt abhaken und zählen dann voll.",
+             "Fahrlehrer sehen in der Akte nur ihre eigenen Fahrten. Den ganzen Stand hat das Büro."] },
   { version: "2026.11.24.16", datum: "2026-11-25", kurz: "Reaktivierung „entfällt“ sperrt niemanden mehr.",
     punkte: ["Steht die Reaktivierung in der Preisliste auf „entfällt“ oder 0 €, wird niemand mehr deswegen gesperrt. Das gilt auch, wenn sie am Tag des Vertrags entfiel.",
              "Büro, App und Server rechnen dabei gleich. In der Liste steht dann „entfällt“.",
