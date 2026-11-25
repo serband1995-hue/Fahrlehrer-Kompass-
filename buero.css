@@ -1084,7 +1084,9 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 /* W16 Teil 3: Glocke (buero-luecken.js) */
 .kopf-glocke{position:relative;margin-left:auto;flex:0 0 auto;}
 /* Glocke neben dem Logo: Name und Fahrschule bleiben einzeilig (sonst wird die Leiste höher) */
-.marke{gap:10px;} .marke>div{min-width:0;} .marke-name{font-size:18px;} .marke-name,.marke-schule{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.marke{gap:8px;} .marke>div{min-width:0;} .marke-name{font-size:17px;} .marke-name,.marke-schule{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media screen and (min-width:901px) and (max-width:1279px){.marke{padding-left:0;padding-right:0;} .marke img{width:34px;height:34px;} .marke-name{font-size:15px;} .marke-schule{font-size:13px;}} /* Fable: mit echter Schrift gemessen */
+.lu-gl-liste{grid-template-columns:minmax(0,1fr);} .lu-gl-text{overflow-wrap:anywhere;}
 /* Glocke immer nur als Symbol (der Kopf hat am PC sonst keinen Platz für eine Zeile), Zahl als Punkt oben rechts */
 .kopf-glocke .ik-text{display:none;} .kopf-glocke .ik-sym{display:block;}
 .knopf.klein.kopf-glocke{min-width:44px;min-height:44px;padding:0;}

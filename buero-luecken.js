@@ -431,7 +431,9 @@ document.addEventListener("click", (e) => {
 /* ---------- Heute › „Fristen und Warnungen“: Erste Hilfe unbezahlt, lange ohne Fahrstunde (Hauptsitzung 25.11.2026) ---------- */
 // Erste Hilfe: Termine der Art „ersthilfe“ mit kurs_bezahlt = false (wie der Schalter „Bezahlt“ der App, fsKursBezahltToggle).
 function luErsteHilfeOffen() {
-  return S.termine.filter((t) => t.art === "ersthilfe" && !t.geloescht && "kurs_bezahlt" in t && !t.kurs_bezahlt)
+  // Nur ab 60 Tagen zurück: der App-Schalter war lange nicht erreichbar, ältere Kurse stünden sonst alle als „unbezahlt“ da (Fable)
+  const ab = KR.addDaysISO(KR.todayISO(), -60);
+  return S.termine.filter((t) => t.art === "ersthilfe" && !t.geloescht && t.datum >= ab && ((t.payload || {}).status || t.status) !== "abgebrochen" && "kurs_bezahlt" in t && !t.kurs_bezahlt)
     .sort((a, b) => String(a.datum).localeCompare(String(b.datum)) || String(a.von || "").localeCompare(String(b.von || "")));
 }
 // Wie App routeFahrschuleStatistik: aktive Schüler, deren letzte Fahrstunde (auch geplante) über 28 Tage zurückliegt oder die keine haben.
