@@ -14,7 +14,8 @@
 //   (7) Paket-Baukasten (Werkstatt 13, 24.11.2026): R19 Büro, Leitung und Super-Admin legen einen Schüler mit Paket an (Verkauf beim Speichern)
 //   (8) W16 Büro und Fahrlehrer trennen (🗣 Serband 24.11.2026): Büro öffnet die App → buero.html (R20), Fahrlehrer öffnet buero.html → App (R13),
 //       Leitung und Super-Admin wählen die Startseite nur in den Einstellungen (R6–R8, R21), kein Streifen und kein Umschalter mehr (R2),
-//       keine Weiterleitungs-Schleife, Passwort-Link und Offline-Start ohne Weiterleitung (R22)
+//       keine Weiterleitungs-Schleife, Passwort-Link und Offline-Start ohne Weiterleitung (R22),
+//       Startseite Büro mit eigenem Stand: erst alles oben, nie während einer Eingabe, auch nach dem neuen Passwort (R26)
 // Die App läuft lokal mit einer Attrappe statt Datenbank (kein Netz, erfundene Namen „Muster“).
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs        (auch in der GitHub-Prüfung)
 // Gegenprobe: ROLLEN_SEITE=/tmp/alt/index.html … (alter Stand muss bei „Leitung fährt selbst“ durchfallen)
@@ -520,6 +521,63 @@ for (const R of ROLLEN) {
   await warte(page, 800);
   await pruefe("R22", "[Büro im Zwischenspeicher] Offline-Start: Rolle unbekannt → keine Weiterleitung", () => (off.ok && off.ziel === null && !aufBuero(page.url()) ? null : JSON.stringify(off) + " " + page.url()));
   await pruefe("R5", "[R22] keine JS-Fehler", () => jsFehler);
+  await ctx.close();
+}
+
+// R26 (W16, Richter): Startseite „Büro-Seite“ mit eigenem Stand (Leitung, die selbst fährt). Erst alles hochladen
+// (auch die Fragebogen-Kopie), nie wegschicken, während jemand etwas eingibt; nach dem neuen Passwort derselbe Weg.
+{
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true, timezoneId: "Europe/Berlin", locale: "de-DE" });
+  const page = await ctx.newPage();
+  const jsFehler = [];
+  page.on("pageerror", (e) => { if (!aufBuero(page.url())) jsFehler.push(e.message); });
+  page.on("dialog", (d) => d.dismiss().catch(() => {}));
+  await page.route("**/*", (r) => (r.request().url().startsWith(basis) ? r.continue() : r.abort()));
+  const FAEHRT = { rolle: "fahrschule_admin", faehrt_selbst: true };
+  // Vor dem Anmelden: Startseite merken, Weiterleitung nur aufzeichnen (die Seite bleibt zum Nachsehen), Hinweise mitschreiben.
+  // pushMs: eigener Stand kommt langsam an. bogen: Fragebogen-Kopie langsam (ms) oder ohne Netz ("netz").
+  const lauf = async ({ pushMs = 0, bogen = 0, tippen = false, pw = false } = {}) => {
+    await page.goto(basis + "index.html", { waitUntil: "load", timeout: 20000 }); await warte(page, 600);
+    await page.evaluate(() => { sessionStorage.clear(); localStorage.setItem("kompass-startseite", JSON.stringify({ "u-ich": "buero" })); });
+    const vorher = `
+      window.__toasts = []; const t0 = toast; toast = (m, ...a) => { window.__toasts.push(String(m)); return t0(m, ...a); };
+      window.__push = 0; const p0 = pushToCloud; pushToCloud = (...a) => { window.__push++; return new Promise((r) => setTimeout(() => r(p0(...a)), ${pushMs})); };
+      window.__weiter = null; KS_START.weiter = (n) => { window.__weiter = { n, push: window.__push, privat: window.__schreib.some((x) => x.tab === "schueler_privat" && x.art === "upsert") }; return true; };
+      DB.students.push({ id: "s-bogen-1", name: "Bogen Muster", bogen: { a: 1 } });
+      const s = getSupa(), f0 = s.from;
+      s.from = (tab) => { const q = f0(tab); if (tab !== "schueler_privat" || !${JSON.stringify(bogen)}) return q;
+        return new Proxy(q, { get: (t, k) => k !== "upsert" ? t[k] : (w, o) => ({ then: (ok, no) => new Promise((r) => setTimeout(r, ${typeof bogen === "number" ? bogen : 300}))
+          .then(() => ${JSON.stringify(bogen)} === "netz" ? { data: null, error: { message: "Failed to fetch" } } : q.upsert(w, o)).then(ok, no) }) }); };
+      ${pw ? "_startWeiterWartet = true;" : ""}
+      ${tippen ? `setTimeout(() => { try { closeSheet(); } catch (e) {} routeSchuelerForm(null);
+        setTimeout(() => { const f = document.getElementById("f_name"); if (f) { f.focus(); f.value = "Tipp Muster"; f.dispatchEvent(new Event("input", { bubbles: true })); } }, 150); }, 300);` : ""}`;
+    await starteApp(page, FAEHRT, { behalte: true, vorher });
+    await warte(page, 600);
+    return page.evaluate(() => ({ weiter: window.__weiter, toasts: window.__toasts, name: (document.getElementById("f_name") || {}).value || "", geaendert: _seiteGeaendert }));
+  };
+  let r = await lauf({ pushMs: 300 });
+  await pruefe("R26", "[Leitung fährt selbst, Startseite Büro] Start ohne Eingabe → eigener Stand oben, dann Büro-Seite", () => (r.weiter && r.weiter.n === "buero" && r.weiter.push >= 1 ? null : JSON.stringify(r)));
+  r = await lauf({ pushMs: 1500, tippen: true });
+  await pruefe("R26", "[Leitung fährt selbst, Startseite Büro] während des Sicherns etwas eingetippt → bleibt in der App, Eingabe da, Hinweis", () => {
+    const f = [];
+    if (r.weiter) f.push("doch weggeschickt");
+    if (r.name !== "Tipp Muster" || !r.geaendert) f.push("Eingabe weg: " + JSON.stringify(r.name));
+    if (!r.toasts.some((t) => /weil du gerade etwas eingibst/.test(t))) f.push("kein Hinweis: " + r.toasts.join(" | "));
+    return f;
+  });
+  r = await lauf({ bogen: 1500 });
+  await pruefe("R26", "[Leitung fährt selbst, Startseite Büro] Fragebogen-Kopie langsam → erst nach ihr zur Büro-Seite", () => (r.weiter && r.weiter.privat ? null : JSON.stringify(r)));
+  r = await lauf({ bogen: "netz" });
+  await pruefe("R26", "[Leitung fährt selbst, Startseite Büro] Fragebogen-Kopie ohne Netz → bleibt in der App mit Hinweis", () => (!r.weiter && r.toasts.some((t) => /Nicht alles gesichert/.test(t)) ? null : JSON.stringify(r)));
+  r = await lauf({ pw: true });
+  await pruefe("R26", "[Leitung fährt selbst, Startseite Büro] Passwort-Link offen → noch nicht weg", () => (r.weiter ? "zu früh weggeschickt" : null));
+  await page.evaluate(() => { try { closeSheet(); } catch (e) {} _openNeuesPasswortSheet(); window.__push = 0; }); await warte(page, 400);
+  await page.fill("#npwNeu", "Muster-1234"); await page.fill("#npwWdh", "Muster-1234");
+  await page.click("#npwSave");
+  await page.waitForFunction(() => window.__weiter, null, { timeout: 12000 }).catch(() => {});
+  const nachPw = await page.evaluate(() => window.__weiter);
+  await pruefe("R26", "[Leitung fährt selbst, Startseite Büro] nach dem neuen Passwort: erst gesichert, dann Büro-Seite", () => (nachPw && nachPw.n === "buero" && nachPw.push >= 1 ? null : JSON.stringify(nachPw)));
+  await pruefe("R5", "[R26] keine JS-Fehler", () => jsFehler);
   await ctx.close();
 }
 

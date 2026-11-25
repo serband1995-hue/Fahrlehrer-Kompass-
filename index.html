@@ -2841,7 +2841,8 @@ body:not(.light){--clay-text:#e8a283;}
     <button class="lo-btn" id="loBtn" onclick="doLogin()">Einloggen</button>
     <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;min-height:44px;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
-    <!-- W16: kein eigener Link zur Büro-Anmeldung mehr. Wer zum Büro gehört, kommt nach der Anmeldung von selbst auf die Büro-Seite. -->
+    <!-- W16: kein eigener Link zur Büro-Anmeldung mehr. Nach der Anmeldung gilt die Startseite (Leitung und Super-Admin wählen sie
+         in den Einstellungen); das Büro startet vorerst wie bisher in der App, bis die Büro-Seite Urlaub, Schichtplan und Backups hat. -->
   </div>
 </div>
 
@@ -4189,6 +4190,29 @@ function _zurBueroWeiter() {
   if (_startWeiterWartet || !_authUser || !window.KS_START) return false;
   return !!KS_START.weiter("buero");
 }
+// W16 (Richter): Wer gerade etwas eingibt (Formular geändert, Fenster offen, Feld aktiv), wird nie von selbst weggeschickt.
+function _eingabeOffen() {
+  try {
+    if (_seiteGeaendert && document.querySelector("#view [data-entwurf]")) return true;
+    if (typeof sheetOffen === "function" && sheetOffen()) return true;
+    const a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "search" && a.closest("#view,#sheet")) return true;
+  } catch (e) {}
+  return false;
+}
+const _BLEIBT_TEXT = "Du bleibst in der App, weil du gerade etwas eingibst. Büro-Seite: Menü › Einstellungen › Startseite.";
+// Startseite „Büro-Seite“ beim Start oder nach dem neuen Passwort: mit eigenem Stand erst alles hochladen
+// (sonst bliebe Neues nur auf diesem Gerät), dann weiter. true = Seite wird gewechselt.
+async function _startZumBuero() {
+  if (_startWeiterWartet || !_authUser || !window.KS_START || _startZiel() !== "buero" || !KS_START.weiterMoeglich("buero")) return false;
+  if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+  if (!_nurGesamtansicht()) {
+    toast("Startseite Büro-Seite: sichere kurz deine Daten …");
+    if (!(await _eigenesSichern(8000))) { toast("Nicht alles gesichert (Internet?). Du bleibst in der App."); return false; }
+    if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+  }
+  return _zurBueroWeiter();
+}
 
 /* ---- Lokale Daten gehören genau einem Konto ----
    Auf einem Gerät können sich nacheinander verschiedene Personen anmelden. Das Gerät merkt sich,
@@ -4326,7 +4350,7 @@ function _openNeuesPasswortSheet(){
       _startWeiterWartet=false; // W16: jetzt darf die Startseite gelten (Büro → Büro-Seite)
       const {data:sessionData}=await supa.auth.getSession();
       if(sessionData&&sessionData.session&&!_authUser) afterLogin(sessionData.session.user);
-      else if(_authUser&&_startZiel()==="buero") setTimeout(()=>{ _zurBueroWeiter(); },1500);
+      else if(_authUser&&_startZiel()==="buero") setTimeout(()=>{ _startZumBuero(); },1500); // wie beim Start: erst sichern
     }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
   });
 }
@@ -4492,7 +4516,7 @@ async function _continueLoginFlow(prof) {
   // buero.html. Geht das nicht (Passwort-Link offen, Weiterleitungs-Schleife), startet die App wie bisher.
   // Rollen mit eigenem Stand (Super-Admin, Leitung, die selbst fährt) sichern vorher alles (unten, nach dem Abgleich).
   let startZiel = _startZiel(prof);
-  if (startZiel === "buero" && _nurGesamtansicht(prof)) { if (_zurBueroWeiter()) return; startZiel = null; }
+  if (startZiel === "buero" && _nurGesamtansicht(prof)) { if (!_eingabeOffen() && _zurBueroWeiter()) return; startZiel = null; }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (_nurGesamtansicht(prof)) {
     document.getElementById("loginOverlay").classList.add("hidden");
@@ -4538,12 +4562,8 @@ async function _continueLoginFlow(prof) {
   if (startZiel === "gesamt" && !_fsAgg && _fsDarfGesamt() && prof && prof.fahrschule_id) {
     if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) toast("Fahrschule gerade nicht erreichbar. Du bist in deiner Fahrlehrer-Ansicht.");
   }
-  // Startseite „Büro-Seite“ mit eigenem Stand: erst alles hochladen (sonst bliebe Neues nur auf diesem Gerät), dann weiter
-  if (startZiel === "buero" && !_startWeiterWartet && window.KS_START && KS_START.weiterMoeglich("buero")) {
-    toast("Startseite Büro-Seite: sichere kurz deine Daten …");
-    if (await _eigenesSichern(8000)) _zurBueroWeiter();
-    else toast("Nicht alles gesichert (Internet?). Du bleibst in der App.");
-  }
+  // Startseite „Büro-Seite“ mit eigenem Stand: erst alles hochladen, dann weiter (nicht, wenn gerade etwas eingegeben wird)
+  if (startZiel === "buero") await _startZumBuero();
 }
 // Zeigt die Nutzungsbedingungen als blockierendes Overlay - erst nach Scrollen ans Ende UND
 // Checkbox wird "Bestätigen" aktiv. Erst danach geht der normale Login-Ablauf weiter.
@@ -4719,16 +4739,18 @@ async function _alleSeiten(bau) {
 }
 // Gemeinsamer Ablauf der drei Brücken: nur Geändertes schreiben, nur Bekanntes löschen.
 // Liefert die IDs, die geschrieben wurden.
-// W16: laufende Brücken-Abgleiche merken, damit ein Wechsel zur Büro-Seite sie abwarten kann (die Büro-Seite liest genau diese Tabellen)
+// W16: ganze Läufe der drei Brücken merken (beim Schüler samt Fragebogen-Kopie), damit ein Wechsel zur Büro-Seite sie abwarten
+// kann (die Büro-Seite liest genau diese Tabellen). Ergebnis false = nicht ganz angekommen oder verschoben; _upsertRobust
+// meldet Netzfehler ebenfalls hier (Rechte-Fehler nicht: die gingen auch beim nächsten Versuch nicht, sonst käme man nie weg).
 const _brueckenLauf = new Set();
-function _brueckeAbgleichen(o) {
-  const p = _brueckeAbgleichenJetzt(o);
+let _brueckenOk = true;
+function _brueckeLauf(fn) {
+  const p = (async () => { try { return await fn(); } catch (e) { return false; } })();
   _brueckenLauf.add(p);
-  const weg = () => { _brueckenLauf.delete(p); };
-  p.then(weg, weg);
+  p.then(r => { _brueckenLauf.delete(p); if (r === false) _brueckenOk = false; });
   return p;
 }
-async function _brueckeAbgleichenJetzt({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
+async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
   const offen = [];
@@ -4813,7 +4835,7 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     // Netzfehler: ganzer Block später. Andere Fehler (Rechte, ungültige Zeile): einzeln weiter, damit eine
     // fehlerhafte Zeile nicht die übrigen blockiert.
     const netzFehler = !error.code || /^PGRST|^5\d\d$/.test(String(error.code)) || /fetch|network|timeout/i.test(error.message || "");
-    if (netzFehler && !rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
+    if (netzFehler && !rechteFehler) { _brueckenOk = false; console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
       if (!e1) ok.push(r[konflikt]); else {
@@ -8466,11 +8488,12 @@ let _schuelerSyncDebounce=null;
 function _syncSchuelerBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.students)return;
   clearTimeout(_schuelerSyncDebounce);
-  _schuelerSyncDebounce=setTimeout(async()=>{
+  _schuelerSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     // Stand erst beim Auslösen lesen - und nie den Fahrschul-Bestand der Gesamtansicht.
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students)||_lokalerSpeicherGehoertAnderem())return;
     // Erst nach einem Abruf schreiben: sonst überschriebe ein leeres Gedächtnis Büro-Änderungen.
-    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); return; }
+    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); return false; }
+    let allesOben=true;
     try{
       const supa=getSupa();
       // Nur geänderte Schüler hochladen; als gelöscht markieren nur, was dieses Gerät kannte.
@@ -8483,7 +8506,7 @@ function _syncSchuelerBridge(warte){
         const bogenOk=new Set(await _upsertRobust("schueler_privat",boegen,"schueler_id"));
         // Fragebogen nicht angekommen: Schüler gilt als nicht abgeglichen, der nächste Lauf versucht es erneut.
         const fehlt=boegen.filter(b=>!bogenOk.has(b.schueler_id));
-        if(fehlt.length){ const m=_abglLaden(); fehlt.forEach(b=>delete m.schueler[b.schueler_id]); _abglSpeichern(m); }
+        if(fehlt.length){ allesOben=false; const m=_abglLaden(); fehlt.forEach(b=>delete m.schueler[b.schueler_id]); _abglSpeichern(m); }
       }
       // Auslastung fürs Fahrschule-Dashboard mitschicken (keine privaten Kalenderdaten, nur die Kennzahl)
       // capacityStats() rechnet auf DB - in der Gesamtansicht wäre das der Bestand aller Fahrlehrer.
@@ -8491,9 +8514,10 @@ function _syncSchuelerBridge(warte){
         const cap=capacityStats();
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
-    }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
+    }catch(e){ allesOben=false; console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
     try{ _theorieOffenNachholen(); }catch(e3){} // erst nach der Schüler-Brücke: ein neuer Schüler ist jetzt auf dem Server
-  },warte===0?0:4000);
+    return allesOben;
+  }),warte===0?0:4000);
 }
 
 /* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
@@ -8504,16 +8528,16 @@ let _termineSyncDebounce=null;
 function _syncTermineBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
-  _termineSyncDebounce=setTimeout(async()=>{
+  _termineSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
-    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return; }
+    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return false; }
     try{ _absagenNachholen(); _stornoAufraeumen(); _theorieOffenNachholen(); }catch(e){}
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false), loeschWertFuer:_stornoWert });
       if(geschrieben.length) _lokalAblegen();
-    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
-  },warte===0?0:4000);
+    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); return false; }
+  }),warte===0?0:4000);
 }
 
 /* ===== Prüfungen-Synchronisations-Brücke (gleiches Prinzip) ===== */
@@ -8521,14 +8545,14 @@ let _pruefungenSyncDebounce=null;
 function _syncPruefungenBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
   clearTimeout(_pruefungenSyncDebounce);
-  _pruefungenSyncDebounce=setTimeout(async()=>{
+  _pruefungenSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams)||_lokalerSpeicherGehoertAnderem())return;
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_pruefungen", art:"pruefungen", eintraege:P.exams, zeileVon:_pruefungZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
-    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
-  },warte===0?0:4000);
+    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); return false; }
+  }),warte===0?0:4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
    Warteliste-Zuordnung entstehen konnten (z.B. derselbe Schüler in zwei Terminen gleichzeitig).
@@ -12933,13 +12957,14 @@ async function _eigenesSichern(ms){
   if(!_authUser||!_pullOk||_nurGesamtansicht())return !!_authUser&&_nurGesamtansicht();
   clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null;
   const ende=Date.now()+ms;
+  _brueckenOk=true; // ab hier zählt: kam alles an (Netzfehler, verschobene oder gescheiterte Läufe → false)
   const push=pushToCloud();
   _brueckenSofort();
   await new Promise(r=>setTimeout(r,60)); // die Brücken starten mit 0 ms Verzögerung
   const alles=(async()=>{
     const ok=await push;
     while(_brueckenLauf.size&&Date.now()<ende) await Promise.race([Promise.allSettled([..._brueckenLauf]),new Promise(r=>setTimeout(r,Math.max(0,ende-Date.now())))]);
-    return ok!==false&&!_brueckenLauf.size;
+    return ok!==false&&!_brueckenLauf.size&&_brueckenOk;
   })();
   return await Promise.race([alles,new Promise(r=>setTimeout(()=>r(false),ms+200))]);
 }
