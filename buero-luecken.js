@@ -5,7 +5,7 @@
    - Monatsbericht als PDF                      ← App fsMonatsberichtPDF (Druckfenster, „Als PDF speichern“; ohne Schülernamen)
    - Quote je Fahrlehrer, Prüfer-Statistik      ← App routeFahrschuleStatistik, routeFahrschulePruefer
    - Glocke: Erinnerungen per WhatsApp-Link     ← App openBellSheet, formatPhoneForWa (nur Links, nichts wird verschickt)
-   Geladen nach buero.js; buero.js ruft die Funktionen nur, wenn es sie gibt (typeof … === "function"). */
+   Geladen vor buero.js (wie buero-verwaltung.js); buero.js ruft die Funktionen nur, wenn es sie gibt (typeof … === "function"). */
 "use strict";
 
 /* ---------- gemeinsame Kleinigkeiten ---------- */
@@ -275,4 +275,68 @@ function luMonatsberichtDialog() {
 }
 document.addEventListener("click", (e) => {
   if (e.target.closest("#kMonatsbericht") && !document.querySelector("dialog[open]")) luMonatsberichtDialog();
+});
+
+/* ---------- 3. Glocke: Erinnerungen für morgen und Geburtstage heute (Kopf der Büro-Seite) ---------- */
+// Wie openBellSheet in der App, aber für alle Fahrlehrer der Fahrschule. Nur Links zu WhatsApp (wa.me): das Büro tippt,
+// WhatsApp öffnet sich mit fertigem Text, abgeschickt wird dort von Hand. Nichts wird gespeichert oder automatisch verschickt.
+// Telefonnummer wie formatPhoneForWa in der App: nur Ziffern, 00… → …, 0… → 49….
+function luWaNummer(tel) {
+  let d = String(tel || "").replace(/[^\d]/g, "");
+  if (!d) return null;
+  if (d.startsWith("00")) d = d.slice(2); else if (d.startsWith("0")) d = "49" + d.slice(1);
+  return d;
+}
+function luWaLink(tel, text) { const n = luWaNummer(tel); return `https://wa.me/${n || ""}?text=${encodeURIComponent(text)}`; }
+function luVorname(name) { return String(name || "").trim().split(/\s+/)[0] || ""; }
+function luGlockeEintraege() {
+  if (!S.geladenAm) return { morgen: [], geburtstage: [], tag: "" };
+  const heute = KR.todayISO(), morgen = KR.addDaysISO(heute, 1);
+  const sx = (id) => S.schueler.find((y) => y.id === id && y.status !== "geloescht");
+  const morgenListe = [];
+  const termine = S.termine.filter((t) => t.datum === morgen && !t.geloescht && t.status !== "abgebrochen" && t.schueler_id && t.art !== "block");
+  for (const t of termine) {
+    const x = sx(t.schueler_id); if (!x) continue;
+    const pruefung = t.art === "pruefung";
+    morgenListe.push({ x, von: t.von || "", fahrlehrer_id: t.fahrlehrer_id, art: pruefung ? "Prüfung" : (ARTEN[t.art] || "Fahrstunde"), pruefung });
+  }
+  // Prüfungen von der Tafel ohne Kalender-Eintrag (z. B. Theorie oder ohne Uhrzeit/Fahrlehrer)
+  for (const p of S.pruefungstermine) {
+    if (p.datum !== morgen || p.status !== "geplant") continue;
+    if (p.kalender_termin_id && S.termine.some((t) => t.id === p.kalender_termin_id && !t.geloescht)) continue;
+    const x = sx(p.schueler_id); if (!x) continue;
+    morgenListe.push({ x, von: p.von || "", fahrlehrer_id: p.fahrlehrer_id, art: p.art === "theorie" ? "Theorieprüfung" : "Prüfung", pruefung: true });
+  }
+  morgenListe.sort((a, b) => (a.von || "99").localeCompare(b.von || "99") || a.x.name.localeCompare(b.x.name, "de"));
+  const md = heute.slice(5);
+  const geburtstage = aktiveSchueler().filter((x) => x.geburtsdatum && String(x.geburtsdatum).slice(5, 10) === md);
+  return { morgen: morgenListe, geburtstage, tag: morgen };
+}
+function luGlockeText(e) {
+  const vn = luVorname(e.x.name);
+  const zeit = e.von ? ` um ${e.von} Uhr` : "";
+  return e.pruefung
+    ? `Hey ${vn}! Kurze Erinnerung: morgen${zeit} ist deine Prüfung. Viel Erfolg! 🍀🚗`
+    : `Hey ${vn}! Kurze Erinnerung: morgen${zeit} ist deine Fahrstunde. Bis dann! 🚗`;
+}
+function luGlockeAuffrischen() {
+  const k = $("glocke"); if (!k) return;
+  if (!S.geladenAm) { k.hidden = true; return; }
+  const e = luGlockeEintraege(), n = e.morgen.length + e.geburtstage.length;
+  k.hidden = false;
+  const z = $("glockeZahl");
+  if (z) { z.textContent = n ? String(n) : ""; z.hidden = !n; }
+  k.setAttribute("aria-label", n ? `Erinnerungen: ${n}` : "Erinnerungen: nichts anstehend");
+}
+function luGlockeFenster() {
+  const e = luGlockeEintraege();
+  const geb = e.geburtstage.map((x) => `<li class="lu-gl-zeile"><span>🎂 <b>${esc(x.name)}</b> hat heute Geburtstag${x.fahrlehrer_id ? ` <span class="leise">· ${esc(lehrerName(x.fahrlehrer_id))}</span>` : ""}</span>${x.telefon ? `<a class="knopf klein" href="${esc(luWaLink(x.telefon, `Alles Gute zum Geburtstag, ${luVorname(x.name)}! 🎉`))}" target="_blank" rel="noopener">WhatsApp</a>` : ""}</li>`).join("");
+  const mor = e.morgen.map((m) => `<li class="lu-gl-zeile"><span>${m.pruefung ? "🏆 " : ""}<b>${esc(m.x.name)}</b> · ${esc(m.art)}${m.von ? ` · ${esc(m.von)} Uhr` : ""}${m.fahrlehrer_id ? ` <span class="leise">· ${esc(lehrerName(m.fahrlehrer_id))}</span>` : ""}${luWaNummer(m.x.telefon) ? "" : ' <span class="leise">· keine Nummer</span>'}</span><a class="knopf klein" href="${esc(luWaLink(m.x.telefon, luGlockeText(m)))}" target="_blank" rel="noopener">WhatsApp</a></li>`).join("");
+  const inhalt = `<p class="leise klein">„WhatsApp“ öffnet WhatsApp mit fertigem Text. Abgeschickt wird erst dort, von Hand. Ohne Nummer wählt man den Kontakt in WhatsApp selbst.</p>
+    <h3 class="lu-gl-titel">Heute Geburtstag</h3>${geb ? `<ul class="lu-gl-liste">${geb}</ul>` : `<p class="leer">Heute hat niemand Geburtstag.</p>`}
+    <h3 class="lu-gl-titel">Morgen, ${esc(datumDE(e.tag))}</h3>${mor ? `<ul class="lu-gl-liste">${mor}</ul>` : `<p class="leer">Morgen stehen keine Fahrstunden oder Prüfungen an.</p>`}`;
+  luInfoFenster("Erinnerungen", inhalt);
+}
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#glocke") && !document.querySelector("dialog[open]")) luGlockeFenster();
 });

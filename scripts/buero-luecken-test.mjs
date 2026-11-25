@@ -331,6 +331,46 @@ if (!NUR || NUR === "L8") {
   await ctx.close();
 }
 
+// L10 Glocke: Geburtstag heute, Fahrstunden und Prüfungen morgen mit WhatsApp-Link (nur Link, nichts verschickt)
+if (!NUR || NUR === "L10") for (const [n, opt] of [["PC, Büro", {}], ["Handy, Leitung", { nutzer: "ad-1", person: null, breite: 360, hoehe: 780 }]]) {
+  const P = `[${n}]`;
+  const { page, ctx, konsole, dialoge } = await oeffne(Object.assign({ hash: "#kalender" }, opt));
+  // gleich nach dem Laden sichtbar (ohne eigenes Neuzeichnen: die Datei muss vor dem ersten Zeichnen geladen sein)
+  await pruefe("L10", `${P} Glocke nach dem Laden im Kopf sichtbar`, async () => (await page.isVisible("#glocke") ? null : "Glocke versteckt"));
+  const erwartet = await page.evaluate((md) => {
+    const x = S.schueler.find((y) => y.id === "s3"); x.geburtsdatum = "2008-" + md; x.telefon = "0170 0000003";
+    const morgen = KR.addDaysISO(KR.todayISO(), 1);
+    const t = S.termine.filter((y) => y.datum === morgen && !y.geloescht && y.schueler_id && y.art !== "block").length;
+    const p = S.pruefungstermine.filter((y) => y.datum === morgen && y.status === "geplant").length;
+    zeichne();
+    return { t, p };
+  }, HEUTE.slice(5));
+  const zahl = await page.textContent("#glockeZahl").catch(() => "");
+  await page.click("#glocke"); await warte(page, 400);
+  const info = await page.evaluate(() => {
+    const d = document.querySelector("dialog[open]"); if (!d) return null;
+    const links = [...d.querySelectorAll("a[href^='https://wa.me/']")];
+    return { text: d.textContent, links: links.map((a) => ({ href: a.href, ziel: a.target, rel: a.rel, h: a.getBoundingClientRect().height })), breit: d.scrollWidth > d.clientWidth + 1 };
+  });
+  await pruefe("L10", `${P} Glocke: Zähler, Geburtstag heute, Termine morgen mit WhatsApp-Link`, () => {
+    if (!info) return "kein Fenster";
+    const f = [];
+    if (Number(zahl) < 1 + erwartet.t) f.push(`Zähler ${zahl}, erwartet mindestens ${1 + erwartet.t}`);
+    if (!/hat heute Geburtstag/.test(info.text) || !/Jonas|s3|Muster|Beispiel|Probe|Vorlage/.test(info.text)) f.push("Geburtstag fehlt");
+    if (erwartet.t && info.links.length < erwartet.t) f.push(`${info.links.length} Links für ${erwartet.t} Termine`);
+    const geb = info.links.find((l) => /wa\.me\/491700000003\?text=/.test(l.href));
+    if (!geb) f.push("Nummer nicht wie in der App umgeschrieben (0170… → 49170…)");
+    if (info.links.some((l) => l.ziel !== "_blank" || !/noopener/.test(l.rel))) f.push("Link ohne neues Fenster/noopener");
+    if (info.links.some((l) => l.h < 44)) f.push("Knopf unter 44 px");
+    if (!info.links.some((l) => /Kurze%20Erinnerung%3A%20morgen/.test(l.href))) f.push("Erinnerungstext fehlt");
+    if (info.breit) f.push("Fenster ragt seitlich heraus");
+    return f;
+  });
+  await alleZu(page);
+  await pruefe("L10", `${P} keine JS-Fehler, keine Browser-Fenster`, () => konsole.concat(dialoge));
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 console.log(`\n${ok} ok, ${fehler} Fehler`);

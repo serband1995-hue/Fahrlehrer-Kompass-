@@ -285,6 +285,7 @@ function zeichne() {
   document.title = b.titel + " · Kompass Büro";
   zeichneNav();
   kopfAktionenZeichnen(b);
+  if (typeof luGlockeAuffrischen === "function") luGlockeAuffrischen(); // W16 Teil 3: Zähler der Glocke
   const ziel = $("ansicht");
   if (!S.geladenAm) { ziel.innerHTML = `<p class="leer">Daten werden geladen …</p>`; return; }
   // K2/K4 (🗣 22.11.2026): Zeichnet sich derselbe Bereich neu (Speichern, Schalter, Auffrischen), bleiben
