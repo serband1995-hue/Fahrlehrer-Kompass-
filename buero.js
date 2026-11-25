@@ -2940,7 +2940,7 @@ function terminDialog(id, vorgabe) {
     // W16 Teil 3: Büro-Spalten wie in der App (kalender_termine.kurs_bezahlt, interessent_name, interessent_telefon), nur bei der passenden Art
     // und nur, wenn die Datenbank die Spalte hat (sie steht in den geladenen Terminen); die App lässt diese Spalten beim Abgleich stehen.
     // Nur, was im Fenster geändert wurde: sonst überschriebe ein altes Fenster einen neueren Wert von einem anderen Gerät.
-    const buero = (k, v) => { if (terminSpalteDa(k) && (!id || v !== (t[k] == null ? null : t[k]))) werte[k] = v; };
+    const buero = (k, v) => { const alt = typeof v === "boolean" ? !!t[k] : (t[k] == null ? null : t[k]); if (terminSpalteDa(k) && (!id || v !== alt)) werte[k] = v; };
     if (d.art === "ersthilfe") buero("kurs_bezahlt", !!d.kurs_bezahlt);
     if (d.art === "beratung") { buero("interessent_name", (d.interessent_name || "").trim() || null); buero("interessent_telefon", (d.interessent_telefon || "").trim() || null); }
     // Fahrlehrer ohne App: Sonderfahrt-Art und Klasse der Stunde im payload (die App eines Fahrlehrers mit App führt das selbst)
@@ -4880,7 +4880,7 @@ function werAuswegZeigen(liste, geladen) {
   let titel = "", text = "";
   if (!geladen) { titel = "Keine Verbindung"; text = "Die Namen konnten nicht geladen werden. Bitte Internet prüfen und auf „Nochmal prüfen“ tippen."; }
   else if (!liste.length) { titel = "Noch keine Büro-Personen"; text = "Bitte die Fahrschul-Leitung bitten, unter „Fahrlehrer & Büro“ eine Person anzulegen und die PIN freizugeben."; }
-  else if (!kann) { titel = "Gerade kann sich niemand anmelden"; text = `Niemand hat eine PIN. Bitte ${verwalterNamen()} oder die Fahrschul-Leitung um „PIN freigeben“ bitten.`; }
+  else if (!kann) { titel = "Gerade kann sich niemand anmelden"; text = `Niemand hat eine PIN. Bitte ${verwalterNamen()} um „PIN freigeben“ bitten; die Fahrschul-Leitung kann das auch.`; }
   box.hidden = !titel;
   if (!titel) { box.innerHTML = ""; return; }
   box.innerHTML = `<b>${esc(titel)}</b><button type="button" class="knopf" id="werNochmal">Nochmal prüfen</button><p>${esc(text)}</p>`;

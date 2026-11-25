@@ -1086,7 +1086,8 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 /* Glocke immer nur als Symbol (der Kopf hat am PC sonst keinen Platz für eine Zeile), Zahl als Punkt oben rechts */
 .kopf-glocke .ik-text{display:none;} .kopf-glocke .ik-sym{display:block;}
 .knopf.klein.kopf-glocke{min-width:44px;min-height:44px;padding:0;}
-.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--gelb);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
+.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#946616;color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
+@media (prefers-color-scheme:dark){.kopf-glocke .zahl{background:var(--gelb);color:#14211A;}} /* Kontrast ≥ 4,5:1 (Richter) */
 .kopf-glocke .zahl[hidden]{display:none;}
 .lu-gl-titel{font-size:16px;margin:14px 0 6px;}
 .lu-gl-liste{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
@@ -1099,4 +1100,4 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .lu-qr .knopfreihe{justify-content:center;}
 .lu-qr-bild{width:min(200px,60vw);}
 .lu-gl-zeile .lu-gl-text{display:grid;gap:2px;min-width:0;}
-.lu-gl-zeile.gesendet{opacity:.65;}
+.lu-gl-zeile.gesendet{background:var(--gruen-soft, rgba(46,133,80,.1));border-radius:8px;padding-left:8px;padding-right:8px;}
