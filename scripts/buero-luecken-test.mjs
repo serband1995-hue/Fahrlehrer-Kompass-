@@ -51,6 +51,7 @@ async function oeffne({ breite = 1366, hoehe = 860, nutzer = "bu-1", person = ["
     // Büro-Spalten, die die echte Datenbank hat (die Attrappe kennt sie sonst nicht)
     d.tabellen.kalender_termine.forEach((t) => Object.assign(t, { kurs_bezahlt: false, interessent_name: null, interessent_telefon: null }));
     d.tabellen.profiles.forEach((p) => { if (p.id === "fl-1") p.slug = "anton-muster"; });
+    d.tabellen.schueler.forEach((x) => { x.buero_todo = x.id === "s6" ? "Mappe fehlt" : null; }); // Spalte wie in der echten Datenbank
     d.tabellen.kalender_pruefungen = (d.tabellen.kalender_pruefungen || []);
     if (personen) d.tabellen.buero_personen = personen;
     window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: nutzer, email: nutzer + "@example.org" } }, rpcs: {}, fehler: {} };
@@ -338,9 +339,9 @@ if (!NUR || NUR === "L10") for (const [n, opt] of [["PC, Büro", {}], ["Handy, L
   // gleich nach dem Laden sichtbar (ohne eigenes Neuzeichnen: die Datei muss vor dem ersten Zeichnen geladen sein)
   await pruefe("L10", `${P} Glocke nach dem Laden im Kopf sichtbar`, async () => (await page.isVisible("#glocke") ? null : "Glocke versteckt"));
   const erwartet = await page.evaluate((md) => {
-    const x = S.schueler.find((y) => y.id === "s3"); x.geburtsdatum = "2008-" + md; x.telefon = "0170 0000003";
+    const x = S.schueler.find((y) => y.id === "s3"); x.ausbildung = Object.assign({}, x.ausbildung, { geburtsdatum: "2008-" + md }); // wie die App: in ausbildung (jsonb) x.telefon = "0170 0000003";
     const morgen = KR.addDaysISO(KR.todayISO(), 1);
-    const t = S.termine.filter((y) => y.datum === morgen && !y.geloescht && y.schueler_id && y.art !== "block").length;
+    const t = S.termine.filter((y) => y.datum === morgen && !y.geloescht && y.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(y.art)).length;
     const p = S.pruefungstermine.filter((y) => y.datum === morgen && y.status === "geplant").length;
     zeichne();
     return { t, p };
@@ -368,6 +369,59 @@ if (!NUR || NUR === "L10") for (const [n, opt] of [["PC, Büro", {}], ["Handy, L
   });
   await alleZu(page);
   await pruefe("L10", `${P} keine JS-Fehler, keine Browser-Fenster`, () => konsole.concat(dialoge));
+  await ctx.close();
+}
+
+// L11 Serientermine (Turboboost) und L12 „To-do / aktueller Stand“ in der Schüler-Akte
+if (!NUR || NUR === "L11") {
+  const { page, ctx, konsole, dialoge } = await oeffne({});
+  const sid = await page.evaluate(() => {
+    const pk = S.pakete.find((p) => p.name === "Turboboost") || (S.pakete.push({ id: "p-turbo", name: "Turboboost", fahrschule_id: S.fsId }), S.pakete[S.pakete.length - 1]);
+    const x = S.schueler.find((y) => y.id === "s6");
+    x.fahrlehrer_id = "fl-3"; x.paket_id = pk.id; return x.id;
+  });
+  const anz = async () => (await tab(page, "kalender_termine")).filter((t) => t.schueler_id === sid && !t.geloescht && t.von === "06:15").length;
+  const vorher = await anz();
+  await page.evaluate((id) => schuelerDialog(id), sid); await warte(page, 500);
+  const todo = await page.inputValue("dialog[open] textarea[name=buero_todo]").catch(() => null);
+  const serKnopf = await page.locator("dialog[open] [data-luserie]").count();
+  if (serKnopf) {
+    await page.click("dialog[open] [data-luserie]"); await warte(page, 400);
+    await page.fill("dialog[open] >> nth=-1 >> input[name=start]", plus(HEUTE, 40));
+    await page.fill("dialog[open] >> nth=-1 >> input[name=von]", "06:15");
+    await page.selectOption("dialog[open] >> nth=-1 >> select[name=intervall]", "7");
+    await page.fill("dialog[open] >> nth=-1 >> input[name=anzahl]", "3");
+    await speichern(page);
+  }
+  const nach = await anz();
+  const zeilen = (await tab(page, "kalender_termine")).filter((t) => t.schueler_id === sid && t.von === "06:15" && !t.geloescht);
+  await pruefe("L11", "Serientermine: Knopf nur bei Turboboost, 3 wöchentliche Termine beim Fahrlehrer des Schülers, 90 Minuten", () => {
+    const f = [];
+    if (!serKnopf) return "kein Knopf „Serientermine anlegen“";
+    if (nach - vorher !== 3) f.push(`${nach - vorher} statt 3 angelegt`);
+    const tage = zeilen.map((t) => t.datum).sort();
+    if (tage.join() !== [plus(HEUTE, 40), plus(HEUTE, 47), plus(HEUTE, 54)].join()) f.push("Tage: " + tage.join(", "));
+    if (zeilen.some((t) => t.fahrlehrer_id !== "fl-3" || t.bis !== "07:45" || t.art !== "fahrstunde" || t.status !== "geplant")) f.push("Zeilen: " + JSON.stringify(zeilen[0]));
+    return f;
+  });
+  await page.click("[data-undo]").catch(() => {}); await warte(page, 800);
+  await pruefe("L11", "Serientermine: Rückgängig nimmt alle zurück", async () => ((await anz()) === vorher ? null : "noch " + ((await anz()) - vorher)));
+  const ohneTurbo = await page.evaluate(() => { const x = S.schueler.find((y) => !y.paket_id || !luIstTurbo(y)); schuelerDialog(x.id); return x.id; });
+  await warte(page, 400);
+  await pruefe("L11", "Serientermine: kein Knopf ohne Turboboost", async () => ((await page.locator("dialog[open] >> nth=-1 >> [data-luserie]").count()) ? "Knopf ohne Turboboost" : null));
+  await alleZu(page);
+  // L12 To-do
+  await page.evaluate((id) => schuelerDialog(id), sid); await warte(page, 500);
+  await page.fill("dialog[open] textarea[name=buero_todo]", "Mappe da, Sehtest fehlt");
+  await speichern(page); await alleZu(page);
+  await pruefe("L12", "To-do / aktueller Stand: wird angezeigt und gespeichert (Spalte schueler.buero_todo wie in der App)", async () => {
+    const x = (await tab(page, "schueler")).find((y) => y.id === sid);
+    const f = [];
+    if (todo !== "Mappe fehlt") f.push("beim Öffnen: " + todo);
+    if (!x || x.buero_todo !== "Mappe da, Sehtest fehlt") f.push("gespeichert: " + (x && x.buero_todo));
+    return f;
+  });
+  await pruefe("L11", "keine JS-Fehler, keine Browser-Fenster", () => konsole.concat(dialoge));
   await ctx.close();
 }
 

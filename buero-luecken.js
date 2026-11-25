@@ -109,7 +109,7 @@ function luBetrag(t) {
   const s = String(t || "").trim().replace(/\s|€/g, "");
   if (!s) return NaN;
   // 1.234,56 · 1234,56 · 1234.56 · 15
-  const norm = /,/.test(s) ? s.replace(/\./g, "").replace(",", ".") : s;
+  const norm = /,/.test(s) || /^\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "").replace(",", ".") : s; // „1.250“ = 1250 wie in der App
   return /^\d+(\.\d{1,2})?$/.test(norm) ? Number(norm) : NaN;
 }
 function luProvisionDialog() {
@@ -135,8 +135,8 @@ function luProvisionDialog() {
     S.provisionen.unshift(neu);
     zeichne();
     toastUndo(`${euro(betrag)} für ${lehrerName(d.fahrlehrer_id)} eingetragen`, async () => {
-      const r = await supa.from("provisionen").update({ status: "storniert" }).eq("id", neu.id).select("id");
-      if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return; }
+      const r = await supa.from("provisionen").update({ status: "storniert" }).eq("id", neu.id).eq("status", "offen").select("id");
+      if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "schon ausgezahlt oder keine Berechtigung"), true); return; }
       neu.status = "storniert";
       toast("Provision zurückgenommen"); zeichne();
     });
@@ -150,22 +150,9 @@ document.addEventListener("click", (e) => {
 });
 
 /* ---------- 6. Quote je Fahrlehrer und Prüfer-Statistik (Seite „Statistik“) ---------- */
-// Praxis-Ergebnisse wie pruefErgebnisse("praxis") (je Schüler und Tag einmal, Tafel vor App), dazu der Prüfer:
-// der volle Name aus der App (kalender_pruefungen.pruefer), sonst die Initialen von der Prüfungstafel.
-function luPraxisMitPruefer() {
-  const map = {};
-  for (const e of S.pruefungen) {
-    if ((e.payload || {}).b197) continue;
-    const ok = e.result === "pass" || e.result === "bestanden", nein = e.result === "fail" || e.result === "nicht_bestanden";
-    if ((ok || nein) && e.datum) map[e.schueler_id + "|" + e.datum] = { datum: e.datum, ok, schueler_id: e.schueler_id, fahrlehrer_id: e.fahrlehrer_id || null, klasse: null, pruefer: String(e.pruefer || (e.payload || {}).pruefer || "").trim() };
-  }
-  for (const p of S.pruefungstermine) {
-    if (p.art !== "praxis" || (p.status !== "bestanden" && p.status !== "nicht_bestanden")) continue;
-    const alt = map[p.schueler_id + "|" + p.datum];
-    map[p.schueler_id + "|" + p.datum] = { datum: p.datum, ok: p.status === "bestanden", schueler_id: p.schueler_id, fahrlehrer_id: p.fahrlehrer_id, klasse: p.klasse, pruefer: (alt && alt.pruefer) || String(p.pruefer || "").trim() };
-  }
-  return Object.values(map);
-}
+// Praxis-Ergebnisse mit Prüfer: pruefErgebnisse("praxis") in buero.js (je Schüler und Tag einmal, Tafel vor App, Prüfer-Name aus der App,
+// sonst die Initialen von der Tafel). Eine Stelle für alle Zahlen der Statistik.
+function luPraxisMitPruefer() { return pruefErgebnisse("praxis"); }
 function luQuote(ok, n) { return n ? Math.round(ok / n * 100) + " %" : "–"; }
 function luZahlenZusatz(f, monate) {
   const von = monate[0], bis = monate[monate.length - 1];
@@ -183,14 +170,16 @@ function luZahlenZusatz(f, monate) {
       <td class="zahlspalte">${zelle(z.v.p)}</td><td class="zahlspalte">${zelle(z.v.t)}</td></tr>`).join("")}</tbody></table>`
     : `<p class="leer">Keine Prüfungsergebnisse in diesem Zeitraum.</p>`;
   const jePruefer = {};
-  for (const e of praxis) { const k = e.pruefer || ""; jePruefer[k] = jePruefer[k] || { ok: 0, n: 0, letzte: "" }; jePruefer[k].n++; if (e.ok) jePruefer[k].ok++; if (e.datum > jePruefer[k].letzte) jePruefer[k].letzte = e.datum; }
+  // gleich geschrieben = gleicher Prüfer (Groß/Klein und Leerzeichen egal); angezeigt wird die erste Schreibweise
+  const nameVon = {};
+  for (const e of praxis) { const roh = String(e.pruefer || "").trim().replace(/\s+/g, " "), k = roh.toLowerCase(); if (k && !nameVon[k]) nameVon[k] = roh; jePruefer[k] = jePruefer[k] || { ok: 0, n: 0, letzte: "" }; jePruefer[k].n++; if (e.ok) jePruefer[k].ok++; if (e.datum > jePruefer[k].letzte) jePruefer[k].letzte = e.datum; }
   const pz = Object.entries(jePruefer).filter(([k]) => k).sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0], "de"));
   const ohne = (jePruefer[""] || { n: 0 }).n;
-  const pt = pz.length ? `<table class="tabelle"><thead><tr><th>Prüfer</th><th class="zahlspalte">Quote</th></tr></thead><tbody>${pz.map(([k, v]) => `<tr><td><b>${esc(k)}</b><div class="unter">zuletzt ${esc(datumDE(v.letzte))}</div></td><td class="zahlspalte"><b>${luQuote(v.ok, v.n)}</b><div class="unter">${v.ok} von ${v.n}</div></td></tr>`).join("")}</tbody></table>`
+  const pt = pz.length ? `<table class="tabelle"><thead><tr><th>Prüfer</th><th class="zahlspalte">Quote</th></tr></thead><tbody>${pz.map(([k, v]) => `<tr><td><b>${esc(nameVon[k] || k)}</b><div class="unter">zuletzt ${esc(datumDE(v.letzte))}</div></td><td class="zahlspalte"><b>${luQuote(v.ok, v.n)}</b><div class="unter">${v.ok} von ${v.n}</div></td></tr>`).join("")}</tbody></table>`
     : `<p class="leer">Noch keine Praxisprüfung mit Prüfer in diesem Zeitraum.</p>`;
   return `<div class="raster zwei">
     <div class="karte" id="luQuoteLehrer"><h2>Bestehensquote je Fahrlehrer</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Namen anklicken für die Liste.</p>${lt}</div>
-    <div class="karte" id="luPruefer"><h2>Prüfer-Statistik (Praxis)</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Name aus der App, sonst die Initialen von der Prüfungstafel.${ohne ? ` ${ohne} ${ohne === 1 ? "Prüfung" : "Prüfungen"} ohne Prüfer nicht mitgezählt.` : ""}</p>${pt}</div>
+    <div class="karte" id="luPruefer"><h2>Prüfer-Statistik (Praxis)</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Name aus der App, sonst die Initialen von der Prüfungstafel (dieselbe Person kann so zweimal stehen).${ohne ? ` ${ohne} ${ohne === 1 ? "Prüfung" : "Prüfungen"} ohne Prüfer nicht mitgezählt.` : ""}</p>${pt}</div>
   </div>`;
 }
 
@@ -292,9 +281,11 @@ function luVorname(name) { return String(name || "").trim().split(/\s+/)[0] || "
 function luGlockeEintraege() {
   if (!S.geladenAm) return { morgen: [], geburtstage: [], tag: "" };
   const heute = KR.todayISO(), morgen = KR.addDaysISO(heute, 1);
-  const sx = (id) => S.schueler.find((y) => y.id === id && y.status !== "geloescht");
+  const sx = (id) => S.schueler.find((y) => y.id === id && y.status !== "geloescht" && istAktiv(y)); // Archiv: keine Erinnerung
   const morgenListe = [];
-  const termine = S.termine.filter((t) => t.datum === morgen && !t.geloescht && t.status !== "abgebrochen" && t.schueler_id && t.art !== "block");
+  // Wie die App (DB.lessons): Fahrstunden samt Sonder-/Nachtfahrt und Schaltkompetenz, dazu Prüfungen; abgebrochen nicht (Status wie sonst im Büro: payload zuerst)
+  const ARTEN_GLOCKE = KR.FAHR_ARTEN.concat(["schalt", "pruefung"]);
+  const termine = S.termine.filter((t) => t.datum === morgen && !t.geloescht && ((t.payload || {}).status || t.status) !== "abgebrochen" && t.schueler_id && ARTEN_GLOCKE.includes(t.art || "fahrstunde"));
   for (const t of termine) {
     const x = sx(t.schueler_id); if (!x) continue;
     const pruefung = t.art === "pruefung";
@@ -304,12 +295,15 @@ function luGlockeEintraege() {
   for (const p of S.pruefungstermine) {
     if (p.datum !== morgen || p.status !== "geplant") continue;
     if (p.kalender_termin_id && S.termine.some((t) => t.id === p.kalender_termin_id && !t.geloescht)) continue;
+    if (p.art !== "theorie" && morgenListe.some((m) => m.pruefung && m.x.id === p.schueler_id)) continue; // dieselbe Prüfung schon aus dem Kalender
     const x = sx(p.schueler_id); if (!x) continue;
     morgenListe.push({ x, von: p.von || "", fahrlehrer_id: p.fahrlehrer_id, art: p.art === "theorie" ? "Theorieprüfung" : "Prüfung", pruefung: true });
   }
   morgenListe.sort((a, b) => (a.von || "99").localeCompare(b.von || "99") || a.x.name.localeCompare(b.x.name, "de"));
   const md = heute.slice(5);
-  const geburtstage = aktiveSchueler().filter((x) => x.geburtsdatum && String(x.geburtsdatum).slice(5, 10) === md);
+  // Geburtsdatum steht wie alle Ausbildungsangaben der App in schueler.ausbildung (jsonb)
+  const geb = (x) => String((x.ausbildung || {}).geburtsdatum || x.geburtsdatum || "");
+  const geburtstage = aktiveSchueler().filter((x) => geb(x).slice(5, 10) === md);
   return { morgen: morgenListe, geburtstage, tag: morgen };
 }
 function luGlockeText(e) {
@@ -339,4 +333,72 @@ function luGlockeFenster() {
 }
 document.addEventListener("click", (e) => {
   if (e.target.closest("#glocke") && !document.querySelector("dialog[open]")) luGlockeFenster();
+});
+
+/* ---------- Serientermine (Turboboost) in der Schüler-Akte ---------- */
+// Wie fsSerientermineSheet in der App: nur für Schüler mit Paket „Turboboost“, Fahrlehrer des Schülers, 90 Minuten,
+// Fahrstunde oder Sonderfahrt, täglich / jeden 2. Tag / wöchentlich, 1–20 Termine, gleiche Zeilen in kalender_termine.
+// Dazu wie im Termin-Fenster: Zahlung ausstehend sperrt, Urlaub und belegte Zeiten warnen („Abbrechen“ ist Hauptknopf).
+function luIstTurbo(x) { return !!x && !!x.paket_id && (S.pakete || []).some((pk) => pk.id === x.paket_id && pk.name === "Turboboost"); }
+function luSerienTage(start, intervall, anzahl) {
+  const out = []; let d = start;
+  for (let i = 0; i < anzahl; i++) { out.push(d); d = KR.addDaysISO(d, intervall); }
+  return out;
+}
+function luSerienDialog(sid) {
+  const x = S.schueler.find((y) => y.id === sid);
+  if (!x) return;
+  if (!x.fahrlehrer_id) { toast("Erst einen Fahrlehrer zuweisen, dann gehen Serientermine.", true); return; }
+  const body = `<div class="formular">
+      <p class="voll leise klein">Für ${esc(x.name)} bei ${esc(lehrerName(x.fahrlehrer_id))}. Jeder Termin dauert 90 Minuten.</p>
+      <label>Erster Tag<input type="date" name="start" required value="${esc(KR.addDaysISO(KR.todayISO(), 1))}"></label>
+      <label>Uhrzeit<input type="time" name="von" required value="10:00"></label>
+      <label>Art<select name="art"><option value="fahrstunde">Fahrstunde</option><option value="sonder">Sonderfahrt</option></select></label>
+      <label>Wie oft<select name="intervall"><option value="1">täglich</option><option value="2">jeden 2. Tag</option><option value="7">wöchentlich</option></select></label>
+      <label>Anzahl Termine<input type="number" name="anzahl" min="1" max="20" value="5" required></label>
+      <p class="voll leise klein" id="luSerieVorschau" aria-live="polite"></p>
+    </div>`;
+  const dlg = oeffneDialog("Serientermine (Turboboost)", body, async (form) => {
+    const d = Object.fromEntries(new FormData(form).entries());
+    const anzahl = Math.round(Number(d.anzahl));
+    if (!d.start || !d.von) { toast("Bitte ersten Tag und Uhrzeit eintragen.", true); return false; }
+    if (!(anzahl >= 1 && anzahl <= 20)) { toast("Bitte 1 bis 20 Termine wählen.", true); return false; }
+    if (bueroGesperrt(x) && d.start >= KR.todayISO()) { toast(ZAHLUNG_MELDUNG, true); return false; }
+    const bis = plusMinuten(d.von, 90);
+    if (KR.hm2min(bis) <= KR.hm2min(d.von)) { toast("Zu spät am Tag für 90 Minuten.", true); return false; }
+    const tage = luSerienTage(d.start, Number(d.intervall) || 1, anzahl);
+    const belegt = tage.filter((t) => S.termine.some((y) => !y.geloescht && y.fahrlehrer_id === x.fahrlehrer_id && y.datum === t && y.von && y.bis && KR.hm2min(y.von) < KR.hm2min(bis) && KR.hm2min(y.bis) > KR.hm2min(d.von)));
+    if (belegt.length && !(await bestaetige("Zeit schon belegt", `${lehrerName(x.fahrlehrer_id)} hat an ${belegt.length === 1 ? "1 Tag" : belegt.length + " Tagen"} um diese Zeit schon einen Termin (${belegt.map(datumDE).join(", ")}). Trotzdem alle anlegen?`, "Trotzdem anlegen", "Abbrechen", true))) return false;
+    if (typeof vwUrlaubWarnen === "function" && !(await vwUrlaubWarnen(x.fahrlehrer_id, tage, "Trotzdem alle anlegen?", "Trotzdem anlegen"))) return false;
+    const jetzt = new Date().toISOString();
+    const zeilen = tage.map((t, i) => ({ id: "b" + Date.now().toString(36) + i + Math.random().toString(36).slice(2, 6), fahrschule_id: S.fsId, fahrlehrer_id: x.fahrlehrer_id, schueler_id: sid,
+      datum: t, von: d.von, bis, art: d.art === "sonder" ? "sonder" : "fahrstunde", status: "geplant", geloescht: false, payload: {}, erstellt_von: S.user.id, aktualisiert_am: jetzt }));
+    const res = await supa.from("kalender_termine").insert(zeilen).select("*");
+    if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
+    S.termine.push(...res.data);
+    zeichne();
+    // Rückgängig wie beim Absagen: alle eben angelegten Termine wieder weg (geloescht: true, Büro löscht nie endgültig)
+    toastUndo(`${res.data.length} Termine angelegt`, async () => {
+      const ids = res.data.map((y) => y.id);
+      const r = await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", ids).select("id");
+      if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return; }
+      S.termine = S.termine.filter((y) => !ids.includes(y.id));
+      toast("Serientermine zurückgenommen"); zeichne();
+    });
+    return true;
+  }, "Termine anlegen");
+  const vorschau = () => {
+    const f = dlg.querySelector("form"), n = Math.round(Number(f.anzahl.value));
+    const el = dlg.querySelector("#luSerieVorschau");
+    if (!f.start.value || !(n >= 1 && n <= 20)) { el.textContent = ""; return; }
+    const tage = luSerienTage(f.start.value, Number(f.intervall.value) || 1, n);
+    el.textContent = `${n === 1 ? "1 Termin" : n + " Termine"}: ${datumDE(tage[0])}${n > 1 ? " bis " + datumDE(tage[n - 1]) : ""}`;
+  };
+  dlg.querySelector("form").addEventListener("input", vorschau);
+  dlg.querySelector("form").addEventListener("change", vorschau);
+  vorschau();
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-luserie]");
+  if (b && b.closest("dialog[open]")) luSerienDialog(b.dataset.luserie);
 });
