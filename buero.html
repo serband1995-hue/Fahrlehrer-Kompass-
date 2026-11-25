@@ -79,6 +79,8 @@
         <div class="marke-name">Kompass Büro</div>
         <div class="marke-schule" id="schulName"></div>
       </div>
+      <!-- W16 Teil 3: Glocke wie in der App (Erinnerungen für morgen per WhatsApp-Link, Geburtstage heute); buero-luecken.js. In der Leiste, nicht im Seitenkopf: der ist am PC voll -->
+      <button class="knopf klein kopf-ik kopf-glocke" id="glocke" type="button" hidden title="Erinnerungen: morgen und Geburtstage" aria-label="Erinnerungen"><svg class="ik-sym" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="ik-text">Erinnerungen</span><span class="zahl" id="glockeZahl" hidden></span></button>
     </div>
     <!-- Handy und kleines Tablet (bis 900 px): Menü als Block zum Aufklappen, damit der Inhalt oben steht -->
     <button type="button" class="knopf menue-knopf" id="menueKnopf" aria-expanded="false" aria-controls="nav">Menü</button>
@@ -107,8 +109,6 @@
       <div class="kopf-links"><button class="knopf klein kopf-zurueck" id="kopfZurueck" type="button" hidden aria-label="Eine Seite zurück">‹ Zurück</button><h1 id="titel"></h1></div>
       <div class="kopf-rechts">
         <span class="status" id="status"><span class="punkt"></span><span id="statusText">verbinde …</span></span>
-        <!-- W16 Teil 3: Glocke wie in der App (Erinnerungen für morgen per WhatsApp-Link, Geburtstage heute); buero-luecken.js -->
-        <button class="knopf klein kopf-ik kopf-glocke" id="glocke" type="button" hidden title="Erinnerungen: morgen und Geburtstage" aria-label="Erinnerungen"><svg class="ik-sym" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="ik-text">Erinnerungen</span><span class="zahl" id="glockeZahl" hidden></span></button>
         <button class="knopf klein kopf-ik" id="drucken" type="button" title="Diese Ansicht auf Papier drucken" aria-label="Drucken"><svg class="ik-sym" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v6H7z"/></svg><span class="ik-text">Drucken</span></button>
         <button class="knopf klein kopf-ik" id="neuLaden" type="button" title="Daten neu laden" aria-label="Aktualisieren"><svg class="ik-sym" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4.5h-4.5"/></svg><span class="ik-text">Aktualisieren</span></button>
         <button class="knopf klein kopf-wer" id="kopfWer" type="button" hidden title="Platz verlassen: Seite sperren. Beim Zurückkommen PIN eingeben."></button>

@@ -4763,6 +4763,7 @@ async function ladeDaten() {
     else { S.elternFehler = true; if (!S.eltern) S.eltern = null; } // Ladefehler: Echt-Versand sperren (Empfänger unklar)
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
+    $("schulName").title = S.fs ? S.fs.name : ""; // W16 Teil 3: Name kann gekürzt sein (Glocke daneben)
     setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
     zeichne();
     if (typeof bkPruefeSpalten === "function") bkPruefeSpalten(); // Werkstatt 13: alte Datenbank ohne Vorlagen erkennen
