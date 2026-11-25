@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.11", datum: "2026-11-25", kurz: "Einstellungen: Sonderfahrt, Papierkorb und Rückgängig.",
+    punkte: ["Büro: Unter Einstellungen › Fahrstunden & Kalender stellst du ein, wie lang eine Sonderfahrt ist (30 bis 90 Minuten, sonst 45).",
+             "Neues Thema „Löschen & Rückgängig“: wie viele Tage Gelöschtes im Papierkorb bleibt (7 bis 90, sonst 30) und wie lange „Rückgängig“ zu sehen ist (4 bis 30 Sekunden, sonst 6).",
+             "Die Werte gelten für die ganze Fahrschule, im Büro und in der App.",
+             "Unterschriebene und stornierte Stunden werden nie endgültig gelöscht."] },
   { version: "2026.11.25.9", datum: "2026-11-25", kurz: "Büro: kürzere Leiste, „Abmelden“ immer zu sehen.",
     punkte: ["Die Leiste links ist kürzer und passt jetzt auch auf kleinere PC-Bildschirme. „Abmelden“ steht immer unten.",
              "Urlaub findest du im Kalender oben rechts. Daneben, als Reiter: „Wer hat Platz?“ und „Schichtplan“.",

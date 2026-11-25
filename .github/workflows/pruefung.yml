@@ -143,3 +143,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/einstellungen-test.mjs
       - name: "Büro: Urlaub, Schichtplan und Backups auf der Büro-Seite (W16 Teil 2, Urlaubs-Warnung im Termin-Fenster)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-verwaltung-test.mjs
+      - name: "Rückgängig-Zeit aus den Einstellungen (App: Hinweis und Absage-Mail gekoppelt)"
+        run: NODE_PATH=$(npm root -g) node scripts/rueckgaengig-zeit-test.mjs

@@ -143,7 +143,7 @@
     hinweis: "So lang ist ein Kästchen einer Sonderfahrt (Überland, Autobahn, Nacht) im Ausbildungsplan; im Nachweis steht „je N Min.“. Fahrchecks und Unterrichtseinheiten bleiben bei 45 Minuten.",
     nach: (n) => { if (typeof KR !== "undefined" && KR.setzeSonderMinuten) KR.setzeSonderMinuten(n); } };
   const KE_PAPIERKORB = { schluessel: "papierkorb.tage", feld: "tage", std: 30, min: 7, max: 90, einheit: "Tage", name: "Papierkorb behalten",
-    hinweis: "Gelöschte Termine liegen so lange im Papierkorb, danach werden sie endgültig gelöscht. Unterschriebene und stornierte Stunden bleiben immer." };
+    hinweis: "Gelöschte Termine liegen so lange im Papierkorb, danach werden sie endgültig gelöscht. Unterschriebene und stornierte Stunden bleiben immer. Eine kürzere Frist gilt sofort, auch für Termine, die schon im Papierkorb liegen." };
   const KE_RUECK = { schluessel: "rueckgaengig.sekunden", feld: "sekunden", std: 6, min: 4, max: 30, einheit: "Sek.", name: "„Rückgängig“ zeigen",
     hinweis: "So lange steht nach dem Löschen der Knopf „Rückgängig“ in der App und im Büro. Absage-Mails gehen erst danach raus." };
   const nurSuper = (was) => `<span class="leise klein">${was} ändert der Super-Admin.</span>`;
