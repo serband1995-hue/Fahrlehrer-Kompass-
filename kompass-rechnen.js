@@ -151,6 +151,7 @@
   // 🗣 Serband 25.11.2026: „Wenn 90 min eingetragen ist, muss Kristina abhaken: 2 Fahrchecks abgegeben oder 1“), höchstens die
   // gebuchten; ohne gewählte Zahl der Vermerk des Fahrlehrers (fcFuersBuero).
   function fcVomBuero(t) {
+    if (t && (t.status === "abgebrochen" || t.status === "nicht erschienen")) return 0; // ausgefallen: nie, auch mit Zahl (Richter W13)
     const n = t ? t.bueroFcAnzahl : null;
     if (n != null && n !== "" && isFinite(+n)) return Math.max(0, Math.min(Math.round(+n), fcGebucht(t)));
     return fcFuersBuero(t);
@@ -163,6 +164,34 @@
     if (t.fc === "v2" || t.fc === "geschenkt" || t.fc === "offen" || t.fc === "nachgereicht") return 0;
     return voll;
   }
+
+  /* ----- Sonderfahrt-Einheit (W13 PR 2) -----
+     Ein Kästchen im Ausbildungsplan (Überland, Autobahn, Nacht) ist eine Sonderfahrt-Einheit, Vorgabe 45 Minuten.
+     Ein Termin von 90 Minuten füllt also 2 Kästchen. Der Wert kann je Fahrschule eingestellt werden.
+     Gelesen wird er NUR über sonderMinuten(). Gesetzt wird er beim Laden der Fahrschule (setzeSonderMinuten).
+     Fahrchecks und UE bleiben fest bei 45 Minuten (fcGebucht, ueOf). */
+  const SONDER_MIN_STANDARD = 45;
+  let sonderMinAktiv = null;
+  function normSonderMin(n) {
+    if (n === null || n === undefined || n === "") return null;
+    const z = Number(n);
+    return Number.isInteger(z) && z >= 30 && z <= 90 ? z : null;
+  }
+  function setzeSonderMinuten(n) { sonderMinAktiv = normSonderMin(n); return sonderMinuten(); }
+  function sonderMinuten() { return sonderMinAktiv || SONDER_MIN_STANDARD; }
+  // Dauer eines Termins in Minuten; eine Fahrt über Mitternacht (22:30–00:00) zählt mit.
+  function terminMinuten(von, bis) {
+    if (!von || !bis) return 0;
+    const d = hm2min(bis) - hm2min(von);
+    return d < 0 ? d + 1440 : d;
+  }
+  // Wie viele Kästchen ein Sonder-Termin belegt. Mindestens 1, wie bisher auch kurze oder unvollständige Termine.
+  function sonderEinheiten(von, bis) {
+    const m = terminMinuten(von, bis);
+    return m > 0 ? Math.max(1, Math.round(m / sonderMinuten())) : 1;
+  }
+  // Volle Sonderfahrt-Einheiten in einer Summe von Minuten (Büro: Ausbildungsnachweis, Zähler ohne App). Abgerundet wie bisher.
+  function sonderEinheitenAusMinuten(min) { return min > 0 ? Math.floor(min / sonderMinuten()) : 0; }
   // Führerscheinantrag bei der Führerscheinstelle: 12 Monate ab Antragsdatum; nach bestandener Theorieprüfung gilt er
   // 12 Monate ab Prüfungsdatum (wie die Theorie; Kristina, 09.10.2026). stufe: ohne_datum | abgelaufen | bald (≤60 Tage) | ok
   function antragInfo(s, heute) {
@@ -475,7 +504,7 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-  const api = { paketVerbrauch, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+  const api = { paketVerbrauch, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;

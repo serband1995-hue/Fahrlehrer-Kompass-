@@ -74,7 +74,7 @@ function nwStand(x, d) {
   let grundMin = 0, sonderOhneArt = 0, schaltMin = 0;
   for (const t of gelaufen) {
     const a = nwSonderArt(t), m = nwMinuten(t);
-    if (a) ist[a] += Math.floor(m / 45);
+    if (a) ist[a] += KR.sonderEinheitenAusMinuten(m); // W13: Länge einer Sonderfahrt-Einheit je Fahrschule (Vorgabe 45)
     else if (t.art === "sonder") sonderOhneArt++;
     else if (t.art === "schalt") schaltMin += m;
     else grundMin += m;
@@ -90,7 +90,7 @@ function nwStand(x, d) {
   const kurz = { ueberland: "Überland", autobahn: "Autobahn", nacht: "Nacht" };
   if (!nwNeuesRecht(heute) && (unterschrift.offen + unterschrift.neu)) fehlt.push({ t: `${unterschrift.offen + unterschrift.neu} Unterschrift${unterschrift.offen + unterschrift.neu === 1 ? "" : "en"} des Schülers${unterschrift.neu ? ` (${unterschrift.neu} nach Änderung neu)` : ""}`, dringend: true });
   if (sonderOhneArt) fehlt.push({ t: `${sonderOhneArt} Sonderfahrt${sonderOhneArt === 1 ? "" : "en"} ohne Art (bitte ändern)`, dringend: true });
-  NW_SONDER.forEach(([k], i) => { if (ist[k] < soll[i]) fehlt.push({ t: `${kurz[k]}: noch ${soll[i] - ist[k]} × 45 Min.` }); });
+  NW_SONDER.forEach(([k], i) => { if (ist[k] < soll[i]) fehlt.push({ t: `${kurz[k]}: noch ${soll[i] - ist[k]} × ${KR.sonderMinuten()} Min.` }); });
   if (theorie && theorie.geladen && theorie.pflicht && !theorie.fertig && !theorie.bestanden) fehlt.push({ t: `Theorie: ${theorie.ist} von ${theorie.soll} Doppelstunden` });
   if (!x.theorie_bestanden_am) fehlt.push({ t: "Theorieprüfung" });
   if (!x.praxis_bestanden_am) fehlt.push({ t: "Praxisprüfung" });
