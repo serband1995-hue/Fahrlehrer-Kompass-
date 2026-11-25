@@ -5764,6 +5764,8 @@ async function pullTermineZuweisungen() {
       // von der Uhrzeit des Geräts. Ohne Gedächtnis entscheidet die Zeit.
       if (bekannt || !local._syncedAt || remoteTime > local._syncedAt) {
         Object.assign(local, merged, { _syncedAt: remoteTime });
+        // W13 (Daten-Prüfer): Verknüpfung mit dem Plan wie der Server – fehlt sie dort, auch hier weg (Object.assign löscht nichts)
+        for (const k of ["srcSonder", "srcSonderIdx"]) if (!(k in merged)) delete local[k];
         mem.termine[r.id] = _abglWertVon("termine", local);
         geaendert++;
       }

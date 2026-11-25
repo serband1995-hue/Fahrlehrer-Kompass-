@@ -483,6 +483,27 @@ await pruefe("K27", "Alter Termin (1 Kästchen, 90 Min) bekommt beim Verschieben
   return r.idx === null && r.date === T2 && r.plan[0] === T2 && r.plan[1] === "2026-10-26" && !r.plan[2] ? null : JSON.stringify(r);
 });
 
+await pruefe("K28", "Abruf vom Server: hat ein anderes Gerät den Termin auf 1 Kästchen gestellt (ohne srcSonderIdx), fällt die Liste auch hier weg (Daten-Prüfer Fund 2)", async () => {
+  const r = await p.evaluate(async () => {
+    const altSupa = window.getSupa, altP = _authProfile, altU = _authUser;
+    const rows = [];
+    const mk = () => { const q = { select: () => q, eq: () => q, order: () => q, range: async () => ({ data: rows, error: null }), then: undefined }; return q; };
+    window.getSupa = () => ({ from: () => mk(), rpc: async () => ({ data: [], error: null }) });
+    _authUser = { id: "u-erfunden" }; _authProfile = { fahrschule_id: "fs-erfunden" };
+    try {
+      ensureDB();
+      const l = { id: "PT1", date: "2026-10-26", von: "10:00", bis: "11:30", art: "sonder", sid: "s1", status: "geplant", note: "x", fc: null, srcSonder: "s1:ueberland:1", srcSonderIdx: [1, 2], _syncedAt: 1 };
+      DB.lessons = [l];
+      const mem = _abglLaden(); mem.termine.PT1 = _abglWertVon("termine", l);
+      rows.push({ id: "PT1", schueler_id: "s1", datum: "2026-10-26", von: "10:00", bis: "10:45", art: "sonder", fahrzeug: null, status: "geplant", aktualisiert_am: new Date(Date.now() + 1e5).toISOString(), payload: { note: "x", fc: null, srcSonder: "s1:ueberland:1" } });
+      await pullTermineZuweisungen();
+      const a = DB.lessons.find((x) => x.id === "PT1");
+      return { bis: a && a.bis, idx: a ? a.srcSonderIdx || null : "weg", key: a && a.srcSonder };
+    } finally { window.getSupa = altSupa; _authProfile = altP; _authUser = altU; }
+  });
+  return r.bis === "10:45" && r.idx === null && r.key === "s1:ueberland:1" ? null : JSON.stringify(r);
+});
+
 await pruefe("K19", "keine JS-Fehler und keine echten Dialogfenster im ganzen Lauf", async () => jsFehler);
 
 await browser.close();
