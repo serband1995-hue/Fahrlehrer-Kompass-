@@ -11,11 +11,11 @@ export const STANDARD_FAHRSCHULE = "Fahrschule Boost";
 export const ABSENDER_ADRESSE = "termine@fahr-akademie.info";
 const ERLAUBT = ["erinnerung_theorie", "erinnerung_praxis", "erinnerung_antrag", "erinnerung_behoerde", "erinnerung_umschreiber"];
 const BETREFF = {
-  erinnerung_theorie: "Erinnerung: Theorieunterricht",
-  erinnerung_praxis: "Erinnerung: Praktische Prüfung",
-  erinnerung_antrag: "Erinnerung: Führerscheinantrag",
-  erinnerung_behoerde: "Erinnerung: Frist der Führerscheinstelle",
-  erinnerung_umschreiber: "Erinnerung: Führerschein-Umschreibung",
+  erinnerung_theorie: "Erinnerung zum Theorieunterricht",
+  erinnerung_praxis: "Erinnerung zur praktischen Prüfung",
+  erinnerung_antrag: "Erinnerung zum Führerscheinantrag",
+  erinnerung_behoerde: "Erinnerung zur Frist der Führerscheinstelle",
+  erinnerung_umschreiber: "Erinnerung zur Führerschein-Umschreibung",
 };
 const FRIST_TEXT = {
   erinnerung_theorie: "Theorieunterricht gilt bis",

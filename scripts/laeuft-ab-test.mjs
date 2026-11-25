@@ -155,7 +155,7 @@ try {
     // Prüf-Team W15: jeder Knopf „Akte öffnen“ und jede „Noch“-Pill liegt ganz im Bild (nicht abgeschnitten, ohne Wischen)
     const imBild = await page.evaluate(() => {
       const w = document.documentElement.clientWidth, raus = [];
-      document.querySelectorAll("[data-baldliste] [data-baldakte], [data-baldliste] .bald-noch .marke-pill, [data-baldliste] .bald-am").forEach((el) => {
+      document.querySelectorAll("[data-baldliste] [data-baldakte], [data-baldliste] [data-balderinnern], [data-baldliste] .bald-noch .marke-pill, [data-baldliste] .bald-am").forEach((el) => {
         const r = el.getBoundingClientRect(); if (r.left < 0 || r.right > w + 0.5 || r.width === 0) raus.push(el.className + ":" + Math.round(r.right));
       });
       return raus;

@@ -964,8 +964,8 @@ body.kiosk .rollen-streifen{display:none;}
   .tabelle[data-baldliste] td.bald-was{grid-column:1;grid-row:2;}
   .tabelle[data-baldliste] td.bald-am{grid-column:2;grid-row:2;justify-self:end;}
   .tabelle[data-baldliste] td.bald-akte{grid-column:1 / -1;grid-row:3;padding-top:6px;}
-  .tabelle[data-baldliste] td.bald-akte .aktionen-box{width:100%;max-width:none;margin-left:0;}
-  .tabelle[data-baldliste] td.bald-akte .knopf{width:100%;}
+  .tabelle[data-baldliste] td.bald-akte .aktionen-box{width:100%;max-width:none;margin-left:0;flex-direction:row;flex-wrap:wrap;}
+  .tabelle[data-baldliste] td.bald-akte .knopf{flex:1 1 130px;min-width:0;} /* „Erinnern“ und „Akte öffnen“ nebeneinander, bei Platzmangel untereinander */
 }
 
 /* Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js). Links Themen, rechts Felder als Zeilen. */

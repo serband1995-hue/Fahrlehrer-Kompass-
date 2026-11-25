@@ -226,7 +226,7 @@ for (const an of ["schueler", "eltern", "beide"]) {
 }
 const html = MAIL.mailHtml(Object.assign({}, d, { an: "schueler" }));
 gleich("Mail-HTML maskiert, Frist im Kasten", true, html.includes("&lt;i&gt;x&lt;/i&gt;") && html.includes(KV.datumText(tag(12))));
-gleich("Betreff fest, ohne Name", "[TEST] Fahrschule Muster: Erinnerung: Frist der Führerscheinstelle", MAIL.betreff(Object.assign({}, d, { an: "schueler" })));
+gleich("Betreff fest, ohne Name", "[TEST] Fahrschule Muster: Erinnerung zur Frist der Führerscheinstelle", MAIL.betreff(Object.assign({}, d, { an: "schueler" })));
 gleich("vorlagen.js der Erinnerung = kompass-vorlagen.js", readFileSync(join(ROOT, "kompass-vorlagen.js"), "utf8"), readFileSync(join(ROOT, "supabase/functions/erinnerungs-mail/vorlagen.js"), "utf8"));
 let wirft = false; try { MAIL.betreff({ vorlage_art: "pruefung" }); } catch (e) { wirft = true; }
 gleich("Mail: fremde Vorlage-Art wird abgelehnt", true, wirft);

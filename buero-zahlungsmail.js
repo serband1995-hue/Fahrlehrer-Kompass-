@@ -68,6 +68,8 @@ function zmLaden(zd, zm, t0) {
 function zmLeeren() { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmFehlt = false; S.zmLadefehler = false; S.zmGeladen = false; S.zmMailsGeladen = false; S.zmVerlaufFehler = false; S.zmEntwurf = null; ZM.offen.clear(); ZM.entwurf = {}; ZM.lokal = []; }
 // Offene Akten: Block nach jedem Laden neu zeichnen, wenn sich etwas geändert hat (z. B. der Modus); Entwurf und Fokus bleiben
 function zmBloeckAktualisieren() { document.querySelectorAll("#zmBlock").forEach((b) => { if (b.dataset.zmsid) zmNeuZeichnen(b.dataset.zmsid, null, null, true); }); }
+// W15 S5 (Prüf-Team): Zahlungs- und Erinnerungs-Mail sperren sich gegenseitig – nach jeder Änderung an einer Sperre alle offenen Blöcke neu zeichnen
+function mailBloeckeAktualisieren() { zmBloeckAktualisieren(); if (typeof emBloeckAktualisieren === "function") emBloeckAktualisieren(); }
 function zmStand() { return S.zahlungsdaten ? String(S.zahlungsdaten.geaendert_am || "") : ""; }
 function zmModus() { return zmEcht() ? "echt" : "test"; }
 function zmModusText(m) { return m === "echt" ? "Echt" : m === "test" ? "Test" : null; }
@@ -264,7 +266,7 @@ function zmBlockHTML(sid) {
   if (ohneMail && daten && !ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
   const zeilen = angebote.map((a) => {
     const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art;
-    const eigene = ZM.laeuft.has(schluessel), andere = ZM.laeuft.size > 0 && !eigene;
+    const eigene = ZM.laeuft.has(schluessel), andere = (ZM.laeuft.size > 0 || EM.laeuft.size > 0) && !eigene;
     const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : echt && S.elternFehler ? "Eltern-Angaben konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
     const e = ZM.entwurf[schluessel] || {};
     const betrag = "betrag" in e ? e.betrag : a.betrag, wofuer = "wofuer" in e ? e.wofuer : a.wofuer;
@@ -330,7 +332,7 @@ function zmBinde(block, dlg, sid) {
       i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); senden.click(); } });
     });
     senden.addEventListener("click", async () => {
-      if (senden.disabled || ZM.laeuft.size) return;
+      if (senden.disabled || ZM.laeuft.size || EM.laeuft.size) return;
       const cent = zmBetragCent(betragFeld.value), wofuer = wofuerFeld.value.trim();
       if (cent == null) { zeigeFehler("Bitte einen Betrag zwischen 1 und 10.000 € eintragen."); betragFeld.focus(); return; }
       if (!wofuer || wofuer.length > 80) { zeigeFehler("Bitte eintragen, wofür gezahlt werden soll (höchstens 80 Zeichen)."); wofuerFeld.focus(); return; }
@@ -339,22 +341,24 @@ function zmBinde(block, dlg, sid) {
       const modus = block.dataset.zmmodus; // genau der Modus, den dieser Bildschirm zeigt (nicht der aus S: der Block kann älter sein); der Server prüft ebenfalls
       ZM.entwurf[schluessel] = { betrag: betragFeld.value, wofuer: wofuerFeld.value }; ZM.offen.add(schluessel);
       if (modus !== zmModus()) { zmNeuZeichnen(sid, art, `Mail an ${name}: Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.`); return; }
-      senden.disabled = true; ZM.laeuft.add(schluessel);
+      senden.disabled = true; ZM.laeuft.add(schluessel); mailBloeckeAktualisieren();
+      const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
       const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
       zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
       const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
       const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase()); // W14: der Server sendet nur, wenn er dieselben Empfänger bestimmt
       const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
-        ZM.laeuft.delete(schluessel);
+        ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
         zmNeuZeichnen(sid);
         toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
       }, {
         ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
         nachAblauf: async (verlassen) => {
           if (verlassen) { ZM.laeuft.delete(schluessel); return; } // Seite wird verlassen: lieber nichts senden
+          if (S.fsId !== fs0) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
           const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr);
-          ZM.laeuft.delete(schluessel);
+          ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
           if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert" || /^reakt_/.test(erg.code || "")) && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
@@ -447,6 +451,7 @@ function emLaden(res) {
   } else if (!res || zmTabelleFehlt(res.error)) S.erinnerungsMails = null; // Tabelle fehlt: keine Knöpfe
   // anderer Ladefehler: letzten Stand behalten
 }
+function emBloeckAktualisieren() { document.querySelectorAll("#emBlock").forEach((b) => { if (b.dataset.emsid) emNeuZeichnen(b.dataset.emsid, null, null, true); }); }
 function emFinde(sid) { return [...document.querySelectorAll("#emBlock")].find((b) => b.dataset.emsid === sid) || null; }
 function emBlockHTML(sid) {
   const x = S.schueler.find((y) => y.id === sid);
@@ -468,16 +473,17 @@ function emBlockHTML(sid) {
   }).join("");
   return `<div class="voll zm-block" id="emBlock" data-emsid="${esc(sid)}" data-emmodus="${zmModus()}"><h3>Erinnerung per Mail</h3>${kopf}${ohneMail ? `<p class="zm-hinweis">Keine E-Mail-Adresse in der Akte.</p>` : ""}${zeilen}</div>`;
 }
-function emNeuZeichnen(sid, art, meldung) {
+function emNeuZeichnen(sid, art, meldung, nurWennGeaendert) {
   const alt = emFinde(sid);
   if (!alt) return;
   const html = emBlockHTML(sid);
-  if (!html) { alt.replaceWith(Object.assign(document.createElement("div"), { id: "emBlock", hidden: true })); return; }
+  if (!html) { if (alt.hidden && !alt.firstChild) return; const leer = Object.assign(document.createElement("div"), { id: "emBlock", hidden: true }); leer.dataset.emsid = sid; alt.replaceWith(leer); return; } // Schüler-Nummer bleibt: der Block kann später wieder gefüllt werden
+  if (nurWennGeaendert && alt._emHtml === html && !meldung) return;
   const t = document.createElement("div"); t.innerHTML = html;
-  const frisch = t.firstElementChild; alt.replaceWith(frisch); emBinde(frisch, sid);
+  const frisch = t.firstElementChild; frisch._emHtml = html; alt.replaceWith(frisch); emBinde(frisch, sid);
   if (art && meldung) { const m = frisch.querySelector(`[data-emart="${art}"] [data-emmeldung]`); if (m) { m.textContent = meldung; m.hidden = false; } }
 }
-function emBindeBlock(dlg, sid) { const b = dlg.querySelector("#emBlock"); if (b && b.dataset.emsid) emBinde(b, sid); }
+function emBindeBlock(dlg, sid) { const b = dlg.querySelector("#emBlock"); if (b && b.dataset.emsid) { b._emHtml = emBlockHTML(sid); emBinde(b, sid); } }
 function emBinde(block, sid) {
   block.querySelectorAll("[data-emsenden]").forEach((knopf) => knopf.addEventListener("click", async () => {
     const art = knopf.dataset.emsenden, schluessel = sid + "|" + art;
@@ -485,19 +491,21 @@ function emBinde(block, sid) {
     const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
     const modus = block.dataset.emmodus; // genau der Modus, den dieser Bildschirm zeigt; der Server prüft ebenfalls
     if (modus !== zmModus()) { emNeuZeichnen(sid, art, `Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.`); return; }
-    EM.laeuft.add(schluessel);
+    EM.laeuft.add(schluessel); mailBloeckeAktualisieren();
+    const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
     const sitz = await zmSitzung();
     emNeuZeichnen(sid);
     const anWen = zmEmpfaenger(x).map(([w]) => (w === "Schüler" ? "den Schüler" : "die Eltern")).join(" und ") || "den Schüler";
     const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase());
     const u = toastUndo(`${modus === "echt" ? "Erinnerung wird an " + anWen + " gesendet" : "Test-Erinnerung wird gesendet"} · ${name}`, async () => {
-      EM.laeuft.delete(schluessel); emNeuZeichnen(sid); toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
+      EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); emNeuZeichnen(sid); toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
     }, {
       ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000,
       nachAblauf: async (verlassen) => {
         if (verlassen) { EM.laeuft.delete(schluessel); return; }
+        if (S.fsId !== fs0) { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
         const erg = await emSende(sid, art, modus, sitz, name, empfAdr);
-        EM.laeuft.delete(schluessel);
+        EM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
         if (erg.ok) { emNeuZeichnen(sid); if (typeof zeichne === "function" && /#fristen/.test(location.hash)) zeichne(); return; }
         if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
         if ((erg.code === "empfaenger_geaendert" || EM_FEHLER[erg.code] && !ZM_FEHLER[erg.code]) && typeof ladeDaten === "function") ladeDaten(); // Stand auffrischen

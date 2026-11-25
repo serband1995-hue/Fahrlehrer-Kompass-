@@ -591,7 +591,8 @@ try {
       F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = ${JSON.stringify(KRtag(15))};` }) });
     pruefe("Z14a s3 (Reaktivierung in 15 Tagen): Prüfung und Reaktivierung", JSON.stringify(await arten(page, "s3")) === '["pruefung","reaktivierung"]');
     const zeile = page.locator('[data-baldliste] tr[data-bald="reaktivierung"]', { has: page.locator('[data-balderinnern="s3"]') });
-    pruefe("Z14b „Läuft bald ab“: Knopf „Erinnerung schicken“ bei der Reaktivierung", (await zeile.count()) === 1 && (await zeile.locator("[data-balderinnern]").innerText()) === "Erinnerung schicken");
+    pruefe("Z14b „Läuft bald ab“: Zweitknopf „Erinnern“ bei der Reaktivierung (kein Hauptknopf, Name sagt „per Mail“)", (await zeile.count()) === 1 && (await zeile.locator("[data-balderinnern]").innerText()) === "Erinnern"
+      && !(await zeile.locator("[data-balderinnern]").evaluate((e) => e.classList.contains("haupt"))) && (await zeile.locator("[data-balderinnern]").getAttribute("aria-label")) === "Erinnerung per Mail schicken");
     // W15 S5: andere Fristen haben ihren eigenen Knopf (Erinnerung ohne Zahlung); der Zahlungs-Knopf hängt nur an der Reaktivierung
     pruefe("Z14c Zahlungs-Erinnerung nur bei der Reaktivierung, jeder Knopf passt zu seiner Zeile", (await page.locator('[data-baldliste] tr:not([data-bald="reaktivierung"]) [data-baldart="reaktivierung"]').count()) === 0
       && (await page.$$eval("[data-baldliste] tr [data-balderinnern]", (l) => l.every((k) => k.dataset.baldart === k.closest("tr").dataset.bald))));
@@ -619,7 +620,10 @@ try {
       F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = ${JSON.stringify(KRtag(15))};` }) });
     const k = page.locator('[data-balderinnern="s3"]');
     const h = await k.evaluate((e) => e.getBoundingClientRect().height);
-    pruefe("Z14m Handy 360 px: „Erinnerung schicken“ mindestens 44 px hoch", h >= 44, String(h));
+    pruefe("Z14m Handy 360 px: „Erinnern“ mindestens 44 px hoch", h >= 44, String(h));
+    // Prüf-Team W15 PR 2 (Design): am Handy stehen „Erinnern“ und „Akte öffnen“ nebeneinander, beide ganz im Bild
+    const lagen = await page.locator('[data-baldliste] tr[data-bald="reaktivierung"]', { has: k }).locator("[data-balderinnern], [data-baldakte]").evaluateAll((l) => l.map((e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: Math.round(r.top) }; }));
+    pruefe("Z14o Handy 360 px: beide Knöpfe nebeneinander und ganz im Bild", lagen.length === 2 && lagen[0].t === lagen[1].t && lagen.every((x) => x.l >= 0 && x.r <= 360.5), JSON.stringify(lagen));
     pruefe("Z14n Handy 360 px: kein seitliches Wischen", (await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 0);
     await ctx.close();
   }

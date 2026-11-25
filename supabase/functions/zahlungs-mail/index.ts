@@ -73,8 +73,10 @@ Deno.serve(async (req) => {
       return json({ fehler: "empfaenger_geaendert" }, 409);
     }
   }
-  const scheitern = async (kurz: string, status = 500) => {
-    await merke({ status: "fehler", fehler: kurz.slice(0, 200) });
+  // W15 S5 (Prüf-Team Daten): unklar = Zeitgrenze oder Netz, die Mail kann trotzdem angekommen sein. Für den Bildschirm
+  // bleibt es ein Fehler, die Spur bleibt aber „vorbereitet“ und zählt weiter zum gemeinsamen Limit.
+  const scheitern = async (kurz: string, status = 500, unklar = false) => {
+    await merke(unklar ? { fehler: ("Versand unklar, zählt zum Limit: " + kurz).slice(0, 200) } : { status: "fehler", fehler: kurz.slice(0, 200) });
     return json({ fehler: "versand_fehlgeschlagen", grund: kurz.split(":")[0].slice(0, 40) }, status);
   };
 
@@ -99,7 +101,7 @@ Deno.serve(async (req) => {
       const dm = { ...d, an: anFuer(i) };
       let betrf = betreff(dm);
       if (d.modus === "test" && !betrf.startsWith("[TEST] ")) betrf = "[TEST] " + betrf;
-      let grund = "";
+      let grund = "", unklar = false;
       try {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -118,9 +120,9 @@ Deno.serve(async (req) => {
         if (res.ok) { if (antwort?.id) ids.push(String(antwort.id)); bedient.push(empfaenger[i]); continue; }
         grund = "Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120);
       } catch (e) {
-        grund = "Versand abgebrochen: " + String(e).slice(0, 100); // Zeitgrenze oder Netz (Fable): wie eine Fehlerantwort behandeln
+        grund = "Versand abgebrochen: " + String(e).slice(0, 100); unklar = true; // Zeitgrenze oder Netz (Fable): Bildschirm wie eine Fehlerantwort
       }
-      if (i === 0) return await scheitern(grund, 502); // erste Mail gescheitert: nichts gesendet
+      if (i === 0) return await scheitern(grund, 502, unklar); // erste Mail gescheitert: nichts gesendet (oder unklar)
       ersterFehler = grund;
       nichtAn.push(anFuer(i) === "eltern" ? "Eltern" : "Schüler");
     }

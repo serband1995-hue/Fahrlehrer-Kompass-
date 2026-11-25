@@ -782,15 +782,15 @@ function laeuftBaldListe(heute) {
   }
   return liste.sort((x, y) => x.datum.localeCompare(y.datum) || String(x.name || "").localeCompare(String(y.name || ""), "de") || x.art.localeCompare(y.art));
 }
-// W15 S4: Reaktivierung in „Läuft bald ab“ – Knopf „Erinnerung schicken“ (öffnet die Akte mit dem Mail-Formular) und
+// W15 S4: Reaktivierung in „Läuft bald ab“ – Knopf „Erinnern“ (Zweitknopf, kurz: passt auch am Handy quer; öffnet die Akte mit dem Mail-Formular) und
 // der Haken der letzten Erinnerung im aktuellen Modus (Test/Echt), damit niemand doppelt erinnert
 // W15 S5: dazu Theorie, Antrag, Behörden-Frist und Umschreiber (Erinnerung ohne Zahlung, Akte → „Erinnerung per Mail“)
 const BALD_OHNE_ZAHLUNG = ["theorie", "antrag", "behoerde", "umschreiber"];
 function baldErinnernKnopf(x) {
   if (x.wer !== "schueler") return "";
   const s = S.schueler.find((y) => y.id === x.id);
-  if (x.art === "reaktivierung") return typeof zmErinnernKann === "function" && zmErinnernKann(s) ? `<button class="knopf klein haupt" type="button" data-balderinnern="${esc(x.id)}" data-baldart="reaktivierung">Erinnerung schicken</button>` : "";
-  if (BALD_OHNE_ZAHLUNG.includes(x.art) && typeof emKann === "function" && emKann(s, x.art)) return `<button class="knopf klein haupt" type="button" data-balderinnern="${esc(x.id)}" data-baldart="${esc(x.art)}">Erinnerung schicken</button>`;
+  if (x.art === "reaktivierung") return typeof zmErinnernKann === "function" && zmErinnernKann(s) ? `<button class="knopf klein" type="button" data-balderinnern="${esc(x.id)}" data-baldart="reaktivierung" aria-label="Erinnerung per Mail schicken" title="Erinnerung per Mail schicken">Erinnern</button>` : "";
+  if (BALD_OHNE_ZAHLUNG.includes(x.art) && typeof emKann === "function" && emKann(s, x.art)) return `<button class="knopf klein" type="button" data-balderinnern="${esc(x.id)}" data-baldart="${esc(x.art)}" aria-label="Erinnerung per Mail schicken" title="Erinnerung per Mail schicken">Erinnern</button>`;
   return "";
 }
 function baldErinnert(x) {

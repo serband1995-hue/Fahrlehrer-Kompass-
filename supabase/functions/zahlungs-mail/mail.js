@@ -81,7 +81,7 @@ const BETREFF = {
   zahlung_offen: "Wichtige Information zu Ihren Terminen",
 };
 // W15 S4: Erinnerung, bevor die Reaktivierung fällig wird (vorlage_art vom Server; die Art der Spur bleibt „reaktivierung“)
-const BETREFF_BALD = "Erinnerung: Reaktivierung";
+const BETREFF_BALD = "Erinnerung zur Reaktivierung"; // ohne zweiten Doppelpunkt (Prüf-Team Design)
 
 /** Fahrschulname für Absender/Betreff säubern (keine <>",; Zeilenumbrüche). */
 export function fahrschulName(d) {

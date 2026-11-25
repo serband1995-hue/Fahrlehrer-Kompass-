@@ -53,8 +53,10 @@ Deno.serve(async (req) => {
       return json({ fehler: "empfaenger_geaendert" }, 409);
     }
   }
-  const scheitern = async (kurz: string, status = 500) => {
-    await merke({ status: "fehler", fehler: kurz.slice(0, 200) });
+  // unklar = Zeitgrenze oder Netz: die Mail kann trotzdem angekommen sein. Dann bleibt die Spur „vorbereitet“ und zählt
+  // weiter zum Limit (5 je Schüler, 100 je Fahrschule am Tag), damit wiederholtes Klicken nicht ohne Grenze sendet (Prüf-Team Daten).
+  const scheitern = async (kurz: string, status = 500, unklar = false) => {
+    await merke(unklar ? { fehler: ("Versand unklar, zählt zum Limit: " + kurz).slice(0, 200) } : { status: "fehler", fehler: kurz.slice(0, 200) });
     return json({ fehler: "versand_fehlgeschlagen", grund: kurz.split(":")[0].slice(0, 40) }, status);
   };
 
@@ -70,7 +72,7 @@ Deno.serve(async (req) => {
     let ersterFehler = "";
     for (let i = 0; i < empfaenger.length; i++) {
       const dm = { ...d, an: anFuer(i) };
-      let grund = "";
+      let grund = "", unklar = false;
       try {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -82,9 +84,9 @@ Deno.serve(async (req) => {
         if (res.ok) { if (antwort?.id) ids.push(String(antwort.id)); bedient.push(empfaenger[i]); continue; }
         grund = "Resend " + res.status + ": " + String(antwort?.message || antwort?.name || "").slice(0, 120);
       } catch (e) {
-        grund = "Versand abgebrochen: " + String(e).slice(0, 100);
+        grund = "Versand abgebrochen: " + String(e).slice(0, 100); unklar = true;
       }
-      if (i === 0) return await scheitern(grund, 502);
+      if (i === 0) return await scheitern(grund, 502, unklar);
       ersterFehler = grund;
       nichtAn.push(anFuer(i) === "eltern" ? "Eltern" : "Schüler");
     }

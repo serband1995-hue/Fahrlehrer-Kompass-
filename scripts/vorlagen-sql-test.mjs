@@ -183,7 +183,7 @@ gleich("Mail: Platzhalter gefüllt, Steuerzeichen weg", true, text.includes("am 
 gleich("Mail-HTML: Vorlage maskiert (kein <b> aus dem Büro-Text)", true, html.includes("&lt;b&gt;fett&lt;/b&gt;") && !html.includes("<b>fett</b>"));
 gleich("Mail: Fällig am …", true, text.includes("Fällig am: " + KV.datumText(tag(12))) && html.includes("Fällig am: <b>" + KV.datumText(tag(12)) + "</b>"));
 const b = MAIL.betreff(Object.assign({}, d, { an: "schueler" }));
-gleich("Betreff fest, ohne Name und Betrag", "[TEST] Fahrschule Muster: Erinnerung: Reaktivierung", b);
+gleich("Betreff fest, ohne Name und Betrag", "[TEST] Fahrschule Muster: Erinnerung zur Reaktivierung", b);
 await einstellung("vorlagen.reaktivierung_bald", undefined);
 
 // ---------- 5. Rechte und Limit bleiben ----------

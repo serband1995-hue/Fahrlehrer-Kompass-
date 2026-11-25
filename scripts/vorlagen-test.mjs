@@ -90,7 +90,7 @@ for (const d of [boese, Object.assign({}, boese, { an: "eltern" }), Object.assig
   const b = MAIL.betreff(d);
   gleich("Betreff ohne Name, Betrag, Vorlagentext (" + b + ")", false, /Lena|Muster,|240|Klick|script|DE89/.test(b.replace("Fahrschule Muster", "")));
 }
-gleich("Betreff „bald“", "[TEST] Fahrschule Muster: Erinnerung: Reaktivierung", MAIL.betreff(Object.assign({}, boese, { vorlage_art: "reaktivierung_bald" })));
+gleich("Betreff „bald“", "[TEST] Fahrschule Muster: Erinnerung zur Reaktivierung", MAIL.betreff(Object.assign({}, boese, { vorlage_art: "reaktivierung_bald" })));
 gleich("fremde vorlage_art wird nicht übernommen (Prüfung-Vorlage für Reaktivierung)", ALT.reaktivierung[0],
   MAIL.satz(Object.assign({}, basis, { art: "reaktivierung", vorlage_art: "pruefung", an: "schueler" })));
 gleich("„bald“ nur bei der Reaktivierung", ALT.pruefung[0], MAIL.satz(Object.assign({}, basis, { art: "pruefung", vorlage_art: "reaktivierung_bald", an: "schueler" })));

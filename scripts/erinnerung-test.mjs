@@ -81,7 +81,7 @@ try {
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", vorbereiten: vor() });
     for (const [sid, art] of [["s5", "behoerde"], ["s6", "antrag"], ["s7", "theorie"], ["s8", "umschreiber"]])
-      pruefe(`E1 ${art}: Knopf „Erinnerung schicken“ in „Läuft bald ab“`, (await zeile(page, sid, art).count()) === 1);
+      pruefe(`E1 ${art}: Knopf „Erinnern“ in „Läuft bald ab“`, (await zeile(page, sid, art).count()) === 1 && (await zeile(page, sid, art).locator("[data-balderinnern]").innerText()) === "Erinnern");
     pruefe("E1b Fahrlehrer-Fristen ohne Knopf", (await page.locator('[data-baldliste] tr[data-bald="fahrlehrer"] [data-balderinnern]').count()) === 0);
     const h = await zeile(page, "s5", "behoerde").locator("[data-balderinnern]").evaluate((e) => e.getBoundingClientRect().height);
     pruefe("E1c Knopf mindestens 44 px", h >= 44, String(h));
