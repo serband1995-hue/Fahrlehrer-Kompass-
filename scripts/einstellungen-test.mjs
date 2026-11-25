@@ -227,7 +227,7 @@ try {
     pruefe("E8d", "Wert bleibt nach dem Speichern, Hinweiszeile „Gespeichert“", (await page.inputValue("input[name=ue]")) === "48" && /Gespeichert/.test(await page.locator("#esMeldung").innerText()) ? null : await page.inputValue("input[name=ue]"));
     pruefe("E8e", "„Wer hat Platz?“ rechnet mit 48", await page.evaluate(() => ueProWoche() === 48) ? null : "nicht 48");
     await setzeHash(page, "#einstellungen?thema=preise");
-    pruefe("E8f", "Preise & Pakete: Knopf „Preisliste öffnen“ → #zahlungen?reiter=preise, Reaktivierungs-Feld mit 240", (await page.locator('#esBox a[href="#zahlungen?reiter=preise"]').innerText()) === "Preisliste öffnen" && (await page.inputValue("input[name=betrag]")) === "240" ? null : await page.locator("#esBox").innerText());
+    pruefe("E8f", "Preise & Pakete: Link-Zeile „Preisliste“ → #zahlungen?reiter=preise, Reaktivierungs-Feld mit 240", /^Preisliste/.test(await page.locator('#esBox a.es-link[href="#zahlungen?reiter=preise"]').innerText()) && (await page.inputValue("input[name=betrag]")) === "240" ? null : await page.locator("#esBox").innerText());
     await page.fill("input[name=betrag]", "250");
     await page.click("#esPreiseForm button[type=submit]"); await warte(page, 400);
     const k2 = await konfig(page);
@@ -302,10 +302,152 @@ try {
     await ctx.close();
   }
 
+
+  // ---- Nachbesserung nach dem Prüf-Team (A–I) ----
+  const DRECK = `window.BUERO_EINSTELLUNGEN_THEMEN = [{ id: "dreck", titel: "Mit Eingabe", reihenfolge: 5, verlassen() { return !window.__DRECK; }, verwerfen() { window.__DRECK = false; }, render(el) { el.innerHTML = '<h2 class="es-abschnitt">Mit Eingabe</h2><label class="es-wert"><input id="dr" type="text" value=""></label>'; el.querySelector("#dr").addEventListener("input", () => { window.__DRECK = true; }); } }];`;
+  const frage = (page) => page.locator("dialog[open]").innerText().catch(() => "");
+  const fortfahren = async (page) => { await page.click('dialog[open] button:has-text("Weiter bearbeiten")'); await warte(page, 400); };
+
+  // A Entwürfe wandern nicht zur nächsten Fahrschule
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "sa-1", hash: "#einstellungen?thema=fahrschule" });
+    await page.fill("input[name=ue]", "48");
+    await page.selectOption("#schulWahl", "fs-test-2"); await warte(page, 900);
+    const b = await page.inputValue("input[name=ue]");
+    pruefe("EA1", "Schulwechsel: Fahrschule B zeigt NICHT den Entwurf „48“ von A", b !== "48" ? null : b);
+    await page.click('.es-thema[data-es-thema="team"]'); await warte(page, 300);
+    pruefe("EA2", "und fragt beim Themenwechsel nicht nach (kein Entwurf in B)", (await page.locator("dialog[open]").count()) === 0 && (await aktivesThema(page)) === "team" ? null : "Rückfrage");
+    await page.selectOption("#schulWahl", "fs-test-1"); await warte(page, 900);
+    await setzeHash(page, "#einstellungen?thema=fahrschule");
+    pruefe("EA3", "zurück zu A: der Entwurf ist weg (kein stilles Mitnehmen)", (await page.inputValue("input[name=ue]")) === "60" ? null : await page.inputValue("input[name=ue]"));
+    pruefe("E12j", "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+
+  // B/C Handy 360: Zurück-Taste mit Eingabe, Tipp auf dasselbe Thema
+  {
+    const { page, ctx, konsole } = await oeffne({ vorher: DRECK, breite: 360, hoehe: 740, hash: "#einstellungen" });
+    await page.click('.es-thema[data-es-thema="dreck"]'); await warte(page, 300);
+    await page.fill("#dr", "abc");
+    await page.goBack(); await warte(page, 500);
+    const st = await page.evaluate(() => ({ ansicht: document.querySelector(".es").dataset.ansicht, inhalt: !!document.querySelector(".es-inhalt").offsetParent, liste: !!document.querySelector(".es-themen").offsetParent }));
+    pruefe("EB1", "Zurück-Taste mit Eingabe: Rückfrage, dahinter das Formular (nicht die Liste)", /Änderungen verwerfen\?/.test(await frage(page)) && st.ansicht === "thema" && st.inhalt && !st.liste ? null : JSON.stringify(st));
+    await fortfahren(page);
+    pruefe("EB2", "„Weiter bearbeiten“: Formular sichtbar, Eingabe erhalten, Adresse beim Thema", (await page.inputValue("#dr")) === "abc" && (await page.evaluate(() => location.hash)) === "#einstellungen?thema=dreck" ? null : await page.evaluate(() => location.hash));
+    await page.click(".es-zurueck"); await warte(page, 400);
+    pruefe("EC1", "„Zurück“-Pfeil zur Liste: keine Rückfrage, Liste sichtbar", (await page.locator("dialog[open]").count()) === 0 && (await page.evaluate(() => !!document.querySelector(".es-themen").offsetParent)) ? null : await frage(page));
+    await page.click('.es-thema[data-es-thema="dreck"]'); await warte(page, 400);
+    pruefe("EC2", "Tipp aus der Liste auf das Thema mit Eingabe: keine Rückfrage, Eingabe noch da", (await page.locator("dialog[open]").count()) === 0 && (await page.inputValue("#dr")) === "abc" ? null : await frage(page));
+    await page.click(".es-zurueck"); await warte(page, 300);
+    await page.click('.es-thema[data-es-thema="team"]'); await warte(page, 400);
+    pruefe("EC3", "Tipp auf ein anderes Thema: Rückfrage", /Änderungen verwerfen\?/.test(await frage(page)) ? null : "keine");
+    await fortfahren(page);
+    pruefe("E12k", "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+
+  // D Verlauf bleibt heil: zweimal Zurück, beide Male Rückfrage
+  {
+    const { page, ctx, konsole } = await oeffne({ vorher: DRECK, hash: "#einstellungen?thema=fahrschule" });
+    await page.click('.es-thema[data-es-thema="dreck"]'); await warte(page, 300);
+    await page.fill("#dr", "abc");
+    await page.goBack(); await warte(page, 500);
+    pruefe("ED1", "erstes Zurück: Rückfrage, altes Thema samt Eingabe", /Änderungen verwerfen\?/.test(await frage(page)) && (await page.inputValue("#dr")) === "abc" ? null : await frage(page));
+    await fortfahren(page);
+    pruefe("ED2", "Adresse wieder beim Thema mit Eingabe", (await page.evaluate(() => location.hash)) === "#einstellungen?thema=dreck" && (await aktivesThema(page)) === "dreck" ? null : await page.evaluate(() => location.hash));
+    await page.goBack(); await warte(page, 500);
+    pruefe("ED3", "zweites Zurück: wieder Rückfrage (nicht still nach Heute)", /Änderungen verwerfen\?/.test(await frage(page)) && (await page.textContent("#titel")) === "Einstellungen" ? null : await page.textContent("#titel"));
+    await page.click('dialog[open] button:has-text("Ja, verwerfen")'); await warte(page, 500);
+    pruefe("ED4", "„Ja, verwerfen“: zurück beim ersten Thema", (await aktivesThema(page)) === "fahrschule" ? null : await aktivesThema(page));
+    pruefe("E12l", "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+
+  // E Fokus überlebt das Auffrischen
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "sa-1", hash: "#einstellungen?thema=fahrschule", breite: 412, hoehe: 800 });
+    await page.click("input[name=ue]"); await page.keyboard.press("End"); await page.keyboard.type("5");
+    await page.evaluate(() => ladeDaten()); await warte(page, 900);
+    const f = await page.evaluate(() => [document.activeElement && document.activeElement.name, document.querySelector("input[name=ue]").value]);
+    await page.keyboard.type("6");
+    pruefe("EE1", "nach dem Auffrischen steht der Cursor noch im Feld, Eingabe bleibt, weiter tippen geht", f[0] === "ue" && f[1] === "605" && (await page.inputValue("input[name=ue]")) === "6056" ? null : JSON.stringify(f));
+    await page.evaluate(() => document.activeElement.blur()); await warte(page, 50);
+    await page.evaluate(() => ladeDaten()); await warte(page, 900);
+    pruefe("EE2", "ohne Fokus holt das Auffrischen keinen Fokus ins Feld", (await page.evaluate(() => document.activeElement && document.activeElement.name)) !== "ue" ? null : "Fokus geholt");
+    pruefe("E12m", "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+
+  // Fremdthemen: render wirft, async render lehnt ab, Ersetzen des offenen Themas, unshift
+  {
+    const v = `window.BUERO_EINSTELLUNGEN_THEMEN = [{ id: "wirft", titel: "Wirft", reihenfolge: 11, render() { throw new Error("test-kaputt"); } }, { id: "async", titel: "Async", reihenfolge: 12, async render(el) { el.innerHTML = "<p>kommt</p>"; throw new Error("test-abgelehnt"); } }];`;
+    const { page, ctx, konsole } = await oeffne({ vorher: v, hash: "#einstellungen?thema=wirft" });
+    pruefe("EK1", "render wirft: Hinweis statt weißer Seite, Liste lebt, Fehlerzeile", /nicht geöffnet/.test(await page.locator("#esBox").innerText()) && (await page.locator(".es-thema").count()) >= 9 && !(await page.locator("#esMeldung").isHidden()) ? null : await page.locator("#esBox").innerText());
+    await page.click('.es-thema[data-es-thema="async"]'); await warte(page, 400);
+    pruefe("EK2", "async render lehnt ab: Hinweis, Fehlerzeile, Seite lebt", /nicht geöffnet/.test(await page.locator("#esBox").innerText()) && !(await page.locator("#esMeldung").isHidden()) ? null : await page.locator("#esBox").innerText());
+    await page.click('.es-thema[data-es-thema="vorlagen"]'); await warte(page, 300);
+    await page.evaluate(() => window.BUERO_EINSTELLUNGEN_THEMEN.push({ id: "vorlagen", titel: "Vorlagen neu", reihenfolge: 50, render(el) { el.innerHTML = "<p>NEUE Vorlagen</p>"; } }));
+    await warte(page, 300);
+    pruefe("EK3", "push ersetzt das gerade offene Thema: es wird neu gezeichnet", /NEUE Vorlagen/.test(await page.locator("#esBox").innerText()) ? null : await page.locator("#esBox").innerText());
+    await page.evaluate(() => { window.BUERO_EINSTELLUNGEN_THEMEN.unshift({ id: "vorn", titel: "Per unshift", reihenfolge: 1, render(el) { el.innerHTML = "<p>vorn</p>"; } }); });
+    await warte(page, 300);
+    pruefe("EK4", "unshift wird erkannt", (await themenListe(page))[0] === "Per unshift" ? null : (await themenListe(page)).join());
+    await page.evaluate(() => { window.BUERO_EINSTELLUNGEN_THEMEN = [{ id: "neuarray", titel: "Neues Array", reihenfolge: 2, render(el) { el.innerHTML = "<p>neu</p>"; } }]; zeichne(); });
+    await warte(page, 300);
+    pruefe("EK5", "ein ganz neues Array wird beim nächsten Zeichnen gelesen", (await themenListe(page)).includes("Neues Array") ? null : (await themenListe(page)).join());
+    pruefe("E12n", "nur die absichtlichen Fehler in der Konsole", konsole.filter((k) => !/test-kaputt|test-abgelehnt/.test(k)).length === 0 ? null : konsole);
+    await ctx.close();
+  }
+
+  // G frisch holen, I Satz, Design (F)
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "sa-1", hash: "#einstellungen?thema=fahrschule" });
+    await page.evaluate(() => { window.__FAKE.tabellen.fahrschulen.find((f) => f.id === "fs-test-1").konfiguration.vomAnderenPc = 7; }); // ein anderer PC hat inzwischen etwas gespeichert
+    await page.fill("input[name=ue]", "50");
+    await page.click("#esFahrschuleForm button[type=submit]"); await warte(page, 500);
+    const k = await konfig(page);
+    pruefe("EG1", "Speichern holt die Konfiguration frisch: Feld des anderen PCs bleibt, nur ueProWoche ergänzt", k.vomAnderenPc === 7 && k.ueProWoche === 50 && k.akademieVermittlung ? null : JSON.stringify(k));
+    pruefe("EG2", "Fehler beim Holen: nichts gespeichert, Fehlerzeile", await (async () => {
+      await page.evaluate(() => { window.__FAKE.fehler = { fahrschulen: "Failed to fetch" }; });
+      await page.fill("input[name=ue]", "51"); await page.click("#esFahrschuleForm button[type=submit]"); await warte(page, 400);
+      const ok2 = (await konfig(page)).ueProWoche === 50 && !(await page.locator("#esMeldung").isHidden());
+      await page.evaluate(() => { window.__FAKE.fehler = {}; });
+      return ok2 ? null : "gespeichert oder keine Zeile";
+    })());
+    await page.fill("input[name=ue]", "50"); // zurück auf den gespeicherten Wert: kein Entwurf mehr
+    await setzeHash(page, "#einstellungen?thema=preise");
+    pruefe("EI1", "Preise & Pakete nennt „Eine abweichende Zahlung (z. B. Sonderangebot) …“ (auch ohne Schreibrecht)", /Eine abweichende Zahlung \(z\. B\. Sonderangebot\) trägst du direkt beim Eintragen der Zahlung ein\./.test(await page.locator("#esBox").innerText()) ? null : "fehlt");
+    const d = await page.evaluate(() => { const fuss = document.querySelector("#esPreiseForm .es-fuss"), kn = fuss.querySelector("button"), f = document.querySelector("#esPreiseForm").getBoundingClientRect(); return { knoepfe: document.querySelectorAll("#esBox .es-knopf").length, links: document.querySelectorAll("#esBox a.es-link").length, speichern: document.querySelectorAll("#esBox button.haupt").length, rechts: Math.abs(kn.getBoundingClientRect().right - f.right) < 2 }; });
+    pruefe("EF1", "Preise & Pakete: Link-Zeilen statt breiter Knöpfe, ein Speichern-Knopf unten rechts", d.knoepfe === 0 && d.links >= 1 && d.speichern === 1 && d.rechts ? null : JSON.stringify(d));
+    const f2 = await page.evaluate(() => { const w = document.querySelector(".es-wert"), a = document.querySelector('.es-thema[aria-current="page"]'), cs = getComputedStyle(a), bf = getComputedStyle(a, "::before"), ws = getComputedStyle(w); return { wert: ws.backgroundColor, rand: ws.borderTopColor, gewicht: cs.fontWeight, strich: bf.opacity, breite: bf.width }; });
+    pruefe("EF2", "hell: aktives Thema fett mit Akzentstrich links; Feld weiß mit klarem Rand (#85858f)", f2.wert === "rgb(255, 255, 255)" && f2.rand === "rgb(133, 133, 143)" && Number(f2.gewicht) >= 700 && f2.strich === "1" && f2.breite === "4px" ? null : JSON.stringify(f2));
+    await setzeHash(page, "#einstellungen?thema=zahlungen");
+    const z = await page.evaluate(() => { const fs = document.querySelector("#zmForm .zm-modus-wahl"), akt = document.querySelector("[data-zmaktuell]"), h = [...document.querySelectorAll("#esBox legend, #esBox h2, #esBox h3")].map((x) => x.textContent.trim()); return { rahmen: getComputedStyle(fs).borderTopWidth, akt: akt ? akt.textContent : "", aktH: akt ? Math.round(akt.getBoundingClientRect().height) : 0, h }; });
+    pruefe("EF3", "Zahlungen & Mails: kein äußerer Rahmen um Test/Echt, Zwischenüberschriften „Wohin gehen die Mails?“ und „Zahlungsdaten“, Test-Hinweis bleibt (eine Zeile)", z.rahmen === "0px" && z.h.includes("Wohin gehen die Mails?") && z.h.includes("Zahlungsdaten") && /TEST/.test(z.akt) && /Test-Adresse|Betreibers|Mails gehen nur an/.test(z.akt) && z.aktH <= 40 ? null : JSON.stringify(z));
+    pruefe("E12o", "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+
+  // F2 Handy: Thema mit großem Zurück-Pfeil und Themenname, kein doppelter Titel „Einstellungen“; quer 740x360
+  for (const [b, h] of [[360, 740], [740, 360]]) {
+    const { page, ctx, konsole } = await oeffne({ breite: b, hoehe: h, hash: "#einstellungen?thema=fahrschule" });
+    const r = await page.evaluate(() => { const z = document.querySelector(".es-zurueck").getBoundingClientRect(), t = document.querySelector(".es-titel"), h1 = document.getElementById("titel"); return { zw: Math.round(z.width), zh: Math.round(z.height), links: z.left < 40, titel: t.textContent, titelSichtbar: !!t.offsetParent, h1: !!h1.offsetParent, doppelt: [...document.querySelectorAll("#esBox .es-abschnitt")].filter((x) => x.offsetParent && x.textContent.trim() === t.textContent).length }; });
+    pruefe(`EF4 ${b}x${h}`, "Zurück-Pfeil links (≥ 44 px), Themenname als Titel, „Einstellungen“ nicht doppelt, Themenname nicht doppelt", r.zw >= 44 && r.zh >= 44 && r.links && r.titel === "Fahrschule" && r.titelSichtbar && !r.h1 && r.doppelt === 0 ? null : JSON.stringify(r));
+    for (const id of ["fahrschule", "preise", "zahlungen", "team", "sicherheit", "darstellung"]) {
+      await setzeHash(page, "#einstellungen?thema=" + id);
+      const q = await page.evaluate(() => ({ breit: document.documentElement.scrollWidth - window.innerWidth, ueber: [...document.querySelectorAll("#esBox *")].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 1).length }));
+      pruefe(`EF5 ${b}x${h} ${id}`, "nichts wischt seitlich", q.breit <= 0 && q.ueber === 0 ? null : JSON.stringify(q));
+    }
+    pruefe(`E12p ${b}x${h}`, "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+
   // E11 dunkel
   {
     const { page, ctx, konsole } = await oeffne({ dunkel: true, hash: "#einstellungen?thema=zahlungen" });
     const r = await page.evaluate(() => { const hell = (c) => { const m = c.match(/\d+(\.\d+)?/g).map(Number); return (m[0] * 299 + m[1] * 587 + m[2] * 114) / 1000; }; const i = document.querySelector(".es-inhalt"), t = document.querySelector(".es-inhalt h2"); return { flaeche: hell(getComputedStyle(i).backgroundColor), text: hell(getComputedStyle(t).color), thema: hell(getComputedStyle(document.querySelector('.es-thema[aria-current="page"]')).backgroundColor) }; });
+    const dk = await page.evaluate(() => [getComputedStyle(document.querySelector(".es-inhalt")).backgroundColor, getComputedStyle(document.body).backgroundColor]);
+    pruefe("E11b", "dunkel: Karte heller als der Hintergrund", dk[0] !== dk[1] ? null : JSON.stringify(dk));
     pruefe("E11a", "dunkel: Fläche dunkel, Text hell, aktives Thema abgesetzt", r.flaeche < 80 && r.text > 170 ? null : JSON.stringify(r));
     pruefe("E12i", "keine Konsolenfehler", konsole.length ? konsole : null);
     await ctx.close();

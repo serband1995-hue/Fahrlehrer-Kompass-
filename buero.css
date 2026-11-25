@@ -975,21 +975,38 @@ body.kiosk .rollen-streifen{display:none;}
 .es-thema:hover{background:var(--surface-2);}
 .es-thema:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
 .es-thema::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--akzent);opacity:0;transform:scaleY(.4);transition:opacity .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1);}
-.es-thema[aria-current="page"]{background:var(--surface-2);font-weight:700;}
+.es-thema[aria-current="page"]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);font-weight:700;}
+.es-thema::before{width:4px;}
 .es-thema[aria-current="page"]::before{opacity:1;transform:none;}
 .es-pfeil{display:none;color:var(--muted);flex:0 0 auto;}
 .es-inhalt{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px 28px;box-shadow:var(--schatten);}
-.es-zurueck{display:none;align-items:center;min-height:44px;margin-bottom:8px;font-weight:600;text-decoration:none;}
+.es-kopfzeile{display:none;}
+.es-zurueck{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:var(--r-klein);color:var(--txt);text-decoration:none;flex:0 0 auto;}
+.es-zurueck:hover{background:var(--surface-2);}
+.es-titel{margin:0;font-size:24px;min-width:0;overflow-wrap:anywhere;}
+.es-doppelt{display:none;}
+.es-link{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;padding:10px 0;border-bottom:1px solid var(--line-soft);text-decoration:none;color:var(--txt);}
+.es-link:hover .es-pfeil{color:var(--txt);transform:translateX(2px);}
+.es-link:focus-visible{outline:3px solid var(--akzent-line);outline-offset:2px;}
+.es-link .es-pfeil{display:block;color:var(--muted);transition:transform .18s cubic-bezier(.2,.8,.2,1);}
+.es-link .es-name span:first-child{display:block;font-size:18px;}
+.es-link .es-hinweis{display:block;}
+/* Zahlungsdaten (buero-zahlungsmail.js) im Rahmen der Einstellungen: eine Ebene weniger, Zwischenüberschriften wie bei Fahrschule/Planung */
+.es-inhalt .formular fieldset.zm-modus-wahl{border:0;padding:0;gap:10px;}
+.es-inhalt .formular .zm-modus-wahl legend{padding:0;margin:0 0 6px;font-family:'Source Serif 4',Georgia,serif;font-size:24px;font-weight:700;}
+.es-inhalt .zm-aktuell{padding:6px 12px;font-size:15px;font-weight:700;line-height:1.35;}
+.es-inhalt .formular .es-abschnitt{margin-top:14px;}
+.es-inhalt .formular label{font-weight:600;}
 .es-box.es-ein{animation:es-ein .16s cubic-bezier(.2,.8,.2,1);}
 @keyframes es-ein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
-.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
+h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .es-box > .es-abschnitt:not(:first-child),.es-box form > .es-abschnitt:not(:first-child){margin-top:26px;}
 .es-zeile{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 0;border-bottom:1px solid var(--line-soft);}
 .es-name{flex:1 1 auto;min-width:0;font-size:18px;}
 .es-name label{display:block;}
 .es-hinweis{color:var(--muted);font-size:15px;line-height:1.35;margin-top:2px;}
 .es-satz{margin:8px 0;}
-.es-wert{flex:0 0 min(240px,42%);box-sizing:border-box;display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--bg);font:inherit;font-weight:600;color:var(--txt);}
+.es-wert{flex:0 0 min(240px,42%);box-sizing:border-box;display:flex;align-items:center;gap:8px;min-width:0;min-height:44px;padding:0 12px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);font:inherit;font-weight:600;color:var(--txt);}
 .es-wert input,.es-wert select{flex:1 1 auto;min-width:0;min-height:42px;border:0;background:transparent;font:inherit;font-weight:600;color:inherit;padding:0;outline:none;}
 .es-wert:focus-within{outline:3px solid var(--akzent-line);outline-offset:2px;}
 .es-wert:has(input:disabled){opacity:.65;}
@@ -1008,7 +1025,7 @@ body.kiosk .rollen-streifen{display:none;}
 /* die übernommenen Zahlungsdaten-Karten (buero-zahlungsmail.js) ohne eigenen Rahmen */
 .es-inhalt .karte{background:transparent;border:0;box-shadow:none;padding:0;margin:0;}
 .es-inhalt .karte h2{font-size:24px;margin:0 0 6px;}
-@media (prefers-color-scheme:dark){ .es-neu{color:var(--gold);} }
+@media (prefers-color-scheme:dark){ .es-neu{color:var(--gold);} .es-inhalt{background:#2a313d;border-color:#4a5565;} .es-thema[aria-current="page"]{background:#2a313d;box-shadow:inset 0 0 0 1px #4a5565;} .es-wert{background:#1b1f27;} }
 @media (max-width:900px){
   .es{grid-template-columns:minmax(0,1fr);gap:0;}
   .es-themen{gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;}
@@ -1017,7 +1034,8 @@ body.kiosk .rollen-streifen{display:none;}
   .es-thema::before{display:none;}
   .es-pfeil{display:block;}
   .es[data-ansicht="liste"] .es-inhalt,.es[data-ansicht="thema"] .es-themen{display:none;}
-  .es-zurueck{display:inline-flex;}
+  .es-kopfzeile{display:flex;align-items:center;gap:6px;margin:-4px 0 10px -8px;}
+  body[data-bereich="einstellungen"][data-es-ansicht="thema"] .kopf h1{display:none;}
   .es-inhalt{padding:16px;}
 }
 @media (max-width:560px){
@@ -1027,7 +1045,7 @@ body.kiosk .rollen-streifen{display:none;}
   .es-wert.es-text{justify-content:flex-start;text-align:left;}
   .es-neu{order:2;}
   .es-knopf{flex:1 1 100%;}
-  .es-fuss{justify-content:stretch;} .es-fuss .knopf{flex:1 1 100%;}
+  .es-fuss .knopf{min-width:140px;}
 }
 .es-inhalt .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
 .es-inhalt .formular{grid-template-columns:minmax(0,1fr);}

@@ -862,7 +862,7 @@ function renderFristen() {
     <p class="leise klein" data-reaktregel>${KR.reaktFreiAm(undefined, heute)
       ? "Reaktivierung entfällt laut Preisliste. Deshalb wird niemand gesperrt und nichts wird fällig."
       : `Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, ${reaktRegelText()}. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist.`} Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
-  </div>${typeof zmEinstellungenHTML === "function" && S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle) ? `<p class="leise klein nicht-drucken" id="fristenEinstHinweis">Zahlungsdaten für die Mails an Schüler, Reaktivierungs-Betrag und Wochen-Einheiten stehen jetzt in den Einstellungen: <a href="#einstellungen?thema=zahlungen">Zahlungsdaten in den Einstellungen</a>.</p>` : ""}`; // Werkstatt 11 Schritt 2: Formulare sind nach #einstellungen umgezogen
+  </div>${typeof zmEinstellungenHTML === "function" && S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle) ? `<p class="leise klein nicht-drucken" id="fristenEinstHinweis">Die Zahlungsdaten für die Mails an Schüler stehen jetzt in den Einstellungen: <a href="#einstellungen?thema=zahlungen">Zahlungsdaten in den Einstellungen</a>.</p>` : ""}`; // Werkstatt 11 Schritt 2: Formulare sind nach #einstellungen umgezogen
 }
 function bindeFristen(ziel) {
   const suche = ziel.querySelector("#fristenSuche");

@@ -5,6 +5,8 @@
                                               render(el, ctx), verlassen?() , verwerfen?() })
 
    - Die Liste darf vor oder nach dem Laden dieser Datei gefüllt werden. Gleiche id: der spätere Eintrag ersetzt den früheren.
+     Bitte push verwenden (unshift und ein neues Array werden beim nächsten Zeichnen auch gelesen, die Liste links aktualisiert sich dann erst dort).
+     Ersetzt ein push das gerade offene Thema, wird es neu gezeichnet. render darf ein Promise zurückgeben (lehnt es ab, erscheint eine Fehlerzeile).
    - ctx = { sb, fahrschuleId, rolle, darfSchreiben, meldung(text, art) }, art = 'ok' | 'fehler' | 'info'.
    - rolle: 'leitung' = fahrschule_admin, 'buero' = buero, 'superadmin' = super_admin.
    - render zeichnet bei jedem Neuzeichnen neu (z. B. nach dem Auffrischen der Daten). Wer Eingaben hat, merkt sie sich selbst.
@@ -16,9 +18,10 @@
   "use strict";
   const W = window;
   if (!Array.isArray(W.BUERO_EINSTELLUNGEN_THEMEN)) W.BUERO_EINSTELLUNGEN_THEMEN = [];
-  const LISTE = W.BUERO_EINSTELLUNGEN_THEMEN;
-  const ROLLEN_KURZ = { fahrschule_admin: "leitung", buero: "buero", super_admin: "superadmin" };
-  const Z = { id: null, el: null, key: undefined, frei: false, entwurf: {}, melde: null };
+    const ROLLEN_KURZ = { fahrschule_admin: "leitung", buero: "buero", super_admin: "superadmin" };
+  let LISTE = W.BUERO_EINSTELLUNGEN_THEMEN;
+  const Z = { id: null, el: null, key: undefined, frei: false, entwurf: {}, melde: null, fs: undefined, fokus: null, nr: null, behalte: false };
+  W.addEventListener("hashchange", () => { Z.fokus = null; });
 
   const meineRolle = () => ROLLEN_KURZ[S.profil && S.profil.rolle] || "";
   const darfSeite = () => !!meineRolle();
@@ -30,6 +33,7 @@
   // Wartelistenpunkt, den noch niemand angemeldet hat, wird hier eingetragen (ein späterer Eintrag mit gleicher id ersetzt ihn)
   function themen() {
     const rolle = meineRolle(), karte = new Map();
+    if (Array.isArray(W.BUERO_EINSTELLUNGEN_THEMEN) && W.BUERO_EINSTELLUNGEN_THEMEN !== LISTE) { LISTE = W.BUERO_EINSTELLUNGEN_THEMEN; patche(LISTE); } // neues Array nach dem Laden
     LISTE.forEach((t) => { if (t && t.id && typeof t.render === "function") karte.set(t.id, t); });
     return [...karte.values()].filter((t) => !Array.isArray(t.rollen) || t.rollen.includes(rolle))
       .sort((a, b) => (Number(a.reihenfolge) || 0) - (Number(b.reihenfolge) || 0));
@@ -52,28 +56,42 @@
   /* ---------- Bausteine für Zeilen ---------- */
   const zeile = (name, wert, o = {}) => `<div class="es-zeile"><div class="es-name">${o.fuer ? `<label for="${o.fuer}">${esc(name)}</label>` : `<span>${esc(name)}</span>`}${o.hinweis ? `<div class="es-hinweis">${o.hinweis}</div>` : ""}</div>${o.neu ? '<span class="es-neu">neu</span>' : ""}${wert}</div>`;
   const abschnitt = (t) => `<h2 class="es-abschnitt">${esc(t)}</h2>`;
-  const link = (href, text) => `<a class="knopf es-knopf" href="${href}">${esc(text)}</a>`;
+  const linkZeile = (href, name, hinweis) => `<a class="es-link" href="${href}"><span class="es-name"><span>${esc(name)}</span>${hinweis ? `<span class="es-hinweis">${hinweis}</span>` : ""}</span><svg class="es-pfeil" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>`;
   const leer = (text) => `<p class="es-leer">${esc(text)}</p>`;
 
-  // Eingaben eines eigenen Themas überstehen das Neuzeichnen (Auffrischen im Hintergrund) und den Themenwechsel
+  // Eingaben eines eigenen Themas überstehen das Neuzeichnen (Auffrischen im Hintergrund) und den Themenwechsel.
+  // Der Entwurf gehört zu Fahrschule UND Thema (Schulwechsel des Super-Admins nimmt nichts mit).
+  const ek = (id) => (S.fsId || "") + "|" + id;
   function entwurfBinden(el, id) {
-    const e = Z.entwurf[id] || {};
+    const k = ek(id), e = Z.entwurf[k] || {};
     el.querySelectorAll("input[name]").forEach((i) => { if (i.name in e && !i.disabled) i.value = e[i.name]; });
     el.addEventListener("input", (ev) => {
       const i = ev.target; if (!i || !i.name || i.disabled) return;
-      const d = (Z.entwurf[id] = Z.entwurf[id] || {});
+      const d = (Z.entwurf[k] = Z.entwurf[k] || {});
       if (i.value === i.defaultValue) delete d[i.name]; else d[i.name] = i.value; // zurück auf den alten Wert = keine Änderung mehr
     });
+    // aktives Feld und Cursor überstehen das Neuzeichnen (sonst klappt die Tastatur am Handy zu)
+    const merke = (ev) => { const t = ev.target; if (t && t.name && el.contains(t)) Z.fokus = { k, name: t.name, a: t.selectionStart, b: t.selectionEnd }; };
+    ["focusin", "input", "keyup", "click", "select"].forEach((ev) => el.addEventListener(ev, merke));
+    el.addEventListener("focusout", () => setTimeout(() => { if (el.isConnected && !el.contains(document.activeElement)) Z.fokus = null; }, 0));
+    if (Z.fokus && Z.fokus.k === k && (!document.activeElement || document.activeElement === document.body)) {
+      const f = el.elements ? el.elements[Z.fokus.name] : el.querySelector(`[name="${Z.fokus.name}"]`), von = Z.fokus.a, bis = Z.fokus.b; // vorher kopieren: focus() löst den Merker aus
+      if (f && f.focus) { f.focus({ preventScroll: true }); try { f.setSelectionRange(von, bis); } catch (e2) { /* Feldart ohne Cursor */ } }
+    }
   }
-  const entwurfDa = (id) => !!(Z.entwurf[id] && Object.keys(Z.entwurf[id]).length);
-  const entwurfWeg = (id) => { delete Z.entwurf[id]; };
+  const entwurfDa = (id) => !!(Z.entwurf[ek(id)] && Object.keys(Z.entwurf[ek(id)]).length);
+  const entwurfWeg = (id) => { delete Z.entwurf[ek(id)]; };
 
   // Eine Zahl in fahrschulen.konfiguration speichern: gleicher Weg wie vorher auf der Fristen-Seite
   async function konfigSpeichern(feld, wert, ctx, thema) {
-    const neu = Object.assign({}, (S.fs && S.fs.konfiguration) || {}, { [feld]: wert });
-    const res = await supa.from("fahrschulen").update({ konfiguration: neu }).eq("id", S.fsId).select("id");
+    // frisch holen und nur das eigene Feld ergänzen: zwei PCs überschreiben einander nicht (wie in der App)
+    const fsId = S.fsId;
+    const cur = await supa.from("fahrschulen").select("konfiguration").eq("id", fsId).single();
+    if (cur.error || !cur.data) { ctx.meldung("Nicht gespeichert: Die Einstellungen konnten nicht geladen werden.", "fehler"); return false; }
+    const neu = Object.assign({}, cur.data.konfiguration || {}, { [feld]: wert });
+    const res = await supa.from("fahrschulen").update({ konfiguration: neu }).eq("id", fsId).select("id");
     if (res.error || !res.data || !res.data.length) { ctx.meldung("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), "fehler"); return false; }
-    S.fs.konfiguration = neu;
+    if (S.fsId === fsId && S.fs) S.fs.konfiguration = neu;
     entwurfWeg(thema);
     toast("Einstellungen gespeichert");
     zeichne();
@@ -113,8 +131,9 @@
         const k = (S.fs && S.fs.konfiguration) || {}, darf = istSuper(), inListe = reaktInPreisliste();
         const pakete = typeof bkDa === "function" && bkDa();
         el.innerHTML = `${abschnitt("Preise")}
-          ${zeile("Preisliste", link("#zahlungen?reiter=preise", "Preisliste öffnen"), { hinweis: "Alle Preise (Fahrstunden, Prüfungen, Reaktivierung …) stehen dort, jeder mit „gültig ab“." })}
-          ${pakete ? zeile("Pakete", link("#zahlungen?reiter=pakete", "Pakete öffnen"), { hinweis: "Paketpreise und Stunden." }) : ""}
+          ${linkZeile("#zahlungen?reiter=preise", "Preisliste", "Alle Preise (Fahrstunden, Prüfungen, Reaktivierung …) stehen dort, jeder mit „gültig ab“.")}
+          ${pakete ? linkZeile("#zahlungen?reiter=pakete", "Pakete", "Paketpreise und Stunden.") : ""}
+          <p class="es-hinweis es-satz">Eine abweichende Zahlung (z. B. Sonderangebot) trägst du direkt beim Eintragen der Zahlung ein.</p>
           ${abschnitt("Reaktivierung")}
           <form id="esPreiseForm" autocomplete="off">
             ${inListe ? `<p class="es-hinweis es-satz">Reaktivierung heute: <b>${esc(reaktHeuteText())}</b>. Das steht in der Preisliste (dort mit „gültig ab“ ändern).</p>` : ""}
@@ -137,6 +156,8 @@
         // Dasselbe Formular wie bisher (buero-zahlungsmail.js): gleiche Darstellung, gleiche Bindung, gleicher Speicherweg
         const html = typeof zmEinstellungenHTML === "function" ? zmEinstellungenHTML() : "";
         el.innerHTML = html || leer("Hier kommt bald: Zahlungsdaten für die Mails an Schüler.");
+        const hinw = el.querySelector("#zmForm p.voll.leise.klein:not([data-zmzuletzt])"); // „Diese Angaben stehen in der Zahlungsaufforderung …“
+        if (hinw) hinw.insertAdjacentHTML("beforebegin", `<h3 class="es-abschnitt">Zahlungsdaten</h3>`);
         if (html && typeof zmBindeEinstellungen === "function") zmBindeEinstellungen(el);
       } },
     { id: "vorlagen", titel: "Nachrichten-Vorlagen", reihenfolge: 50,
@@ -151,8 +172,8 @@
       render(el) {
         const aktiv = (S.personen || []).filter((p) => p.aktiv !== false).length;
         el.innerHTML = `${abschnitt("Team & Zugänge")}
-          ${zeile("Fahrlehrer & Büro", link("#team", "Öffnen"), { hinweis: "Zugänge anlegen, ändern oder sperren." })}
-          ${zeile("Büro-Personen und PIN", link("#team", "Öffnen"), { hinweis: `Namen und PIN je Person (${aktiv} aktiv). Steht auf der Seite „Fahrlehrer & Büro“ weiter unten.` })}`;
+          ${linkZeile("#team", "Fahrlehrer & Büro", "Zugänge anlegen, ändern oder sperren.")}
+          ${linkZeile("#team", "Büro-Personen und PIN", `Namen und PIN je Person (${aktiv} aktiv). Steht auf der Seite „Fahrlehrer & Büro“ weiter unten.`)}`;
       } },
     { id: "sicherheit", titel: "Sicherheit (PIN)", reihenfolge: 80,
       render(el) {
@@ -177,6 +198,7 @@
 
   /* ---------- Seite ---------- */
   const chevron = '<svg class="es-pfeil" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  const zurueckPfeil = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
   const listeHTML = (T, aktivId) => T.map((t) => `<a class="es-thema" href="${themaHash(t.id)}" data-es-thema="${esc(t.id)}"${t.id === aktivId ? ' aria-current="page"' : ""}><span>${esc(t.titel)}</span>${chevron}</a>`).join("");
   function darfVerlassen(t) { try { return !(t && typeof t.verlassen === "function") || t.verlassen() !== false; } catch (e) { return true; } }
   function rueckfrage(alt, hash) {
@@ -190,26 +212,46 @@
 
   function renderEinstellungenSeite() {
     const T = themen();
-    if (!Z.el || !Z.el.isConnected) { Z.key = undefined; Z.halte = null; } // Seite wurde verlassen: beim Zurückkommen kein Einblenden
+    if (Z.fs !== S.fsId) { Z.entwurf = {}; Z.fokus = null; Z.fs = S.fsId; } // andere Fahrschule: keine Entwürfe der vorigen
+    if (!Z.el || !Z.el.isConnected) { Z.key = undefined; Z.halte = null; Z.behalte = false; } // Seite wurde verlassen: beim Zurückkommen kein Einblenden
     const wunsch = hashThema();
-    let aktiv = T.find((t) => t.id === wunsch) || T[0] || null;
-    const alt = Z.el && Z.el.isConnected ? T.find((t) => t.id === Z.id) : null;
+    const alt = Z.el && Z.el.isConnected ? T.find((t) => t.id === Z.id) || null : null;
+    let aktiv = T.find((t) => t.id === wunsch) || (wunsch === "" && schmal() && alt) || T[0] || null;
     Z.halte = null;
-    if (alt && aktiv && alt.id !== aktiv.id) {
+    const dirty = !!alt && !darfVerlassen(alt);
+    const kommtAusListe = Z.inListe; Z.inListe = false; // Handy: das Thema lag zuletzt hinter der Liste
+    const zuListe = dirty && wunsch === "" && schmal(); // Handy: von der Eingabe zurück zur Liste
+    let ausListeOk = false;
+    if (alt && aktiv && (alt.id !== aktiv.id || zuListe)) {
       if (Z.frei) Z.frei = false;
-      else if (!darfVerlassen(alt)) { // Zurück-Taste oder Adresse: beim alten Thema bleiben und fragen
+      else if (zuListe && (Z.listeOk || kommtAusListe)) { Z.listeOk = false; Z.halte = alt; ausListeOk = true; Z.inListe = true; } // Pfeil „Alle Themen“: ohne Frage, Eingabe bleibt im Hintergrund
+      else if (dirty) { // Zurück-Taste oder Adresse: beim alten Thema bleiben und fragen
         Z.halte = alt; const neuHash = location.hash;
-        history.replaceState(null, "", themaHash(alt.id));
+        const jetzt = typeof buNr === "function" ? buNr() : null;
         aktiv = alt;
-        rueckfrage(alt, neuHash);
+        if (Z.nr != null && jetzt != null && jetzt !== Z.nr) {
+          // erst zurückspringen, dann fragen (der Sprung schließt offene Fenster); kommt kein Sprung an, wird nach 0,4 s ersatzweise umgeschrieben
+          Z.behalte = true; Z.frage = { alt, hash: neuHash };
+          if (jetzt < Z.nr) history.forward(); else history.back();
+          setTimeout(() => { if (Z.frage) { const q = Z.frage; Z.frage = null; Z.behalte = false; history.replaceState(null, "", themaHash(q.alt.id)); rueckfrage(q.alt, q.hash); } }, 400);
+        } else { history.replaceState(null, "", themaHash(alt.id)); rueckfrage(alt, neuHash); }
       }
-    } else Z.frei = false;
+    } else {
+      Z.frei = false;
+      if (alt && aktiv && alt.id === aktiv.id && kommtAusListe && wunsch !== "" && dirty) { Z.halte = alt; } // zurück aus der Liste ins selbe Thema: Eingabe behalten
+      else if (alt && aktiv && alt.id === aktiv.id && Z.behalte) { // Rückgängig-Sprung: das Feld samt Eingabe behalten, dann fragen
+        if (typeof buNr === "function") Z.nr = buNr();
+        Z.behalte = false; Z.halte = alt;
+        if (Z.frage) { const q = Z.frage; Z.frage = null; setTimeout(() => rueckfrage(q.alt, q.hash), 0); }
+      }
+    }
     Z.aktiv = aktiv;
     if (!aktiv) return `<div class="es"><p class="es-leer">Hier kommt bald etwas zum Einstellen.</p></div>`;
-    return `<div class="es" data-ansicht="${wunsch && T.some((t) => t.id === wunsch) ? "thema" : "liste"}">
+    const imThema = (!!Z.halte && !ausListeOk) || !!(wunsch && T.some((t) => t.id === wunsch));
+    return `<div class="es" data-ansicht="${imThema ? "thema" : "liste"}">
       <nav class="es-themen" aria-label="Themen">${listeHTML(T, aktiv.id)}</nav>
       <section class="es-inhalt" aria-label="${esc(aktiv.titel)}">
-        <a class="es-zurueck" href="${themaHash("")}" data-es-thema="">‹ Alle Themen</a>
+        <div class="es-kopfzeile"><a class="es-zurueck" href="${themaHash("")}" data-es-thema="" aria-label="Zurück zu allen Themen">${zurueckPfeil}</a><h2 class="es-titel">${esc(aktiv.titel)}</h2></div>
         <div class="es-meldung" id="esMeldung" role="status" aria-live="polite" hidden></div>
         <div class="es-box" id="esBox" data-thema="${esc(aktiv.id)}"></div>
       </section>
@@ -219,42 +261,56 @@
   function bindeEinstellungenSeite(ziel) {
     const aktiv = Z.aktiv, box = ziel.querySelector("#esBox");
     if (!aktiv || !box) return;
-    if (Z.halte && Z.el && Z.el.isConnected === false) { box.replaceWith(Z.el); }
+    const es = ziel.querySelector(".es"); if (es) document.body.dataset.esAnsicht = es.dataset.ansicht; // Handy: im Thema steht der Themenname statt „Einstellungen“ oben
+    if (Z.halte && Z.el && !Z.el.isConnected) { box.replaceWith(Z.el); }
     else {
-      try { aktiv.render(box, kontext()); }
-      catch (e) { console.error(e); box.innerHTML = leer("Dieses Thema konnte nicht geöffnet werden. Bitte die Seite neu laden."); }
+      const ctx = kontext();
+      const fehler = (e) => { console.error(e); box.innerHTML = leer("Dieses Thema konnte nicht geöffnet werden. Bitte die Seite neu laden."); ctx.meldung("Dieses Thema konnte nicht geladen werden.", "fehler"); };
+      try {
+        const r = aktiv.render(box, ctx);
+        if (r && typeof r.then === "function") r.then(null, (e) => { if (box.isConnected) fehler(e); else console.error(e); }); // async render: Ablehnung abfangen
+      } catch (e) { fehler(e); }
       if (!box.firstElementChild && !box.textContent.trim()) box.innerHTML = leer("Hier kommt bald etwas zum Einstellen.");
+      const h = box.firstElementChild; // Überschrift = Themenname: am Handy steht der Name schon oben
+      if (h && h.classList.contains("es-abschnitt") && h.textContent.trim() === aktiv.titel) h.classList.add("es-doppelt");
       // sanft einblenden nur beim Wechsel des Themas (nicht beim ersten Zeichnen, nicht beim Neuzeichnen desselben Themas)
       const key = schmal() ? hashThema() : aktiv.id;
       if (Z.key !== undefined && Z.key !== key) { void box.offsetWidth; box.classList.add("es-ein"); }
-      Z.key = key; Z.el = box; Z.id = aktiv.id;
+      Z.key = key; Z.el = box; Z.id = aktiv.id; Z.nr = typeof buNr === "function" ? buNr() : null;
     }
-    if (Z.halte) Z.halte = null;
+    Z.halte = null;
   }
 
   // Klick auf ein Thema: bei ungespeicherten Änderungen erst fragen, ohne einen Eintrag im Verlauf anzulegen
   document.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("a[data-es-thema]");
     if (!a || !Z.el || !Z.el.isConnected) return;
+    const neu = a.dataset.esThema;
+    if (neu === "") { Z.listeOk = true; setTimeout(() => { Z.listeOk = false; }, 1000); return; } // „Alle Themen“: die Eingabe bleibt, es wird nicht gefragt
+    if (neu === Z.id) return; // dasselbe Thema verlässt nichts
     const alt = themen().find((t) => t.id === Z.id), hash = a.getAttribute("href");
     if (!alt || darfVerlassen(alt)) return;
-    const neu = a.dataset.esThema;
-    if (neu === Z.id && !schmal()) return;
     e.preventDefault();
     rueckfrage(alt, hash);
   });
 
-  // Ein Thema kommt nach dem Laden dazu: Liste links nachziehen, ein gewünschtes Thema aus der Adresse jetzt öffnen
-  const push0 = LISTE.push;
-  LISTE.push = function () {
-    const r = push0.apply(this, arguments);
-    if (document.body && document.body.dataset.bereich === "einstellungen" && S.geladenAm) {
-      const T = themen(), nav = document.querySelector(".es-themen"), w = hashThema();
-      if (w && T.some((t) => t.id === w) && Z.id !== w) zeichne();
-      else if (nav) nav.innerHTML = listeHTML(T, Z.id);
-    }
-    return r;
-  };
+  // Ein Thema kommt nach dem Laden dazu: Liste links nachziehen, ein gewünschtes Thema aus der Adresse jetzt öffnen,
+  // ein ersetztes offenes Thema neu zeichnen
+  function angemeldet(ids) {
+    if (!(document.body && document.body.dataset.bereich === "einstellungen" && S.geladenAm)) return;
+    const T = themen(), nav = document.querySelector(".es-themen"), w = hashThema();
+    if ((w && T.some((t) => t.id === w) && Z.id !== w) || ids.includes(Z.id)) zeichne();
+    else if (nav) nav.innerHTML = listeHTML(T, Z.id);
+  }
+  function patche(arr) {
+    if (arr.__es) return;
+    Object.defineProperty(arr, "__es", { value: true });
+    ["push", "unshift"].forEach((m) => {
+      const o = arr[m];
+      Object.defineProperty(arr, m, { configurable: true, writable: true, value: function () { const ids = [...arguments].map((x) => x && x.id); const r = o.apply(this, arguments); angemeldet(ids); return r; } });
+    });
+  }
+  patche(LISTE);
 
   W.renderEinstellungenSeite = renderEinstellungenSeite;
   W.bindeEinstellungenSeite = bindeEinstellungenSeite;
