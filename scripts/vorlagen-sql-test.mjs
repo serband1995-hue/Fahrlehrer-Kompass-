@@ -146,7 +146,8 @@ await einstellung("vorlagen.reaktivierung_bald", undefined); await einstellung("
 
 // ---------- 3. Zufall: Server = Büro/App (KR.reaktInfo mit denselben Einstellungen) ----------
 let seed = 20261128;
-const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor(seed / 65536) % n; }; // obere Bits
+const zaehler = [0, 0]; // [gesendet, abgelehnt]
 for (let runde = 0; runde < 30; runde++) {
   const ein = zufall(3) ? { bald_tage: 1 + zufall(100), vorwarn_tage: 1 + zufall(120), monate: 1 + zufall(30) } : undefined;
   await einstellung("fristen.reaktivierung", ein);
@@ -160,10 +161,12 @@ for (let runde = 0; runde < 30; runde++) {
     const darf = ["gesperrt", "pruefen_faellig", "bald", "demnaechst"].includes(r.stufe);
     const d = await vorbereiten(s.id);
     gleich(`Zufall ${runde}/${s.id}: Server sendet ⇔ Büro bietet an (${r.stufe})`, darf, !d.fehler);
+    zaehler[d.fehler ? 1 : 0]++;
     if (darf && !d.fehler) gleich(`Zufall ${runde}/${s.id}: Fälligkeit und Vorlage`, { f: r.faellig, v: r.tage >= 0 ? "reaktivierung_bald" : "reaktivierung" }, { f: d.faellig_am, v: d.vorlage_art });
   }
 }
 await einstellung("fristen.reaktivierung", undefined);
+gleich(`Zufall: beide Ausgänge kommen vor (${zaehler[0]} gesendet, ${zaehler[1]} abgelehnt)`, true, zaehler[0] >= 5 && zaehler[1] >= 5);
 
 // ---------- 4. Mail = Vorschau (dieselbe Datei, dieselben Werte) ----------
 gleich("vorlagen.js ist Byte für Byte kompass-vorlagen.js", readFileSync(join(ROOT, "kompass-vorlagen.js"), "utf8"), readFileSync(join(ROOT, "supabase/functions/zahlungs-mail/vorlagen.js"), "utf8"));

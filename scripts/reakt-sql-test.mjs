@@ -187,7 +187,7 @@ await db.exec("delete from public.kalender_termine");
 
 // ---------- 6. Zufallsvergleich Server ↔ kompass-rechnen.js (Regel und Sperre) ----------
 let seed = 20261124;
-const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };
+const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return Math.floor(seed / 65536) % n; }; // obere Bits: die unteren wiederholen sich (bei % 2 immer abwechselnd)
 for (let runde = 0; runde < 60; runde++) {
   const zeilen = [];
   for (let i = 0, n = zufall(5); i < n; i++) {
