@@ -4,6 +4,14 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.11", datum: "2026-11-25", kurz: "Büro-Seite: Buchungslinks, Erinnerungen, Monatsbericht.",
+    punkte: ["Buchungslinks und QR-Code je Fahrlehrer: unter „Fahrlehrer & Büro“ beim Fahrlehrer auf „Buchungslinks“ tippen.",
+             "Die Glocke oben zeigt, wer morgen Fahrstunde oder Prüfung hat und wer heute Geburtstag hat. „WhatsApp“ öffnet den fertigen Text, abgeschickt wird erst dort.",
+             "Statistik: „Monatsbericht (PDF)“ oben rechts, dazu die Quote je Fahrlehrer und die Prüfer.",
+             "Zahlungen › Verkäufe & Provision: „+ Provision von Hand“.",
+             "Termin-Fenster: bei Erste Hilfe „Kurs bezahlt“, bei Beratung Name und Telefon. Auf „Heute“ stehen offene Erste-Hilfe-Kurse und Schüler, die seit 4 Wochen nicht gefahren sind.",
+             "Schüler-Akte: „To-do / aktueller Stand“ und bei Turboboost „Serientermine anlegen“.",
+             "Urlaub warnt jetzt auch bei Prüfung, Fahrlehrerwechsel und im Ausbildungsnachweis."] },
   { version: "2026.11.25.10", datum: "2026-11-25", kurz: "Plan: Sonderfahrt-Kästchen folgen jetzt ihrem Termin.",
     punkte: ["Verschiebt oder ändert jemand eine Sonderfahrt, zum Beispiel das Büro, ändern sich die Kästchen im Ausbildungsplan mit. Das gilt für Sonderfahrten, die ab jetzt aus dem Plan eingetragen werden. Sagt das Büro eine künftige Fahrt ab, werden ihre Kästchen wieder frei.",
              "Bei „nicht erschienen“ oder „abgebrochen“ werden die Kästchen frei, und du kannst die Fahrt neu eintragen. Stellst du den Termin zurück, zählt er wieder.",
