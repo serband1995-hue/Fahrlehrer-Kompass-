@@ -35,6 +35,8 @@ pruefe("T5", "keine Namen, nur telefon/datum/klasse", r.every((x) => j(Object.ke
 pruefe("T6", "Reihenfolge egal (aufsteigend sortiert gleiches Ergebnis)", j(bestandenBauen([...pb].reverse(), alle, AB, HEUTE).sort((x, y) => x.telefon < y.telefon ? -1 : 1)) === j([...r].sort((x, y) => x.telefon < y.telefon ? -1 : 1)) || "anders");
 pruefe("T7", "leere Eingaben -> leere Liste", j(bestandenBauen([], [], AB, HEUTE)) === "[]" || "nicht leer");
 pruefe("T8", "Klasse leer ueberall -> null", j(bestandenBauen([{ schueler_id: "f", datum: "2026-11-01", klasse: "" }], alle, AB, HEUTE)) === j([{ telefon: "0173 4444444", datum: "2026-11-01", klasse: null }]) || "falsch");
+pruefe("T15", "+49 und 0 gelten als dieselbe Nummer (Geschwister erkannt)", j(bestandenBauen([{ schueler_id: "g", datum: "2026-11-01", klasse: "B" }], [{ id: "g", telefon: "+49 175 5555555" }, { id: "h", telefon: "0175 5555555" }, { id: "i", telefon: "0049 175 6666666" }], AB, HEUTE)) === "[]" || "nicht erkannt");
+pruefe("T16", "Bestanden-Teil hat ein Zeitlimit (Termine kommen auch, wenn er haengt)", /Promise\.race\(\[\s*bestandenLaden/.test(await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8")) || "fehlt");
 // Termine (v3) unveraendert
 const t = termineBauen([{ schueler_id: "a", datum: "2026-12-03" }], [{ id: "a", telefon: "0171 1111111", status: "aktiv" }], HEUTE, mehrdeutigeNummern([]));
 pruefe("T9", "Termine wie bisher", j(t) === j([{ telefon: "0171 1111111", datum: "2026-12-03" }]) || j(t));

@@ -38,7 +38,8 @@ export function termineBauen(pruefungen: Pruefung[], schueler: Schueler[], heute
 // klasse: aus der Pruefung, sonst die Klasse des Schuelers, sonst null. Keine Namen.
 export type BestandenPruefung = { schueler_id: string | null; datum: string; klasse?: string | null };
 export type ExportSchueler = { id: string; telefon: string | null; klasse?: string | null };
-export function telefonNorm(t: string): string { return String(t || "").replace(/\(0\)/g, "").replace(/[\s\-\/().]/g, ""); }
+// +49 / 0049 am Anfang gilt wie 0 (gleiche Nummer in zwei Schreibweisen = Geschwister erkannt). Nur fuer "bestanden".
+export function telefonNorm(t: string): string { return String(t || "").replace(/\(0\)/g, "").replace(/[\s\-\/().]/g, "").replace(/^(\+|00)49/, "0"); }
 export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchueler[], ab: string, heute: string): { telefon: string; datum: string; klasse: string | null }[] {
   const nachId = new Map<string, ExportSchueler>();
   const zaehl = new Map<string, number>();

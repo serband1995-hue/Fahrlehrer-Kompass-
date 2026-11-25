@@ -114,7 +114,13 @@ Deno.serve(async (req: Request) => {
       gleiche.push(...(data || []));
     }
     const termine = termineBauen(pt || [], schueler, heute, mehrdeutigeNummern(gleiche));
-    const bestanden = await bestandenLaden(client, heute);
+    // Haengt der Bestanden-Teil, gehen die Termine nach hoechstens 10 Sekunden trotzdem raus (dann bestanden = []).
+    let uhr: ReturnType<typeof setTimeout> | undefined;
+    const bestanden = await Promise.race([
+      bestandenLaden(client, heute),
+      new Promise<{ telefon: string; datum: string; klasse: string | null }[]>((r) => { uhr = setTimeout(() => { console.error("Bestanden-Teil zu langsam"); r([]); }, 10000); }),
+    ]);
+    clearTimeout(uhr);
     console.log("Termine ausgeliefert: " + termine.length + ", bestanden: " + bestanden.length);   // nur Anzahlen, keine Daten
     return antwort(200, { termine, bestanden });
   } catch (e) {
