@@ -195,7 +195,7 @@ for (const [w, h, n] of [[360, 740, "Handy"], [1024, 768, "Tablet quer"], [1280,
   const q = b.page;
   await q.waitForFunction(() => window.S && S.geladenAm, null, { timeout: 8000 }).catch(() => {});
   const knopf = () => q.evaluate(() => { const k = document.getElementById("kopfZurueck"); if (!k || k.hidden) return null; const r = k.getBoundingClientRect(); return { h: r.height, w: r.width }; });
-  await pruefe(`B1 [${n}]`, "Büro: beim Start kein Zurück-Knopf; Tipp auf „Heute zu tun“ (dieselbe Seite) auch nicht", async () => {
+  await pruefe(`B1 [${n}]`, "Büro: beim Start kein Zurück-Knopf; Tipp auf „Heute“ (dieselbe Seite) auch nicht", async () => {
     if (await knopf()) return "Knopf sichtbar";
     await q.evaluate(() => { location.hash = "heute"; }); await warte(q, 300);
     if (await knopf()) return "Knopf nach Tipp auf die Startseite sichtbar";
