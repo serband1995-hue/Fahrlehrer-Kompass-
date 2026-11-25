@@ -5147,7 +5147,7 @@ async function starte(user) {
   } catch (e) {
     console.error(e);
     zeigeHinweis("Keine Verbindung", "Das Profil konnte nicht geladen werden. Bitte Internet prüfen und die Seite neu laden.",
-      `<button class="knopf haupt" type="button" onclick="location.reload()">Neu laden</button>`);
+      `<button class="knopf haupt" type="button" onclick="location.reload()">Neu laden</button><button class="knopf" type="button" data-abmelden>Abmelden</button>`); // W16 3 B: ohne App-Link immer ein Ausweg
     return;
   }
   S.profil = profil;
