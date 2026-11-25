@@ -47,9 +47,9 @@ const DATEN = `
   F.tabellen.kalender_termine.push(tt("kg-1", "21:10", "21:50"), tt("kg-2", "21:30", "22:10"));
   window.__dlg = 0; window.confirm = () => { window.__dlg++; return true; }; window.alert = () => { window.__dlg++; };
 `;
-async function oeffne({ hash = "#heute", breite = 1366, hoehe = 900, code = "", vorher = "" } = {}) {
+async function oeffne({ hash = "#heute", breite = 1366, hoehe = 900, code = "", vorher = "", nutzer = "ad-1", uhr } = {}) {
   const daten = bauDaten(new Date().toISOString().slice(0, 10));
-  const session = { user: { id: "ad-1", email: "ad-1@example.org" } };
+  const session = { user: { id: nutzer, email: nutzer + "@example.org" } };
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
   const page = await ctx.newPage();
   ctx.setDefaultTimeout(8000);
@@ -61,12 +61,11 @@ async function oeffne({ hash = "#heute", breite = 1366, hoehe = 900, code = "", 
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   if (vorher) await page.addInitScript(vorher);
   await page.addInitScript(([d, s, v]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s }; (new Function("F", v))(window.__FAKE); }, [daten, session, DATEN + code]);
+  if (uhr) await page.clock.install({ time: new Date(uhr) }); // feste Uhr, läuft ab da weiter
   await page.goto(basis + "buero.html" + hash);
   await warte(page, 700);
   return { page, ctx, konsole };
 }
-const gruppen = (page) => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("[data-gruppe]")].map((b) => [b.dataset.gruppe, b.getAttribute("aria-expanded") === "true" && !b.nextElementSibling.hidden])));
-const offene = (g) => Object.entries(g).filter(([, v]) => v).map(([k]) => k).join(",");
 const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filter((x) => x.tabelle === t && x.art === a), [tab, art]);
 
 // ---- Werkstatt 11 Schritt 1: flache Leiste ----
@@ -75,7 +74,8 @@ const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#neu
 const punkte = (page) => page.$$eval("#nav .nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.querySelector(".nav-text").textContent.trim(), !!a.querySelector("svg"), Math.round(a.getBoundingClientRect().height), a.getAttribute("aria-current") === "page"]));
 const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (l) => l.map((a) => a.getAttribute("href")).join(","));
 {
-  const { page, ctx, konsole } = await oeffne({ hash: "#heute" });
+  const heuteUm = (h, m) => { const d = new Date(); d.setHours(h, m, 0, 0); return d.toISOString(); };
+  const { page, ctx, konsole } = await oeffne({ hash: "#heute", uhr: heuteUm(10, 20) });
   const p = await punkte(page);
   const soll = HAUPT.concat(NEBEN).map((x) => x.join("|")).join(" / ");
   pruefe("L1", "Leiste: 8 Hauptpunkte + 3 darunter in der richtigen Reihenfolge, jeder mit Symbol", p.map((x) => x[0] + "|" + x[1]).join(" / ") === soll && p.every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
@@ -83,6 +83,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const h = new Set(p.slice(0, 8).map((x) => x[3]));
   pruefe("L3", "alle 8 Hauptpunkte gleich hoch (≥ 40 px)", h.size === 1 && [...h][0] >= 40 ? null : [...h].join(","));
   pruefe("L4", "Heute ist markiert, der Titel heißt „Heute“", (await markiert(page)) === "#heute" && (await page.textContent("#titel")) === "Heute" ? null : await markiert(page));
+  pruefe("L5b", "Status: Tooltip „verbunden · Uhrzeit“ am Punkt", /^verbunden/.test(await page.getAttribute("#status", "title")) ? null : await page.getAttribute("#status", "title"));
   const zahlen = await page.$$eval("#nav .nav-punkt .zahl", (z) => z.length);
   pruefe("L5", "Zähler sichtbar (mindestens einer, rot)", zahlen >= 1 ? null : "keine Zähler");
   // Zahlungen-Zähler = Verkäufe „empfohlen“
@@ -96,22 +97,30 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
     await page.evaluate((h) => { location.hash = h; }, hash); await warte(page, 350);
     pruefe("U" + hash.slice(1), `${hash} erreichbar, in der Leiste markiert: ${eltern}`, (await markiert(page)) === eltern && (await page.textContent("#titel")) === titel ? null : `markiert ${await markiert(page)}, Titel ${await page.textContent("#titel")}`);
   }
-  // Zahlungen: Reiterzeile in einer Linie
-  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
-  const rz = await page.$$eval(".zahl-reiter .tab", (l) => l.map((a) => [a.textContent.trim(), a.getAttribute("href"), a.getAttribute("aria-current") === "page", Math.round(a.getBoundingClientRect().top)]));
+  // Zahlungen: Reiterzeile in einer Linie. Wartet ein Verkauf („empfohlen“), öffnet #zahlungen „Verkäufe & Provision“, sonst „Preise“.
+  const ohneZahl = (t) => t.replace(/\s*\d+$/, "").trim();
+  const reiterInfo = () => page.$$eval(".zahl-reiter .tab", (l) => l.map((a) => [a.textContent.trim(), a.getAttribute("href"), a.getAttribute("aria-current") === "page", Math.round(a.getBoundingClientRect().top), !!a.querySelector(".zahl")]));
   const mitPakete = await page.evaluate(() => bkDa());
   const rzSoll = (mitPakete ? ["Preise", "Pakete", "Verkäufe & Provision"] : ["Preise", "Verkäufe & Provision"]).join("|");
-  pruefe("Z1", "#zahlungen: EINE Reiterzeile „Preise · Pakete · Verkäufe & Provision“ in einer Linie, „Preise“ aktiv, keine zweite Reiterzeile", rz.map((x) => x[0]).join("|") === rzSoll && rz[0][2] && rz.slice(1).every((x) => !x[2]) && new Set(rz.map((x) => x[3])).size === 1 && (await page.locator(".bk-reiter").count()) === 0 ? null : JSON.stringify(rz));
+  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
+  let rz = await reiterInfo();
+  pruefe("Z1", "#zahlungen mit wartendem Verkauf: EINE Reiterzeile in einer Linie, „Verkäufe & Provision“ aktiv und mit Zahl, keine zweite Reiterzeile", rz.map((x) => ohneZahl(x[0])).join("|") === rzSoll && rz[rz.length - 1][2] && rz[rz.length - 1][4] && rz.slice(0, -1).every((x) => !x[2] && !x[4]) && new Set(rz.map((x) => x[3])).size === 1 && (await page.locator(".bk-reiter").count()) === 0 && (await page.locator("#vMonat").count()) === 1 ? null : JSON.stringify(rz));
+  const badge = await page.evaluate(() => [document.querySelector('#nav .nav-punkt[href="#zahlungen"] .zahl').textContent, document.querySelector(".zahl-reiter .tab .zahl").textContent]);
+  pruefe("Z1c", "Zahl am Reiter = Zahl in der Leiste", badge[0] === badge[1] && Number(badge[0]) > 0 ? null : JSON.stringify(badge));
+  await page.click('.zahl-reiter .tab[href="#preise"]'); await warte(page, 350);
+  pruefe("Z2", "Reiter „Preise“ zeigt die Preisseite", (await page.locator("#prNeu").count()) === 1 && (await markiert(page)) === "#zahlungen" ? null : "keine Preisseite");
   if (mitPakete) {
     await page.click('.zahl-reiter .tab[href="#preise?reiter=pakete"]'); await warte(page, 350);
-    pruefe("Z1b", "Reiter „Pakete“ zeigt die Pakete, bleibt auf der Seite Zahlungen", (await page.locator("#bkNeu").count()) === 1 && (await page.locator('.zahl-reiter .tab[aria-current=page]').textContent()) === "Pakete" && (await markiert(page)) === "#zahlungen" ? null : "bkNeu " + (await page.locator("#bkNeu").count()));
+    pruefe("Z1b", "Reiter „Pakete“ zeigt die Pakete, bleibt auf der Seite Zahlungen", (await page.locator("#bkNeu").count()) === 1 && ohneZahl(await page.locator('.zahl-reiter .tab[aria-current=page]').textContent()) === "Pakete" && (await markiert(page)) === "#zahlungen" ? null : "bkNeu " + (await page.locator("#bkNeu").count()));
+    await page.evaluate(() => { location.hash = "#zahlungen?reiter=pakete"; }); await warte(page, 350);
+    pruefe("Z1d", "#zahlungen?reiter=pakete bleibt bei den Paketen (auch mit wartendem Verkauf)", (await page.locator("#bkNeu").count()) === 1 ? null : "nicht Pakete");
   }
-  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
-  pruefe("Z2", "#zahlungen zeigt die Preisseite", (await page.locator("#prNeu").count()) === 1 ? null : "keine Preisseite");
   await page.click('.zahl-reiter .tab[href="#verkaeufe"]'); await warte(page, 350);
   pruefe("Z3", "Reiter „Verkäufe & Provision“ zeigt die Verkäufe, Reiterzeile bleibt, Leiste markiert Zahlungen", (await page.locator("#vMonat").count()) === 1 && (await page.locator(".zahl-reiter .tab").count()) === rzSoll.split("|").length && (await markiert(page)) === "#zahlungen" ? null : "vMonat " + (await page.locator("#vMonat").count()));
-  await page.click('.zahl-reiter .tab[href="#preise"]'); await warte(page, 350);
-  pruefe("Z4", "Reiter zurück: Preise", (await page.locator("#prNeu").count()) === 1 && (await page.locator(".zahl-reiter .tab[aria-current=page]").textContent()).startsWith("Preise") ? null : "nicht Preise");
+  // ohne wartenden Verkauf: Preise zuerst, keine Zahl am Reiter
+  await page.evaluate(() => { S.verkaeufe.forEach((v) => { if (v.status === "empfohlen") v.status = "bezahlt"; }); location.hash = "#zahlungen"; zeichne(); }); await warte(page, 350);
+  rz = await reiterInfo();
+  pruefe("Z4", "ohne wartenden Verkauf: #zahlungen öffnet „Preise“, keine Zahl am Reiter und in der Leiste", (await page.locator("#prNeu").count()) === 1 && rz[0][2] && rz.every((x) => !x[4]) && (await page.locator('#nav .nav-punkt[href="#zahlungen"] .zahl').count()) === 0 ? null : JSON.stringify(rz));
   // Kalender
   await page.click('#nav .nav-punkt[href="#kalender"]'); await warte(page, 350);
   const kn = await page.$$eval("#kopfAktionen > *", (l) => l.map((a) => [a.textContent.trim(), a.className, Math.round(a.getBoundingClientRect().top), Math.round(a.getBoundingClientRect().height)]));
@@ -137,13 +146,21 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
     const d = document.querySelector("dialog[open]"); if (!d) return null;
     const f = (n) => d.querySelector(`[name="${n}"]`).value;
     const aktive = S.lehrer.filter((l) => l.aktiv !== false);
-    const h = new Date().getHours() + 1;
+    const h = 11; // feste Uhr 10:20
     return { datum: f("datum"), soll: kTag(), von: f("von"), bis: f("bis"), lehrer: f("fahrlehrer_id"), ersterLehrer: aktive[0].id, h, ks: K_START, ke: K_ENDE, titel: d.querySelector("h2").textContent };
   });
   const vonSoll = v && (v.h * 60 >= v.ks && v.h * 60 < v.ke ? String(v.h).padStart(2, "0") + ":00" : "08:00");
   const bisSoll = v && (() => { const m = Number(vonSoll.slice(0, 2)) * 60 + 90; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); })();
+  pruefe("K2a", "feste Uhr: Kalenderzeit enthält 11:00", v && v.ks <= 660 && v.ke > 660 ? null : JSON.stringify(v));
   pruefe("K2", "„+ Termin“ öffnet „Termin anlegen“ mit Tag, nächster voller Stunde (sonst 08:00), Fahrlehrer und Bis = +90 min", v && v.titel === "Termin anlegen" && v.datum === v.soll && v.von === vonSoll && v.bis === bisSoll && v.lehrer === v.ersterLehrer ? null : JSON.stringify([v, vonSoll, bisSoll]));
   await page.keyboard.press("Escape"); await warte(page, 400);
+  // spät am Abend: nächste volle Stunde liegt außerhalb der Kalenderzeit → 08:00
+  await page.clock.setSystemTime(new Date(heuteUm(23, 10)));
+  await page.click("#kNeuTermin"); await warte(page, 300);
+  const spaet = await page.evaluate(() => ({ von: document.querySelector('dialog[open] [name="von"]').value, ke: K_ENDE }));
+  pruefe("K2b", "23:10 Uhr: Vorgabe 08:00 (23:00 liegt nicht in der Kalenderzeit) und „Bis“ 09:30", spaet.von === (spaet.ke > 23 * 60 ? "23:00" : "08:00") && (await page.inputValue('dialog[open] [name="bis"]')) === (spaet.von === "08:00" ? "09:30" : "23:59") ? null : JSON.stringify(spaet));
+  await page.keyboard.press("Escape"); await warte(page, 400);
+  await page.clock.setSystemTime(new Date(heuteUm(10, 20)));
   pruefe("K3", "Dialog schließt (nach der Animation kein offenes Fenster)", (await page.locator("dialog[open]").count()) === 0 ? null : "noch offen");
   // gefilterter Fahrlehrer
   const zweiter = await page.evaluate(() => S.lehrer.filter((l) => l.aktiv !== false)[1].id);
@@ -155,9 +172,15 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   await page.click('#kopfAktionen a[href="#auslastung"]'); await warte(page, 350);
   pruefe("K5", "„Wer hat Platz?“ öffnet die Auslastung, Knöpfe nur im Kalender", (await page.locator("#ansicht table").count()) >= 1 && (await page.locator("#kopfAktionen").isHidden()) ? null : "Auslastung/Knöpfe");
   // Bewegung: Seitenwechsel hat eine Einblendung
-  await page.evaluate(() => { location.hash = "#schueler"; });
-  const anim = await page.evaluate(() => getComputedStyle(document.getElementById("ansicht")).animationName);
-  pruefe("A1", "Seitenwechsel blendet ein (Animation „seite-ein“)", anim === "seite-ein" ? null : anim);
+  await page.evaluate(() => { window.__seiteEin = 0; document.getElementById("ansicht").addEventListener("animationstart", (e) => { if (e.animationName === "seite-ein") window.__seiteEin++; }); location.hash = "#schueler"; });
+  await page.waitForFunction(() => window.__seiteEin >= 1, null, { timeout: 3000 }).catch(() => {});
+  await page.evaluate(() => { location.hash = "#fristen"; });
+  await page.waitForFunction(() => window.__seiteEin >= 2, null, { timeout: 3000 }).catch(() => {});
+  const zaehl = await page.evaluate(() => window.__seiteEin);
+  pruefe("A1", "jeder Seitenwechsel startet die Einblendung „seite-ein“ neu (2 Wechsel = 2 Starts)", zaehl === 2 ? null : "Starts: " + zaehl);
+  await page.evaluate(() => { window.__seiteEin = 0; zeichne(); });
+  await warte(page, 300);
+  pruefe("A1b", "dieselbe Seite neu zeichnen (Auffrischen) blendet nicht erneut ein", (await page.evaluate(() => window.__seiteEin)) === 0 ? null : "blendet erneut ein");
   await page.evaluate(() => { location.hash = "#heute"; }); await warte(page, 350);
   pruefe("A2", "kurz nach dem Wechsel sofort klickbar (Leiste, Seite)", await page.click('#nav .nav-punkt[href="#kalender"]', { timeout: 1500 }).then(() => true, () => false) ? null : "nicht klickbar");
   pruefe("L9", "keine Konsolenfehler", konsole);
@@ -180,6 +203,69 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   pruefe("V5", "#urlaub rendert die Seite", (await m.page.locator("#attUrlaub").count()) === 1 ? null : "nicht gerendert");
   pruefe("V6", "keine Konsolenfehler", m.konsole);
   await m.ctx.close();
+}
+// ---- Fenster schließen weich (2), „‹ Zurück“ (3), Backups nur Leitung (6) ----
+{
+  const zaehl = `window.__an = 0; const _an = Element.prototype.animate; Element.prototype.animate = function (...a) { window.__an++; return _an.apply(this, a); };`;
+  const { page, ctx, konsole } = await oeffne({ hash: "#kalender", vorher: zaehl });
+  const hosts = () => page.evaluate(() => document.querySelectorAll('body > div[aria-hidden="true"]').length);
+  await page.click("#kNeuTermin"); await warte(page, 400);
+  await page.evaluate(() => { window.__an = 0; });
+  await page.keyboard.press("Escape");
+  const sofort = await page.evaluate(() => ({ dlg: document.querySelectorAll("dialog").length, an: window.__an, host: document.querySelectorAll('body > div[aria-hidden="true"]').length, namen: document.querySelectorAll('[name="von"]').length }));
+  pruefe("F1", "Fenster schließen: das echte Fenster ist sofort weg (keine doppelten Felder), eine Kopie blendet in einem eigenen Baum aus", sofort.dlg === 0 && sofort.namen === 0 && sofort.an >= 2 && sofort.host === 1 ? null : JSON.stringify(sofort));
+  await page.click("#kNeuTermin"); await warte(page, 50);
+  const neu2 = await page.evaluate(() => ({ dlg: document.querySelectorAll("dialog[open]").length, von: document.querySelectorAll('dialog [name="von"]').length }));
+  pruefe("F2", "sofort neu geöffnetes Fenster kollidiert nicht mit dem ausblendenden (1 Fenster, 1 Feld „von“)", neu2.dlg === 1 && neu2.von === 1 ? null : JSON.stringify(neu2));
+  const geklickt = await page.click('dialog[open] button[value=ok]', { trial: true, timeout: 1500 }).then(() => true, () => false);
+  pruefe("F3", "Elemente des neuen Fensters sind sofort klickbar (auch mit ausblendender Kopie darüber/darunter)", geklickt ? null : "nicht klickbar");
+  await page.keyboard.press("Escape"); await warte(page, 600);
+  pruefe("F4", "nach der Ausblendung bleibt nichts zurück", (await hosts()) === 0 ? null : "Kopie bleibt im Dokument");
+  await page.evaluate(() => { const k = document.getElementById("kNeuTermin"); k.click(); k.click(); });
+  await warte(page, 300);
+  pruefe("F5", "zweimal „+ Termin“ kurz nacheinander öffnet nur ein Fenster", (await page.locator("dialog[open]").count()) === 1 ? null : "Fenster: " + (await page.locator("dialog[open]").count()));
+  pruefe("F6", "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+{
+  const zaehl = `window.__an = 0; const _an = Element.prototype.animate; Element.prototype.animate = function (...a) { window.__an++; return _an.apply(this, a); };`;
+  const { page, ctx } = await oeffne({ hash: "#kalender", vorher: zaehl });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.click("#kNeuTermin"); await warte(page, 200);
+  await page.evaluate(() => { window.__an = 0; });
+  await page.keyboard.press("Escape"); await warte(page, 60);
+  const r = await page.evaluate(() => ({ an: window.__an, host: document.querySelectorAll('body > div[aria-hidden="true"]').length, dlg: document.querySelectorAll("dialog").length }));
+  pruefe("F7", "reduzierte Bewegung: Fenster schließt ohne Kopie und ohne Animation", r.an === 0 && r.host === 0 && r.dlg === 0 ? null : JSON.stringify(r));
+  await ctx.close();
+}
+{
+  const { page, ctx, konsole } = await oeffne({ hash: "#heute" });
+  const zk = () => page.evaluate(() => { const k = document.getElementById("kopfZurueck"); return !!k && !k.hidden; });
+  const nav = async (h) => { await page.click(`#nav .nav-punkt[href="${h}"]`); await warte(page, 350); };
+  await nav("#kalender");
+  const a = await zk();
+  await nav("#zahlungen"); const b = await zk();
+  await nav("#kalender"); const c = await zk();
+  pruefe("Y1", "über die Leiste erreichte Hauptpunkte (Kalender, Zahlungen) zeigen kein „‹ Zurück“", !a && !b && !c ? null : JSON.stringify([a, b, c]));
+  await page.click("#kPlatz"); await warte(page, 350);
+  pruefe("Y2", "Unterseite #auslastung zeigt „‹ Zurück“, es führt zum Kalender (ohne Zurück dort)", (await zk()) && (await (async () => { await page.click("#kopfZurueck"); await warte(page, 400); return (await page.textContent("#titel")) === "Kalender" && !(await zk()); })()) ? null : "Zurück-Knopf fehlt oder führt falsch");
+  await nav("#zahlungen");
+  await page.click('.zahl-reiter .tab[href="#preise"]'); await warte(page, 350);
+  pruefe("Y3", "Reiter auf Unterseite #preise: „‹ Zurück“ da", (await zk()) ? null : "kein Zurück");
+  await nav("#heute");
+  const link = page.locator('#ansicht a[href="#fristen"]').first();
+  const da = (await link.count()) > 0;
+  if (da) { await link.click(); await warte(page, 350); }
+  pruefe("Y4", "Sprung per Link aus einer Seite (Heute → Fristen): „‹ Zurück“ da, führt zurück", da && (await zk()) && (await (async () => { await page.click("#kopfZurueck"); await warte(page, 400); return (await page.textContent("#titel")) === "Heute"; })()) ? null : "Link da: " + da);
+  pruefe("Y5", "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+{
+  const att = `window.renderUrlaub = () => '<div class="karte">U</div>'; window.renderSchichtplan = () => '<div class="karte">S</div>'; window.renderBackups = () => '<div class="karte">B</div>';`;
+  const sicht = async (nutzer) => { const m = await oeffne({ nutzer, vorher: att }); const r = await m.page.evaluate(() => ({ admin: istAdmin(), punkte: [...document.querySelectorAll("#nav .nav-punkt")].map((a) => a.getAttribute("href")) })); await m.ctx.close(); return r; };
+  const leitung = await sicht("ad-1"), buero = await sicht("bu-1");
+  pruefe("B1", "Leitung (Administrator) sieht Urlaub, Schichtplan und Backups", leitung.admin && ["#urlaub", "#schichtplan", "#backups"].every((h) => leitung.punkte.includes(h)) ? null : JSON.stringify(leitung));
+  pruefe("B2", "Büro (kein Administrator) sieht Urlaub und Schichtplan, aber kein Backups", !buero.admin && buero.punkte.includes("#urlaub") && buero.punkte.includes("#schichtplan") && !buero.punkte.includes("#backups") ? null : JSON.stringify(buero));
 }
 // ---- reduzierte Bewegung ----
 {

@@ -117,6 +117,7 @@ function setStatus(art, text) {
   s.classList.remove("ok", "warn", "fehler");
   if (art) s.classList.add(art);
   $("statusText").textContent = text;
+  s.title = text; // bis 1400 px steht nur der Punkt (oder gekürzter Text): der ganze Text im Tooltip
 }
 // supabase-js wirft nicht, sondern liefert {error}: hier wird daraus ein echter Fehler
 function pruefe(res, was) {
@@ -161,7 +162,7 @@ const BEREICHE = [
   { id: "schueler", titel: "Schüler", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "pruefungen", titel: "Prüfungen", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
   { id: "fristen", titel: "Fristen", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
-  { id: "zahlungen", titel: "Zahlungen", render: () => zahlungsReiter(preisReiter()) + renderPreisSeite(), nachher: (...a) => bindePreisSeite(...a), zahl: () => S.verkaeufe.filter((v) => v.status === "empfohlen").length || "" },
+  { id: "zahlungen", titel: "Zahlungen", render: () => zahlungenVerkaeufe() ? zahlungsReiter("verkaeufe") + renderVerkaeufe() : zahlungsReiter(preisReiter()) + renderPreisSeite(), nachher: (...a) => zahlungenVerkaeufe() ? bindeVerkaeufe(...a) : bindePreisSeite(...a), zahl: () => offeneVerkaeufe() || "" },
   { id: "fahrchecks", titel: "Fahrcheck", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "zahlen", titel: "Statistik", render: renderZahlen, nachher: bindeZahlen },
   { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
@@ -169,7 +170,7 @@ const BEREICHE = [
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
   { id: "urlaub", titel: "Urlaub", neben: true, wenn: () => typeof renderUrlaub === "function", render: (...a) => renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
   { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
-  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
+  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function" && istAdmin(), render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
   // Unterseiten: per Adresse erreichbar, in der Leiste ist der Elternpunkt markiert
   { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: renderAuslastung },
@@ -179,10 +180,13 @@ const BEREICHE = [
 ];
 // Reiterzeile der Seite „Zahlungen“ (auch auf #preise und #verkaeufe): EINE Zeile „Preise · Pakete · Verkäufe & Provision“.
 // „Pakete“ gibt es nur mit der Paket-Datenbank (bkDa in buero-pakete.js).
+function offeneVerkaeufe() { return S.verkaeufe.filter((v) => v.status === "empfohlen").length; }
+// #zahlungen öffnet den Reiter „Verkäufe & Provision“, wenn dort etwas wartet (Zähler > 0), sonst „Preise“; ein Hash mit ?reiter=pakete bleibt bei den Preisen
+function zahlungenVerkaeufe() { return offeneVerkaeufe() > 0 && !/[?&]reiter=/.test(location.hash); }
 function zahlungsReiter(aktiv) {
   const pakete = typeof bkDa === "function" && bkDa();
   const tab = (h, id, t) => `<a class="tab" href="${h}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>`;
-  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision")}</div>`;
+  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision" + (offeneVerkaeufe() ? ` <span class="zahl">${offeneVerkaeufe()}</span>` : ""))}</div>`;
 }
 function preisReiter() { return typeof bkReiter === "function" ? bkReiter() : "preise"; }
 function aktuellerBereich() {
@@ -228,7 +232,7 @@ function kNeuTerminVorgabe() {
   return { fahrlehrer_id: lehrer, datum: kTag(), von };
 }
 document.addEventListener("click", (e) => {
-  if (e.target.closest("#kNeuTermin")) terminDialog(null, kNeuTerminVorgabe());
+  if (e.target.closest("#kNeuTermin") && !document.querySelector("dialog[open]")) terminDialog(null, kNeuTerminVorgabe()); // kein zweiter Termin-Dialog bei Doppelklick
 });
 function zeichne() {
   wartIndex = null; // Warteliste neu rechnen (Termine können sich geändert haben)
@@ -276,10 +280,10 @@ function klappWieder(ziel, m) {
 const buVerlauf = []; let buNrZaehler = 0; let buKalenderZuletzt = "";
 const _buReplace = history.replaceState.bind(history), _buPush = history.pushState.bind(history);
 function buNr() { return history.state && typeof history.state.buNr === "number" ? history.state.buNr : null; }
-function buNeuerEintrag() {
+function buNeuerEintrag(ausLeiste) {
   const nr = ++buNrZaehler;
   try { _buReplace(Object.assign({}, history.state || {}, { buNr: nr }), "", location.href); } catch (e) {}
-  buVerlauf.push({ nr, hash: location.hash || "" }); if (buVerlauf.length > 30) buVerlauf.shift();
+  buVerlauf.push({ nr, hash: location.hash || "", leiste: ausLeiste !== false }); if (buVerlauf.length > 30) buVerlauf.shift();
 }
 // Filter/Suche ersetzen die Adresse: Nummer behalten, gemerkten Hash nachziehen
 history.replaceState = function (st, t, u) {
@@ -291,11 +295,18 @@ history.replaceState = function (st, t, u) {
 history.pushState = function (st, t, u) {
   const alt = buVerlauf.find((x) => x.nr === buNr()); if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
   const r = _buPush(st, t, u);
-  if (!(st && st.fenster != null)) { buNeuerEintrag(); buLetzteNr = buNr(); buZurueckKnopf(); }
+  if (!(st && st.fenster != null)) { buNeuerEintrag(alt ? alt.leiste : true); buLetzteNr = buNr(); buZurueckKnopf(); }
   return r;
 };
 buNeuerEintrag(); // die Startseite
-function buZurueckKnopf() { const k = $("kopfZurueck"); if (k) k.hidden = buVerlauf.findIndex((x) => x.nr === buNr()) < 1; }
+// „‹ Zurück“ nur auf Unterseiten (Bereich mit eltern) und wenn man aus einer Seite heraus (Link, nicht über die Leiste) woanders hingekommen ist; auf den Leistenpunkten sonst nie
+let buLeisteKlick = false;
+document.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("#nav a")) { buLeisteKlick = true; setTimeout(() => { buLeisteKlick = false; }, 150); } }, true);
+function buZurueckKnopf() {
+  const k = $("kopfZurueck"); if (!k) return;
+  const i = buVerlauf.findIndex((x) => x.nr === buNr());
+  k.hidden = i < 1 || !(aktuellerBereich().eltern || !buVerlauf[i].leiste);
+}
 window.addEventListener("hashchange", () => {
   // Zurück-Taste (oder Link) wechselt die Seite: offene Fenster ohne Eingaben schließen, damit nichts über der falschen Seite stehen bleibt
   document.querySelectorAll("dialog[open]").forEach((d) => { if (!d.dataset.festhalten && !hatEingabe(d)) { d._verlauf = false; d.close(); } });
@@ -312,7 +323,7 @@ window.addEventListener("hashchange", () => {
     else {
       // Kalender über das Menü: mit dem zuletzt gezeigten Tag/Monat weiter (Blättern ist keine eigene Seite)
       if (location.hash === "#kalender" && buKalenderZuletzt) { try { _buReplace(history.state, "", "#kalender?" + buKalenderZuletzt); } catch (e) {} }
-      buNeuerEintrag(); // neue Seite (Menü, Link)
+      buNeuerEintrag(buLeisteKlick); buLeisteKlick = false; // neue Seite (Menü, Link)
     }
   }
   zeichne(); $("ansicht").focus({ preventScroll: true });
@@ -1982,7 +1993,7 @@ function aufgabenBlockHTML(sid) {
     </div>
     ${offen.length ? `<ul class="notizliste">${offen.map(zeile).join("")}</ul>` : `<p class="leise klein">Keine offene Aufgabe.</p>`}
     ${erledigt.length ? `<details><summary>Erledigt (${erledigt.length})</summary><ul class="notizliste">${erledigt.slice(0, 20).map(zeile).join("")}</ul></details>` : ""}
-    <p class="leise klein">Offene Aufgaben stehen bei der gewählten Person auf der Startseite „Heute zu tun“ (rot = überfällig oder dringend, orange = heute). Keine Gesundheits- oder Privatdaten.</p>`;
+    <p class="leise klein">Offene Aufgaben stehen bei der gewählten Person auf der Startseite „Heute“ (rot = überfällig oder dringend, orange = heute). Keine Gesundheits- oder Privatdaten.</p>`;
 }
 async function aendereAufgabe(id, werte, hinweis) {
   const res = await supa.from("schueler_aufgaben").update(werte).eq("id", id).select("*");
@@ -2054,7 +2065,7 @@ function bindeAufgabenBlock(dlg, sid) {
       fuer_person_id: block.querySelector("#agFuer").value || null, dringend: block.querySelector("#agDringend").checked }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Aufgabe nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); knopf.disabled = false; return; }
     S.aufgaben.unshift(res.data[0]);
-    toast(heute ? "Aufgabe steht jetzt unter „Heute zu tun“." : "Aufgabe gespeichert.");
+    toast(heute ? "Aufgabe steht jetzt unter „Heute“." : "Aufgabe gespeichert.");
     neu();
   };
   const bind = () => {
@@ -3741,7 +3752,7 @@ function bindeZahlen(ziel) {
   ziel.querySelectorAll("[data-zschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.zschueler)));
 }
 
-/* ---------- Fahrlehrer & Zugänge ---------- */
+/* ---------- Fahrlehrer & Büro ---------- */
 async function adminFunktion(body) {
   const { data: sd } = await supa.auth.getSession();
   const token = sd && sd.session ? sd.session.access_token : null;
@@ -3839,7 +3850,7 @@ function personDialog(id) {
   const aus = document.querySelector("dialog[open] #pAustritt");
   if (aus) aus.addEventListener("click", async () => {
     document.querySelector("dialog[open]").close();
-    if (!(await bestaetige("Ausgetreten?", `${p.name} kann sich dann nicht mehr mit der eigenen PIN anmelden. Zurückholen geht jederzeit. Das gemeinsame Büro-Passwort gilt weiter: Die Leitung setzt es unter „Fahrlehrer & Zugänge“ neu.`, "Ja, ausgetreten"))) return;
+    if (!(await bestaetige("Ausgetreten?", `${p.name} kann sich dann nicht mehr mit der eigenen PIN anmelden. Zurückholen geht jederzeit. Das gemeinsame Büro-Passwort gilt weiter: Die Leitung setzt es unter „Fahrlehrer & Büro“ neu.`, "Ja, ausgetreten"))) return;
     try { await personRpc("buero_person_speichern", { p_id: p.id, p_fahrschule: S.fsId, p_name: p.name, p_telefon: p.telefon, p_darf_verwalten: null, p_aktiv: false }); }
     catch (e) { toast("Nicht gespeichert: " + dbFehlerText(e), true); return; }
     await ladePersonen(); toast("Gespeichert"); zeichne();
@@ -4385,6 +4396,44 @@ window.addEventListener("beforeunload", (e) => {
 // Nach dem Neuladen steht noch ein Fenster-Eintrag im Verlauf: einmal zurück, damit „Zurück“ nicht ins Leere läuft
 if (history.state && history.state.fenster != null) { ignorierePop++; setTimeout(() => { ignorierePop = 0; }, 1500); try { history.back(); } catch (e) { /* egal */ } }
 
+/* Weiches Schließen: Das echte Fenster verschwindet wie bisher sofort (keine doppelten IDs, keine Kollision mit einem sofort neu
+   geöffneten Fenster). Eine Kopie blendet dabei in 180 ms aus. Sie liegt in einem geschlossenen Schatten-Baum (für Skripte, Tests und
+   Vorlese-Programme unsichtbar), ist inert und fängt keine Klicks. Bei „weniger Bewegung“ gibt es sie nicht. */
+let GEIST_CSS;
+function geistCss() {
+  if (GEIST_CSS !== undefined) return GEIST_CSS;
+  GEIST_CSS = null;
+  try {
+    let t = "";
+    for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) t += r.cssText + "\n"; } catch (e) {} }
+    const b = new CSSStyleSheet(); b.replaceSync(t); GEIST_CSS = b;
+  } catch (e) { GEIST_CSS = null; }
+  return GEIST_CSS;
+}
+function geistMachen(dlg) {
+  try {
+    if (window.matchMedia("(prefers-reduced-motion:reduce)").matches || !dlg.open) return;
+    const css = geistCss(); if (!css || !document.body.animate) return;
+    const r = dlg.getBoundingClientRect(); if (r.width < 10 || r.height < 10) return;
+    const host = document.createElement("div");
+    host.setAttribute("aria-hidden", "true"); host.inert = true;
+    host.style.cssText = "position:fixed;inset:0;z-index:2147483000;pointer-events:none;font:17px/1.5 'Barlow',system-ui,sans-serif;color:var(--txt);";
+    const root = host.attachShadow({ mode: "closed" });
+    root.adoptedStyleSheets = [css];
+    const kopie = dlg.cloneNode(true);
+    kopie.querySelectorAll("[id],[name],[for],[autofocus]").forEach((e) => { e.removeAttribute("id"); e.removeAttribute("name"); e.removeAttribute("for"); e.removeAttribute("autofocus"); });
+    const grund = document.createElement("div"); grund.className = "geist-grund";
+    const box = document.createElement("div"); box.className = "dialog geist"; box.innerHTML = kopie.innerHTML;
+    box.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0;max-height:none;`;
+    root.append(grund, box);
+    document.body.appendChild(host);
+    const t = { duration: 180, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" };
+    box.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(6px)" }], t);
+    const a = grund.animate([{ opacity: 1 }, { opacity: 0 }], t);
+    a.onfinish = () => host.remove();
+    setTimeout(() => host.remove(), 400);
+  } catch (e) {}
+}
 function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
   const o = optionen || {};
   const dlg = document.createElement("dialog");
@@ -4396,6 +4445,8 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
       <footer>${o.festhalten ? "" : `<button class="knopf" type="button" data-schliessen>${esc(o.abbrechenText || "Abbrechen")}</button>`}<button class="knopf haupt" value="ok" type="submit">${esc(knopfText || "Speichern")}</button></footer>
     </form>`;
   document.body.appendChild(dlg);
+  const schliesseEcht = dlg.close.bind(dlg);
+  dlg.close = (...a) => { if (!dlg._geparkt) geistMachen(dlg); schliesseEcht(...a); };
   const form = dlg.querySelector("form");
   // Abbrechen und ✕ sind keine Absende-Knöpfe: Enter speichert, und das Schließen klappt auch bei leeren Pflichtfeldern
   dlg.querySelectorAll("[data-schliessen]").forEach((b) => b.addEventListener("click", () => versucheSchliessen(dlg)));
@@ -4798,7 +4849,7 @@ $("werListe").addEventListener("click", (e) => {
     return;
   }
   if (!p.hat_pin && !pinFrei(p)) {
-    zeigePin("anmelden", `${p.name} hat noch keine PIN. Bitte ${verwalterNamen(p.id)} fragen: „PIN freigeben“ unter Fahrlehrer & Zugänge. Danach hier eine eigene PIN festlegen.`, true);
+    zeigePin("anmelden", `${p.name} hat noch keine PIN. Bitte ${verwalterNamen(p.id)} fragen: „PIN freigeben“ unter Fahrlehrer & Büro. Danach hier eine eigene PIN festlegen.`, true);
     return;
   }
   zeigePin(p.hat_pin ? "anmelden" : "festlegen1");

@@ -362,15 +362,14 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 /* Werkstatt 11: ruhige Bewegung (nur transform/opacity, 150-200 ms). Keine Bewegung, wenn der Browser es so wünscht. */
 .ansicht.seite-ein{animation:seite-ein .18s cubic-bezier(.2,.8,.2,1);}
 @keyframes seite-ein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
-.dialog{opacity:0;transform:translateY(6px) scale(.985);transition:opacity .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1),overlay .18s allow-discrete,display .18s allow-discrete;}
+.dialog{opacity:0;transform:translateY(6px);transition:opacity .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1),overlay .18s allow-discrete,display .18s allow-discrete;}
 .dialog[open]{opacity:1;transform:none;}
-@starting-style{.dialog[open]{opacity:0;transform:translateY(6px) scale(.985);}}
+@starting-style{.dialog[open]{opacity:0;transform:translateY(6px);}}
 .dialog:not([open]){pointer-events:none;}
 .dialog::backdrop{opacity:0;transition:opacity .18s cubic-bezier(.2,.8,.2,1),overlay .18s allow-discrete,display .18s allow-discrete;}
 .dialog[open]::backdrop{opacity:1;}
 @starting-style{.dialog[open]::backdrop{opacity:0;}}
-.knopf{transition:background-color .15s cubic-bezier(.2,.8,.2,1),border-color .15s cubic-bezier(.2,.8,.2,1),transform .15s cubic-bezier(.2,.8,.2,1);}
-.knopf:active{transform:scale(.98);}
+.knopf{transition:background-color .15s cubic-bezier(.2,.8,.2,1),border-color .15s cubic-bezier(.2,.8,.2,1);}
 .tab{transition:background-color .15s cubic-bezier(.2,.8,.2,1),color .15s cubic-bezier(.2,.8,.2,1),border-color .15s cubic-bezier(.2,.8,.2,1);}
 .kopf-aktionen{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
 @media print{.kopf-aktionen{display:none !important;}}
@@ -941,3 +940,11 @@ body.kiosk .rollen-streifen{display:none;}
 .bk-anm-summe{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
 .bk-anm-summe b{font-size:19px;}
 .bk-anm-warn{color:var(--pill-gelb);font-weight:600;}
+
+/* Ausblendende Kopie eines geschlossenen Fensters (siehe geistMachen in buero.js, liegt in einem Schatten-Baum) */
+.dialog.geist{opacity:1;transform:none;pointer-events:none;display:block;overflow:hidden;}
+.geist-grund{position:fixed;inset:0;background:rgba(20,22,30,.4);}
+.kopf-aktionen[hidden]{display:none;}
+.tab .zahl{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--rot);color:#fff;font-size:13px;font-weight:700;vertical-align:1px;}
+@media (prefers-color-scheme:dark){.tab .zahl{background:#b3392b;}}
+@media (max-width:1400px){ .status:not(.ok) #statusText{max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} }
