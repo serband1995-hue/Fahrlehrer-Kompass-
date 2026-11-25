@@ -192,7 +192,7 @@ try {
     const { page, ctx, jsFehler } = await oeffne({ breite: b, hoehe: h, schema });
     const m = await page.evaluate(() => {
       const breit = document.documentElement.scrollWidth, sicht = document.documentElement.clientWidth;
-      const klein = [...document.querySelectorAll("[data-esf] input, [data-esf] button")].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && getComputedStyle(e).visibility !== "hidden" && r.height < 44; }).map((e) => e.id || e.textContent);
+      const klein = [...document.querySelectorAll("[data-esf] input, [data-esf] button")].map((e) => (e.tagName === "INPUT" && e.closest(".es-wert")) || e).filter((e) => { const r = e.getBoundingClientRect(); /* Tippfläche eines Felds = seine Hülle .es-wert (wie in den anderen Themen) */ return r.width > 0 && getComputedStyle(e).visibility !== "hidden" && r.height < 44; }).map((e) => e.id || e.textContent);
       const raus = [...document.querySelectorAll("[data-esf] *")].filter((e) => { const r = e.getBoundingClientRect(); return r.width && r.right > sicht + 1; }).map((e) => e.className || e.tagName).slice(0, 5);
       // Kein Text liegt auf einem Feld (Tablet: Namensspalte zu schmal)
       const ueber = [];
@@ -310,6 +310,71 @@ try {
     pruefe(`B8 ${b}×${h}: Speichern erreichbar und frei`, await page.locator("[data-esf-speichern]").isEnabled() && await page.locator("[data-esf-speichern]").isVisible());
     if (BILDER) await page.screenshot({ path: join(BILDER, `rahmen-${b}x${h}.png`), fullPage: true });
     pruefe(`B8 ${b}×${h}: keine JS-Fehler`, !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+
+  // B9 (Prüf-Team PR 3): Rückgängig nach Themenwechsel lässt keinen alten Wert stehen; Warnung, wenn die Reaktivierung kürzer wird
+  {
+    const { page, ctx, konsole } = await oeffneBuero();
+    await tippe(page, "reaktivierung", "monate", "6");
+    pruefe("B9a Reaktivierung kürzer: Warnung sichtbar", await page.locator('[data-esf-warn="reaktivierung"]').isVisible() && /sofort fällig/.test(await page.locator('[data-esf-warn="reaktivierung"]').innerText()));
+    await tippe(page, "reaktivierung", "monate", "18");
+    pruefe("B9b Reaktivierung länger: keine Warnung", await page.locator('[data-esf-warn="reaktivierung"]').isHidden());
+    await tippe(page, "reaktivierung", "monate", "12");
+    await tippe(page, "antrag", "bald_tage", "77");
+    await page.locator("[data-esf-speichern]").click(); await page.waitForTimeout(400);
+    await page.click('.es-thema[data-es-thema="preise"]'); await page.waitForTimeout(300);
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(500);
+    await page.click('.es-thema[data-es-thema="fristen"]'); await page.waitForTimeout(400);
+    pruefe("B9c Speichern, anderes Thema, Rückgängig, zurück: Feld 60, nichts „geändert“, Speichern aus, Eintrag weg",
+      (await feld(page, "antrag", "bald_tage").inputValue()) === "60" && await page.locator("[data-esf-speichern]").isDisabled() && (await zeilenEinst(page)).length === 0 && (await fristen(page)).antrag.bald_tage === 60);
+    await page.click('.es-thema[data-es-thema="preise"]'); await page.waitForTimeout(300);
+    pruefe("B9d danach keine Rückfrage beim Verlassen", (await page.locator("dialog[open]").count()) === 0);
+    pruefe("B9e keine JS-Fehler", !konsole.length, konsole.join(" | "));
+    await ctx.close();
+  }
+  // B10 (Prüf-Team PR 3, Daten Muss 1+2): Wechsel der Fahrschule nimmt keine Eingaben mit, Rückgängig schreibt in die Fahrschule, in der gespeichert wurde
+  {
+    const { page, ctx, konsole } = await oeffneBuero({ nutzer: "sa-1" });
+    const wechsle = (id) => page.evaluate((fs) => { const w = document.getElementById("schulWahl"); if (![...w.options].some((o) => o.value === fs)) w.innerHTML += `<option value="${fs}">${fs}</option>`; w.value = fs; w.dispatchEvent(new Event("change")); }, id);
+    // Rahmen zeichnet das Thema für die neue Fahrschule (die Attrappe hat nur eine, darum direkt nachgestellt)
+    const zeichneFuer = (id, fs) => page.evaluate(([i, f]) => { const t = window.BUERO_EINSTELLUNGEN_THEMEN.find((x) => x.id === i), box = document.createElement("div"); box.id = "probeBox"; document.body.appendChild(box); t.render(box, { sb: supa, fahrschuleId: f, rolle: "superadmin", darfSchreiben: true, meldung() {} }); }, [id, fs]);
+    const alle = () => page.evaluate(() => (window.__FAKE.tabellen.fahrschule_einstellungen || []).map((z) => z.fahrschule_id + "|" + z.schluessel).sort().join(","));
+    if (!(await page.locator("#esBox [data-esf]").count())) { await page.evaluate(() => { location.hash = "#einstellungen?thema=fristen"; }); await page.waitForTimeout(400); }
+    await tippe(page, "antrag", "bald_tage", "70");
+    // Der Rahmen zeichnet das Thema für die neue Fahrschule (ctx.fahrschuleId) – hier direkt nachgestellt, weil die Attrappe nur eine Fahrschule hat
+    const nachWechsel = await page.evaluate(() => {
+      const t = window.BUERO_EINSTELLUNGEN_THEMEN.find((x) => x.id === "fristen"), box = document.createElement("div");
+      document.body.appendChild(box);
+      t.render(box, { sb: supa, fahrschuleId: "fs-andere", rolle: "superadmin", darfSchreiben: true, meldung() {} });
+      const r = [box.querySelector('input[data-art="antrag"][data-feld="bald_tage"]').value, box.querySelector("[data-esf-speichern]").disabled];
+      box.remove(); zeichne(); return r;
+    });
+    pruefe("B10a andere Fahrschule: Eingabe der vorigen nicht übernommen (Feld Standard 60, Speichern aus)", nachWechsel[0] === "60" && nachWechsel[1] === true, JSON.stringify(nachWechsel));
+    await page.waitForTimeout(300);
+    if (!(await page.locator("#esBox [data-esf]").count())) { await page.evaluate(() => { location.hash = "#einstellungen?thema=fristen"; }); await page.waitForTimeout(400); }
+    await tippe(page, "antrag", "bald_tage", "70");
+    await page.locator("[data-esf-speichern]").click(); await page.waitForTimeout(400);
+    const vorUndo = await alle();
+    await wechsle("fs-andere"); await page.waitForTimeout(500); await zeichneFuer("fristen", "fs-andere");
+    await page.locator(".toast-undo [data-undo]").click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(500);
+    const nachUndo = await alle();
+    await page.evaluate(() => document.getElementById("probeBox")?.remove());
+    pruefe("B10b Speichern in Fahrschule 1, Wechsel, Rückgängig: Eintrag in Fahrschule 1 weg, nichts in der anderen", vorUndo === "fs-test-1|fristen.antrag" && nachUndo === "", vorUndo + " → " + nachUndo);
+    pruefe("B10c in der anderen Fahrschule rechnet das Büro weiter mit Standard", (await fristen(page)).antrag.bald_tage === 60);
+    // dasselbe für die Vorlagen
+    await wechsle("fs-test-1"); await page.waitForTimeout(700);
+    await page.evaluate(() => { location.hash = "#einstellungen?thema=vorlagen"; }); await page.waitForTimeout(500);
+    await page.click('[data-esv-kopf="pruefung"]'); await page.waitForTimeout(200);
+    const ta = page.locator('[data-esv-feld="text"]');
+    await ta.click(); await ta.press("Control+A"); await ta.pressSequentially("Bitte zahlen: {Betrag}");
+    await page.locator("[data-esv-speichern]").click(); await page.waitForTimeout(400);
+    const vVor = await alle();
+    await wechsle("fs-andere"); await page.waitForTimeout(500); await zeichneFuer("vorlagen", "fs-andere");
+    await page.locator(".toast-undo [data-undo]").click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(500);
+    const vNach = await alle();
+    pruefe("B10d Vorlage: Speichern, Wechsel, Rückgängig: Eintrag in Fahrschule 1 weg, nichts in der anderen", vVor === "fs-test-1|vorlagen.pruefung" && vNach === "", vVor + " → " + vNach);
+    pruefe("B10e keine JS-Fehler", !konsole.filter((k) => !/fs-andere|Failed to load resource|Fahrschule: keine Zeile/.test(k)).length, konsole.join(" | "));
     await ctx.close();
   }
 

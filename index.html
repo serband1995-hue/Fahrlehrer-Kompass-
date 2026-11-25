@@ -6247,6 +6247,7 @@ async function _fsExitAggModeJetzt(){
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
   if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); _fristenAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
+  else if(window.KR&&KR.setzeFristen) KR.setzeFristen(null); // W15 PR 3: ohne eigene Fahrschule (Super-Admin) nicht die Fristen der Gesamtansicht behalten
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();

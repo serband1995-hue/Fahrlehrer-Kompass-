@@ -40,20 +40,20 @@
 .esf-feld{display:flex;align-items:center;gap:6px;min-width:0;}
 .esf-feld .esf-label{display:none;}
 .esf-feld .esf-label small{display:none;}
-.esf-feld input{width:4.2em;min-height:44px;font:inherit;font-size:16px;text-align:right;padding:0 10px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--surface);color:var(--txt);}
-.esf-feld input:focus-visible{outline:3px solid var(--fokus);outline-offset:1px;}
-.esf-feld input[aria-invalid=true]{border-color:var(--rot);border-width:2px;}
-.esf-feld input:disabled{background:var(--surface-2);color:var(--muted);}
+.esf-feld .es-wert{flex:0 0 auto;padding:0 10px;}
+.esf-feld input{width:3.2em;min-height:42px;font:inherit;font-size:16px;font-weight:600;text-align:right;padding:0;border:0;background:transparent;color:inherit;outline:none;}
+.esf-feld .es-wert:has(input[aria-invalid=true]){border-color:var(--rot);border-width:2px;}
 .esf-feld .es-einheit{font-size:13px;color:var(--muted);}
 .esf-leer{color:var(--faint);font-size:14px;}
 .esf-fest{font-size:14px;color:var(--muted);}
 .esf-fest b{color:var(--txt);font-weight:600;}
-.esf-gesetz .es-name{color:var(--muted);}
 .esf-par{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:12px;font-weight:600;}
 .esf-aktion{display:flex;justify-content:flex-end;}
 .esf-aktion .knopf.klein{min-height:44px;min-width:44px;}
 .esf-tabelle .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .esf-fehler{grid-column:1/-1;color:var(--rot);font-size:13px;margin:-4px 0 0;}
+.esf-warn{grid-column:1/-1;font-size:13px;line-height:1.35;margin:-4px 0 0;padding:6px 10px;border-left:4px solid var(--gelb);background:var(--gelb-soft);color:var(--txt);border-radius:0 var(--r-klein) var(--r-klein) 0;}
+.esf-warn[hidden],.esf-fehler[hidden]{display:none;}
 .esf-geaendert .es-name::after{content:" · geändert";font-weight:400;color:var(--muted);font-size:13px;}
 .esf-fuss-text{font-size:13px;color:var(--muted);}
 [data-esf] .es-fuss{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding-top:16px;}
@@ -67,7 +67,6 @@
   .esf-feld .esf-label{display:block;font-size:12px;color:var(--muted);font-weight:600;line-height:1.25;}
   .esf-feld .esf-label small{display:block;font-weight:400;font-size:12px;}
   .esf-feld .esf-eingabe{display:flex;align-items:center;gap:6px;}
-  .esf-feld input{width:4em;}
   .esf-feld .es-einheit{display:none;}
   .esf-aktion{grid-column:1/-1;justify-content:flex-start;}
   .esf-aktion:has(.knopf:disabled),.esf-aktion:empty{display:none;}
@@ -99,16 +98,17 @@
 
   const thema = {
     id: "fristen", titel: "Fristen", reihenfolge: 40, rollen: ["leitung", "buero", "superadmin"],
-    _el: null, _ctx: null, _stand: null, _laeuft: false,
+    _el: null, _ctx: null, _stand: null, _laeuft: false, _fs: undefined,
     render(el, ctx) {
       stil();
       // Der Rahmen zeichnet bei jedem Auffrischen der Daten neu: ungespeicherte Eingaben (auch fehlerhafte) mitnehmen
       let roh = null;
-      if (this._el && this._el !== el && this._ctx && this._ctx.darfSchreiben && this._stand && this._el.querySelector("[data-esf]")) {
+      const gleicheSchule = this._fs === (ctx && ctx.fahrschuleId); // andere Fahrschule: Eingaben der vorigen nie mitnehmen
+      if (gleicheSchule && this._el && this._el !== el && this._ctx && this._ctx.darfSchreiben && this._stand && this._el.querySelector("[data-esf]")) {
         const { geaendert, fehler } = this.lesen();
         if (geaendert.length || Object.keys(fehler).length) roh = [...this._el.querySelectorAll("[data-esf] input")].map((i) => [i.id, i.value]);
       }
-      this._el = el; this._ctx = ctx || {};
+      this._el = el; this._ctx = ctx || {}; this._fs = this._ctx.fahrschuleId;
       this._stand = geladen();
       this.zeichne();
       if (roh && this._ctx.darfSchreiben) {
@@ -119,7 +119,7 @@
     zeichne(eingaben) {
       const el = this._el, ctx = this._ctx, darf = !!ctx.darfSchreiben;
       const w = eingaben || this._stand;
-      el.innerHTML = `<h2 class="es-abschnitt">Fristen</h2><section data-esf>
+      el.innerHTML = `<h2 class="es-abschnitt es-doppelt">Fristen</h2><section data-esf>
         <p class="es-hinweis">Wie lange eine Frist gilt und wann sie in Gelb (bald) oder Blau (demnächst) erscheint, für die ganze Fahrschule. Das gilt im Büro und in der App aller Fahrlehrer. Grau = gesetzlich festgelegt.</p>
         <div class="esf-tabelle" role="table" aria-label="Fristen">
           <div class="esf-kopf" role="row"><span role="columnheader">Frist</span><span role="columnheader">Dauer</span><span role="columnheader">Warnung (gelb)</span><span role="columnheader">Vorwarnung (blau)</span><span role="columnheader"><span class="sr-only">Standard</span></span></div>
@@ -132,6 +132,7 @@
               <div role="cell">${zelle(z, "vorwarn_tage", wa.vorwarn_tage, darf)}</div>
               <div class="esf-aktion" role="cell">${darf && !z.nur ? `<button type="button" class="knopf klein" data-esf-standard="${z.art}" title="Standard: ${standardText(z.art)}"${istStandard(z.art, wa) ? " disabled" : ""}>Standard</button>` : ""}</div>
               ${z.nur ? "" : `<p class="esf-fehler" data-esf-fehler="${z.art}" role="alert" hidden></p>`}
+              ${z.art === "reaktivierung" && !z.nur ? `<p class="esf-warn" data-esf-warn="reaktivierung" hidden>Achtung, kürzer als bisher: Wer die Reaktivierung noch nicht bezahlt hat, kann dann sofort fällig sein. Für diese Schüler sind neue Termine gesperrt, bis bezahlt ist.</p>` : ""}
             </div>`;
           }).join("")}
         </div>
@@ -180,14 +181,16 @@
         const b = el.querySelector(`[data-esf-standard="${art}"]`);
         if (b) b.disabled = istStandard(art, werte[art]);
       }
+      const warn = el.querySelector('[data-esf-warn="reaktivierung"]');
+      if (warn) warn.hidden = !!fehler.reaktivierung || !(werte.reaktivierung.monate < this._stand.reaktivierung.monate);
       const n = Object.keys(fehler).length, knopf = el.querySelector("[data-esf-speichern]"), status = el.querySelector("[data-esf-status]");
       if (knopf) knopf.disabled = this._laeuft || n > 0 || !geaendert.length;
       if (status) status.textContent = n ? "Bitte die rot markierten Felder prüfen." : geaendert.length ? `${geaendert.length} ${geaendert.length === 1 ? "Frist" : "Fristen"} geändert, noch nicht gespeichert.` : "Nichts geändert.";
       return { fehler, geaendert, werte };
     },
     // Eine Frist schreiben: Standard = Eintrag löschen (zurück auf den eingebauten Wert), sonst das ganze Objekt
-    async schreibe(art, wert) {
-      const ke = window.KE, ctx = this._ctx, schluessel = "fristen." + art;
+    async schreibe(art, wert, ctx) {
+      const ke = window.KE, schluessel = "fristen." + art;
       const r = istStandard(art, wert) ? await ke.zuruecksetzen(ctx.sb, ctx.fahrschuleId, schluessel) : await ke.setze(ctx.sb, ctx.fahrschuleId, schluessel, Object.assign({}, wert));
       if (r && r.error) throw new Error(r.error.message || "Speichern ging nicht");
     },
@@ -198,9 +201,10 @@
       this._laeuft = true; this.pruefen();
       const geschrieben = [];
       try {
-        for (const art of geaendert) { await this.schreibe(art, werte[art]); geschrieben.push(art); }
+        for (const art of geaendert) { await this.schreibe(art, werte[art], ctx); geschrieben.push(art); }
       } catch (e) {
         this._laeuft = false;
+        if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Speichern in der vorigen Fahrschule ging nicht: " + (e && e.message ? e.message : "Fehler") + ".", "fehler"); return; }
         // Teilweise gespeichert: das Gespeicherte gilt, der Rest bleibt als Eingabe stehen
         const stand = Object.assign({}, vorher); for (const a of geschrieben) stand[a] = werte[a];
         this.uebernehmen(stand, vorher);
@@ -209,20 +213,23 @@
         return;
       }
       this._laeuft = false;
+      if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Fristen der vorigen Fahrschule gespeichert.", "ok"); return; } // inzwischen andere Fahrschule: deren Anzeige nicht anfassen
       const neu = Object.assign({}, vorher); for (const a of geaendert) neu[a] = werte[a];
       this.uebernehmen(neu, vorher);
       this.zeichne();
       const text = geaendert.length === 1 ? `Frist „${ZEILEN.find((z) => z.art === geaendert[0]).name}“ gespeichert` : `${geaendert.length} Fristen gespeichert`;
       const zurueck = async () => {
-        for (const art of geaendert) await this.schreibe(art, vorher[art]);
+        for (const art of geaendert) await this.schreibe(art, vorher[art], ctx); // in die Fahrschule, in der gespeichert wurde
+        if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Fristen der vorigen Fahrschule wie vorher.", "ok"); return; }
         const jetzt = Object.assign({}, this._stand); for (const a of geaendert) jetzt[a] = vorher[a];
         this.uebernehmen(jetzt, this._stand);
-        if (this._el && this._el.isConnected) this.zeichne();
-        melde(ctx, "Fristen wie vorher", "ok");
+        if (this._el) this.zeichne(); // auch wenn das Thema gerade nicht offen ist: sonst bliebe der alte Wert als „Eingabe“ stehen
+        melde(this._ctx, "Fristen wie vorher", "ok");
       };
       if (typeof window.toastUndo === "function") window.toastUndo(text, zurueck);
       else melde(ctx, text, "ok");
     },
+    gleicheSchule(ctx) { return !!(this._ctx && ctx && this._ctx.fahrschuleId === ctx.fahrschuleId); },
     // Neue Werte gelten sofort im ganzen Büro; die Monate der Reaktivierung zusätzlich vom Server holen und vergleichen
     uebernehmen(neu, vorher) {
       this._stand = KR.normFristen(neu);

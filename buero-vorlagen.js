@@ -78,7 +78,7 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
 .esv-unten .knopf:disabled{opacity:.5;}
 [data-esv] .es-fuss{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px 14px;padding-top:18px;}
 .esv-fuss-text{font-size:13px;color:var(--muted);}
-@media (max-width:520px){.esv-marken{max-width:40%;}.esv-titel{font-size:17px;}}`;
+@media (max-width:520px){.esv-kopf{flex-wrap:wrap;}.esv-text{flex:1 1 0;}.esv-pfeil{order:1;}.esv-marken{order:2;flex:1 0 100%;max-width:none;justify-content:flex-start;}.esv-marken:empty{display:none;}.esv-titel{font-size:17px;}}`;
     document.head.appendChild(s);
   }
 
@@ -137,7 +137,7 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
     zeichne() {
       const root = this._el, ctx = this._ctx, darf = !!ctx.darfSchreiben;
       root.textContent = "";
-      const h2 = el("h2", "es-abschnitt", "Nachrichten-Vorlagen");
+      const h2 = el("h2", "es-abschnitt es-doppelt", "Nachrichten-Vorlagen"); // Themenname steht schon oben (Rahmen), auch nach eigenem Neuzeichnen
       const sec = el("section"); sec.setAttribute("data-esv", "");
       sec.appendChild(el("p", "es-hinweis", "Die Texte der Mails an Schüler und Eltern. Tippe auf eine Vorlage, um sie zu ändern. Betrag, Konto und Datum hängen wir bei Bedarf automatisch an."));
       for (const g of GRUPPEN) {
@@ -310,11 +310,13 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
       return { fehler, geaendert };
     },
     // Eine Vorlage schreiben: wieder genau der Standard = Zeile löschen, sonst { text, text_eltern }
-    async schreibe(art, wert) {
-      const ctx = this._ctx, schluessel = "vorlagen." + art;
-      if (istStandard(art, wert)) await KE.zuruecksetzen(ctx.sb, ctx.fahrschuleId, schluessel);
-      else await KE.setze(ctx.sb, ctx.fahrschuleId, schluessel, { text: norm(wert.text), text_eltern: norm(wert.text_eltern) });
+    async schreibe(art, wert, ctx) {
+      const schluessel = "vorlagen." + art, s = std(art), obj = {};
+      for (const k of ["text", "text_eltern"]) if (norm(wert[k]) !== norm(s[k])) obj[k] = norm(wert[k]); // gleich dem Standard = weglassen
+      if (!Object.keys(obj).length) await KE.zuruecksetzen(ctx.sb, ctx.fahrschuleId, schluessel);
+      else await KE.setze(ctx.sb, ctx.fahrschuleId, schluessel, obj);
     },
+    gleicheSchule(ctx) { return !!(this._ctx && ctx && this._ctx.fahrschuleId === ctx.fahrschuleId); },
     async speichern() {
       const { fehler, geaendert } = this.aktualisiere();
       if (this._laeuft || Object.keys(fehler).length || !geaendert.length) return;
@@ -323,9 +325,10 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
       this._laeuft = true; this.aktualisiere();
       const geschrieben = [];
       try {
-        for (const a of geaendert) { await this.schreibe(a, werte[a]); geschrieben.push(a); }
+        for (const a of geaendert) { await this.schreibe(a, werte[a], ctx); geschrieben.push(a); }
       } catch (e) {
         this._laeuft = false;
+        if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Speichern in der vorigen Fahrschule ging nicht: " + (e && e.message ? e.message : "Fehler") + ".", "fehler"); return; }
         for (const a of geschrieben) delete this._ent[a]; // Gespeichertes gilt, der Rest bleibt als Eingabe stehen
         this._stand = ladeStand();
         this.zeichne();
@@ -333,15 +336,17 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
         return;
       }
       this._laeuft = false;
+      if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Vorlagen der vorigen Fahrschule gespeichert.", "ok"); return; } // Entwürfe gehören schon der neuen Fahrschule
       for (const a of geaendert) delete this._ent[a];
       this._stand = ladeStand();
       if (this._el && this._el.isConnected) this.zeichne();
       const text = geaendert.length === 1 ? `Vorlage „${KV.VORLAGEN[geaendert[0]].titel}“ gespeichert` : `${geaendert.length} Vorlagen gespeichert`;
       const zurueck = async () => {
-        for (const a of geaendert) await this.schreibe(a, vorher[a]);
+        for (const a of geaendert) await this.schreibe(a, vorher[a], ctx); // in die Fahrschule, in der gespeichert wurde
+        if (!this.gleicheSchule(ctx)) { melde(this._ctx, "Vorlagen der vorigen Fahrschule wie vorher.", "ok"); return; }
         this._stand = ladeStand();
         if (this._el && this._el.isConnected) this.zeichne();
-        melde(ctx, "Vorlagen wie vorher", "ok");
+        melde(this._ctx, "Vorlagen wie vorher", "ok");
       };
       if (typeof window.toastUndo === "function") window.toastUndo(text, zurueck);
       else melde(ctx, text, "ok");

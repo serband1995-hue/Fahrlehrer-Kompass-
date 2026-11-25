@@ -157,7 +157,7 @@ try {
     pruefe("V5a", "Änderung: Marke „nicht gespeichert“, Speichern aktiv, Status nennt 1 Vorlage", /nicht gespeichert/.test(await page.locator('[data-esv-marken="pruefung"]').innerText()) && !(await page.locator("[data-esv-speichern]").isDisabled()) && /1 Vorlage geändert/.test(await page.locator("[data-esv-status]").innerText()) ? null : "falsch");
     await page.click("[data-esv-speichern]"); await warte(page, 400);
     let z = await zeilen(page);
-    pruefe("V5b", "Speichern: Zeile vorlagen.pruefung mit { text, text_eltern } (Eltern-Text = Standard), richtige Fahrschule", z.length === 1 && z[0].s === "vorlagen.pruefung" && z[0].f === "fs-test-1" && z[0].w.text === NEU && z[0].w.text_eltern === STD("pruefung").text_eltern && Object.keys(z[0].w).sort().join() === "text,text_eltern" ? null : JSON.stringify(z));
+    pruefe("V5b", "Speichern: Zeile vorlagen.pruefung nur mit dem geänderten Text (Eltern-Text = Standard bleibt weg, damit spätere Verbesserungen am Standard ankommen), richtige Fahrschule", z.length === 1 && z[0].s === "vorlagen.pruefung" && z[0].f === "fs-test-1" && z[0].w.text === NEU && Object.keys(z[0].w).join() === "text" ? null : JSON.stringify(z));
     const t = await page.locator(".toast-undo").innerText().catch(() => "");
     pruefe("V5c", "Hinweis „Vorlage „Prüfung bezahlen“ gespeichert“ mit Rückgängig, kein Bestätigen-Fenster", /Vorlage „Prüfung bezahlen“ gespeichert/.test(t) && /Rückgängig/.test(t) ? null : t);
     pruefe("V5d", "danach Marke „geändert“ (nicht mehr „nicht gespeichert“), Speichern aus, Feld zeigt den gespeicherten Text, Vorlage bleibt offen", (await page.locator('[data-esv-marken="pruefung"]').innerText()).trim() === "geändert" && (await page.locator("[data-esv-speichern]").isDisabled()) && (await page.inputValue(feld("pruefung", "text"))) === NEU ? null : await page.locator('[data-esv-marken="pruefung"]').innerText());
@@ -176,7 +176,7 @@ try {
     pruefe("V5g", "zweites Speichern überschreibt die Zeile (eine Zeile, beide Texte neu)", z.length === 1 && z[0].w.text === "Zweiter Text {Datum}" && z[0].w.text_eltern === "Eltern Text {Vorname}" ? null : JSON.stringify(z));
     await page.click(".toast-undo [data-undo]"); await warte(page, 500);
     z = await zeilen(page);
-    pruefe("V5h", "Rückgängig stellt den vorigen Stand her (erster Text, Eltern-Text wieder Standard)", z.length === 1 && z[0].w.text === "Erster Text {Datum}" && z[0].w.text_eltern === STD("erinnerung_antrag").text_eltern && (await page.inputValue(feld("erinnerung_antrag", "text"))) === "Erster Text {Datum}" ? null : JSON.stringify(z));
+    pruefe("V5h", "Rückgängig stellt den vorigen Stand her (erster Text, Eltern-Text weiter Standard = nicht gespeichert)", z.length === 1 && z[0].w.text === "Erster Text {Datum}" && Object.keys(z[0].w).join() === "text" && (await page.inputValue(feld("erinnerung_antrag", "text"))) === "Erster Text {Datum}" ? null : JSON.stringify(z));
     // Standard-Knopf: beide Texte, danach speichern → Zeile gelöscht
     pruefe("V5i", "Standard-Knopf ist aktiv (Text weicht ab)", !(await page.locator('[data-esv-standard="erinnerung_antrag"]').isDisabled()) ? null : "aus");
     await page.click('[data-esv-standard="erinnerung_antrag"]'); await warte(page, 100);
