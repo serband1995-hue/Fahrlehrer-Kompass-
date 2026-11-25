@@ -160,6 +160,24 @@ const rechte = (await db.query(`select has_function_privilege('authenticated', '
   has_function_privilege('authenticated', 'public.reakt_monate(uuid)', 'execute') as monate, has_function_privilege('anon', 'public.reakt_regel(uuid)', 'execute') as anon`)).rows[0];
 gleich("Hilfsfunktionen nicht direkt aufrufbar", { frei: false, monate: false, anon: false }, rechte);
 
+// ---------- 5b. Als echte Rolle „authenticated“ (Fable: der Test läuft sonst als Superuser und sieht Rechte nicht) ----------
+await db.exec("grant usage on schema public, auth to authenticated; grant all on all tables in schema public to authenticated; grant execute on function auth.uid() to authenticated;");
+await preiseSetzen(FS, [{ betrag_cent: 24000, gueltig_ab: monate(-30) }]);
+await schuelerSetzen([{ id: "t1", vertrag_am: monate(-13) }, { id: "t2", vertrag_am: monate(-2) }]);
+await alsNutzer(BUERO);
+const versuch = async (q, p) => { try { await db.query(q, p); return "ok"; } catch (e) { return String(e.message); } };
+await db.exec("set role authenticated");
+gleich("Rolle: läuft als authenticated", "authenticated", (await db.query("select current_user as u")).rows[0].u);
+gleich("Rolle: Termin für Gesperrten abgelehnt", true, /Zahlung ausstehend/.test(await versuch("insert into public.kalender_termine (id, schueler_id, datum, art) values ('rk1','t1',$1,'fahrstunde')", [tag(3)])));
+gleich("Rolle: Termin für freien Schüler geht", "ok", await versuch("insert into public.kalender_termine (id, schueler_id, datum, art) values ('rk2','t2',$1,'fahrstunde')", [tag(3)]));
+gleich("Rolle: schueler_reakt_gesperrt direkt abgelehnt", true, /permission denied/.test(await versuch("select public.schueler_reakt_gesperrt(s) from public.schueler s limit 1")));
+gleich("Rolle: reakt_frei_am direkt abgelehnt", true, /permission denied/.test(await versuch("select public.reakt_frei_am($1::uuid, current_date)", [FS])));
+gleich("Rolle: reakt_regel eigene Fahrschule", { monate: 12, frei: [] }, (await db.query("select public.reakt_regel($1::uuid) as r", [FS])).rows[0].r);
+gleich("Rolle: reakt_regel fremde Fahrschule → null", null, (await db.query("select public.reakt_regel($1::uuid) as r", [FS2])).rows[0].r);
+gleich("Rolle: Schüler ändern (Schutz-Trigger) geht", "ok", await versuch("update public.schueler set name = 'Test Zwei' where id = 't1'"));
+await db.exec("reset role");
+await db.exec("delete from public.kalender_termine");
+
 // ---------- 6. Zufallsvergleich Server ↔ kompass-rechnen.js (Regel und Sperre) ----------
 let seed = 20261124;
 const zufall = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; };

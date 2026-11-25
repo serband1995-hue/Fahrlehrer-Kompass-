@@ -219,6 +219,21 @@ try {
     pruefe("A9b rpc mit der Fahrschule der Gesamtansicht gefragt", rpcAgg >= 1);
     const zur = await page.evaluate(async () => { try { await _fsExitAggModeJetzt(); } catch (e) { return { fehler: String(e) }; } await new Promise((r) => setTimeout(r, 150)); return { soll: _reaktRegelSoll, frei: KR.reaktFreiAm(undefined, todayISO()), agg: _fsAgg }; });
     pruefe("A9c Gesamtansicht verlassen: wieder die eigene Regel (nicht frei)", zur.soll === "fs-1" && zur.frei === false && zur.agg === null, JSON.stringify(zur));
+    // A9e (Fable B1): eine Änderung in der Gesamtansicht während die Regel geladen wird, darf beim Neuladen nicht verloren gehen
+    const b1 = await page.evaluate(async () => {
+      window.__regelJe = null; window.__regel = { art: "ok", data: { monate: 12, frei: [] } };
+      const c = getSupa(), rpcAlt = c.rpc.bind(c);
+      const ok1 = await _fsLoadAggData("fs-1");
+      c.rpc = (name, args) => (name === "reakt_regel"
+        ? new Promise((r) => { setTimeout(() => { if (DB.students[0]) DB.students[0].name = "Geaendert Muster"; }, 30); setTimeout(() => r(rpcAlt(name, args)), 120); })
+        : rpcAlt(name, args));
+      const ok2 = await _fsLoadAggData("fs-1");
+      c.rpc = rpcAlt;
+      const name = DB.students[0] && DB.students[0].name;
+      try { await _fsExitAggModeJetzt(); } catch (e) {}
+      return { ok1, ok2, name };
+    });
+    pruefe("A9e Änderung während des Neuladens bleibt (kein stilles Überschreiben)", b1.ok1 === true && b1.ok2 === false && b1.name === "Geaendert Muster", JSON.stringify(b1));
     await page.evaluate(() => { _authProfile = { id: "sa-1", fahrschule_id: null, rolle: "super_admin" }; });
     const ohne = await page.evaluate(async () => { await _ladeReaktRegel(getSupa()); return { soll: _reaktRegelSoll, regel: KR.holeReaktRegel() }; });
     pruefe("A9d Super-Admin ohne eigene Fahrschule: keine fremde Regel übrig", ohne.soll === null && ohne.regel === null, JSON.stringify(ohne));

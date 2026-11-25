@@ -6107,10 +6107,11 @@ async function _fsLoadAggData(fahrschuleId){
     return false;
   }
   if(gen!==_fsAggGen)return false;
-  if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
-  // W15 (Prüf-Team): Regel der Reaktivierung für DIESE Fahrschule, bevor die Sperren gezeichnet werden
+  // W15 (Prüf-Team): Regel der Reaktivierung für DIESE Fahrschule, bevor die Sperren gezeichnet werden.
+  // Fable B1: VOR der Prüfung auf eigene Änderungen holen – zwischen Prüfung und Überschreiben darf kein Warten liegen.
   await _ladeReaktRegel(supa,fahrschuleId);
   if(gen!==_fsAggGen)return false;
+  if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
   window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||(p.rolle==="entfernt"?"Ehemaliger Fahrlehrer":p.email)||""; });
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
