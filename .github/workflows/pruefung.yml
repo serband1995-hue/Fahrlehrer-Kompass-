@@ -84,10 +84,6 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/zahlung-test.mjs
       - name: "Büro: Seitenleiste (8 Punkte) und Doppelbelegung gesehen (K18)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-gruppen-test.mjs
-      - name: "Einstellungen-Baustein KE (Laden, Speichern, Grenzen)"
-        run: node scripts/ke-test.mjs
-      - name: "Büro: Einstellungen nach Themen (Entwürfe, Zurück, Handy)"
-        run: NODE_PATH=$(npm root -g) node scripts/einstellungen-test.mjs
       - name: "Löschen, Stornieren, Papierkorb (K7)"
         run: NODE_PATH=$(npm root -g) node scripts/loeschen-test.mjs
       - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"
@@ -130,3 +126,7 @@ jobs:
           npx -y playwright@1.63.0 install --with-deps chromium
       - name: "Büro-Test (alle Bereiche, Rollen, Kalender, Schüler, Fristen, Handy-Größen)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-test.mjs
+      - name: "Einstellungen-Baustein KE (Laden, Speichern, Grenzen)"
+        run: node scripts/ke-test.mjs
+      - name: "Büro: Einstellungen nach Themen (Entwürfe, Zurück, Handy)"
+        run: NODE_PATH=$(npm root -g) node scripts/einstellungen-test.mjs
