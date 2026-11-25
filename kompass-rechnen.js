@@ -101,6 +101,14 @@
     }
     return w;
   }
+  // Aus den Einstellungen von Werkstatt 11 (KE.wert(schluessel, standard)); ohne KE = null (Standard). KE als Argument, damit
+  // diese Datei ohne KE läuft (Tests).
+  function fristenAusKE(ke) {
+    if (!ke || typeof ke.wert !== "function") return null;
+    const w = {};
+    for (const art of Object.keys(FRISTEN_STANDARD)) { try { w[art] = ke.wert("fristen." + art, Object.assign({}, FRISTEN_STANDARD[art])); } catch (e) { /* Standard */ } }
+    return w;
+  }
   let fristenAktiv = normFristen(null);
   function setzeFristen(w) { fristenAktiv = normFristen(w); return fristenAktiv; }
   function holeFristen() { return fristenAktiv; }
@@ -523,7 +531,7 @@
   }
   const api = { paketVerbrauch, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
-    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);

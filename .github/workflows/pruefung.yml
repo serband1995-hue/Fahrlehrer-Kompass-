@@ -94,6 +94,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/reakt-entfaellt-test.mjs
       - name: "W15 Fristen: Reiter „Läuft bald ab“ (alle Fristen nach Datum, Schüler und Fahrlehrer)"
         run: NODE_PATH=$(npm root -g) node scripts/laeuft-ab-test.mjs
+      - name: "W15 S3: Thema „Fristen“ der Einstellungen (Speichern, Rückgängig, Handy)"
+        run: NODE_PATH=$(npm root -g) node scripts/fristen-thema-test.mjs
       - name: Paket-Baukasten im Büro (Werkstatt 13)
         run: NODE_PATH=$(npm root -g) node scripts/baukasten-test.mjs
       - name: Paket verkaufen und „noch offen“ (Werkstatt 13)
