@@ -5,6 +5,7 @@
 //   V3 falsche Eingabe (bis vor von): Fenster bleibt offen, nichts gespeichert · V4 Löschen ohne Rückfrage, „Rückgängig“ holt ihn zurück
 //   V5 Schichtplan: 14 Tage, Eintrag mit Status, Löschen · V6 Backups: jetzt sichern, Liste, Herunterladen
 //   V7 Ladefehler: Hinweis mit „Nochmal laden“ · V8 kein seitliches Verrutschen am Handy · V9 keine JS-Fehler
+//   V11 Löschen ganz unten: die Seite springt nicht nach oben
 //   V10 Termin auf einen Urlaubstag: Warnung im Termin-Fenster (die Büro-Seite kennt keine blockierten Tage wie die App)
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/buero-verwaltung-test.mjs
 import { createRequire } from "node:module";
@@ -218,6 +219,22 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 700);
   await pruefe("V10", "Tag ohne Urlaub: keine Warnung, gespeichert", async () => (/Urlaub/.test(await page.evaluate(() => [...document.querySelectorAll("dialog[open]")].map((d) => d.textContent).join(" "))) ? "Warnung ohne Urlaub" : (await page.evaluate((t) => window.__FAKE.tabellen.kalender_termine.some((x) => x.datum === t && x.art === "block"), plus(HEUTE, 9))) ? null : "nicht gespeichert"));
   await pruefe("V10", "keine JS-Fehler", () => konsole);
+  await ctx.close();
+}
+// V11 Löschen ganz unten im Schichtplan: die Seite bleibt, wo sie ist (Bedienungs-Prüfer W16 Teil 2: sprang nach oben)
+{
+  const { page, ctx, konsole } = await oeffne({ breite: 360, hoehe: 780 });
+  await gehe(page, "#schichtplan");
+  const letzter = await page.evaluate(() => vwSchichtZeitraum().bis);
+  await page.click(`[data-vwschichtneu="${letzter}"]`); await warte(page, 300);
+  await page.click("dialog[open] footer button[value=ok]"); await warte(page, 800);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await warte(page, 300);
+  const vorher = await page.evaluate(() => window.scrollY);
+  const id = await page.evaluate((t) => (window.__FAKE.tabellen.fahrschule_schichten.find((x) => x.datum === t) || {}).id, letzter);
+  await page.click(`[data-vwschichtweg="${id}"]`); await warte(page, 900);
+  const nachher = await page.evaluate(() => window.scrollY);
+  await pruefe("V11", "Löschen ganz unten: Seite springt nicht nach oben", () => (vorher > 200 && Math.abs(vorher - nachher) < 120 ? null : `vorher ${Math.round(vorher)} px, danach ${Math.round(nachher)} px`));
+  await pruefe("V11", "keine JS-Fehler", () => konsole);
   await ctx.close();
 }
 await browser.close();

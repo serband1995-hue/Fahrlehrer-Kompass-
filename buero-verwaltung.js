@@ -53,16 +53,17 @@ function vwLaden(was, abfrage, neu) {
 function vwBindeNeuLaden(ziel, was, laden) {
   ziel.querySelectorAll(`[data-vwneu="${was}"]`).forEach((b) => b.addEventListener("click", () => { delete VW.fehler[was]; laden(); zeichne(); }));
 }
-// Zeile löschen; „Rückgängig“ setzt sie unverändert wieder ein (wie _cloudLoeschenMitRueckgaengig in der App)
+// Zeile löschen; „Rückgängig“ setzt sie unverändert wieder ein (wie _cloudLoeschenMitRueckgaengig in der App).
+// neuLaden(weg): weg = true direkt nach dem Löschen (Zeile sofort aus der Liste nehmen, ohne „Lade …“ – sonst sprang die Seite nach oben)
 async function vwLoeschen(tabelle, zeile, text, neuLaden) {
   const res = await supa.from(tabelle).delete().eq("id", zeile.id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
-  neuLaden();
+  neuLaden(true);
   toastUndo(text, async () => {
     const r = await supa.from(tabelle).insert(zeile).select("id");
     if (r.error) { toast("Nicht wiederhergestellt: " + dbFehlerText(r.error), true); return; }
     toast("Wiederhergestellt");
-    neuLaden();
+    neuLaden(false);
   });
 }
 
@@ -106,7 +107,7 @@ function bindeUrlaub(ziel) {
     const u = (VW.urlaub || []).find((x) => x.id === b.dataset.vwurlaubweg);
     if (!u) return;
     b.disabled = true;
-    vwLoeschen("fahrschule_urlaub", u, "Urlaubseintrag gelöscht", () => { VW.urlaub = null; vwLadeUrlaub(true); zeichne(); });
+    vwLoeschen("fahrschule_urlaub", u, "Urlaubseintrag gelöscht", (weg) => { if (weg && VW.urlaub) VW.urlaub = VW.urlaub.filter((x) => x.id !== u.id); vwLadeUrlaub(true); zeichne(); });
   }));
 }
 // W14: Person aus der Liste (Fahrlehrer der Fahrschule, gespeichert mit Fahrlehrer-ID) oder andere Person ohne Kalender
@@ -138,7 +139,7 @@ function urlaubDialog() {
     const res = await supa.from("fahrschule_urlaub").insert({ fahrschule_id: S.fsId, fahrlehrer_id: lid, mitarbeiter_name: name, von, bis, erstellt_von: S.user.id }).select("id");
     if (res.error) { toast("Nicht eingetragen: " + (res.error.code === "22023" && /gehört nicht zu dieser Fahrschule/.test(res.error.message || "") ? "diese Person gehört nicht zur Fahrschule" : dbFehlerText(res.error)), true); return false; }
     toast("Urlaub eingetragen");
-    VW.urlaub = null; vwLadeUrlaub(true); zeichne();
+    vwLadeUrlaub(true); zeichne(); // alte Liste bleibt stehen, bis die frische da ist (kein Springen)
   }, "Eintragen");
   const sel = dlg.querySelector("select[name=wer]"), nameZeile = dlg.querySelector("[data-vwname]"), von = dlg.querySelector("input[name=von]"), bis = dlg.querySelector("input[name=bis]");
   sel.addEventListener("change", () => { nameZeile.hidden = sel.value !== "_andere"; if (sel.value === "_andere") nameZeile.querySelector("input").focus(); });
@@ -186,7 +187,7 @@ function bindeSchichtplan(ziel) {
     const e = (VW.schichten || []).find((x) => x.id === b.dataset.vwschichtweg);
     if (!e) return;
     b.disabled = true;
-    vwLoeschen("fahrschule_schichten", e, "Eintrag gelöscht", () => { VW.schichten = null; vwLadeSchichten(true); zeichne(); });
+    vwLoeschen("fahrschule_schichten", e, "Eintrag gelöscht", (weg) => { if (weg && VW.schichten) VW.schichten = VW.schichten.filter((x) => x.id !== e.id); vwLadeSchichten(true); zeichne(); });
   }));
 }
 // Statt dreier Eingabefenster (wie früher in der App) ein Fenster: Name, Status, Notiz
@@ -203,7 +204,7 @@ function schichtDialog(datum) {
     const res = await supa.from("fahrschule_schichten").insert({ fahrschule_id: S.fsId, mitarbeiter_name: name, datum, status, notiz: form.notiz.value.trim() || null, erstellt_von: S.user.id }).select("id");
     if (res.error) { toast("Nicht eingetragen: " + dbFehlerText(res.error), true); return false; }
     toast("Eingetragen");
-    VW.schichten = null; vwLadeSchichten(true); zeichne();
+    vwLadeSchichten(true); zeichne();
   }, "Eintragen");
 }
 
@@ -233,7 +234,7 @@ function bindeBackups(ziel) {
     jetzt.disabled = false; jetzt.textContent = "Jetzt alles sichern";
     if (res.error) { toast("Backup nicht erstellt: " + dbFehlerText(res.error), true); return; }
     toast("Backup erstellt");
-    VW.backups = null; vwLadeBackups(true); zeichne();
+    vwLadeBackups(true); zeichne();
   });
   ziel.querySelectorAll("[data-vwbackuplade]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
