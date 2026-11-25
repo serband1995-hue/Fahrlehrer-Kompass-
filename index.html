@@ -1986,6 +1986,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="kompass-rechnen.js"></script>
+<script src="kompass-einstellungen.js"></script>
 <script src="neuigkeiten.js"></script>
 <script src="lernszenen.js" defer></script>
 <script src="lernszenen-stadt.js" defer></script>
@@ -5522,6 +5523,7 @@ async function pullSchuelerZuweisungen() {
     const supa = getSupa();
     const gen = _abglGen;
     // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
+    if (window.KE) KE.lade(supa, _authProfile.fahrschule_id); // W11: Einstellungen der eigenen Fahrschule (wirft nie)
     const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
@@ -5811,6 +5813,7 @@ async function doLogout(opts) {
   }
   if (_syncTimer) clearInterval(_syncTimer);
   _pullOk = false;
+  if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
   if (!opts.alleGeraete) {
     // Nur dieses Gerät abmelden: signOut() ohne scope meldet in supabase-js v2 ALLE Geräte ab (Handy, PC, Laptop).
     try { if (supa) await Promise.race([supa.auth.signOut({ scope: "local" }), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}
@@ -6161,6 +6164,7 @@ async function _fsEnterAggMode(fahrschuleId){
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
+  if(window.KE) KE.lade(getSupa(),fahrschuleId); // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht)
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6194,6 +6198,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
+  if(window.KE&&_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); // W11: wieder die Einstellungen der eigenen Fahrschule
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -8013,7 +8018,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.2";
+const APP_VERSION="2026.11.25.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

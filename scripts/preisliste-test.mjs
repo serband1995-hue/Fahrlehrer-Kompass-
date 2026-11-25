@@ -147,9 +147,9 @@ try {
     const csv = await readFile(await dl2.path(), "utf8");
     pruefe("P7d CSV mit Semikolon, Komma-Beträgen, Kopfzeile", csv.startsWith("﻿art;art_name;klasse") && /;260,00;nein;/.test(csv), csv.slice(0, 200));
     // P8 Reaktivierung in den Fristen nimmt die Preisliste
-    await page.goto(basis + "buero.html#fristen"); await page.waitForTimeout(600);
+    await page.goto(basis + "buero.html#einstellungen?thema=preise"); await page.waitForTimeout(600);
     const f = await page.locator("#ansicht").innerText();
-    pruefe("P8a Fristen: „Reaktivierung heute 260 €“ mit Verweis auf die Preisliste", /Reaktivierung heute:\s*260\s*€/.test(f) && await page.locator('#ansicht a[href="#preise"]').count() >= 1, f.slice(-600));
+    pruefe("P8a Einstellungen (Preise & Pakete): „Reaktivierung heute 260 €“ mit Verweis auf die Preisliste", /Reaktivierung heute:\s*260\s*€/.test(f) && await page.locator('#ansicht a[href="#zahlungen?reiter=preise"]').count() >= 1, f.slice(-600));
     const betrag = await page.evaluate(() => [reaktBetrag(), reaktBetrag({ vertrag_am: "2000-01-01" }), reaktBetrag({ vertrag_am: new Date(Date.now() + 40 * 864e5).toISOString().slice(0, 10) })]);
     pruefe("P8b alter Vertrag (vor der Preisliste) → alter Betrag 240; heute 260; Vertrag nach Erhöhung 280", betrag[0] === 260 && betrag[1] === 240 && betrag[2] === 280, JSON.stringify(betrag));
     // P6e Büro ändert: Verlauf zeigt die PIN-Person
@@ -170,8 +170,8 @@ try {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", vorbereiten: function () { F.fehler = { fahrschule_preise: 'relation "public.fahrschule_preise" does not exist' }; } });
     const t = await page.locator("#ansicht").innerText();
     pruefe("P9a ohne Tabelle: Hinweis statt Fehler", /noch nicht eingerichtet/.test(t), t.slice(0, 200));
-    await page.goto(basis + "buero.html#fristen"); await page.waitForTimeout(600);
-    pruefe("P9b Fristen: altes Feld „Standardbetrag Reaktivierung“ bleibt, Betrag 240", await page.evaluate(() => reaktBetrag()) === 240 && /Standardbetrag Reaktivierung/.test(await page.locator("#ansicht").innerText()));
+    await page.goto(basis + "buero.html#einstellungen?thema=preise"); await page.waitForTimeout(600);
+    pruefe("P9b Einstellungen (Preise & Pakete): altes Feld „Standardbetrag Reaktivierung“ bleibt, Betrag 240", await page.evaluate(() => reaktBetrag()) === 240 && /Standardbetrag Reaktivierung/.test(await page.locator("#ansicht").innerText()));
     pruefe("P9c keine Fehler in der Konsole (außer dem erwarteten Ladefehler)", konsole.filter((k) => !/fahrschule_preise/.test(k)).length === 0, konsole.join(" | "));
     await ctx.close();
   }
