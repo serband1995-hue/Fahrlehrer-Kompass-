@@ -2239,8 +2239,8 @@ async function k2Kontrast(page, sel) {
   for (const [w, h] of [[901, 800], [1366, 860]]) {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
     const r = await page.evaluate(() => ({ nav: [...document.querySelectorAll(".nav-punkt")].filter((a) => a.offsetParent).length, menue: !!document.getElementById("menueKnopf").offsetParent, drucken: !!document.getElementById("drucken").offsetParent, wer: !!document.getElementById("werZeile").offsetParent, seite: Math.round(document.querySelector(".seite").getBoundingClientRect().width) }));
-    // Werkstatt 11: alle 12 Punkte der flachen Leiste sichtbar
-    if (r.nav !== 12) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
+    // Werkstatt 11: alle Punkte der flachen Leiste sichtbar (W16 Teil 2: 15 mit Urlaub, Schichtplan, Backups)
+    if (r.nav !== 15) fehler(`K2 PC ${w}: ${r.nav} statt 15 Punkte sichtbar`);
     if (r.menue) fehler(`K2 PC ${w}: Knopf „Menü“ sichtbar`);
     if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
     if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);

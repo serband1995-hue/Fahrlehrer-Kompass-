@@ -35,7 +35,8 @@ const warte = (p, ms = 250) => p.waitForTimeout(ms);
 const HEUTE = new Date().toISOString().slice(0, 10);
 const plus = (iso, t) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + t); return d.toISOString().slice(0, 10); };
 
-async function oeffne({ breite, hoehe, ladefehler = false }) {
+// person: wer am Büro-PC sitzt (PIN). Paula hat kein Verwalten-Recht, Mia hat es: beide sehen Urlaub, Schichtplan und Backups (W11/W16).
+async function oeffne({ breite, hoehe, ladefehler = false, person = ["Paula Muster", "7352"] }) {
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, acceptDownloads: true });
   const page = await ctx.newPage();
   const konsole = [];
@@ -51,15 +52,16 @@ async function oeffne({ breite, hoehe, ladefehler = false }) {
   await page.goto(basis + "buero.html#urlaub");
   await warte(page, 500);
   const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1500 }).catch(() => null);
-  if (frage) { await page.click('#werListe button:has-text("Paula Muster")'); await page.keyboard.type("7352", { delay: 20 }); await warte(page, 500); }
+  if (frage) { await page.click(`#werListe button:has-text("${person[0]}")`); await page.keyboard.type(person[1], { delay: 20 }); await warte(page, 500); }
   return { page, ctx, konsole };
 }
 const fs = (page, t) => page.evaluate((t) => JSON.parse(JSON.stringify(window.__FAKE.tabellen[t] || [])), t);
 const gehe = async (page, hash) => { await page.evaluate((h) => { location.hash = h; }, hash); await warte(page, 600); };
 
-for (const [n, w, h] of [["PC", 1366, 860], ["Handy", 360, 780]]) {
+for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, ["Paula Muster", "7352"]], ["Handy, Büro mit Verwalten-Recht", 360, 780, ["Mia Muster", "5917"]]]) {
   const P = `[${n}]`;
-  const { page, ctx, konsole } = await oeffne({ breite: w, hoehe: h });
+  const { page, ctx, konsole } = await oeffne({ breite: w, hoehe: h, person });
+  await pruefe("V0", `${P} Leiste: Urlaub, Schichtplan und Backups da`, () => page.evaluate(() => { const h = [...document.querySelectorAll("#nav .nav-punkt")].map((a) => a.getAttribute("href")); const f = ["#urlaub", "#schichtplan", "#backups"].filter((x) => !h.includes(x)); return f.length ? "fehlt: " + f.join(", ") : null; }));
   await gehe(page, "#urlaub");
   // V1 Urlaub für einen Fahrlehrer
   await page.click("#vwUrlaubNeu");
@@ -129,10 +131,10 @@ for (const [n, w, h] of [["PC", 1366, 860], ["Handy", 360, 780]]) {
   await pruefe("V5", `${P} Schichtplan: 14 Tage, Eintrag mit Status und Notiz (Name vorgeschlagen), Löschen`, async () => {
     const f = [];
     if (tage !== 14) f.push(tage + " Tage statt 14");
-    if (vorschlag !== "Paula Muster") f.push("Name nicht vorgeschlagen: " + vorschlag);
+    if (vorschlag !== person[0]) f.push("Name nicht vorgeschlagen: " + vorschlag); // wer gerade am Büro-PC sitzt
     const e = sch.find((x) => x.datum === HEUTE);
-    if (!e || e.status !== "krank" || e.notiz !== "Arzttermin" || e.mitarbeiter_name !== "Paula Muster") f.push("gespeichert: " + JSON.stringify(sch));
-    if (!/Paula Muster[\s\S]*krank/.test(await page.textContent("#ansicht"))) f.push("nicht im Plan");
+    if (!e || e.status !== "krank" || e.notiz !== "Arzttermin" || e.mitarbeiter_name !== person[0]) f.push("gespeichert: " + JSON.stringify(sch));
+    if (!new RegExp(person[0] + "[\\s\\S]*krank").test(await page.textContent("#ansicht"))) f.push("nicht im Plan");
     if (e) { await page.click(`[data-vwschichtweg="${e.id}"]`); await warte(page, 700); if ((await fs(page, "fahrschule_schichten")).length) f.push("nicht gelöscht"); }
     return f;
   });

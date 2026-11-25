@@ -177,7 +177,8 @@ const BEREICHE = [
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
   { id: "urlaub", titel: "Urlaub", neben: true, wenn: () => typeof renderUrlaub === "function", render: (...a) => renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
   { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
-  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function" && istAdmin(), render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
+  // W16 Teil 2 (mit W11 abgestimmt): Backups auch für das Büro, wie in der App und laut Datenbank (is_buero darf sichern und lesen)
+  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
   // Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js), ganz unten in der Leiste; für Büro, Leitung und Super-Admin
   { id: "einstellungen", titel: "Einstellungen", neben: true, wenn: () => typeof renderEinstellungenSeite === "function" && !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)), render: (...a) => renderEinstellungenSeite(...a), nachher: (...a) => typeof bindeEinstellungenSeite === "function" && bindeEinstellungenSeite(...a) },
