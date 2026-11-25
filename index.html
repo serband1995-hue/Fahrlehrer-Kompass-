@@ -6198,17 +6198,18 @@ async function _fsEnterAggMode(fahrschuleId){
   if(neuGesichert){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule gleich holen, unabhängig vom Laden der Daten (offline gilt der Gerätespeicher)
   if(!(await _fsLoadAggData(fahrschuleId))){
     // Nicht in die Gesamtansicht gekommen: die Sicherung der eigenen Daten wieder freigeben, sonst würde
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
     // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
-    if(!_fsAgg&&meinGen===_fsAggGen) _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
+    if(!_fsAgg&&meinGen===_fsAggGen){ _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
+      if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); else KE.leeren(); _sonderMinAusKE(); } } // W11: und die Einstellungen der eigenen
     return false;
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6250,6 +6251,7 @@ async function _fsExitAggModeJetzt(){
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
   if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
+  if(window.KE&&_fsAgg) KE.lade(getSupa(),_fsAgg.fahrschuleId); // W11: Einstellungen im Takt mit auffrischen (wirft nie)
   // W14b (Daten-Prüfer): erst ein laufendes Speichern abwarten – sonst läse das Neuladen den Stand davor und das
   // nächste Speichern drehte die eigene Änderung zurück
   if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
@@ -8923,7 +8925,7 @@ function theorieBestandenSetzen(s,an,leise){
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
 function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn nicht mit einem früheren Hinweis zusammengefasst)
-  const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
+  const t=$("#toast"); ms=ms||_undoMs(); t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
   // Hinweise mit eigenem Knopf (z. B. „Meine nehmen“) nie zusammenfassen: ein Tipp darf nur das tun, was dort steht
   if(!knopf&&t._undos&&t._undos.length&&!t._eigenerKnopf&&t.classList.contains("undo")&&t.classList.contains("show")){
@@ -15062,7 +15064,7 @@ function _absageSenden(id){ _absageVergessen(id); _notifyOnlineBookingChange(id,
 function _absagenNachholen(){ if(!_authUser)return; const uid=_authUser.id, jetzt=Date.now();
   // Fable K7: läuft noch ein (zusammengefasstes) Rückgängig, wartet die Absage (sonst Mail trotz „Rückgängig“)
   try{ const t=$("#toast"); if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(_absagenNachholen,1500); return; } }catch(e){}
-  _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>7000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
+  _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>_undoMs()+1000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
 function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig, ohneAbsage){
   // W13: alle Kästchen des Termins leeren (90 Minuten = 2), Rückgängig stellt alle wieder her
   let sonderAlt=null;

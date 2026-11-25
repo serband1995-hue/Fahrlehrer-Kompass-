@@ -461,23 +461,23 @@ try {
     pruefe("E13a" + nm, "Fahrstunden & Kalender: Eingabe „Länge einer Sonderfahrt“ mit 45, kein „Hier kommt bald“", (await page.inputValue("input[name=minuten]")) === "45" && !/kommt bald/.test(await page.locator("#esBox").innerText()) && /Ausbildungsplan/.test(await page.locator("#esBox").innerText()) && /Fahrchecks/.test(await page.locator("#esBox").innerText()) ? null : await page.locator("#esBox").innerText());
     pruefe("E13b" + nm, "kein „Auf Standard“-Knopf, solange nichts gespeichert ist", (await page.locator("[data-es-std]").count()) === 0 ? null : "da");
     await page.fill("input[name=minuten]", "29"); await page.click('form[data-es-ke="minuten"] button[type=submit]'); await warte(page, 300);
-    pruefe("E13c" + nm, "29: abgelehnt mit den Grenzen 30 bis 90, nichts gespeichert", /30 bis 90/.test(await page.locator("#esMeldung").innerText()) && (await keZeile(page, "fahrstunden.sonderfahrt")).length === 0 ? null : await page.locator("#esMeldung").innerText());
+    pruefe("E13c" + nm, "29: abgelehnt mit den Grenzen 30 bis 90, nichts gespeichert", /30 bis 90/.test(await page.locator(".es-kefehler:not([hidden])").first().innerText()) && (await keZeile(page, "fahrstunden.sonderfahrt")).length === 0 ? null : await page.locator(".es-kefehler:not([hidden])").first().innerText());
     await page.fill("input[name=minuten]", "91"); await page.click('form[data-es-ke="minuten"] button[type=submit]'); await warte(page, 300);
     pruefe("E13d" + nm, "91: abgelehnt", (await keZeile(page, "fahrstunden.sonderfahrt")).length === 0 ? null : "gespeichert");
     await page.fill("input[name=minuten]", "45.5"); await page.click('form[data-es-ke="minuten"] button[type=submit]'); await warte(page, 300);
     pruefe("E13e" + nm, "keine ganze Zahl: abgelehnt", (await keZeile(page, "fahrstunden.sonderfahrt")).length === 0 ? null : "gespeichert");
     await page.fill("input[name=minuten]", "60"); await page.click('form[data-es-ke="minuten"] button[type=submit]'); await warte(page, 500);
     const z = await keZeile(page, "fahrstunden.sonderfahrt");
-    pruefe("E13f" + nm, "60: richtige Zeile in fahrschule_einstellungen (fs-test-1, wert {minuten:60}), Meldung „Gespeichert“", z.length === 1 && z[0].fahrschule_id === "fs-test-1" && z[0].wert.minuten === 60 && /Gespeichert/.test(await page.locator("#esMeldung").innerText()) ? null : JSON.stringify(z));
+    pruefe("E13f" + nm, "60: richtige Zeile in fahrschule_einstellungen (fs-test-1, wert {minuten:60}), Meldung „Gespeichert“", z.length === 1 && z[0].fahrschule_id === "fs-test-1" && z[0].wert.minuten === 60 && /Gespeichert/.test(await page.locator(".es-keok:not([hidden])").first().innerText()) ? null : JSON.stringify(z));
     pruefe("E13g" + nm, "wirkt sofort: KR.sonderMinuten() = 60, Feld zeigt 60, Standard-Knopf da", (await page.evaluate(() => KR.sonderMinuten())) === 60 && (await page.inputValue("input[name=minuten]")) === "60" && (await page.locator("[data-es-std]").count()) === 1 ? null : String(await page.evaluate(() => KR.sonderMinuten())));
     await page.click("[data-es-std]"); await warte(page, 500);
     pruefe("E13h" + nm, "Auf Standard zurück: Zeile gelöscht, KR.sonderMinuten() = 45, Feld 45", (await keZeile(page, "fahrstunden.sonderfahrt")).length === 0 && (await page.evaluate(() => KR.sonderMinuten())) === 45 && (await page.inputValue("input[name=minuten]")) === "45" ? null : "nicht zurück");
 
     await setzeHash(page, "#einstellungen?thema=loeschen");
     const t = await page.locator("#esBox").innerText();
-    pruefe("E13i" + nm, "Thema „Löschen & Rückgängig“: Papierkorb 30 Tage, Rückgängig 6 Sek., Hinweistext", (await page.inputValue("input[name=tage]")) === "30" && (await page.inputValue("input[name=sekunden]")) === "6" && /Gelöschte Termine liegen so lange im Papierkorb, danach werden sie endgültig gelöscht\. Unterschriebene und stornierte Stunden bleiben immer\./.test(t) ? null : t);
+    pruefe("E13i" + nm, "Thema „Löschen & Rückgängig“: Papierkorb 30 Tage, Rückgängig 6 Sek., Hinweistext", (await page.inputValue("input[name=tage]")) === "30" && (await page.inputValue("input[name=sekunden]")) === "6" && /Gelöschte Termine bleiben so lange im Papierkorb, danach sind sie endgültig weg\. Unterschriebene und stornierte Stunden bleiben immer\./.test(t) ? null : t);
     await page.fill("input[name=tage]", "6"); await page.click('form[data-es-ke="tage"] button[type=submit]'); await warte(page, 300);
-    pruefe("E13j" + nm, "Papierkorb 6: abgelehnt (7 bis 90)", /7 bis 90/.test(await page.locator("#esMeldung").innerText()) && (await keZeile(page, "papierkorb.tage")).length === 0 ? null : "?");
+    pruefe("E13j" + nm, "Papierkorb 6: abgelehnt (7 bis 90)", /7 bis 90/.test(await page.locator(".es-kefehler:not([hidden])").first().innerText()) && (await keZeile(page, "papierkorb.tage")).length === 0 ? null : "?");
     await page.fill("input[name=tage]", "91"); await page.click('form[data-es-ke="tage"] button[type=submit]'); await warte(page, 300);
     pruefe("E13k" + nm, "Papierkorb 91: abgelehnt", (await keZeile(page, "papierkorb.tage")).length === 0 ? null : "gespeichert");
     await page.fill("input[name=tage]", "14"); await page.click('form[data-es-ke="tage"] button[type=submit]'); await warte(page, 500);
@@ -486,7 +486,7 @@ try {
     const rest = await page.evaluate(() => { const vor = new Date(Date.now() - 3 * 86400000).toISOString(); return [nwRestTage({ geloescht_am: vor }), nwPapierkorbText({ geloescht_am: vor, payload: {} }), nwRestTage({ geloescht_am: "kaputt" })]; });
     pruefe("E13m" + nm, "Büro-Papierkorb rechnet mit 14 Tagen: nach 3 Tagen noch 11, Standardwert 14 bei unlesbarem Datum", rest[0] === 11 && /11 Tagen/.test(rest[1]) && rest[2] === 14 ? null : JSON.stringify(rest));
     await page.fill("input[name=sekunden]", "3"); await page.click('form[data-es-ke="sekunden"] button[type=submit]'); await warte(page, 300);
-    pruefe("E13n" + nm, "Rückgängig 3: abgelehnt (4 bis 30)", /4 bis 30/.test(await page.locator("#esMeldung").innerText()) && (await keZeile(page, "rueckgaengig.sekunden")).length === 0 ? null : "?");
+    pruefe("E13n" + nm, "Rückgängig 3: abgelehnt (4 bis 30)", /4 bis 30/.test(await page.locator(".es-kefehler:not([hidden])").first().innerText()) && (await keZeile(page, "rueckgaengig.sekunden")).length === 0 ? null : "?");
     await page.fill("input[name=sekunden]", "31"); await page.click('form[data-es-ke="sekunden"] button[type=submit]'); await warte(page, 300);
     pruefe("E13o" + nm, "Rückgängig 31: abgelehnt", (await keZeile(page, "rueckgaengig.sekunden")).length === 0 ? null : "gespeichert");
     await page.fill("input[name=sekunden]", "10"); await page.click('form[data-es-ke="sekunden"] button[type=submit]'); await warte(page, 500);
@@ -510,7 +510,7 @@ try {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#einstellungen?thema=kalender" });
     await page.evaluate(() => { window.__FAKE.fehler = { fahrschule_einstellungen: "row-level security: new row violates" }; });
     await page.fill("input[name=minuten]", "50"); await page.click('form[data-es-ke="minuten"] button[type=submit]'); await warte(page, 400);
-    pruefe("E13t", "Datenbank lehnt ab: Meldung „Keine Berechtigung …“, Wert 50 bleibt im Feld, Knopf wieder frei", /Berechtigung|nicht gespeichert|Nicht gespeichert/i.test(await page.locator("#esMeldung").innerText()) && (await page.inputValue("input[name=minuten]")) === "50" && !(await page.locator('form[data-es-ke="minuten"] button[type=submit]').isDisabled()) ? null : await page.locator("#esMeldung").innerText());
+    pruefe("E13t", "Datenbank lehnt ab: Meldung „Keine Berechtigung …“, Wert 50 bleibt im Feld, Knopf wieder frei", /Berechtigung|nicht gespeichert|Nicht gespeichert/i.test(await page.locator(".es-kefehler:not([hidden])").first().innerText()) && (await page.inputValue("input[name=minuten]")) === "50" && !(await page.locator('form[data-es-ke="minuten"] button[type=submit]').isDisabled()) ? null : await page.locator(".es-kefehler:not([hidden])").first().innerText());
     await ctx.close();
   }
   // Handy: Löschen & Rückgängig passt (kein seitliches Wischen)
@@ -528,12 +528,66 @@ try {
     await page.fill("#dr", "abc");
     if (f5) await page.evaluate(() => { buVerlauf.length = 0; }); // wie nach F5: im Arbeitsspeicher kennt niemand die alten Verlaufsnummern
     await page.goBack(); await warte(page, 800);
-    pruefe("E14a" + nm, "Zurück mit Eingabe: Rückfrage, Eingabe noch da, Adresse beim Thema", /Änderungen verwerfen\?/.test(await frage(page)) && (await page.inputValue("#dr")) === "abc" && (await page.evaluate(() => location.hash)) === "#einstellungen?thema=dreck" ? null : (await frage(page)) + (await page.evaluate(() => location.hash)));
+    pruefe("E14a" + nm, "Zurück mit Eingabe: Rückfrage, Eingabe noch da, Adresse beim Thema", /Änderungen verwerfen\?/.test(await frage(page)) && (await page.inputValue("#dr")) === "abc" && (f5 || (await page.evaluate(() => location.hash)) === "#einstellungen?thema=dreck") ? null : (await frage(page)) + (await page.evaluate(() => location.hash)));
     await page.click('dialog[open] button:has-text("Ja, verwerfen")'); await warte(page, 800);
     pruefe("E14b" + nm, "„Ja, verwerfen“: erstes Thema offen, Adresse beim ersten Thema", (await aktivesThema(page)) === "fahrschule" && (await page.evaluate(() => location.hash)) === "#einstellungen?thema=fahrschule" ? null : (await aktivesThema(page)) + (await page.evaluate(() => location.hash)));
     await page.goBack(); await warte(page, 600);
     pruefe("E14c" + nm, "kein zusätzlicher Verlaufseintrag: ein weiteres Zurück verlässt das Thema „Mit Eingabe“ (nicht wieder dorthin)", !/thema=dreck/.test(await page.evaluate(() => location.hash)) ? null : "wieder bei dreck");
     pruefe("E12q" + nm, "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+  // ---- Prüf-Team zu Schritt 3: Handy-Knöpfe, Fehler an der Karte, später ankommende Werte, kleine Punkte ----
+  for (const [b, h] of [[360, 740], [412, 860]]) {
+    const { page, ctx, konsole } = await oeffne({ breite: b, hoehe: h, hash: "#einstellungen?thema=loeschen" });
+    const nm = ` ${b}x${h}`;
+    await page.fill("input[name=tage]", "45"); await page.click('form[data-es-ke="tage"] button[type=submit]'); await warte(page, 500);
+    const k = await page.evaluate(() => { const f = document.querySelector('form[data-es-ke="tage"]'), bs = [...f.querySelectorAll(".es-fuss .knopf")].sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).map((x) => { const r = x.getBoundingClientRect(); return { t: x.textContent.trim(), top: Math.round(r.top), h: Math.round(r.height), w: Math.round(r.width) }; }); const wb = f.querySelector(".es-fuss").getBoundingClientRect(); return { bs, fuss: Math.round(wb.width), toast: !!document.querySelector(".toast.zeigen") && /gespeichert/i.test(document.querySelector(".toast.zeigen").textContent) }; });
+    pruefe("E15a" + nm, "zwei Knöpfe untereinander, volle Breite, gleiche Höhe ≥ 44, „Speichern“ oben, einzeilig", k.bs.length === 2 && /Speichern/.test(k.bs[0].t) && /Standard/.test(k.bs[1].t) && k.bs[0].top < k.bs[1].top && k.bs.every((x) => x.h >= 44 && x.h === k.bs[0].h && x.w >= k.fuss - 2 && x.h < 60) ? null : JSON.stringify(k));
+    pruefe("E15b" + nm, "kein Toast „Einstellungen gespeichert“ (nur die Meldung an der Karte)", !k.toast && /Gespeichert/.test(await page.locator('form[data-es-ke="tage"] .es-keok').innerText()) ? null : JSON.stringify(k));
+    await page.fill("input[name=tage]", "3"); await page.click('form[data-es-ke="tage"] button[type=submit]'); await warte(page, 700);
+    const f = await page.evaluate(() => { const i = document.querySelector("input[name=tage]"), e = document.querySelector('form[data-es-ke="tage"] .es-kefehler'), r = e.getBoundingClientRect(); return { alarm: e.getAttribute("role"), text: e.textContent, invalid: i.getAttribute("aria-invalid"), fokus: document.activeElement === i, rot: i.closest(".es-wert").hasAttribute("data-fehler"), sichtbar: r.top >= 0 && r.bottom <= window.innerHeight && !e.hidden }; });
+    pruefe("E15c" + nm, "Fehler an der Karte: role=alert, nennt „Papierkorb“ und 7 bis 90, Feld rot, aria-invalid, Fokus, im Bild", f.alarm === "alert" && /^Papierkorb: .*7 bis 90/.test(f.text) && f.invalid === "true" && f.fokus && f.rot && f.sichtbar ? null : JSON.stringify(f));
+    await page.fill("input[name=tage]", "20");
+    pruefe("E15d" + nm, "beim Tippen verschwindet der Fehler", (await page.locator('form[data-es-ke="tage"] .es-kefehler').isHidden()) ? null : "noch da");
+    pruefe("E15e" + nm, "Zahl-Feld ohne Auf/Ab-Pfeile", await page.evaluate(() => getComputedStyle(document.querySelector("input[name=tage]")).appearance === "textfield" || getComputedStyle(document.querySelector("input[name=tage]")).webkitAppearance === "textfield") ? null : "Pfeile da");
+    pruefe("E12r" + nm, "keine Konsolenfehler", konsole.length ? konsole : null);
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await oeffne({ hash: "#einstellungen?thema=loeschen" });
+    pruefe("E15f", "„Standard: 30“ am Feld, solange nichts gespeichert ist; danach weg", /Standard: 30/.test(await page.locator("#esBox").innerText()) ? null : "fehlt");
+    await page.fill("input[name=tage]", "40"); await page.click('form[data-es-ke="tage"] button[type=submit]'); await warte(page, 500);
+    pruefe("E15g", "nach dem Speichern kein „Standard: 30“ mehr beim Papierkorb", !/Standard: 30/.test(await page.locator('form[data-es-ke="tage"]').innerText()) ? null : "noch da");
+    // Werte kommen später an (KE nach dem Zeichnen): Feld zieht nach, Entwurf bleibt
+    await page.fill("input[name=sekunden]", "12");
+    await page.evaluate(() => { window.__FAKE.tabellen.fahrschule_einstellungen.push({ fahrschule_id: "fs-test-1", schluessel: "fahrstunden.sonderfahrt", wert: { minuten: 60 } }); return KE.lade(supa, "fs-test-1"); });
+    await warte(page, 500);
+    pruefe("E15h", "später angekommener Wert zieht das Feld nach (Sonderfahrt 60), Entwurf (Rückgängig 12) bleibt", (await page.evaluate(() => KR.sonderMinuten())) === 60 && (await page.inputValue("input[name=sekunden]")) === "12" ? null : "Entwurf weg");
+    await page.fill("input[name=sekunden]", "6");
+    await setzeHash(page, "#einstellungen?thema=kalender");
+    pruefe("E15i", "Kalender-Thema zeigt 60", (await page.inputValue("input[name=minuten]")) === "60" && !/in der App\s*$/m.test(await page.locator("#esBox .es-wert.es-text").allInnerTexts().then((a) => a.join("\n"))) ? null : await page.inputValue("input[name=minuten]"));
+    pruefe("E15j", "Arbeitszeiten: Hinweiszeile ohne Feldoptik; Satz „Gilt auch für ältere Termine“; Abschnitt „Sonderfahrt“, Feld „Länge“", (await page.locator("#esBox .es-zeile .es-wert.es-text").count()) === 0 && /Arbeitszeiten stellt jeder Fahrlehrer/.test(await page.locator("#esBox").innerText()) && /Gilt auch für ältere Termine im Nachweis\./.test(await page.locator("#esBox").innerText()) && /^Länge/m.test(await page.locator("#esBox .es-name").first().innerText()) ? null : await page.locator("#esBox").innerText());
+    await ctx.close();
+  }
+  {
+    const { page, ctx } = await oeffne({ breite: 360, hoehe: 740, hash: "#einstellungen" });
+    pruefe("E15k", "Handy-Themenliste ohne offenes Thema: kein Thema wirkt ausgewählt", await page.evaluate(() => { const a = document.querySelector('.es-thema[aria-current="page"]'); const c = getComputedStyle(a); return c.fontWeight === "500" && (c.boxShadow === "none" || /^0px 0px 0px 0px/.test(c.boxShadow)) && c.backgroundColor === "rgba(0, 0, 0, 0)"; }) ? null : "ausgewählt");
+    await ctx.close();
+  }
+  // E16 nach F5: Zurück, „Weiter bearbeiten“, noch einmal Zurück fragt wieder
+  {
+    const { page, ctx } = await oeffne({ vorher: DRECK, hash: "#einstellungen?thema=fahrschule" });
+    await page.click('.es-thema[data-es-thema="dreck"]'); await warte(page, 300);
+    await page.fill("#dr", "abc");
+    await page.evaluate(() => { buVerlauf.length = 0; });
+    await page.goBack(); await warte(page, 800);
+    pruefe("E16a", "nach F5: Zurück fragt", /Änderungen verwerfen\?/.test(await frage(page)) ? null : "keine Frage");
+    await fortfahren(page); await warte(page, 300);
+    pruefe("E16b", "„Weiter bearbeiten“: Eingabe da, Adresse beim Thema", (await page.inputValue("#dr")) === "abc" && (await page.evaluate(() => location.hash)) === "#einstellungen?thema=dreck" ? null : await page.evaluate(() => location.hash));
+    await page.goBack(); await warte(page, 800);
+    pruefe("E16c", "noch einmal Zurück: fragt wieder (nicht still weg)", /Änderungen verwerfen\?/.test(await frage(page)) && (await page.inputValue("#dr")) === "abc" ? null : "keine Frage");
+    await page.click('dialog[open] button:has-text("Ja, verwerfen")'); await warte(page, 800);
+    pruefe("E16d", "„Ja, verwerfen“: erstes Thema", (await aktivesThema(page)) === "fahrschule" ? null : await aktivesThema(page));
     await ctx.close();
   }
 } finally {

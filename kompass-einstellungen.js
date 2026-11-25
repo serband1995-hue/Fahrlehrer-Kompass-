@@ -150,7 +150,7 @@
     zahl: function (schluessel, feld, standard, min, max) {
       var o = _fs && _werte[schluessel];
       var v = o && Object.prototype.hasOwnProperty.call(o, feld) ? o[feld] : undefined;
-      if (typeof v === "number") v = Number.isFinite(v) ? String(v) : ""; // eine Zahl im JSON zählt wie ihr Text (1.5 und 1e21 fallen dabei durch)
+      if (typeof v === "number") v = Number.isInteger(v) ? String(v) : ""; // eine Zahl im JSON zählt wie ihr Text (1.5 und 1e21 fallen dabei durch)
       if (typeof v !== "string" || !/^[0-9]{1,6}$/.test(v)) return standard;
       var n = parseInt(v, 10);
       return n >= min && n <= max ? n : standard;

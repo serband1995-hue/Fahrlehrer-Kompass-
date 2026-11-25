@@ -69,7 +69,7 @@ pruefe("Ereignis nach lade", gleich(ereignisse[ereignisse.length - 1], { fsId: F
 
 // 2 zahl
 reset();
-await KE.lade(fakeSb([{ fahrschule_id: F1, schluessel: "fristen.z", wert: { ok: "7", zahl: 8, text: "abc", neg: "-3", neg2: -3, gross: "9999", komma: "1.5", komma2: 1.5, leer: "", sieben: "1234567", fuehrend: "007", leerz: " 5", obj: { a: 1 } } }]), F1);
+await KE.lade(fakeSb([{ fahrschule_id: F1, schluessel: "fristen.z", wert: { ok: "7", zahl: 8, text: "abc", neg: "-3", neg2: -3, gross: "9999", komma: "1.5", komma2: 1.5, leer: "", sieben: "1234567", fuehrend: "007", leerz: " 5", exp: 1e21, obj: { a: 1 } } }]), F1);
 const z = (f, s, mi, ma) => KE.zahl("fristen.z", f, s, mi, ma);
 pruefe("zahl gültig (Text)", z("ok", 12, 1, 60) === 7);
 pruefe("zahl gültig (JSON-Zahl)", z("zahl", 12, 1, 60) === 8);
@@ -79,6 +79,7 @@ pruefe("zahl negativ (Zahl) → Standard", z("neg2", 12, -10, 60) === 12);
 pruefe("zahl zu groß → Standard", z("gross", 12, 1, 60) === 12);
 pruefe("zahl Komma (Text) → Standard", z("komma", 12, 1, 60) === 12);
 pruefe("zahl Kommazahl → Standard", z("komma2", 12, 1, 60) === 12);
+pruefe("zahl 1e21 (JSON-Zahl, keine ganze Zahl im Wortsinn der DB) → Standard", z("exp", 12, 1, 99999999) === 12);
 pruefe("zahl leer → Standard", z("leer", 12, 1, 60) === 12);
 pruefe("zahl 7 Ziffern → Standard", z("sieben", 12, 1, 99999999) === 12);
 pruefe("zahl führende Nullen gültig", z("fuehrend", 12, 1, 60) === 7);

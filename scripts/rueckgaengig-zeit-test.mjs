@@ -57,6 +57,12 @@ try {
   const zeiten = await page.evaluate(() => { const w = []; const alt = window.setTimeout; window.setTimeout = function (f, m) { w.push(m); return alt.apply(window, arguments); }; toastUndo("Test gelöscht", () => {}, _undoMs()); window.setTimeout = alt; return w; });
   pruefe("R2c", "toastUndo mit _undoMs(): Zeitgeber 9000", zeiten.includes(9000) ? null : JSON.stringify(zeiten));
 
+  // R2d Aufruf OHNE ms (Verschieben, Umwandeln, Bestanden …) folgt auch der Einstellung (früher fest 5 s)
+  const z2 = await page.evaluate(() => { const w = []; const alt = window.setTimeout; window.setTimeout = function (f, m) { w.push(m); return alt.apply(window, arguments); }; toastUndo("Ohne ms", () => {}); window.setTimeout = alt; return w; });
+  pruefe("R2d", "toastUndo ohne ms: Zeitgeber 9000 (Einstellung), nicht 5000", z2.includes(9000) && !z2.includes(5000) ? null : JSON.stringify(z2));
+  pruefe("R2e", "_absagenNachholen wartet _undoMs()+1000 (nicht fest 7000)", /jetzt-x\.t>_undoMs\(\)\+1000/.test(quelle) && !/jetzt-x\.t>7000/.test(quelle) ? null : "fehlt");
+  pruefe("R2f", "Gesamtansicht: KE.lade vor dem Laden der Daten und im Auffrischen", /KE\.lade\(getSupa\(\),fahrschuleId\);[^\n]*\n\s*if\(!\(await _fsLoadAggData/.test(quelle) && /KE\.lade\(getSupa\(\),_fsAgg\.fahrschuleId\)/.test(quelle) ? null : "fehlt");
+
   // R3b nachAblauf erst nach Sekunden + 300 ms
   const t = await page.evaluate(async () => {
     const eintrag = { id: "x1" }; DB.films = [eintrag]; const start = Date.now(); let lief = null;
