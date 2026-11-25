@@ -440,11 +440,12 @@ function luLangeOhneFahrstunde() {
   const vor28 = KR.addDaysISO(KR.todayISO(), -28);
   const letzte = {};
   for (const t of S.termine) {
-    if (t.geloescht || !t.schueler_id || !KR.FAHR_ARTEN.includes(t.art || "fahrstunde") || ((t.payload || {}).status || t.status) === "abgebrochen") continue;
+    if (t.geloescht || !t.schueler_id || !KR.FAHR_ARTEN.concat(["schalt"]).includes(t.art || "fahrstunde") || ((t.payload || {}).status || t.status) === "abgebrochen") continue;
     if (!letzte[t.schueler_id] || t.datum > letzte[t.schueler_id]) letzte[t.schueler_id] = t.datum;
   }
+  const bestanden = new Set(pruefErgebnisse("praxis").filter((e) => e.ok).map((e) => e.schueler_id)); // auch nur in der App eingetragen
   return aktiveSchueler().filter((x) => {
-    if (!x.fahrlehrer_id || x.praxis_bestanden_am) return false;
+    if (!x.fahrlehrer_id || x.praxis_bestanden_am || bestanden.has(x.id)) return false;
     const anm = anmeldeDatum(x);
     if (!letzte[x.id] && anm && anm >= vor28) return false;
     return !letzte[x.id] || letzte[x.id] < vor28;
