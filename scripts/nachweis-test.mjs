@@ -210,6 +210,49 @@ const top = (page) => page.locator("dialog[open]").last();
   await ctx.close();
 }
 
+// W13 PR 2: Sonderfahrt-Einheit je Fahrschule (KR.sonderMinuten) – Nachweis zählt volle Einheiten, über Mitternacht zählt mit,
+// Text nennt die Einheit. Laden aus fahrschulen.konfiguration.sonderMin, Wechsel der Fahrschule setzt zurück.
+{
+  const { page, ctx, konsole } = await oeffne({});
+  await page.waitForTimeout(300);
+  const r = await page.evaluate(() => {
+    const x = Object.assign({}, S.schueler.find((s) => !istUmschreiber(s)) || S.schueler[0], { klasse: "B" });
+    const heute = KR.todayISO(), gestern = KR.addDaysISO(heute, -1);
+    const d = { aktiv: [
+      { id: "w13a", schueler_id: x.id, datum: gestern, von: "10:00", bis: "11:30", art: "sonder", payload: { sonderArt: "ueberland" } },
+      { id: "w13b", schueler_id: x.id, datum: gestern, von: "22:30", bis: "00:00", art: "sonder", payload: { sonderArt: "nacht" } },
+      { id: "w13c", schueler_id: x.id, datum: gestern, von: "10:00", bis: "09:00", art: "sonder", payload: { sonderArt: "autobahn" } },
+    ], papierkorb: [], spur: [] };
+    const o = { geladen: KR.sonderMinuten() }; // ohne Zeile in fahrschule_einstellungen: 45
+    KR.setzeSonderMinuten(null); const a = nwStand(x, d); o.v45 = [a.ist.ueberland, a.ist.nacht, a.ist.autobahn]; o.t45 = a.fehlt.map((f) => f.t).join(" | ");
+    KR.setzeSonderMinuten(90); const b = nwStand(x, d); o.v90 = [b.ist.ueberland, b.ist.nacht]; o.t90 = b.fehlt.map((f) => f.t).join(" | ");
+    KR.setzeSonderMinuten(null);
+    // Plan-Kästchen: nur bis heute zählen (geplante Fahrt ist kein „abgehakt ohne Termin“)
+    const morgen = KR.addDaysISO(heute, 1);
+    const xp = Object.assign({}, x, { ausbildung: { plan: { sonder: { ueberland: [{ d: "", iso: gestern }, { d: "", iso: morgen }], autobahn: [], nacht: [] } } } });
+    o.planIst = nwStand(xp, { aktiv: [], papierkorb: [], spur: [] }).planIst.ueberland;
+    return o;
+  });
+  pruef(JSON.stringify(r.v45) === "[2,2,0]", "W13: Einheit 45 zählt " + JSON.stringify(r.v45) + " statt [2,2,0] (90 Min = 2, über Mitternacht = 2, Tippfehler 10–09 Uhr = 0)");
+  pruef(/× 45 Min\./.test(r.t45), "W13: Text ohne „× 45 Min.“: " + r.t45);
+  pruef(JSON.stringify(r.v90) === "[1,1]" && /× 90 Min\./.test(r.t90), "W13: Einheit 90 wirkt nicht: " + JSON.stringify(r.v90) + " " + r.t90);
+  pruef(r.geladen === 45, "W13: ohne Einstellung nicht 45: " + r.geladen);
+  pruef(r.planIst === 1, "W13: Plan-Kästchen in der Zukunft zählen im Nachweis mit: " + r.planIst);
+  // Einstellung fahrstunden.sonderfahrt = 60 Minuten → nach dem Laden gilt 60; Wechsel der Fahrschule setzt zurück
+  const r2 = await page.evaluate(async () => {
+    const warte = async (soll) => { for (let i = 0; i < 40 && KR.sonderMinuten() !== soll; i++) await new Promise((r) => setTimeout(r, 50)); return KR.sonderMinuten(); };
+    window.__FAKE.tabellen.fahrschule_einstellungen = [{ fahrschule_id: S.fsId, schluessel: "fahrstunden.sonderfahrt", wert: { minuten: 60 } }];
+    await ladeDaten();
+    const nach = await warte(60); // KE lädt nebenher, dann Ereignis ke:geladen
+    window.__FAKE.tabellen.fahrschule_einstellungen = [];
+    await ladeDaten();
+    return { nach, danach: await warte(45) };
+  });
+  pruef(r2.nach === 60 && r2.danach === 45, "W13: Einstellung fahrstunden.sonderfahrt wirkt nicht: " + JSON.stringify(r2));
+  pruef(!konsole.length, "Konsole W13: " + konsole.join(" | "));
+  await ctx.close();
+}
+
 await browser.close(); server.close();
 console.log(`Ausbildungsnachweis: ${ok} Prüfungen bestanden, ${probleme} Fehler`);
 process.exit(probleme ? 1 : 0);

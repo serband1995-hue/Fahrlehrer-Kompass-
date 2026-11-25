@@ -102,6 +102,10 @@ jobs:
         run: |
           node scripts/paket-stand-test.mjs
           NODE_PATH=$(npm root -g) node scripts/paket-verkauf-test.mjs
+      - name: Sonderfahrt-Kästchen im Plan (90 Minuten = 2, Werkstatt 13)
+        run: |
+          NODE_PATH=$(npm root -g) node scripts/sonder-kaestchen-test.mjs
+          SONDER_SCHNELL=1 NODE_PATH=$(npm root -g) node scripts/sonder-stopp-test.mjs
       - name: "Zahlungsaufforderung per Mail (Mail-Inhalt, GiroCode)"
         run: |
           npm i --silent --no-save --prefix /tmp/zm-qr jsqr@1.4.0 pngjs@7.0.0

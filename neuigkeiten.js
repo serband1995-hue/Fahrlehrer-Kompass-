@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.6", datum: "2026-11-25", kurz: "Plan: 90 Minuten Sonderfahrt füllen jetzt 2 Kästchen.",
+    punkte: ["Im Ausbildungsplan füllt eine Sonderfahrt mit 90 Minuten jetzt 2 Kästchen (je 45 Minuten eins). Bitte nicht zusätzlich von Hand abhaken.",
+             "Das gilt beim Eintragen aus dem Plan, bei „Mehrere Termine planen“ und bei „Welche Sonderfahrt?“. Löschen und „Rückgängig“ nehmen beide Kästchen mit.",
+             "Ältere Termine bleiben bei einem Kästchen.",
+             "Büro: Im Ausbildungsnachweis zählen Fahrten über Mitternacht jetzt mit."] },
   { version: "2026.11.25.5", datum: "2026-11-25", kurz: "Büro: bei 90 Minuten „2 abgegeben“ oder „1 abgegeben“.",
     punkte: ["Fahrcheck-Kontrolle: Bei einer Stunde mit 90 Minuten wählt das Büro „2 abgegeben“ oder „1 abgegeben“. Im Paket zählt genau diese Zahl.",
              "Den Fahrcheck-Haken setzt nur noch das Büro oder die Leitung.",
