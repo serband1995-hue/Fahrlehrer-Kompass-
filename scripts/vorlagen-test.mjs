@@ -20,7 +20,7 @@ function gleich(name, erwartet, ist) {
 
 // ---------- 1. Eine Datei für Büro und Server ----------
 const quelle = readFileSync(join(ROOT, "kompass-vorlagen.js"), "utf8");
-gleich("Kopie in der Edge-Funktion ist Byte für Byte gleich", quelle, readFileSync(join(ROOT, "supabase/functions/zahlungs-mail/vorlagen.js"), "utf8"));
+for (const f of ["zahlungs-mail", "erinnerungs-mail"]) gleich("Kopie in der Edge-Funktion " + f + " ist Byte für Byte gleich", quelle, readFileSync(join(ROOT, "supabase/functions", f, "vorlagen.js"), "utf8"));
 gleich("keine unsichtbaren Zeichen im Quelltext (nur als \\u-Schreibweise)", [], [...quelle].filter((c) => { const o = c.codePointAt(0); return (o < 32 && c !== "\n") || (o >= 0x7f && o <= 0x9f) || (o >= 0x200b && o <= 0x200f) || (o >= 0x2028 && o <= 0x202e) || (o >= 0x2066 && o <= 0x2069) || o === 0xfeff; }).map((c) => c.codePointAt(0).toString(16)));
 gleich("mail.js lädt die Kopie", true, /import "\.\/vorlagen\.js";/.test(readFileSync(join(ROOT, "supabase/functions/zahlungs-mail/mail.js"), "utf8")));
 gleich("global KV (Büro/Deno) hat dieselben Teile wie das Modul (Node)", Object.keys(KV), Object.keys(globalThis.KV || {}));
