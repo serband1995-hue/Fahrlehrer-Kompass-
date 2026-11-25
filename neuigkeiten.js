@@ -4,6 +4,15 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.1", datum: "2026-11-25", kurz: "Paket: Stunden zählen erst mit dem Haken vom Büro.",
+    punkte: ["Im Paket zählt eine Fahrstunde oder Sonderfahrt erst, wenn das Büro abgehakt hat, dass die Fahrchecks da sind. Je Fahrcheck (45 Minuten) zählt eins.",
+             "Fehlt der Haken noch, steht unter dem Paket, wie viele Termine darauf warten. Ausgefallene Termine zählen nie.",
+             "Büro: Auch nachgereichte Fahrchecks lassen sich jetzt abhaken und zählen dann voll.",
+             "Fahrlehrer sehen in der Akte nur ihre eigenen Fahrten. Den ganzen Stand hat das Büro."] },
+  { version: "2026.11.24.16", datum: "2026-11-25", kurz: "Reaktivierung „entfällt“ sperrt niemanden mehr.",
+    punkte: ["Steht die Reaktivierung in der Preisliste auf „entfällt“ oder 0 €, wird niemand mehr deswegen gesperrt. Das gilt auch, wenn sie am Tag des Vertrags entfiel.",
+             "Büro, App und Server rechnen dabei gleich. In der Liste steht dann „entfällt“.",
+             "Büro, Fristen: Neuer Reiter „Läuft bald ab“. Dort steht nach Datum, bei wem bald etwas abläuft, bei Schülern und Fahrlehrern. Mit „Akte öffnen“ kommst du direkt hin."] },
   { version: "2026.11.24.15", datum: "2026-11-24", kurz: "Neue Telefonnummer vom Büro bleibt jetzt sicher.",
     punkte: ["Ändert das Büro Name oder Telefon eines Schülers, schreibt die App die alte Nummer nicht mehr zurück. Das gilt auch, wenn du am Schüler etwas anderes geändert hast oder gerade offline warst.",
              "Änderst du Name oder Telefon selbst in der App, gelten wie bisher beide Angaben vom Handy."] },

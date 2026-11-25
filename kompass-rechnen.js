@@ -47,21 +47,65 @@
      reakt_bezahlt_bis = nächste Fälligkeit; ist sie vorbei, ist die Reaktivierung offen.
      Eine Zahlung verschiebt die Fälligkeit um genau 12 Monate (auch bei später Zahlung,
      wer zwei Jahre im Rückstand ist, bleibt nach einer Zahlung weiter überfällig). */
-  function reaktFaellig(s) {
+  /* W15 (🗣 Serband 24.11.2026): Regel der Fahrschule vom Server (rpc reakt_regel, gleiche Regel wie die Sperre in der
+     Datenbank, supabase/migrations/20261126_w15_01): { monate, frei: [{ ab, bis }] } – Zeiträume, in denen die Reaktivierung
+     laut Preisliste entfällt oder 0 € kostet (ohne Beträge). Frei heute ODER am Vertragstag = Stufe „entfaellt“ (keine
+     Fälligkeit, keine Sperre). Ohne Regel (null) rechnet alles wie vorher: 12 Monate, nie frei.
+     Büro und App setzen die Regel einmal mit setzeReaktRegel; ein drittes Argument „regel“ geht vor (Tests, Attrappe). */
+  const REAKT_MONATE_STANDARD = 12;
+  const ISO_TAG = /^\d{4}-\d{2}-\d{2}$/;
+  function normReaktRegel(r) {
+    if (!r || typeof r !== "object") return null;
+    const m = Number(r.monate);
+    const frei = (Array.isArray(r.frei) ? r.frei : [])
+      .map((z) => ({ ab: z && String(z.ab || "").slice(0, 10), bis: z && z.bis ? String(z.bis).slice(0, 10) : null }))
+      .filter((z) => ISO_TAG.test(z.ab) && (z.bis === null || ISO_TAG.test(z.bis)));
+    return { monate: Number.isInteger(m) && m >= 1 && m <= 120 ? m : REAKT_MONATE_STANDARD, frei };
+  }
+  let reaktRegelAktiv = null;
+  function setzeReaktRegel(r) { reaktRegelAktiv = normReaktRegel(r); return reaktRegelAktiv; }
+  function holeReaktRegel() { return reaktRegelAktiv; }
+  function reaktRegelVon(regel) { return regel === undefined ? reaktRegelAktiv : normReaktRegel(regel); }
+  function reaktMonate(regel) { const r = reaktRegelVon(regel); return r ? r.monate : REAKT_MONATE_STANDARD; }
+  function reaktFreiAm(regel, tag) {
+    const r = reaktRegelVon(regel), t = tag ? String(tag).slice(0, 10) : "";
+    return !!(r && ISO_TAG.test(t) && r.frei.some((z) => z.ab <= t && (z.bis === null || t <= z.bis)));
+  }
+  /* Gleiche Rechnung wie reakt_regel in der Datenbank, aus Zeilen der Preisliste (Attrappe und SQL-Test).
+     Je „gültig ab“-Tag gilt die zuletzt angelegte Zeile; frei = betrag_cent null (entfällt) oder 0. */
+  function reaktRegelAusPreisen(zeilen, monate) {
+    const zeit = (r) => { const t = Date.parse(r.angelegt_am || ""); return isNaN(t) ? 0 : t; };
+    const eigene = (zeilen || []).filter((r) => r && r.art === "reaktivierung" && !r.klasse && ISO_TAG.test(String(r.gueltig_ab || "").slice(0, 10)))
+      .slice().sort((a, b) => (a.gueltig_ab < b.gueltig_ab ? -1 : a.gueltig_ab > b.gueltig_ab ? 1 : zeit(a) - zeit(b) || String(a.id || "").localeCompare(String(b.id || ""))));
+    const tage = [];
+    for (const r of eigene) {
+      const tag = String(r.gueltig_ab).slice(0, 10), frei = r.betrag_cent == null || Number(r.betrag_cent) === 0;
+      if (tage.length && tage[tage.length - 1].ab === tag) tage[tage.length - 1].frei = frei; else tage.push({ ab: tag, frei });
+    }
+    const frei = tage.map((t, i) => ({ ab: t.ab, bis: tage[i + 1] ? addDaysISO(tage[i + 1].ab, -1) : null, f: t.frei }))
+      .filter((t) => t.f).map((t) => ({ ab: t.ab, bis: t.bis }));
+    return { monate: monate == null ? REAKT_MONATE_STANDARD : monate, frei };
+  }
+  function reaktFaellig(s, regel) {
     if (!s || s.reakt_status === "befreit") return null;
     if (s.reakt_bezahlt_bis) return s.reakt_bezahlt_bis;
-    if (s.vertrag_am) return addMonthsISO(s.vertrag_am, 12);
+    if (s.vertrag_am) return addMonthsISO(s.vertrag_am, reaktMonate(regel));
     return null;
   }
-  function reaktNachZahlung(s) {
-    const f = reaktFaellig(s);
-    return f ? addMonthsISO(f, 12) : null;
+  function reaktNachZahlung(s, regel) {
+    const f = reaktFaellig(s, regel);
+    return f ? addMonthsISO(f, reaktMonate(regel)) : null;
   }
-  // stufe: befreit | ohne_datum | gesperrt | pruefen_faellig | bald (≤30 Tage) | demnaechst (≤60) | ok
-  function reaktInfo(s, heute) {
+  // Reaktivierung für diesen Schüler frei? Frei heute oder am Vertragstag (Entscheidung 1a der Hauptsitzung, 24.11.2026)
+  function reaktEntfaellt(s, heute, regel) {
+    return reaktFreiAm(regel, heute || todayISO()) || !!(s && s.vertrag_am && reaktFreiAm(regel, s.vertrag_am));
+  }
+  // stufe: befreit | entfaellt | ohne_datum | gesperrt | pruefen_faellig | bald (≤30 Tage) | demnaechst (≤60) | ok
+  function reaktInfo(s, heute, regel) {
     heute = heute || todayISO();
     if (s && s.reakt_status === "befreit") return { stufe: "befreit", faellig: null, tage: null, gesperrt: false };
-    const faellig = reaktFaellig(s);
+    if (reaktEntfaellt(s, heute, regel)) return { stufe: "entfaellt", faellig: null, tage: null, gesperrt: false };
+    const faellig = reaktFaellig(s, regel);
     if (!faellig) return { stufe: "ohne_datum", faellig: null, tage: null, gesperrt: false };
     const tage = daysBetweenISO(heute, faellig);
     let stufe;
@@ -96,6 +140,12 @@
     if (!t || !FC_ARTEN.includes(t.art) || !t.von || !t.bis) return 0;
     const min = hm2min(t.bis) - hm2min(t.von);
     return min > 0 ? Math.round(min / 45) : 0;
+  }
+  // Fahrchecks, die das Büro für diesen Termin in der Hand haben soll: wie fcErhalten, ein nachgereichter zählt wieder voll.
+  // Daran hängt der Büro-Haken fürs Paket (🗣 Serband 24.11.2026). Ausgefallen = 0.
+  function fcFuersBuero(t) {
+    if (t && t.fc === "nachgereicht") return t.status === "abgebrochen" || t.status === "nicht erschienen" ? 0 : fcGebucht(t);
+    return fcErhalten(t);
   }
   function fcErhalten(t) {
     const voll = fcGebucht(t);
@@ -350,13 +400,17 @@
     }
     return liste;
   }
-  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, tatsaechlicheDauer}): nur vorbei (heute erst
-     nach dem Ende), ohne abgebrochen/nicht erschienen/abgesagt/geplatzt (wie countRange in der App). Fahrstunden, Nacht- und
-     Sonderfahrten in UE zu 45 min mit der tatsächlichen Dauer (ueOf). extra (beides freiwillig):
-     - pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach sind
-       dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später.
-     - plan: Ausbildungsplan der App (plan.sonder). Je Art zählt das Größere aus Plan und Kalender: dieselbe Fahrt steht oft in beiden,
-       nachgetragene Büro-Fahrten oder alte Plan-Einträge nur in einem. jetztMin = Minuten seit Mitternacht. */
+  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, fc, bueroFc}).
+     🗣 Serband 24.11.2026: „Eine Fahrstunde zählt erst dann, wenn sie von Kristina abgehakt wird, dass die Fahrchecks da sind. Wird
+     der Termin gelöscht, weil der Schüler nicht da war, zählt das natürlich nicht.“ Darum zählen Fahrstunde, Sonder- und Nachtfahrt
+     nur mit Büro-Haken (bueroFc = kalender_termine.buero_fc_status = „abgegeben“), und zwar je Fahrcheck, der beim Büro ist
+     (fcFuersBuero: 45 min = 1, Vermerk fc des Fahrlehrers wie in der Fahrcheck-Kontrolle, nachgereicht = voll).
+     Ohne Haken (offen, fehlt) zählt der Termin bei „ohneHaken“ (Hinweis „warten noch auf den Haken vom Büro“).
+     Sonderfahrt ohne Art (weder sonderArt noch srcSonder): bei „ohneArt“ (Hinweis), keinem Posten zuzuordnen.
+     Nie: Zukunft, heute vor dem Ende, abgebrochen/nicht erschienen/abgesagt/geplatzt (gelöschte Termine kommen gar nicht erst an).
+     Der Ausbildungsplan der App zählt fürs Paket nicht: dort hakt niemand vom Büro ab.
+     extra.pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach
+     sind dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später. jetztMin = Minuten seit Mitternacht. */
   const PAKET_NICHT = ["abgebrochen", "nicht erschienen", "abgesagt", "geplatzt"];
   function paketSonderArt(t) {
     if (t.art === "nacht") return "nacht";
@@ -373,23 +427,37 @@
     return n;
   }
   function paketQuelleAusTerminen(termine, heute, jetztMin, extra) {
-    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0 };
+    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0, ohneHaken: 0, ohneArt: 0 };
     const ex = extra || {}, pTage = [];
     for (const t of termine || []) {
       if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
       if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
       if (PAKET_NICHT.includes(t.status)) continue;
-      if (t.art === "fahrstunde") q.fahrstunden += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer);
-      else if (t.art === "nacht" || t.art === "sonder") { const a = paketSonderArt(t); if (a) q.sonder[a] += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer); }
-      else if (t.art === "pruefung") pTage.push(t.datum);
+      if (FC_ARTEN.includes(t.art)) {
+        // Gezählt wird, was an Fahrchecks beim Büro ist (fcFuersBuero): „1 vergessen“ = einer weniger, nachgereicht = voll,
+        // geschenkt oder beide vergessen = keiner (dann wartet auch nichts auf den Haken).
+        const n = fcFuersBuero(t);
+        if (!n) continue;
+        const a = t.art === "fahrstunde" ? "" : paketSonderArt(t);
+        if (t.art !== "fahrstunde" && !a) { q.ohneArt++; continue; } // Sonderfahrt ohne Art: keinem Posten zuzuordnen, mit Hinweis
+        if (t.bueroFc !== "abgegeben") { q.ohneHaken++; continue; }
+        if (t.art === "fahrstunde") q.fahrstunden += n; else q.sonder[a] += n;
+      } else if (t.art === "pruefung") pTage.push(t.datum);
       else if (t.art === "simulator") q.simulator += 1;
     }
     for (const d of ex.pruefDaten || []) if (d && String(d).slice(0, 10) <= heute) pTage.push(String(d).slice(0, 10));
     q.pruefungen = paketPruefZahl(pTage);
-    const plan = paketSonderAusPlan(ex.plan, heute);
-    for (const a of Object.keys(q.sonder)) q.sonder[a] = Math.round(Math.max(q.sonder[a], plan ? plan[a] : 0) * 100) / 100;
-    q.fahrstunden = Math.round(q.fahrstunden * 100) / 100;
     return q;
+  }
+  // Hinweise unter dem Paket, gleich in Büro-Akte und App-Karte (Text, ohne HTML)
+  function paketHinweise(q) {
+    const h = [];
+    if (!q) return h;
+    if (q.ohneHaken === 1) h.push("1 Termin wartet noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket.");
+    else if (q.ohneHaken > 1) h.push(q.ohneHaken + " Termine warten noch auf den Fahrcheck-Haken vom Büro. Erst danach zählen sie im Paket.");
+    if (q.ohneArt === 1) h.push("1 Sonderfahrt hat keine Art (Überland, Autobahn oder Nacht) und zählt darum nicht. Das Büro kann die Art am Termin eintragen.");
+    else if (q.ohneArt > 1) h.push(q.ohneArt + " Sonderfahrten haben keine Art (Überland, Autobahn oder Nacht) und zählen darum nicht. Das Büro kann die Art am Termin eintragen.");
+    return h;
   }
   // heute (freiwillig): nur Fahrten bis heute zählen; ein für nächste Woche eingetragenes Feld ist noch nicht gefahren (Fable W5)
   function paketSonderAusPlan(plan, heute) {
@@ -398,7 +466,8 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-  const api = { paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+  const api = { paketVerbrauch, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);

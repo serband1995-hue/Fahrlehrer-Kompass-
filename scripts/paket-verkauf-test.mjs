@@ -233,15 +233,50 @@ try {
       const fl = F.tabellen.profiles.find((p) => p.id === s.fahrlehrer_id); if (fl) fl.ohne_app = true;
       const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
       F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1").concat([
-        { id: "kt-a", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(5), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+        { id: "kt-a", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(5), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "abgegeben", payload: {} },
         { id: "kt-b", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(4), von: "10:00", bis: "10:45", status: "geplant", geloescht: false, payload: { status: "abgebrochen" } },
-        { id: "kt-c", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "sonder", datum: tag(3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: { sonderArt: "ueberland" } },
+        { id: "kt-c", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "sonder", datum: tag(3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "abgegeben", payload: { sonderArt: "ueberland" } },
+        { id: "kt-e", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(2), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "offen", payload: {} },
         { id: "kt-d", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(-3), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
       ]);
     }) });
     const d = await oeffneAkte(page, S1);
     const t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V9b Termin ohne Fahrcheck-Haken zählt nicht, Hinweis „1 Termin wartet“", /1 Termin wartet noch auf den Fahrcheck-Haken vom Büro/.test(t), t);
     pruefe("V9 Akte: „2 von 20 gefahren · noch 18 offen“ und „2 von 5 gefahren · noch 3 offen“, Grundbetrag ohne Zähler", /2 von 20 gefahren · noch 18 offen/.test(t) && /2 von 5 gefahren · noch 3 offen/.test(t) && !/Grundbetrag[^\n]*(gefahren|offen)/.test(t), t);
+    await ctx.close();
+  }
+  // V9c Fable W1: nachgereicht, geschenkt, „1 vergessen“, Sonderfahrt ohne Art; Haken über den Knopf der Fahrcheck-Kontrolle, dann Akte
+  {
+    const { page, ctx } = await oeffne({ nutzer: "bu-1", hash: "#fahrchecks?ansicht=stunden&von=2000-01-01", vorbereiten: vb(function () {
+      F.tabellen.schueler_pakete.push({ id: "sp-w1", fahrschule_id: F.tabellen.fahrschulen[0].id, schueler_id: "s1", vorlage_id: "p-1", name: "Boost-Paket 1", klasse: "B",
+        posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6000 }, { art: "sonderfahrt", bezeichnung: "Überlandfahrt", anzahl: 5, preis_cent: 7000 }],
+        gesamt_cent: 155000, verkauft_am: "2026-10-01T10:00:00Z", bearbeiter: "Mia Muster", storniert_am: null });
+      const s = F.tabellen.schueler.find((x) => x.id === "s1"); s.paket_id = "p-1"; s.ausbildung = {};
+      const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+      const z = (id, n, x) => Object.assign({ id, fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(n), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "offen", payload: {} }, x);
+      F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1").concat([
+        z("kt-n", 6, { payload: { fc: "nachgereicht", nachAm: tag(1) } }),          // nachgereicht, noch ohne Haken: wartet
+        z("kt-g", 5, { payload: { fc: "geschenkt" } }),                              // geschenkt: zählt nicht, wartet nicht
+        z("kt-v1", 4, { buero_fc_status: "abgegeben", payload: { fc: "v1" } }),     // 1 von 2 Fahrchecks da: zählt 1
+        z("kt-s", 3, { art: "sonder", buero_fc_status: "abgegeben" }),              // Sonderfahrt ohne Art: Hinweis
+        z("kt-x", 2, { geloescht: true, buero_fc_status: "abgegeben" }),            // gelöscht: nie
+      ]);
+    }) });
+    const knopf = page.locator('#ansicht [data-fcstatus="abgegeben"][data-id="kt-n"]');
+    pruefe("V9c Fahrcheck-Kontrolle: nachgereichte Stunde hat den Knopf „Abgegeben“", (await knopf.count()) === 1);
+    let d = await oeffneAkte(page, S1);
+    let t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V9d „1 vergessen“ zählt 1, geschenkt und gelöscht nicht: „1 von 20 gefahren“; nur die nachgereichte wartet", /(^|\D)1 von 20 gefahren · noch 19 offen/.test(t) && /1 Termin wartet noch auf den Fahrcheck-Haken vom Büro\. Erst danach zählt er im Paket\./.test(t), t);
+    pruefe("V9e Sonderfahrt ohne Art: Hinweis statt still nichts", /1 Sonderfahrt hat keine Art/.test(t), t);
+    await page.evaluate(() => { const x = [...document.querySelectorAll("dialog[open]")]; x.forEach((e) => e.close()); });
+    if (await knopf.count()) { await knopf.click(); await page.waitForTimeout(300); }
+    const st = await page.evaluate(() => (S.termine.find((x) => x.id === "kt-n") || {}).buero_fc_status);
+    const zeile = await page.evaluate(() => { const b = document.querySelector('#ansicht [data-fcbearb="kt-n"]'); return b ? b.closest("tr").innerText : ""; });
+    pruefe("V9g Fahrcheck-Kontrolle: nachgereichte Stunde zeigt nach dem Haken „abgegeben“ (nicht „–“)", /abgegeben/.test(zeile), zeile);
+    d = await oeffneAkte(page, S1);
+    t = await d.locator("[data-bk-anm-info]").innerText();
+    pruefe("V9f Haken über den Knopf gesetzt → Akte: nachgereichte zählt voll („3 von 20 gefahren“), kein Warte-Hinweis mehr", st === "abgegeben" && /(^|\D)3 von 20 gefahren · noch 17 offen/.test(t) && !/wartet noch/.test(t), { st, t });
     await ctx.close();
   }
   // V8 Fahrschulwechsel setzt die verkauften Pakete zurück (keine fremden Pakete in der neuen Schule)
@@ -365,8 +400,8 @@ try {
     const s = F.tabellen.schueler.find((x) => x.id === "s1"); s.paket_id = "p-1"; s.ausbildung = {};
     const tag = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
     F.tabellen.kalender_termine = F.tabellen.kalender_termine.filter((t) => t.schueler_id !== "s1").concat([
-      { id: "kt-neu", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(10), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
-      { id: "kt-alt", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(500), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, payload: {} },
+      { id: "kt-neu", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(10), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "abgegeben", payload: {} },
+      { id: "kt-alt", fahrschule_id: s.fahrschule_id, fahrlehrer_id: s.fahrlehrer_id, schueler_id: "s1", art: "fahrstunde", datum: tag(500), von: "10:00", bis: "11:30", status: "geplant", geloescht: false, buero_fc_status: "abgegeben", payload: {} },
     ]);
     F.tabellen.kalender_pruefungen = (F.tabellen.kalender_pruefungen || []).filter((p) => p.schueler_id !== "s1"); // nur die alte Tafel-Prüfung zählt
     F.tabellen.pruefungstermine = (F.tabellen.pruefungstermine || []).filter((p) => p.schueler_id !== "s1").concat([
@@ -469,42 +504,90 @@ try {
     DB.lessons = []; DB.termine = []; DB.exams = []; save();
     // Attrappe: schueler_pakete (eine Zeile für a1, mit Preisen – die App zeigt sie nicht)
     const zeilen = [{ schueler_id: "a1", name: "Boost-Paket B", posten: [{ art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "sonderfahrt", bezeichnung: "Überlandfahrt", anzahl: 5, preis_cent: 8000 }] }];
-    const q = (fehler) => { const o = { select: () => o, in: () => o, is: () => o, then: (f) => f(fehler ? { data: null, error: { message: 'relation "public.schueler_pakete" does not exist' } } : { data: zeilen, error: null }) }; return o; };
-    await _ladePakete({ from: () => q(false) }, ["a1", "a2"]);
-    routeDetail("a1"); await new Promise((r) => setTimeout(r, 300));
-    const k1 = document.querySelector(".paket-karte"); const t1 = k1 ? k1.textContent : "";
-    routeDetail("a2"); await new Promise((r) => setTimeout(r, 200));
+    // Attrappe: schueler_pakete (für _ladePakete) und kalender_termine (die Akte lädt beim Öffnen diesen einen Schüler über getSupa).
+    // Jede Kette gibt sich selbst zurück; kalender_termine liefert nur, was zu den Filtern passt (ohne eq geloescht=false auch Gelöschte).
+    let ktRows = [], ktFehler = false; const ktAufrufe = [];
+    const antwort = (tab, a, pak, fehler) => {
+      if (fehler) return { data: null, error: { message: 'relation "public.schueler_pakete" does not exist' } };
+      if (tab === "kalender_termine") { ktAufrufe.push(a); return ktFehler ? { data: null, error: { message: "Failed to fetch" } } : { data: ktRows.filter((r) => r.schueler_id === a.eq.schueler_id && (a.eq.geloescht === false ? !r.geloescht : true)), error: null }; }
+      return { data: tab === "schueler_pakete" ? pak : [], error: null };
+    };
+    const mock = (pak, fehler) => ({ from: (tab) => { const a = { sel: "", eq: {} }; const o = new Proxy({}, { get: (_, k) => k === "then" ? (f, r) => Promise.resolve(antwort(tab, a, pak, fehler)).then(f, r)
+      : (...x) => { if (k === "select") a.sel = x[0]; if (k === "eq") a.eq[x[0]] = x[1]; return o; } }); return o; } });
+    const q = (fehler) => mock(zeilen, fehler);
+    const altSupa0 = window.getSupa; window.getSupa = () => mock(zeilen, false);
+    const warte = (ms) => new Promise((r) => setTimeout(r, ms));
+    const karte = () => (document.querySelector(".paket-karte") || {}).textContent || "";
+    // Zeilen, wie PostgREST sie für die Auswahl mit pst:payload->>status, sonderArt:…, srcSonder:…, fc:… liefert
+    const kt = (id, datum, von, bis, x) => Object.assign({ id, schueler_id: "a1", art: "fahrstunde", datum, von, bis, status: "geplant", buero_fc_status: "abgegeben", pst: null, sonderArt: null, srcSonder: null, fc: null, geloescht: false }, x || {});
+    await _ladePakete(q(false), ["a1", "a2"]);
+    routeDetail("a1"); const k0 = karte(); await warte(300);
+    const t1 = karte();
+    routeDetail("a2"); await warte(200);
     const k2 = !!document.querySelector(".paket-karte");
     _paketVerkauft = null;
-    await _ladePakete({ from: () => q(true) }, ["a1"]);
-    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
+    await _ladePakete(q(true), ["a1"]);
+    routeDetail("a1"); await warte(200);
     const k3 = !!document.querySelector(".paket-karte");
-    // Schritt 2: Termine des Geräts → „2 von 20“
+    // Schritt 2: Termine vom Server mit Büro-Haken → „2 von 20“, „Überland 2 von 5“; ohne Haken zählt nicht (Hinweis), Plan zählt nicht
     const gestern = KR.addDaysISO(KR.todayISO(), -1);
-    DB.lessons = [{ id: "l1", sid: "a1", art: "fahrstunde", date: gestern, von: "10:00", bis: "11:30", status: "" }];
-    DB.students.find((x) => x.id === "a1").plan.sonder = { ueberland: [{ iso: gestern }], autobahn: [], nacht: [] };
-    _paketVerkauft = null; await _ladePakete({ from: () => q(false) }, ["a1"]);
-    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
-    const k4 = (document.querySelector(".paket-karte") || {}).textContent || "";
+    DB.lessons = [{ id: "l-lokal", sid: "a1", art: "fahrstunde", date: gestern, von: "13:00", bis: "14:30", status: "" }]; // nur auf dem Gerät: zählt nicht
+    DB.students.find((x) => x.id === "a1").plan.sonder = { ueberland: [{ iso: gestern }, { iso: gestern }, { iso: gestern }], autobahn: [], nacht: [] };
+    ktRows = [kt("k1", gestern, "10:00", "11:30"), kt("k2", gestern, "15:00", "16:30", { art: "sonder", sonderArt: "ueberland" }),
+      kt("k3", gestern, "17:00", "17:45", { buero_fc_status: "offen" }), kt("k4", gestern, "18:00", "18:45", { status: "geplatzt" }),
+      kt("k5", gestern, "19:00", "20:30", { geloescht: true }), kt("k6", gestern, "08:00", "09:30", { fc: "geschenkt" }), kt("k7", gestern, "06:00", "06:45", { pst: "abgebrochen" }),
+      kt("k8", gestern, "20:30", "21:15", { schueler_id: "a2" })];
+    _paketVerkauft = null; await _ladePakete(q(false), ["a1"]); delete _paketTermine.a1;
+    routeDetail("a1"); await warte(300);
+    const k4 = karte(), aufruf = ktAufrufe[ktAufrufe.length - 1] || { eq: {}, sel: "" };
+    const nAufrufe = ktAufrufe.length; routeDetail("a1"); await warte(200);
+    const nochmal = ktAufrufe.length - nAufrufe; // frisch geladen: kein zweiter Abruf binnen einer Minute
+    // nicht ladbar → Hinweis, „–“ statt Paketgröße
+    ktFehler = true; delete _paketTermine.a1; routeDetail("a1"); await warte(300);
+    const k4f = karte(); ktFehler = false;
+    // Fahrlehrer sieht nur eigene Termine → ehrlicher Hinweis
+    const altProfil = _authProfile; _authProfile = { rolle: "fahrlehrer" }; delete _paketTermine.a1; routeDetail("a1"); await warte(300);
+    const k4l = karte(); _authProfile = altProfil;
+    // Gesamtansicht (Leitung, Büro): Termine samt Haken aus DB.lessons, kein eigener Abruf
+    _fsAgg = { fahrschuleId: "fs-test" }; const nVorAgg = ktAufrufe.length;
+    DB.lessons = [{ id: "g1", sid: "a1", art: "fahrstunde", date: gestern, von: "10:00", bis: "11:30", status: "geplant", buero_fc_status: "abgegeben" },
+      { id: "g2", sid: "a1", art: "fahrstunde", date: gestern, von: "12:00", bis: "12:45", status: "geplant", buero_fc_status: "offen" },
+      { id: "g3", sid: "a1", art: "fahrstunde", date: gestern, von: "14:00", bis: "15:30", status: "geplant", buero_fc_status: "abgegeben", fc: "nachgereicht" },
+      { id: "g4", sid: "a2", art: "fahrstunde", date: gestern, von: "16:00", bis: "17:30", status: "geplant", buero_fc_status: "abgegeben" }];
+    const box = document.createElement("div"); box.innerHTML = paketCard(DB.students.find((x) => x.id === "a1")); await warte(150);
+    const kAgg = box.textContent, aggAbruf = ktAufrufe.length - nVorAgg; _fsAgg = null; DB.lessons = [];
+    // Richter: Gerät hat nach dem Update noch die alte kompass-rechnen.js → keine Zahl statt Absturz
+    const kF = KR.fcFuersBuero; delete KR.fcFuersBuero; let kAlt = "";
+    try { const b2 = document.createElement("div"); b2.innerHTML = paketCard(DB.students.find((x) => x.id === "a1")); kAlt = b2.textContent; } catch (e) { kAlt = "AUSNAHME " + e.message; }
+    KR.fcFuersBuero = kF;
     // A6/A8/A9: mehr als im Paket (+2), Grundbetrag „enthalten“, Prüfung mit Ergebnis zählt
-    const zeilen2 = [{ schueler_id: "a1", name: "Boost-Paket B", vorlage_id: "v1", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "pruefung_praxis", bezeichnung: "Vorstellung zur praktischen Prüfung", anzahl: 1, preis_cent: 20000 }] }];
-    DB.lessons = Array.from({ length: 11 }, (_, i) => ({ id: "m" + i, sid: "a1", art: "fahrstunde", date: KR.addDaysISO(KR.todayISO(), -2 - i), von: "10:00", bis: "11:30", status: "" }));
+    const zeilen2 = [{ schueler_id: "a1", name: "Boost-Paket B", vorlage_id: "v1", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "pruefung_praxis", bezeichnung: "Vorstellung zur praktischen Prüfung", anzahl: 1, preis_cent: 15000 }] }];
+    ktRows = Array.from({ length: 11 }, (_, i) => kt("m" + i, KR.addDaysISO(KR.todayISO(), -2 - i), "10:00", "11:30"));
     DB.exams = [{ id: "e1", sid: "a1", date: gestern, result: "fail" }];
-    _paketVerkauft = null; await _ladePakete({ from: () => { const o = { select: () => o, in: () => o, is: () => o, then: (f) => f({ data: zeilen2, error: null }) }; return o; } }, ["a1"]);
-    routeDetail("a1"); await new Promise((r) => setTimeout(r, 200));
-    const k5 = (document.querySelector(".paket-karte") || {}).textContent || "";
+    _paketVerkauft = null; await _ladePakete(mock(zeilen2, false), ["a1"]); delete _paketTermine.a1;
+    routeDetail("a1"); await warte(300);
+    const k5 = karte();
+    window.getSupa = altSupa0;
     // A7: Leitung kann ein im Büro verkauftes Paket in der App nicht überschreiben
     let geschrieben = false; const altSupa = window.getSupa;
     window.getSupa = () => ({ from: () => { geschrieben = true; return { update: () => ({ eq: () => Promise.resolve({}) }) }; } });
     await schuelerPaketSetzen("a1", "v2");
     window.getSupa = altSupa;
-    return { t1, k2, k3, k4, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
+    return { k0, t1, k2, k3, k4, k4f, k4l, kAgg, kAlt, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
   });
   pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Stand (noch nichts gefahren: „0 von 20“)", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*0 von 20/.test(erg.t1) && /Überlandfahrt\s*0 von 5/.test(erg.t1), erg.t1);
   pruefe("A2 App: keine Preise für den Fahrlehrer", !/€|65|80,00/.test(erg.t1), erg.t1);
   pruefe("A3 App: Schüler ohne Paket → keine Karte", erg.k2 === false);
   pruefe("A4 App: alte Datenbank (Tabelle fehlt) → keine Karte, kein Fehler", erg.k3 === false && !jsF.length, jsF.join(" | "));
-  pruefe("A5 App Schritt 2: „Übungsstunden 2 von 20“, „Überlandfahrt 1 von 5“", /Übungsstunden\s*2 von 20/.test(erg.k4) && /Überlandfahrt\s*1 von 5/.test(erg.k4), erg.k4);
+  pruefe("A5 App: nur mit Büro-Haken: „Übungsstunden 2 von 20“, „Überlandfahrt 2 von 5“ (Plan, Gerät, geplatzt, abgebrochen, geschenkt, gelöscht, anderer Schüler zählen nicht)", /Übungsstunden\s*2 von 20/.test(erg.k4) && /Überlandfahrt\s*2 von 5/.test(erg.k4), erg.k4);
+  pruefe("A5b App: Hinweis „1 Termin wartet noch auf den Fahrcheck-Haken“", /1 Termin wartet noch auf den Fahrcheck-Haken vom Büro/.test(erg.k4), erg.k4);
+  pruefe("A0 App: beim Öffnen „Stand wird gezählt …“ und „–“ statt der Paketgröße", /Stand wird gezählt/.test(erg.k0) && /Übungsstunden\s*–/.test(erg.k0) && !/20 ×/.test(erg.k0), erg.k0);
+  pruefe("A5c App: Abruf nur für diesen Schüler, ohne gelöschte (eq geloescht=false), ohne die ganze Nutzlast", erg.aufruf.eq.schueler_id === "a1" && erg.aufruf.eq.geloescht === false && /buero_fc_status/.test(erg.aufruf.sel) && /fc:payload->>fc/.test(erg.aufruf.sel) && !/(^|,)payload(,|$)/.test(erg.aufruf.sel), erg.aufruf);
+  pruefe("A5d App: frisch geladen → kein zweiter Abruf binnen einer Minute", erg.nochmal === 0, erg.nochmal);
+  pruefe("A5e App: nicht ladbar → „Stand gerade nicht abrufbar“, „–“ statt Zahlen", /Stand gerade nicht abrufbar/.test(erg.k4f) && /Übungsstunden\s*–/.test(erg.k4f), erg.k4f);
+  pruefe("A5f App: Fahrlehrer → Hinweis „Du siehst nur deine eigenen Fahrten“ (Leitung/Büro nicht)", /Du siehst nur deine eigenen Fahrten/.test(erg.k4l) && !/eigenen Fahrten/.test(erg.k4), erg.k4l);
+  pruefe("A5g App-Gesamtansicht: Termine samt Haken aus DB.lessons (1 Std. + 1 nachgereicht = 4, 1 wartet), kein eigener Abruf", /Übungsstunden\s*4 von 20/.test(erg.kAgg) && /1 Termin wartet/.test(erg.kAgg) && erg.aggAbruf === 0 && !/eigenen Fahrten/.test(erg.kAgg), { t: erg.kAgg, n: erg.aggAbruf });
+  pruefe("A5h App: alte kompass-rechnen.js im Zwischenspeicher → „nicht abrufbar“, kein Absturz", /Stand gerade nicht abrufbar/.test(erg.kAlt) && !/AUSNAHME/.test(erg.kAlt), erg.kAlt);
   pruefe("A6 App: 22 von 20 Einheiten → „20 von 20 ✓ · +2“", /Übungsstunden\s*20 von 20 ✓ · \+2/.test(erg.k5), erg.k5);
   pruefe("A7 App: verkauftes Paket lässt sich in der App nicht überschreiben", erg.geschrieben === false);
   pruefe("A8 App: Grundbetrag „enthalten“", /Grundbetrag\s*enthalten/.test(erg.k5), erg.k5);

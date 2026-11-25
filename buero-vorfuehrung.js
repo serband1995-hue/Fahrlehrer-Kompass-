@@ -316,6 +316,11 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       const s = tabelle("schueler").find((x) => x.id === p_schueler); if (s) s.paket_id = v;
       return null;
     },
+    // W15: wie reakt_regel in der Datenbank (gleiche Rechnung, scripts/reakt-sql-test.mjs vergleicht beide). F.reaktRegelFehlt = true: alte Datenbank
+    reakt_regel: ({ p_fs }) => {
+      if (F.reaktRegelFehlt) throw new Error("rpc fehlt: reakt_regel");
+      return window.KR.reaktRegelAusPreisen(tabelle("fahrschule_preise").filter((x) => x.fahrschule_id === p_fs), F.reaktMonate || 12);
+    },
     buero_pin_anmelden: ({ p_person, p_pin, p_erste }) => {
       const p = personen().find((x) => x.id === p_person && x.aktiv !== false);
       if (!p) return { fehler: "unbekannt" };

@@ -5345,6 +5345,28 @@ let _termineFehlversuche = 0;
 /* Fristen vom Büro (Reaktivierung, Theorie). Nur im Speicher, nie in DB.students:
    sonst landeten die Felder beim nächsten Abgleich in schueler.ausbildung. */
 let _schuelerFristen = {};
+/* W15: Regel der Reaktivierung vom Server (rpc reakt_regel: entfällt laut Preisliste heute oder am Vertragstag, Monate). Nur die Regel,
+   keine Preise (Fahrlehrer dürfen die Preisliste bald nicht mehr lesen). Dieselbe Regel nutzt die Datenbank für die Sperre und das Büro.
+   Fehlt die Funktion (Datenbank-Update noch nicht da): alte Regel, wie der Server. Für offline gemerkt (je Fahrschule). */
+const _REAKT_REGEL_KEY="kompass_reakt_regel"; // je Fahrschule: kompass_reakt_regel:<fahrschule>
+let _reaktRegelSoll=null; // für welche Fahrschule die Regel gerade gilt (eigene oder die der Gesamtansicht)
+function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
+function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY+":"+fs)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
+// fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
+async function _ladeReaktRegel(supa,fsId){
+  if(!window.KR||!KR.setzeReaktRegel)return;
+  const fs=fsId||(_authProfile&&_authProfile.fahrschule_id)||null;
+  if(fs!==_reaktRegelSoll){ _reaktRegelSoll=fs; KR.setzeReaktRegel(null); if(fs) _reaktRegelAusSpeicher(fs); } // Regel einer anderen Fahrschule nie mitnehmen
+  else if(fs&&!KR.holeReaktRegel()) _reaktRegelAusSpeicher(fs);
+  if(!fs)return;
+  try{
+    const {data,error}=await supa.rpc("reakt_regel",{p_fs:fs});
+    if(_reaktRegelSoll!==fs)return; // inzwischen in eine andere Ansicht gewechselt
+    if(error){ if(_reaktRegelFehlt(error)){ KR.setzeReaktRegel(null); try{localStorage.removeItem(_REAKT_REGEL_KEY+":"+fs);}catch(e){} } return; }
+    KR.setzeReaktRegel(data||null);
+    try{ localStorage.setItem(_REAKT_REGEL_KEY+":"+fs,JSON.stringify({fs,regel:data||null})); }catch(e){ /* voll: nur im Speicher */ }
+  }catch(e){ /* Netz: gemerkte Regel bleibt */ }
+}
 function _merkeFristen(rows){
   (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
     theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,zahlung_gesperrt_seit:r.zahlung_gesperrt_seit||null,zahlung_gesperrt_grund:r.zahlung_gesperrt_grund||null,
@@ -5499,7 +5521,8 @@ async function pullSchuelerZuweisungen() {
   try {
     const supa = getSupa();
     const gen = _abglGen;
-    const { data: rows, error: schErr } = await supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv");
+    // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
+    const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
     _ladeTheorieBesuch(supa, (rows||[]).map(r=>r.id));
@@ -6084,6 +6107,10 @@ async function _fsLoadAggData(fahrschuleId){
     return false;
   }
   if(gen!==_fsAggGen)return false;
+  // W15 (Prüf-Team): Regel der Reaktivierung für DIESE Fahrschule, bevor die Sperren gezeichnet werden.
+  // Fable B1: VOR der Prüfung auf eigene Änderungen holen – zwischen Prüfung und Überschreiben darf kein Warten liegen.
+  await _ladeReaktRegel(supa,fahrschuleId);
+  if(gen!==_fsAggGen)return false;
   if(standVorher!==null&&standVorher!==JSON.stringify([DB.students,DB.lessons,DB.exams])){ _fsSyncAggChanges(); return false; }
   const lehrer=lehrerR.data||[];
   window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||(p.rolle==="entfernt"?"Ehemaliger Fahrlehrer":p.email)||""; });
@@ -6129,8 +6156,11 @@ async function _fsEnterAggMode(fahrschuleId){
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
     // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
+    if(!_fsAgg&&meinGen===_fsAggGen) _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
     return false;
   }
+  // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
+  if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6163,6 +6193,7 @@ async function _fsExitAggModeJetzt(){
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
   _zeigeSaStreifen();
+  _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -7982,7 +8013,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.24.15";
+const APP_VERSION="2026.11.25.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -10222,6 +10253,24 @@ async function _ladeTheorieBesuch(supa, ids){
    keine Verbindung: keine Karte, kein Fehler. Später (Schritt 2) kommt „noch offen“ je Posten dazu. */
 let _paketVerkauft = null; // schueler_id -> {name, posten:[{art, bezeichnung, anzahl}]} oder null (kein Paket); null = nicht geladen
 let _paketLadeNr = 0; const _paketNrJe = {};
+// Termine fürs Paket mit dem Fahrcheck-Haken des Büros (buero_fc_status). Die eigenen Termine des Geräts kennen den Haken nicht;
+// im Paket zählt eine Fahrstunde aber erst mit Haken (🗣 Serband 24.11.). Gesamtansicht: DB.lessons hat ihn schon (_fsMapTermin).
+// Sonst wird beim Öffnen der Akte nur dieser eine Schüler vom Server geholt, höchstens einmal je Minute (Prüf-Team: nicht alle
+// Paket-Schüler im Minutentakt, ohne Unterschriften aus der Nutzlast). schueler_id -> {zeit, rows} bzw. {fehler}
+const _paketTermine = {}, _paketTermineLaeuft = {};
+const _PAKET_TERMINE_MS = 60000;
+async function _paketTermineLaden(sid){
+  if(_paketTermineLaeuft[sid]) return;
+  _paketTermineLaeuft[sid]=true;
+  try{
+    const supa=getSupa(); if(!supa) throw new Error("offline");
+    const rows=await _alleSeiten(()=>supa.from("kalender_termine").select("id,art,datum,von,bis,status,buero_fc_status,pst:payload->>status,sonderArt:payload->>sonderArt,srcSonder:payload->>srcSonder,fc:payload->>fc").eq("schueler_id",sid).eq("geloescht",false));
+    _paketTermine[sid]={zeit:Date.now(),rows:rows.map(r=>({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:r.pst||r.status,sonderArt:r.sonderArt||null,srcSonder:r.srcSonder||null,fc:r.fc||null,bueroFc:r.buero_fc_status||"offen"}))};
+  }catch(e){ _paketTermine[sid]=Object.assign({},_paketTermine[sid],{fehler:Date.now()}); } // alten Stand behalten
+  finally{ delete _paketTermineLaeuft[sid]; }
+  const el=document.querySelector(`.paket-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
+  if(el&&st) el.outerHTML=paketCard(st);
+}
 async function _ladePakete(supa, ids){
   const nr=++_paketLadeNr;
   try{
@@ -10239,26 +10288,43 @@ async function _ladePakete(supa, ids){
     for(const sid in neu){ if((_paketNrJe[sid]||0)<=nr){ _paketVerkauft[sid]=neu[sid]; _paketNrJe[sid]=nr; } }
   }catch(e){ /* offline: alten Stand behalten */ }
 }
-/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: eigene
-   Termine dieses Geräts, Prüfungen mit Ergebnis (DB.exams) und die Sonderfahrten aus dem Ausbildungsplan. */
+/* Schritt 2: „noch offen“ je Posten, gleiche Rechnung wie im Büro (KR.paketQuelleAusTerminen, KR.paketVerbrauch). Quelle: Termine mit dem
+   Fahrcheck-Haken des Büros (Gesamtansicht: DB.lessons, sonst _paketTermine) und die Prüfungen mit Ergebnis (DB.exams).
+   Liefert {q} oder {laden:true} bzw. {fehler:true}, solange keine Termine da sind. */
 function _paketQuelle(s){
-  if(!window.KR||!KR.paketQuelleAusTerminen)return null;
+  if(!window.KR||!KR.paketQuelleAusTerminen||!KR.fcFuersBuero||!KR.paketHinweise)return {fehler:true}; // alte kompass-rechnen.js: lieber keine Zahl als eine falsche
+  let termine;
+  if(_fsAgg){
+    termine=(DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,sonderArt:l.sonderArt||null,srcSonder:l.srcSonder||null,fc:l.fc||null,bueroFc:l.buero_fc_status||"offen"}));
+  }else{
+    const x=_paketTermine[s.id]||{};
+    if(!_paketTermineLaeuft[s.id]&&(!x.zeit||Date.now()-x.zeit>_PAKET_TERMINE_MS)&&!(x.fehler&&Date.now()-x.fehler<_PAKET_TERMINE_MS)) setTimeout(()=>_paketTermineLaden(s.id),0);
+    if(!x.rows) return x.fehler&&!_paketTermineLaeuft[s.id]?{fehler:true}:{laden:true};
+    termine=x.rows;
+  }
   const d=new Date();
   const pruefDaten=(DB.exams||[]).filter(ex=>ex.sid===s.id&&istPruefung(ex)&&ex.date&&(ex.result==="pass"||ex.result==="fail")).map(ex=>ex.date);
-  return KR.paketQuelleAusTerminen((DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,srcSonder:l.srcSonder,sonderArt:l.sonderArt,tatsaechlicheDauer:l.tatsaechlicheDauer})),todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten,plan:s.plan});
+  return {q:KR.paketQuelleAusTerminen(termine,todayISO(),d.getHours()*60+d.getMinutes(),{pruefDaten})};
 }
 function paketCard(s){
   const p=_paketVerkauft&&_paketVerkauft[s.id];
   if(!p) return "";
-  const q=_paketQuelle(s), v=q?KR.paketVerbrauch(p.posten,q):[];
+  const qq=_paketQuelle(s), q=qq.q||null, v=q?KR.paketVerbrauch(p.posten,q):[];
   const zahl=n=>(Math.round(Number(n)*10)/10).toLocaleString("de-DE");
-  // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“
-  const rechts=(x,i)=>{ const z=v[i]; if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
+  // Ohne Zähler (Grundbetrag, Lernapp, Sonstiges): „enthalten“ bzw. „2 ×“; mit Zähler wie im Büro, Überzug als „+2“.
+  // Solange der Stand fehlt: bei zählbaren Posten „–“ statt der Paketgröße (sonst sähe „20 ×“ wie ein Stand aus)
+  const zaehlbar=x=>KR.paketVerbrauch([x],{fahrstunden:0,sonder:{ueberland:0,autobahn:0,nacht:0},pruefungen:0,simulator:0})[0].verbraucht!=null;
+  const rechts=(x,i)=>{ const z=v[i];
+    if(!q&&zaehlbar(x)) return "–";
+    if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
     return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`<span style="white-space:nowrap">${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}</span>`; };
-  return `<div class="res-block paket-karte" style="animation:none;margin-top:9px;">
+  const klein=t=>`<p class="muted-p" style="font-size:12px;margin:6px 0 0;">${t}</p>`;
+  const nurEigene=!_fsAgg&&_authProfile&&_authProfile.rolle==="fahrlehrer"; // sieht nur eigene Termine (Zugriffsregeln)
+  return `<div class="res-block paket-karte" data-sid="${esc(s.id)}" style="animation:none;margin-top:9px;">
     <h4>${_li("bogen")} Paket: ${esc(p.name)}</h4>
     ${p.posten.map((x,i)=>`<div class="mini-dash-row"><span>${esc(x.bezeichnung)}</span><b>${rechts(x,i)}</b></div>`).join("")}
-    <p class="muted-p" style="font-size:12px;margin:6px 0 0;">Vom Büro verkauft. Gefahren von gebucht (Einheiten à 45 Min.). Ändern nur im Büro.</p>
+    ${q?KR.paketHinweise(q).map(h=>klein(esc(h))).join(""):klein(qq.laden?"Stand wird gezählt …":"Stand gerade nicht abrufbar (offline?). Die Zahlen kommen, sobald wieder Verbindung da ist.")}
+    ${klein("Vom Büro verkauft. Gezählt wird je Fahrcheck (45 Min.), sobald das Büro ihn abgehakt hat."+(nurEigene?" Du siehst nur deine eigenen Fahrten, den ganzen Stand hat das Büro.":"")+" Ändern nur im Büro.")}
   </div>`;
 }
 function theorieStandFuer(s){
