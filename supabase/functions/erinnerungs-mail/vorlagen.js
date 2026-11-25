@@ -79,10 +79,15 @@
   const BEISPIEL = { Vorname: "Lena", Datum: "2026-12-15", Betrag: 24000, Tage: 20, Fahrschule: "Fahrschule Muster" };
 
   function zeichen(s) { return Array.from(String(s)); }
+  // Zeichenklassen aus Zahlenwerten gebaut: im Quelltext steht kein Backslash-u, denn manche Übertragungswege (Deploy der
+  // Edge-Funktion) machen daraus echte Zeilentrenner und der Code bricht (HS7, 25.11.2026). Verhalten wie vorher.
+  const klasse = (bereiche) => new RegExp("[" + bereiche.map(([a, b]) => String.fromCharCode(a) + (b === undefined ? "" : "-" + String.fromCharCode(b))).join("") + "]", "g");
+  const ZEILENTRENNER = klasse([[0x85], [0x2028], [0x2029]]); // NEL, Zeilen- und Absatztrenner → Zeilenumbruch
+  const UNSICHTBAR = klasse([[0x00, 0x08], [0x0b, 0x1f], [0x7f, 0x9f], [0x200b, 0x200f], [0x202a, 0x202e], [0x2066, 0x2069], [0xfeff]]); // Steuer- und Richtungszeichen
   // Freien Text säubern: Steuerzeichen raus, Zeilenumbrüche vereinheitlichen, höchstens eine Leerzeile, Länge begrenzen
   function saeubere(text) {
-    let t = String(text == null ? "" : text).replace(/\r\n?/g, "\n").replace(/[\u0085\u2028\u2029]/g, "\n").replace(/\t/g, " ");
-    t = t.replace(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, "");
+    let t = String(text == null ? "" : text).replace(/\r\n?/g, "\n").replace(ZEILENTRENNER, "\n").replace(/\t/g, " ");
+    t = t.replace(UNSICHTBAR, "");
     t = t.split("\n").map((z) => z.replace(/ {2,}/g, " ").trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
     const a = zeichen(t);
     return a.length > MAX_ZEICHEN ? a.slice(0, MAX_ZEICHEN).join("").trim() : t;
