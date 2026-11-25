@@ -5,7 +5,7 @@
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
   { version: "2026.11.25.9", datum: "2026-11-25", kurz: "Plan: Sonderfahrt-Kästchen folgen jetzt ihrem Termin.",
-    punkte: ["Verschiebt oder ändert jemand eine Sonderfahrt, zum Beispiel das Büro, ändern sich die Kästchen im Ausbildungsplan mit. Sagt das Büro eine künftige Fahrt ab, werden ihre Kästchen wieder frei.",
+    punkte: ["Verschiebt oder ändert jemand eine Sonderfahrt, zum Beispiel das Büro, ändern sich die Kästchen im Ausbildungsplan mit. Das gilt für Sonderfahrten, die ab jetzt aus dem Plan eingetragen werden. Sagt das Büro eine künftige Fahrt ab, werden ihre Kästchen wieder frei.",
              "Bei „nicht erschienen“ oder „abgebrochen“ werden die Kästchen frei, und du kannst die Fahrt neu eintragen. Stellst du den Termin zurück, zählt er wieder.",
              "Tippst du auf ein Kästchen, das zu einem Termin gehört, öffnet sich der Termin. Dort kannst du ihn verschieben oder entfernen, mit „Rückgängig“.",
              "Büro: Eine Nachtfahrt über Mitternacht zählt jetzt mit ihren Fahrchecks (zum Beispiel 22:30–0:00 = 2)."] },

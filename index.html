@@ -5803,7 +5803,8 @@ async function pullTermineZuweisungen() {
           delete mem.termine[l.id];
           // W13 PR 3: vom Büro abgesagt oder gelöscht → die Kästchen im Plan werden frei (wie beim Löschen auf dem Gerät)
           // Eine schon gefahrene Sonderfahrt bleibt im Plan abgehakt (Daten 2); nur künftige werden frei.
-          if (l.srcSonder && !weggegeben.has(l.id) && !isAbsolved(l.date, l.bis)) { const [sid, grp] = String(l.srcSonder).split(":"); const st = (DB.students || []).find(x => x.id === sid); if (st) _sfFreigeben(st, grp, l); }
+          const vorbei = (window.KR && KR.terminEndeMin) ? (l.date < todayISO() || (l.date === todayISO() && KR.terminEndeMin(l.von, l.bis) <= new Date().getHours() * 60 + new Date().getMinutes())) : isAbsolved(l.date, l.bis); // über Mitternacht: erst morgen vorbei
+          if (l.srcSonder && !weggegeben.has(l.id) && !vorbei) { const [sid, grp] = String(l.srcSonder).split(":"); const st = (DB.students || []).find(x => x.id === sid); if (st) _sfFreigeben(st, grp, l); }
         }
         return bleibt;
       });
@@ -8139,7 +8140,6 @@ if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungH
 function save(){
   _snapGeaendert=true;
   if(_fsAgg){ _fsSyncAggChanges(); return; }
-  try{ _sfAbgleichen(); }catch(e){ console.warn("[Kompass] Sonderfahrt-Kästchen:", e&&e.message); } // W13 PR 3: Kästchen folgen ihrem Termin
   if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
   try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}
@@ -8152,6 +8152,9 @@ function save(){
 // Gezählt wird nur Speichern kurz nach einer Bedienung (Tippen/Taste) – ein Abruf im Hintergrund macht das Fenster darunter nicht veraltet.
 var _letzteBedienung=0; ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>{ _letzteBedienung=Date.now(); },true));
 { const _saveOhneZaehler=save; save=function(){ if(typeof _saveZaehler==="number"&&Date.now()-_letzteBedienung<3000)_saveZaehler++; return _saveOhneZaehler.apply(this,arguments); }; }
+// W13 PR 3: Sonderfahrt-Kästchen folgen ihrem Termin (_sfAbgleichen) – ebenfalls als Hülle, save() selbst bleibt unverändert.
+// Nicht in der Gesamtansicht (dort schreibt save() nur die echten Änderungen beim jeweiligen Fahrlehrer zurück).
+{ const _saveOhneSonder=save; save=function(){ if(!_fsAgg){ try{ _sfAbgleichen(); }catch(e){ console.warn("[Kompass] Sonderfahrt-Kästchen:", e&&e.message); } } return _saveOhneSonder.apply(this,arguments); }; }
 /* ===== Stufe 2: Schreib-Umleitung im Fahrschul-Modus =====
    Vergleicht DB.students/lessons/exams gegen den zuletzt geladenen Stand (_fsBaseline) und
    schreibt NUR echte Änderungen - jede beim ursprünglichen (oder neu gewählten) Fahrlehrer,
@@ -10816,7 +10819,9 @@ function _sfIdx(l){
 }
 // W13 PR 3 (Fable H1): Ein Termin, der gerade nicht zählt („nicht erschienen“, „abgebrochen“, Art ≠ Sonderfahrt), hält keine Kästchen.
 function _sfTerminZu(sid,grp,idx,ohne){
-  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; if(l.srcSonderMin!=null&&!_sfZaehlt(l))return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
+  // Richter Empf. 1: Trägt das Kästchen die Nummer eines Termins, gehört es nur diesem (nicht einem zurückgestellten mit alter Liste)
+  const st=(DB.students||[]).find(x=>x.id===sid), box=st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp]?st.plan.sonder[grp][+idx]:null, boxTid=box&&box.tid||null;
+  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; if(boxTid&&l.id!==boxTid&&l.srcSonderMin!=null)return false; if(l.srcSonderMin!=null&&!_sfZaehlt(l))return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
 }
 // Merkt sich die Kästchen vor einer Änderung (für Rückgängig): [{i,o}]
 function _sfStand(arr,liste){ return liste.map(i=>({i,o:arr[i]?Object.assign({},arr[i]):null})); }
@@ -10826,7 +10831,8 @@ function _sfZurueck(s,grp,stand){ if(!s||!stand||!stand.length)return; ensure(s)
 // W13 PR 3: Ein Kästchen, das schon einem anderen Termin gehört (tid), bleibt.
 function _sfFreigeben(s,grp,l){
   const arr=(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])||null; if(!arr)return [];
-  const liste=_sfIdx(l).filter(i=>!(arr[i]&&arr[i].tid&&arr[i].tid!==l.id)), stand=_sfStand(arr,liste);
+  // Richter B1: ein Kästchen mit fremder tid oder ein von Hand gesetzter Haken (ohne tid, anderes Datum) bleibt stehen
+  const liste=_sfIdx(l).filter(i=>{ const o=arr[i]; if(!o)return true; if(o.tid)return o.tid===l.id; return l.srcSonderMin==null||o.iso===l.date; }), stand=_sfStand(arr,liste);
   liste.forEach(i=>{ arr[i]=null; });
   return stand;
 }
@@ -10854,7 +10860,7 @@ function _sfBelegen(s,grp,l,idx0,anzahl){
    ältere Verknüpfungen und von Hand abgehakte Kästchen fasst der Abgleich nie an. */
 function _sfMin(l){ return (window.KR&&KR.terminMinuten)?KR.terminMinuten(l.von,l.bis):(l.von&&l.bis?Math.max(0,hm2min(l.bis)-hm2min(l.von)):0); }
 function _sfKaestchen(l){ return {d:isoToShort(l.date),iso:l.date,tid:l.id}; }
-function _sfZaehlt(l){ return l.art==="sonder"&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"; }
+function _sfZaehlt(l){ return (l.art==="sonder"||(l.art==="nacht"&&String(l.srcSonder||"").split(":")[1]==="nacht"))&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"; } // Richter Empf. 2: Büro-Art „Nachtfahrt“
 function _sfAbgleichen(){
   const GR=["ueberland","autobahn","nacht"];
   const studs={}; (DB.students||[]).forEach(s=>{ if(s&&s.id)studs[s.id]=s; });

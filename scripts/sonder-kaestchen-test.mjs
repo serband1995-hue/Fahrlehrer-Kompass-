@@ -809,6 +809,41 @@ await pruefe("K50", "Das Büro hatte die Art gesetzt, der Fahrlehrer wählt im P
   return r.nacht[0] === "2026-10-20" && r.nacht[1] === "2026-10-20" && !r.autobahn[0] && r.art === "nacht" ? null : JSON.stringify(r);
 });
 
+await pruefe("K51", "Von Hand gesetzter Haken in einem frei gewordenen Kästchen bleibt, wenn der ausgefallene Termin danach gelöscht wird (Richter B1)", async () => {
+  const t = await mitTermin();
+  const r = await p.evaluate((id) => {
+    const l = DB.lessons.find((x) => x.id === id); l.status = "nicht erschienen"; save();
+    const s = DB.students.find((x) => x.id === "s1"); s.plan.sonder.ueberland[1] = { d: "14.10.26", iso: "2026-10-14" }; save();
+    deleteLesson(id);
+    return __t.plan("s1", "ueberland");
+  }, t.id);
+  return r[1] === "2026-10-14" ? null : `Plan ${JSON.stringify(r)}`;
+});
+
+await pruefe("K52", "Zurückgestellter Termin findet keine freien Kästchen: das Kästchen gehört weiter dem Termin, dessen Nummer es trägt (Richter Empf. 1)", async () => {
+  const t = await mitTermin(); // Überland [1,2]
+  const r = await p.evaluate(({ id, T2 }) => {
+    const l = DB.lessons.find((x) => x.id === id); l.status = "abgebrochen"; save();
+    const s = DB.students.find((x) => x.id === "s1");
+    commitSonderZeit(s, "ueberland", 1, T2, "10:00");            // B: Kästchen 2 und 3
+    commitSonderZeit(s, "ueberland", 3, "2026-10-29", "10:00");  // C: Kästchen 4 und 5
+    l.status = "geplant"; save();                                 // A: nichts mehr frei
+    const zu = _sfTerminZu("s1", "ueberland", 1);
+    return { zu: zu && zu.id, a: id, plan: __t.plan("s1", "ueberland") };
+  }, { id: t.id, T2 });
+  return r.zu && r.zu !== r.a && r.plan[1] === T2 ? null : JSON.stringify(r);
+});
+
+await pruefe("K53", "Büro stellt eine verknüpfte Nacht-Sonderfahrt auf die Art „Nachtfahrt“: die Nacht-Kästchen bleiben gefüllt (Richter Empf. 2)", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(() => {
+    commitSonderZeit(DB.students.find((x) => x.id === "s1"), "nacht", 0, "2026-10-26", "19:30");
+    const l = DB.lessons.find((x) => x.srcSonder === "s1:nacht:0"); l.art = "nacht"; save();
+    return __t.plan("s1", "nacht");
+  });
+  return r[0] === "2026-10-26" && r[1] === "2026-10-26" ? null : `Plan ${JSON.stringify(r)}`;
+});
+
 await pruefe("K19", "keine JS-Fehler und keine echten Dialogfenster im ganzen Lauf", async () => jsFehler);
 
 await browser.close();
