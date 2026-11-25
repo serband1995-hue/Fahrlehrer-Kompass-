@@ -74,7 +74,7 @@ try {
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1" });
     const txt = await page.locator("#ansicht").innerText();
-    pruefe("P1a Seite „Preisliste“ in der Leiste (Gruppe Geld)", await page.locator('nav a[href="#preise"]').count() === 1);
+    pruefe("P1a Preisliste: Leistenpunkt „Zahlungen“, Reiter „Preise“ in der Reiterzeile", await page.locator('nav a[href="#zahlungen"]').count() === 1 && await page.locator('.zahl-reiter a[href="#preise"]').count() === 1);
     pruefe("P1b leer: Hinweis „Noch keine Preise“", /Noch keine Preise eingetragen/.test(txt), txt.slice(0, 200));
     pruefe("P1c Leitung hat „Neuer Preis“", await page.locator("#prNeu").count() === 1);
     // P2 neuen Preis anlegen
