@@ -117,13 +117,15 @@ function nwFehlerText(e, sonst) {
   if (/Zahlung ausstehend/.test(e.message || "")) return typeof ZAHLUNG_MELDUNG === "string" ? ZAHLUNG_MELDUNG : "Zahlung ausstehend";
   return e.code === "P0001" ? "die Leitung hat diesen Termin entfernt" : e.message;
 }
-// K7: Papierkorb – storniert (bleibt aufbewahrt) oder Fehleintrag (nach 30 Tagen endgültig weg)
-const NW_PAPIERKORB_TAGE = 30;
+// K7: Papierkorb – storniert (bleibt aufbewahrt) oder Fehleintrag (nach den eingestellten Tagen endgültig weg, Vorgabe 30)
+// Tage im Papierkorb: Einstellung papierkorb.tage (7–90, Vorgabe 30), der Server leert danach (W11 S3)
+function nwPapierkorbTage() { try { return window.KE && KE.zahl ? KE.zahl("papierkorb.tage", "tage", 30, 7, 90) : 30; } catch (e) { return 30; } }
 function nwStorno(t) { const s = (t.payload || {}).storno; return s && typeof s === "object" ? s : null; }
 function nwRestTage(t) {
   const ab = Date.parse(t.geloescht_am || t.aktualisiert_am || "");
-  if (isNaN(ab)) return NW_PAPIERKORB_TAGE;
-  return Math.max(0, NW_PAPIERKORB_TAGE - Math.floor((Date.now() - ab) / 86400000));
+  const tage = nwPapierkorbTage();
+  if (isNaN(ab)) return tage;
+  return Math.max(0, tage - Math.floor((Date.now() - ab) / 86400000));
 }
 function nwPapierkorbText(t) {
   const s = nwStorno(t);
@@ -466,7 +468,7 @@ function pkHTML() {
   const weg = alle.filter((t) => !bleibt.includes(t));
   return `<details class="karte nw-details pk-karte" id="pkKarte"${PK.offen ? " open" : ""}><summary>Papierkorb (${PK.daten ? alle.length + (PK.voll ? "+" : "") : "…"})</summary>
     ${PK.fehler ? `<p class="leise klein">Papierkorb konnte nicht geladen werden.</p>` : !PK.daten ? `<p class="leise klein">Lädt …</p>` : `
-    <p class="leise klein">Gelöschte Termine. Fehleinträge werden nach ${NW_PAPIERKORB_TAGE} Tagen endgültig gelöscht; stornierte und unterschriebene Stunden bleiben aufbewahrt. Der Verlauf jeder Stunde bleibt.</p>
+    <p class="leise klein">Gelöschte Termine. Fehleinträge werden nach ${nwPapierkorbTage()} Tagen endgültig gelöscht; stornierte und unterschriebene Stunden bleiben aufbewahrt. Der Verlauf jeder Stunde bleibt.</p>
     ${PK.voll ? `<p class="leise klein">Gezeigt werden die letzten ${PK_MAX} gelöschten Termine.</p>` : ""}
     ${weg.length ? `<ul class="nw-liste">${weg.map(pkZeile).join("")}</ul>` : `<p class="leise klein">Keine gelöschten Termine.</p>`}
     ${bleibt.length ? `<details class="nw-details" id="pkStorno"${PK.stornoOffen ? " open" : ""}><summary>Storniert, bleibt aufbewahrt (${bleibt.length})</summary><ul class="nw-liste">${bleibt.map(pkZeile).join("")}</ul></details>` : ""}`}

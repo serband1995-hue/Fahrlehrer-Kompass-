@@ -93,9 +93,11 @@ function toast(text, fehler = false) {
 /* ---------- Rückgängig-Hinweis (einheitlich für alles, was man versehentlich antippen kann) ----------
    toastUndo(text, rueckgaengig, { ms, nachAblauf }): zeigt den Hinweis mit dem Knopf „Rückgängig“.
    - Knopf: rueckgaengig() läuft, nachAblauf() läuft NICHT.
-   - Zeit um (Standard 6 s), neuer Rückgängig-Hinweis oder Seite wird verlassen: nachAblauf() läuft (z. B. die Absage-Mail).
+   - Zeit um (Standard 6 s, einstellbar), neuer Rückgängig-Hinweis oder Seite wird verlassen: nachAblauf() läuft (z. B. die Absage-Mail).
    Der Hinweis hängt im obersten offenen Fenster (sonst läge er unter dem Fenster) und zieht beim Schließen um. */
 const UNDO = { offen: null };
+// W11 S3: wie lange der Hinweis steht (Einstellung rueckgaengig.sekunden, 4–30, Vorgabe 6); ohne KE 6 s
+function undoMs() { try { return (window.KE && KE.zahl ? KE.zahl("rueckgaengig.sekunden", "sekunden", 6, 4, 30) : 6) * 1000; } catch (e) { return 6000; } }
 function undoPlatzieren() {
   const u = UNDO.offen;
   if (!u) return;
@@ -119,7 +121,7 @@ function toastUndo(text, rueckgaengig, optionen) {
   el.setAttribute("role", "status");
   el.innerHTML = `<span class="toast-text"></span><button type="button" class="toast-knopf" data-undo>Rückgängig</button>`;
   el.querySelector(".toast-text").textContent = text;
-  const u = UNDO.offen = { el, ids: o.ids || null, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || 6000) };
+  const u = UNDO.offen = { el, ids: o.ids || null, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || undoMs()) };
   el.querySelector("[data-undo]").addEventListener("click", async (e) => {
     if (UNDO.offen !== u) return;
     e.target.disabled = true;
@@ -325,7 +327,8 @@ function klappWieder(ziel, m) {
    des Browsers/Handys führen genau dorthin zurück. Der Knopf erscheint, sobald es eine vorige Seite gibt. */
 // Jede Seite im Browser-Verlauf trägt eine laufende Nummer (history.state.buNr). So erkennt der Verlauf ein echtes Zurück
 // sicher – auch wenn Filter/Suche die Adresse ändern (replaceState) oder man über das Menü auf eine frühere Seite tippt.
-const buVerlauf = []; let buNrZaehler = 0; let buKalenderZuletzt = "";
+const buVerlauf = []; let buUnbekannt = false; /* Sprung (Zurück/Vor) auf eine Seite, die diese Sitzung nicht kennt, z. B. nach F5 */ let buNrZaehler = Date.now(); // Startwert = Uhrzeit: nach F5 sind neue Nummern größer als alte (Richtung eines Sprungs bleibt erkennbar)
+let buKalenderZuletzt = "";
 const _buReplace = history.replaceState.bind(history), _buPush = history.pushState.bind(history);
 function buNr() { return history.state && typeof history.state.buNr === "number" ? history.state.buNr : null; }
 function buNeuerEintrag(ausLeiste) {
@@ -363,6 +366,7 @@ window.addEventListener("hashchange", () => {
   if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
   let ziel = null;
   const nr = buNr(); const i = nr != null ? buVerlauf.findIndex((x) => x.nr === nr) : -1;
+  buUnbekannt = nr != null && i < 0; // trägt der Eintrag eine Nummer, die nur eine frühere Sitzung kennt (F5), kennt niemand die Richtung des Sprungs
   if (i >= 0) { ziel = buVerlauf[i]; buVerlauf.length = i + 1; } // echtes Zurück (oder Vor) auf eine bekannte Seite
   else {
     // Startseite ohne Adresse („“) und „#heute“ sind dieselbe Seite: dann keine neue Seite, sonst führte Zurück auf dieselbe
@@ -1959,7 +1963,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
     }));
     block.querySelectorAll("[data-notizweg]").forEach((b) => b.addEventListener("click", async () => {
       const n = S.notizen.find((x) => x.id === b.dataset.notizweg);
-      if (!n) return; // K7: ohne Rückfrage, 6 s Rückgängig
+      if (!n) return; // K7: ohne Rückfrage, mit Rückgängig
       const res = await supa.from("schueler_notizen").delete().eq("id", n.id).select("id");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
       S.notizen = S.notizen.filter((x) => x.id !== n.id);
@@ -2111,7 +2115,7 @@ async function erledigeAufgabe(id, nachher) {
 }
 async function loescheAufgabe(id, nachher) {
   const a = S.aufgaben.find((x) => x.id === id);
-  if (!a) return false; // K7: ohne Rückfrage, 6 s Rückgängig
+  if (!a) return false; // K7: ohne Rückfrage, mit Rückgängig
   const res = await supa.from("schueler_aufgaben").delete().eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   S.aufgaben = S.aufgaben.filter((x) => x.id !== id);
@@ -2917,7 +2921,7 @@ function terminDialog(id, vorgabe) {
     if (KR.hm2min(d.bis) <= KR.hm2min(d.von)) { toast("„Bis“ muss nach „Von“ liegen.", true); return false; }
     const jetzt = new Date().toISOString();
     if (d.absagen) {
-      // K7: ohne Rückfrage (Rückgängig 6 s). Gelaufene/unterschriebene Nachweis-Stunde: stornieren mit Grund (buero-nachweis.js)
+      // K7: ohne Rückfrage (mit Rückgängig). Gelaufene/unterschriebene Nachweis-Stunde: stornieren mit Grund (buero-nachweis.js)
       if (typeof nwIstNachweis === "function" && NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") && nwIstNachweis(t)) { setTimeout(() => nwLoeschen(t, () => {}), 0); return true; }
       return sageTermineAb([t], "Termin abgesagt");
     }

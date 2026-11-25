@@ -1031,6 +1031,18 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .es-knopf{flex:0 0 auto;min-height:44px;white-space:nowrap;}
 .es-neu{flex:0 0 auto;padding:2px 10px;border-radius:999px;background:var(--gold-soft);color:#7a5410;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
 .es-fuss{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:18px;}
+/* W11 S3: Zahl-Karten (Sonderfahrt, Papierkorb, Rückgängig) */
+.es-keform input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+.es-keform input[type=number]::-webkit-inner-spin-button,.es-keform input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.es-standardzahl{display:block;color:var(--muted);font-size:14px;margin-top:2px;}
+.es-fett{font-weight:700;}
+.es-keform .es-wert[data-fehler]{border-color:var(--pill-rot);box-shadow:0 0 0 1px var(--pill-rot);}
+.es-kefehler,.es-keok{margin:10px 0 0;padding:10px 14px;border-radius:var(--r-klein);font-weight:600;line-height:1.35;}
+.es-kefehler{background:var(--rot-soft);color:var(--pill-rot);}
+.es-keok{background:var(--gruen-soft);color:var(--pill-gruen);}
+.es-kefehler[hidden],.es-keok[hidden]{display:none;}
+.es-fuss .es-std{background:transparent;border:1px solid var(--feld);color:var(--txt);font-weight:600;}
+
 .es-leer{color:var(--muted);padding:14px 0;margin:0;}
 .es-kasten{margin-top:8px;}
 .es-meldung{margin:0 0 14px;padding:10px 14px;border-radius:var(--r-klein);border:1px solid var(--line-soft);background:var(--bg);font-weight:600;}
@@ -1049,6 +1061,9 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
   .es-thema:last-child{border-bottom:0;}
   .es-thema::before{display:none;}
   .es-pfeil{display:block;}
+  .es[data-ansicht="liste"] .es-thema[aria-current="page"]{background:transparent;box-shadow:none;font-weight:500;} /* Liste ohne offenes Thema: nichts wirkt ausgewählt */
+  .es-fuss{flex-direction:column-reverse;align-items:stretch;gap:10px;}
+  .es-fuss .knopf{width:100%;min-height:48px;white-space:nowrap;}
   .es[data-ansicht="liste"] .es-inhalt,.es[data-ansicht="thema"] .es-themen{display:none;}
   .es-kopfzeile{display:flex;align-items:center;gap:6px;margin:-4px 0 10px -8px;}
   body[data-bereich="einstellungen"][data-es-ansicht="thema"] .kopf h1{display:none;}
@@ -1061,7 +1076,6 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
   .es-wert.es-text{justify-content:flex-start;text-align:left;}
   .es-neu{order:2;}
   .es-knopf{flex:1 1 100%;}
-  .es-fuss .knopf{min-width:140px;}
 }
 .es-inhalt .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
 .es-inhalt .formular{grid-template-columns:minmax(0,1fr);}

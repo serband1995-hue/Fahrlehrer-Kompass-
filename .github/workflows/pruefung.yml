@@ -40,10 +40,11 @@ jobs:
         run: node scripts/zugang-regeln-test.mjs
       - name: Startseite je Rolle (Weiterleitung ohne Schleife)
         run: node scripts/startseite-test.mjs
-      - name: "W15 Reaktivierung: Sperre der Datenbank in echtem Postgres (PGlite), gleich wie Büro und App"
+      - name: "Datenbank in echtem Postgres (PGlite): W15 Reaktivierungs-Sperre, W11 Papierkorb-Frist je Fahrschule"
         run: |
           npm i --silent --no-save --prefix /tmp/w15-pg @electric-sql/pglite@0.2.17
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/reakt-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/papierkorb-sql-test.mjs
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
   # fand keinen Weg, Schüler anzulegen). Jede Rolle wird vom Start bis zum gespeicherten Schüler durchgespielt.
@@ -142,3 +143,5 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/einstellungen-test.mjs
       - name: "Büro: Urlaub, Schichtplan und Backups auf der Büro-Seite (W16 Teil 2, Urlaubs-Warnung im Termin-Fenster)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-verwaltung-test.mjs
+      - name: "Rückgängig-Zeit aus den Einstellungen (App: Hinweis und Absage-Mail gekoppelt)"
+        run: NODE_PATH=$(npm root -g) node scripts/rueckgaengig-zeit-test.mjs
