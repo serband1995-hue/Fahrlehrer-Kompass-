@@ -43,8 +43,9 @@ const P = {
 // 1) Wer welche Startseite haben kann (erste = Vorgabe = so startet die App schon heute)
 {
   const { KS } = umgebung();
-  // Rolle Büro: erst mit dem Schalter BUERO_NUR_BUEROSEITE nur die Büro-Seite (vorher wie bisher die App, keine Wahl)
-  const erwartet = { fahrlehrer: "eigen", buero: KS.bueroNurBueroseite ? "buero" : "", leitung: "gesamt,buero", leitungFaehrt: "eigen,gesamt,buero", sa: "eigen,gesamt,buero", saOhne: "eigen,buero", gesperrt: "", leer: "", fremd: "" };
+  // Rolle Büro: seit W16 Teil 3 B (Schalter BUERO_NUR_BUEROSEITE an) nur die Büro-Seite, keine Wahl
+  pruefe("S1", "Schalter BUERO_NUR_BUEROSEITE ist an", KS.bueroNurBueroseite === true || "aus");
+  const erwartet = { fahrlehrer: "eigen", buero: "buero", leitung: "gesamt,buero", leitungFaehrt: "eigen,gesamt,buero", sa: "eigen,gesamt,buero", saOhne: "eigen,buero", gesperrt: "", leer: "", fremd: "" };
   for (const [k, w] of Object.entries(erwartet)) pruefe("S1", `${k}: ${w || "nichts"}`, KS.erlaubt(P[k]).join() === w || "ist " + KS.erlaubt(P[k]).join());
   pruefe("S1", "ohne Profil: nichts", KS.erlaubt(null).length === 0 || "nicht leer");
   pruefe("S1", "Wahl nur bei Leitung und Super-Admin", ["leitung", "leitungFaehrt", "sa", "saOhne"].every((k) => KS.hatWahl(P[k])) && ["fahrlehrer", "buero", "gesperrt", "leer"].every((k) => !KS.hatWahl(P[k])) || "falsch");
@@ -52,7 +53,7 @@ const P = {
 // 2) Merken je Konto, Vorgabe, unpassende Werte
 {
   const { KS, g } = umgebung();
-  pruefe("S2", "ohne Wahl gilt die Vorgabe", KS.lesen(P.sa) === "eigen" && KS.lesen(P.leitung) === "gesamt" && KS.lesen(P.buero) === (KS.bueroNurBueroseite ? "buero" : null) || "falsch");
+  pruefe("S2", "ohne Wahl gilt die Vorgabe", KS.lesen(P.sa) === "eigen" && KS.lesen(P.leitung) === "gesamt" && KS.lesen(P.buero) === "buero" || "falsch");
   pruefe("S2", "setzen + lesen", KS.setzen(P.sa, "buero") && KS.lesen(P.sa) === "buero" || "nicht gemerkt");
   pruefe("S2", "anderes Konto auf demselben Gerät bleibt bei seiner Vorgabe", KS.lesen(P.leitungFaehrt) === "eigen" || "ist " + KS.lesen(P.leitungFaehrt));
   pruefe("S2", "unpassender Wert wird nicht gemerkt (reine Leitung „eigen“, Fahrlehrer „buero“)", !KS.setzen(P.leitung, "eigen") && !KS.setzen(P.fahrlehrer, "buero") && !KS.setzen(P.sa, "quatsch") || "gemerkt");

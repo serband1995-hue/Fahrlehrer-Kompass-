@@ -654,7 +654,7 @@ for (const R of ROLLEN) {
       });
     }
     // W16 Teil 2: Leitung und Super-Admin wählen die Startseite unter Einstellungen › Darstellung & Start (🗣 Serband: nur in den
-    // Einstellungen), ohne Link zur App in der Leiste. Das Büro hat dort keine Wahl; den Link zur App behält es, bis es nur noch die Büro-Seite hat.
+    // Einstellungen), ohne Link zur App in der Leiste. Das Büro hat dort keine Wahl und (seit Teil 3 B) keinen Link zur App.
     if (B.knoepfe) {
       await page.evaluate(() => { location.hash = "#einstellungen?thema=darstellung"; }); await warte(page, 900);
       const st = await page.evaluate(() => {
@@ -664,7 +664,7 @@ for (const R of ROLLEN) {
           werte: k.map((b) => b.dataset.ksStart), an: k.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.ksStart),
           minH: k.length ? Math.min(...k.map((b) => b.getBoundingClientRect().height)) : 0 };
       });
-      const linkSoll = !B.wahl.length && !NUR_BUERO ? 1 : 0; // nur das Büro, und nur solange der Schalter aus ist
+      const linkSoll = 0; // W16 Teil 3 B: den Link zur App (#zurApp) gibt es nicht mehr, auch nicht für das Büro
       await pruefe("R23", `[${B.n}] Büro-Seite: ${B.wahl.length ? "Startseite " + B.wahl.join(" / ") + " unter Einstellungen › Darstellung & Start, kein Link zur App" : linkSoll ? "keine Startseiten-Wahl, Link zur App wie bisher" : "keine Startseiten-Wahl, kein Weg in die App"}`, () => {
         const f = [];
         if (st.appLinks !== linkSoll) f.push(st.appLinks + " Link(s) zur App in der Seite statt " + linkSoll);

@@ -5121,14 +5121,6 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
-// W16: Link zur App in der Leiste nur noch für das Büro, solange es die App noch braucht (KS_START.bueroNurBueroseite aus).
-// Leitung und Super-Admin wechseln über Einstellungen › Darstellung & Start (buero-einstellungen.js).
-function zeigeAppLink(profil) {
-  const link = $("zurApp");
-  if (!link) return;
-  const ks = window.KS_START;
-  link.hidden = !(profil.rolle === "buero" && !(ks && ks.bueroNurBueroseite));
-}
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
   $("hinweisText").textContent = text;
@@ -5198,7 +5190,6 @@ async function starte(user) {
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email; $("nutzerName").title = $("nutzerName").textContent;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
-  zeigeAppLink(profil);
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();
