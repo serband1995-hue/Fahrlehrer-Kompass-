@@ -82,7 +82,8 @@ function nwStand(x, d) {
   }
   // Ausbildungsplan der App: abgehakte Sonderfahrten ohne Kalendertermin (die fehlen im Nachweis)
   const plan = ((x.ausbildung || {}).plan || {}).sonder || {};
-  const planIst = {}; for (const [k] of NW_SONDER) planIst[k] = (plan[k] || []).filter((o) => o && o.iso).length;
+  // Richter W13 (Kann 2): nur Kästchen bis heute; eine geplante Fahrt ist noch nicht „ohne Termin abgehakt“
+  const planIst = {}; for (const [k] of NW_SONDER) planIst[k] = (plan[k] || []).filter((o) => o && o.iso && String(o.iso).slice(0, 10) <= heute).length;
   const unterschrift = { ok: 0, neu: 0, offen: 0 };
   for (const t of gelaufen) unterschrift[nwUnterschrift(t)]++;
   const theorie = typeof theorieStandVon === "function" ? theorieStandVon(x) : null;
