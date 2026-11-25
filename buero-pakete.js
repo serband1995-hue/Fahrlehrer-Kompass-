@@ -463,7 +463,7 @@ function bkVerbrauchQuelle(x, voll) {
   for (const t of S.termine || []) if (t.schueler_id === x.id) nachId.set(t.id, t);
   const termine = [...nachId.values()].filter((t) => t.schueler_id === x.id && !t.geloescht).map((t) => {
     const pl = t.payload || {};
-    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, fc: pl.fc || null, bueroFc: t.buero_fc_status || "offen" };
+    return { art: t.art, datum: t.datum, von: t.von, bis: t.bis, status: pl.status || t.status, sonderArt: pl.sonderArt, srcSonder: pl.srcSonder, fc: pl.fc || null, bueroFc: t.buero_fc_status || "offen", bueroFcAnzahl: t.buero_fc_anzahl == null ? null : t.buero_fc_anzahl };
   });
   const pruefDaten = typeof pruefErgebnisse === "function" ? pruefErgebnisse("praxis").filter((e) => e.schueler_id === x.id).map((e) => e.datum) : [];
   for (const p of (voll && voll.tafel) || []) if (p.art === "praxis" && (p.status === "bestanden" || p.status === "nicht_bestanden") && p.datum && p.datum < grenze) pruefDaten.push(p.datum);

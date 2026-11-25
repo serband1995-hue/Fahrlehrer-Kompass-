@@ -1,7 +1,7 @@
 -- Test zu 20261125_w13_01_fc_haken_schutz.sql, NUR an einer lokalen Kopie (nie an der echten Datenbank).
 -- Ablauf: createdb -T kt <name>; psql -d <name> -f supabase/tests/20261125_w13_fc_haken_schema.sql;
 --   psql -d <name> -f supabase/migrations/20261125_w13_01_fc_haken_schutz.sql; psql -d <name> -f supabase/tests/20261125_w13_fc_haken_test.sql
--- Erwartet: 13 Zeilen F1–F13, jede endet auf „true“. kt = lokaler Stub (Rollen, Profile, is_buero …), Daten ausgedacht.
+-- Erwartet: 17 Zeilen F1–F17, jede endet auf „true“. kt = lokaler Stub (Rollen, Profile, is_buero …), Daten ausgedacht.
 \set ON_ERROR_STOP 1
 \pset tuples_only on
 \pset format unaligned
@@ -51,3 +51,17 @@ reset role;
 select set_config('t.uid','',false);
 update kalender_termine set buero_fc_status='fehlt' where id='t2';
 select 'F13 Server (ohne Anmeldung) darf: ' || (buero_fc_status='fehlt') from kalender_termine where id='t2';
+-- Zahl der Fahrchecks (buero_fc_anzahl)
+select set_config('t.uid','a0000000-0000-0000-0000-000000000001',false);
+set role authenticated;
+update kalender_termine set buero_fc_status='abgegeben', buero_fc_anzahl=1 where id='t2';
+select 'F14 Büro wählt „1 abgegeben“: ' || (buero_fc_status='abgegeben' and buero_fc_anzahl=1) from kalender_termine where id='t2';
+select set_config('t.uid','a0000000-0000-0000-0000-000000000003',false);
+update kalender_termine set buero_fc_anzahl=2, payload = payload || '{"notiz":"z"}' where id='t2';
+select 'F15 Fahrlehrer ändert die Zahl: bleibt 1, Notiz gespeichert: ' || (buero_fc_anzahl=1 and payload->>'notiz'='z') from kalender_termine where id='t2';
+update kalender_termine set payload = payload || '{"fc":"v1"}' where id='t2';
+select 'F16 Fahrlehrer ändert Vermerk: Haken offen, Zahl leer: ' || (buero_fc_status='offen' and buero_fc_anzahl is null) from kalender_termine where id='t2';
+insert into kalender_termine (id,fahrschule_id,fahrlehrer_id,schueler_id,art,datum,von,bis,status,buero_fc_status,buero_fc_anzahl)
+  values ('t3','11111111-1111-1111-1111-111111111111','a0000000-0000-0000-0000-000000000003','s1','fahrstunde','2026-11-20','15:00','16:30','geplant','abgegeben',2);
+select 'F17 neuer Termin des Fahrlehrers mit Zahl: offen, Zahl leer: ' || (buero_fc_status='offen' and buero_fc_anzahl is null) from kalender_termine where id='t3';
+reset role;

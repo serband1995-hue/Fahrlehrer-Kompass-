@@ -15,9 +15,10 @@
 -- ===== Trigger =====
 CREATE TRIGGER trg_fc_abgaben_bearbeiter BEFORE INSERT ON public.fc_abgaben FOR EACH ROW EXECUTE FUNCTION fc_abgaben_bearbeiter();
 CREATE TRIGGER trg_pruefung_verschiebung_schutz BEFORE UPDATE ON public.kalender_pruefungen FOR EACH ROW EXECUTE FUNCTION termin_verschiebung_schutz();
--- W13 (Migration 20261125_w13_01, aus der Datei nachgetragen): buero_fc_status / buero_fc_nachgereicht_am ändern nur Büro,
--- Leitung, Super-Admin (sonst bleibt der alte Wert still stehen; neuer Termin startet „offen“). Ändert ein Fahrlehrer an einer
--- abgehakten Stunde Vermerk (payload.fc), Uhrzeit oder Art, springt der Haken auf „offen“ zurück.
+-- W13 (Migration 20261125_w13_01, aus der Datei nachgetragen): neue Spalte buero_fc_anzahl (vom Büro gewählte Zahl der
+-- Fahrchecks). buero_fc_status / buero_fc_anzahl / buero_fc_nachgereicht_am ändern nur Büro, Leitung, Super-Admin (sonst bleibt
+-- der alte Wert still stehen; neuer Termin startet „offen“ ohne Zahl). Ändert ein Fahrlehrer an einer abgehakten Stunde
+-- Vermerk (payload.fc), Uhrzeit oder Art, springt der Haken auf „offen“ zurück und die Zahl wird geleert.
 CREATE TRIGGER trg_termin_c_fc_haken BEFORE INSERT OR UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_fc_haken_schutz();
 CREATE TRIGGER trg_termin_entfernt_schutz BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_entfernt_schutz();
 CREATE TRIGGER trg_termin_verschiebung_schutz BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_verschiebung_schutz();

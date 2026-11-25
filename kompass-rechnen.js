@@ -147,6 +147,14 @@
     if (t && t.fc === "nachgereicht") return t.status === "abgebrochen" || t.status === "nicht erschienen" ? 0 : fcGebucht(t);
     return fcErhalten(t);
   }
+  // Was zählt, wenn das Büro abgehakt hat: die Zahl, die das Büro gewählt hat (bueroFcAnzahl = kalender_termine.buero_fc_anzahl,
+  // 🗣 Serband 25.11.2026: „Wenn 90 min eingetragen ist, muss Kristina abhaken: 2 Fahrchecks abgegeben oder 1“), höchstens die
+  // gebuchten; ohne gewählte Zahl der Vermerk des Fahrlehrers (fcFuersBuero).
+  function fcVomBuero(t) {
+    const n = t ? t.bueroFcAnzahl : null;
+    if (n != null && n !== "" && isFinite(+n)) return Math.max(0, Math.min(Math.round(+n), fcGebucht(t)));
+    return fcFuersBuero(t);
+  }
   function fcErhalten(t) {
     const voll = fcGebucht(t);
     if (!voll || t.status === "abgebrochen" || t.status === "nicht erschienen") return 0;
@@ -400,7 +408,7 @@
     }
     return liste;
   }
-  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, fc, bueroFc}).
+  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, fc, bueroFc, bueroFcAnzahl}).
      🗣 Serband 24.11.2026: „Eine Fahrstunde zählt erst dann, wenn sie von Kristina abgehakt wird, dass die Fahrchecks da sind. Wird
      der Termin gelöscht, weil der Schüler nicht da war, zählt das natürlich nicht.“ Darum zählen Fahrstunde, Sonder- und Nachtfahrt
      nur mit Büro-Haken (bueroFc = kalender_termine.buero_fc_status = „abgegeben“), und zwar je Fahrcheck, der beim Büro ist
@@ -436,11 +444,12 @@
       if (FC_ARTEN.includes(t.art)) {
         // Gezählt wird, was an Fahrchecks beim Büro ist (fcFuersBuero): „1 vergessen“ = einer weniger, nachgereicht = voll,
         // geschenkt oder beide vergessen = keiner (dann wartet auch nichts auf den Haken).
-        const n = fcFuersBuero(t);
+        // Mit Haken zählt die Zahl, die das Büro gewählt hat (fcVomBuero), sonst der Vermerk des Fahrlehrers.
+        const abgehakt = t.bueroFc === "abgegeben", n = abgehakt ? fcVomBuero(t) : fcFuersBuero(t);
         if (!n) continue;
         const a = t.art === "fahrstunde" ? "" : paketSonderArt(t);
         if (t.art !== "fahrstunde" && !a) { q.ohneArt++; continue; } // Sonderfahrt ohne Art: keinem Posten zuzuordnen, mit Hinweis
-        if (t.bueroFc !== "abgegeben") { q.ohneHaken++; continue; }
+        if (!abgehakt) { q.ohneHaken++; continue; }
         if (t.art === "fahrstunde") q.fahrstunden += n; else q.sonder[a] += n;
       } else if (t.art === "pruefung") pTage.push(t.datum);
       else if (t.art === "simulator") q.simulator += 1;
@@ -467,7 +476,7 @@
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
   const api = { paketVerbrauch, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
-    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
