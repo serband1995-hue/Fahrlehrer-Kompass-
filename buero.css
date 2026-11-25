@@ -1083,8 +1083,10 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 }
 /* W16 Teil 3: Glocke (buero-luecken.js) */
 .kopf-glocke{position:relative;}
-.kopf-glocke .zahl{position:static;margin-left:6px;display:inline-block;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--gelb);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
-@media (max-width:1400px){.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;margin:0;}} /* nur Symbol: Zahl als Punkt oben rechts */
+/* Glocke immer nur als Symbol (der Kopf hat am PC sonst keinen Platz für eine Zeile), Zahl als Punkt oben rechts */
+.kopf-glocke .ik-text{display:none;} .kopf-glocke .ik-sym{display:block;}
+.knopf.klein.kopf-glocke{min-width:44px;min-height:44px;padding:0;}
+.kopf-glocke .zahl{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--gelb);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center;}
 .kopf-glocke .zahl[hidden]{display:none;}
 .lu-gl-titel{font-size:16px;margin:14px 0 6px;}
 .lu-gl-liste{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
