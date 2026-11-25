@@ -30,6 +30,9 @@
 <script src="buero-verwaltung.js" defer></script>
 <script src="buero.js" defer></script>
 <script src="buero-nachweis.js" defer></script>
+<!-- W16 Teil 3: Lücken zur App (Buchungslinks/QR, Provision von Hand, Monatsbericht, Quote je Fahrlehrer, Prüfer, Glocke) -->
+<script src="quiz-qrcode.js" defer></script>
+<script src="buero-luecken.js" defer></script>
 <script src="buero-einstellungen.js" defer></script>
 </head>
 <body>
@@ -125,6 +128,7 @@
       <h2 id="werTitel">Wer bedient gerade?</h2>
       <p class="leise">Tippe deinen Namen an und gib deine PIN ein. Dein Name steht bei jeder Änderung im Protokoll.</p>
       <div class="wer-liste" id="werListe"></div>
+      <div class="wer-ausweg" id="werAusweg" role="status" hidden></div>
     </div>
     <!-- Schritt 2: PIN eingeben (oder beim ersten Mal festlegen) -->
     <div id="werPin" class="wer-pin" hidden>

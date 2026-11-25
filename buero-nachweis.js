@@ -253,6 +253,9 @@ function nwStundeDialog(x, t, nachher) {
     const sonderArt = artGleich ? (((v.payload || {}).sonderArt) || null) : istSonder ? f.artwahl : null;
     const grund = (f.grund || "").trim();
     const jetzt = new Date().toISOString();
+    // W16 Teil 3: Urlaub des Fahrlehrers (buero-verwaltung.js), wenn Tag oder Fahrlehrer neu sind; vergangene Tage warnen nicht (Liste ab heute)
+    if (typeof vwUrlaubWarnen === "function" && (neu || f.datum !== v.datum || f.fahrlehrer_id !== v.fahrlehrer_id)
+      && !(await vwUrlaubWarnen(f.fahrlehrer_id, f.datum))) return false;
     if (neu) {
       const gleich = (nwAlle || []).find((y) => !y.geloescht && y.datum === f.datum && y.von && y.bis && KR.hm2min(y.von) < KR.hm2min(f.bis) && KR.hm2min(y.bis) > KR.hm2min(f.von));
       if (gleich && !(await bestaetige("Zeit schon belegt", `Am ${datumDE(f.datum)} gibt es schon eine Stunde ${gleich.von}–${gleich.bis}. Trotzdem nachtragen?`, "Ja, nachtragen"))) return false;
