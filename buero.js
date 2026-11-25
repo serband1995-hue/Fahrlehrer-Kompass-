@@ -4659,7 +4659,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel, sonderEinst] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4686,10 +4686,13 @@ async function ladeDaten() {
       alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
       holeReaktRegel(fsId),   // W15: Regel der Reaktivierung (entfällt, Monate); fehlt die Funktion → alte Regel
+      supa.from("fahrschule_einstellungen").select("wert").eq("fahrschule_id", fsId).eq("schluessel", "fahrstunden.sonderfahrt").maybeSingle(),   // W13 PR 2: Länge einer Sonderfahrt-Einheit; fehlt Tabelle/Zeile → 45
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
-    KR.setzeSonderMinuten(((S.fs && S.fs.konfiguration) || {}).sonderMin); // W13 PR 2: Länge einer Sonderfahrt-Einheit (Vorgabe 45), nur über KR.sonderMinuten() lesen
+    // W13 PR 2: Länge einer Sonderfahrt-Einheit (fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten; Vorgabe 45,
+    // erlaubt 30–90). Gelesen wird sie nur über KR.sonderMinuten(). Einstellung im Büro: W11 („Fahrstunden & Kalender“).
+    KR.setzeSonderMinuten(sonderEinst && !sonderEinst.error && sonderEinst.data && sonderEinst.data.wert ? sonderEinst.data.wert.minuten : null);
     S.lehrer = (pruefe(lehrer, "Fahrlehrer") || []).filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
     S.schueler = pruefe(schueler, "Schüler") || [];
     S.termine = pruefe(termine, "Termine") || [];

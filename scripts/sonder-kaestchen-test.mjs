@@ -54,7 +54,7 @@ await pruefe("K1", "KR: Vorgabe 45 Minuten; volle Einheiten (90 = 2, 45 = 1, 60 
   KR.setzeSonderMinuten(90);
   if (KR.sonderMinuten() !== 90 || e("10:00", "11:30") !== 1 || KR.sonderEinheitenAusMinuten(135) !== 1) f.push("Einheit 90 wirkt nicht");
   KR.setzeSonderMinuten("60");
-  if (KR.sonderMinuten() !== 60) f.push("Text „60“ (aus konfiguration->>sonderMin) wird nicht gelesen");
+  if (KR.sonderMinuten() !== 60) f.push("Text „60“ wird nicht gelesen");
   for (const x of ["abc", 20, 120, 45.5, {}]) { KR.setzeSonderMinuten(x); if (KR.sonderMinuten() !== 45) f.push(`Unsinn ${JSON.stringify(x)} ergibt ${KR.sonderMinuten()}`); }
   KR.setzeSonderMinuten(null);
   if (KR.fcGebucht({ art: "sonder", von: "10:00", bis: "11:30" }) !== 2) f.push("Fahrchecks bleiben nicht bei 45 Minuten");
@@ -325,16 +325,20 @@ await pruefe("K16", "Abgleich: srcSonderIdx landet in der Nutzlast (payload) und
 
 await pruefe("K17", "Laden der Einheit (App): Wert der Fahrschule wird übernommen und gemerkt; andere Fahrschule ohne Wert → 45; Fehler beim Laden → gemerkter Wert bleibt", async () => {
   const r = await p.evaluate(async () => {
-    const supa = (antwort) => ({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => antwort }) }) }) });
+    const log = [];
+    const supa = (antwort) => ({ from: (t) => { log.push(t); const q = { select: () => q, eq: (k, v) => { log.push(k + "=" + v); return q; }, maybeSingle: async () => antwort }; return q; } });
     try { localStorage.removeItem("kompass_sonder_min:fs-a"); localStorage.removeItem("kompass_sonder_min:fs-b"); } catch (e) {}
     const o = [];
-    await _ladeSonderMin(supa({ data: { sonderMin: "60" }, error: null }), "fs-a"); o.push(KR.sonderMinuten());
-    await _ladeSonderMin(supa({ data: { sonderMin: null }, error: null }), "fs-b"); o.push(KR.sonderMinuten());
+    await _ladeSonderMin(supa({ data: { wert: { minuten: 60 } }, error: null }), "fs-a"); o.push(KR.sonderMinuten());
+    await _ladeSonderMin(supa({ data: null, error: null }), "fs-b"); o.push(KR.sonderMinuten());
     await _ladeSonderMin(supa({ data: null, error: { message: "Netz" } }), "fs-a"); o.push(KR.sonderMinuten());
     KR.setzeSonderMinuten(null);
-    return o;
+    return { o, quelle: log.slice(0, 3).join(" ") };
   });
-  return JSON.stringify(r) === "[60,45,60]" ? null : `Werte ${JSON.stringify(r)} statt [60,45,60]`;
+  const f = [];
+  if (JSON.stringify(r.o) !== "[60,45,60]") f.push(`Werte ${JSON.stringify(r.o)} statt [60,45,60]`);
+  if (r.quelle !== "fahrschule_einstellungen fahrschule_id=fs-a schluessel=fahrstunden.sonderfahrt") f.push(`Quelle ${r.quelle}`);
+  return f;
 });
 
 await pruefe("K18", "Plan zeichnen (buildSonder) mit 2 belegten Kästchen: Zähler zeigt 3 bei Überland, keine JS-Fehler", async () => {
@@ -434,8 +438,9 @@ await pruefe("K25", "Laden der Einheit: eine späte Antwort der vorigen Fahrschu
   const r = await p.evaluate(async () => {
     try { localStorage.removeItem("kompass_sonder_min:fs-x"); localStorage.removeItem("kompass_sonder_min:fs-y"); } catch (e) {}
     let los; const spaet = new Promise((ok) => { los = ok; });
-    const supaSpaet = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => { await spaet; return { data: { sonderMin: "90" }, error: null }; } }) }) }) };
-    const supaY = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { sonderMin: "60" }, error: null }) }) }) }) };
+    const kette = (fn, log) => ({ from: (t) => { log && log.push(t); const q = { select: () => q, eq: (k, v) => { log && log.push(k + "=" + v); return q; }, maybeSingle: fn }; return q; } });
+    const supaSpaet = kette(async () => { await spaet; return { data: { wert: { minuten: 90 } }, error: null }; });
+    const supaY = kette(async () => ({ data: { wert: { minuten: 60 } }, error: null }));
     const a = _ladeSonderMin(supaSpaet, "fs-x");
     await _ladeSonderMin(supaY, "fs-y");
     los(); await a;

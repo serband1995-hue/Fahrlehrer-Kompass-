@@ -5352,8 +5352,9 @@ const _REAKT_REGEL_KEY="kompass_reakt_regel"; // je Fahrschule: kompass_reakt_re
 let _reaktRegelSoll=null; // für welche Fahrschule die Regel gerade gilt (eigene oder die der Gesamtansicht)
 function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
 function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY+":"+fs)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
-/* W13 PR 2: Länge einer Sonderfahrt-Einheit (ein Kästchen im Plan) je Fahrschule, Vorgabe 45 Minuten. Quelle vorerst
-   fahrschulen.konfiguration.sonderMin; gelesen wird der Wert NUR über KR.sonderMinuten(). Für offline gemerkt (je Fahrschule).
+/* W13 PR 2: Länge einer Sonderfahrt-Einheit (ein Kästchen im Plan) je Fahrschule, Vorgabe 45 Minuten (erlaubt 30–90). Quelle:
+   fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten (Hauptsitzung 25.11.2026; Einstellung im Büro baut W11).
+   Gelesen wird der Wert NUR über KR.sonderMinuten(). Für offline gemerkt (je Fahrschule). Fehlt die Tabelle: gemerkter Wert bzw. 45.
    Geladen in denselben Momenten wie die Regel der Reaktivierung (eigene Fahrschule oder die der Gesamtansicht). */
 const _SONDER_MIN_KEY="kompass_sonder_min"; // je Fahrschule: kompass_sonder_min:<fahrschule>
 let _sonderMinSoll; // für welche Fahrschule der Wert gerade gilt
@@ -5364,9 +5365,9 @@ async function _ladeSonderMin(supa,fs){
     KR.setzeSonderMinuten(n); }
   if(!fs||!supa)return;
   try{
-    const {data,error}=await supa.from("fahrschulen").select("sonderMin:konfiguration->>sonderMin").eq("id",fs).maybeSingle();
-    if(_sonderMinSoll!==fs||error)return; // inzwischen gewechselt, oder Fehler: gemerkter Wert bleibt
-    const n=data&&data.sonderMin!=null?data.sonderMin:null;
+    const {data,error}=await supa.from("fahrschule_einstellungen").select("wert").eq("fahrschule_id",fs).eq("schluessel","fahrstunden.sonderfahrt").maybeSingle();
+    if(_sonderMinSoll!==fs||error)return; // inzwischen gewechselt, oder Fehler (z. B. Tabelle fehlt): gemerkter Wert bleibt
+    const n=data&&data.wert&&data.wert.minuten!=null?data.wert.minuten:null;
     KR.setzeSonderMinuten(n);
     try{ localStorage.setItem(_SONDER_MIN_KEY+":"+fs,JSON.stringify({fs,min:n})); }catch(e){ /* voll: nur im Speicher */ }
   }catch(e){ /* Netz: gemerkter Wert bleibt */ }

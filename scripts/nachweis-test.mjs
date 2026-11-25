@@ -223,17 +223,26 @@ const top = (page) => page.locator("dialog[open]").last();
       { id: "w13b", schueler_id: x.id, datum: gestern, von: "22:30", bis: "00:00", art: "sonder", payload: { sonderArt: "nacht" } },
       { id: "w13c", schueler_id: x.id, datum: gestern, von: "10:00", bis: "09:00", art: "sonder", payload: { sonderArt: "autobahn" } },
     ], papierkorb: [], spur: [] };
-    const o = {};
+    const o = { geladen: KR.sonderMinuten() }; // ohne Zeile in fahrschule_einstellungen: 45
     KR.setzeSonderMinuten(null); const a = nwStand(x, d); o.v45 = [a.ist.ueberland, a.ist.nacht, a.ist.autobahn]; o.t45 = a.fehlt.map((f) => f.t).join(" | ");
     KR.setzeSonderMinuten(90); const b = nwStand(x, d); o.v90 = [b.ist.ueberland, b.ist.nacht]; o.t90 = b.fehlt.map((f) => f.t).join(" | ");
     KR.setzeSonderMinuten(null);
-    o.geladen = (S.fs && S.fs.konfiguration && S.fs.konfiguration.sonderMin) == null ? KR.sonderMinuten() : null;
     return o;
   });
   pruef(JSON.stringify(r.v45) === "[2,2,0]", "W13: Einheit 45 zählt " + JSON.stringify(r.v45) + " statt [2,2,0] (90 Min = 2, über Mitternacht = 2, Tippfehler 10–09 Uhr = 0)");
   pruef(/× 45 Min\./.test(r.t45), "W13: Text ohne „× 45 Min.“: " + r.t45);
   pruef(JSON.stringify(r.v90) === "[1,1]" && /× 90 Min\./.test(r.t90), "W13: Einheit 90 wirkt nicht: " + JSON.stringify(r.v90) + " " + r.t90);
-  pruef(r.geladen === 45, "W13: ohne sonderMin in der Fahrschule nicht 45: " + r.geladen);
+  pruef(r.geladen === 45, "W13: ohne Einstellung nicht 45: " + r.geladen);
+  // Einstellung fahrstunden.sonderfahrt = 60 Minuten → nach dem Laden gilt 60; Wechsel der Fahrschule setzt zurück
+  const r2 = await page.evaluate(async () => {
+    window.__FAKE.tabellen.fahrschule_einstellungen = [{ fahrschule_id: S.fsId, schluessel: "fahrstunden.sonderfahrt", wert: { minuten: 60 } }];
+    await ladeDaten();
+    const nach = KR.sonderMinuten();
+    window.__FAKE.tabellen.fahrschule_einstellungen = [];
+    await ladeDaten();
+    return { nach, danach: KR.sonderMinuten() };
+  });
+  pruef(r2.nach === 60 && r2.danach === 45, "W13: Einstellung fahrstunden.sonderfahrt wirkt nicht: " + JSON.stringify(r2));
   pruef(!konsole.length, "Konsole W13: " + konsole.join(" | "));
   await ctx.close();
 }
