@@ -117,10 +117,36 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   }
   await page.click('.zahl-reiter .tab[href="#verkaeufe"]'); await warte(page, 350);
   pruefe("Z3", "Reiter „Verkäufe & Provision“ zeigt die Verkäufe, Reiterzeile bleibt, Leiste markiert Zahlungen", (await page.locator("#vMonat").count()) === 1 && (await page.locator(".zahl-reiter .tab").count()) === rzSoll.split("|").length && (await markiert(page)) === "#zahlungen" ? null : "vMonat " + (await page.locator("#vMonat").count()));
+  // Der Reiter wird EINMAL beim Öffnen festgelegt und steht dann in der Adresse
+  await page.evaluate(() => { location.hash = "#heute"; }); await warte(page, 300);
+  const nVor = await page.evaluate(() => buVerlauf.length);
+  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
+  const hash1 = await page.evaluate(() => location.hash);
+  pruefe("Z5", "frisch geöffnet mit wartendem Verkauf: Adresse #zahlungen?reiter=verkaeufe (nur ersetzt, kein neuer Verlaufseintrag)", hash1 === "#zahlungen?reiter=verkaeufe" && (await page.evaluate(() => buVerlauf.length)) === nVor + 1 && (await page.evaluate(() => buVerlauf[buVerlauf.length - 1].hash)) === "#zahlungen?reiter=verkaeufe" ? null : hash1);
+  await page.evaluate(() => { S.verkaeufe.forEach((v) => { if (v.status === "empfohlen") v.status = "bezahlt"; }); zeichne(); }); await warte(page, 300);
+  pruefe("Z6", "letzten Verkauf erledigt + neu zeichnen: bleibt auf „Verkäufe & Provision“ (kein Sprung zu Preise)", (await page.locator("#vMonat").count()) === 1 && (await page.locator("#prNeu").count()) === 0 ? null : "Seite gesprungen");
   // ohne wartenden Verkauf: Preise zuerst, keine Zahl am Reiter
-  await page.evaluate(() => { S.verkaeufe.forEach((v) => { if (v.status === "empfohlen") v.status = "bezahlt"; }); location.hash = "#zahlungen"; zeichne(); }); await warte(page, 350);
+  await page.evaluate(() => { location.hash = "#heute"; }); await warte(page, 300);
+  await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
   rz = await reiterInfo();
-  pruefe("Z4", "ohne wartenden Verkauf: #zahlungen öffnet „Preise“, keine Zahl am Reiter und in der Leiste", (await page.locator("#prNeu").count()) === 1 && rz[0][2] && rz.every((x) => !x[4]) && (await page.locator('#nav .nav-punkt[href="#zahlungen"] .zahl').count()) === 0 ? null : JSON.stringify(rz));
+  pruefe("Z4", "frisch geöffnet ohne wartenden Verkauf: „Preise“, Adresse #zahlungen?reiter=preise, keine Zahl am Reiter und in der Leiste", (await page.locator("#prNeu").count()) === 1 && rz[0][2] && rz.every((x) => !x[4]) && (await page.locator('#nav .nav-punkt[href="#zahlungen"] .zahl').count()) === 0 && (await page.evaluate(() => location.hash)) === "#zahlungen?reiter=preise" ? null : JSON.stringify(rz));
+  await page.evaluate(() => { const v = S.verkaeufe.find((x) => x.status === "bezahlt"); v.status = "empfohlen"; zeichne(); }); await warte(page, 300);
+  pruefe("Z7", "Nachladen mit neuer Empfehlung, während „Preise“ offen ist: bleibt auf „Preise“, Zahl erscheint am Reiter und in der Leiste", (await page.locator("#prNeu").count()) === 1 && (await page.locator(".zahl-reiter .tab .zahl").count()) === 1 && (await page.locator('#nav .nav-punkt[href="#zahlungen"] .zahl').count()) === 1 ? null : "Seite gesprungen");
+  // Zurück-Schleife: Leiste → Zahlungen (Verkäufe) → Preise → Verkäufe → Zurück muss auf „Preise“ landen
+  await page.evaluate(() => { location.hash = "#heute"; }); await warte(page, 300);
+  await page.click('#nav .nav-punkt[href="#zahlungen"]'); await warte(page, 350);
+  await page.click('.zahl-reiter .tab[href="#preise"]'); await warte(page, 350);
+  await page.click('.zahl-reiter .tab[href="#verkaeufe"]'); await warte(page, 350);
+  await page.click("#kopfZurueck"); await warte(page, 450);
+  const z1 = (await page.locator("#prNeu").count()) === 1;
+  await page.click("#kopfZurueck").catch(() => {}); await warte(page, 450);
+  const z2 = (await page.locator("#vMonat").count()) === 1 && /^#zahlungen\?reiter=verkaeufe/.test(await page.evaluate(() => location.hash));
+  pruefe("Z8", "„‹ Zurück“ von Verkäufe landet auf dem vorigen Reiter (Preise), danach auf dem Ausgangsreiter; keine Schleife", z1 && z2 ? null : `Preise ${z1}, Verkäufe ${z2}`);
+  // Filter im Reiter „Verkäufe“ bleiben auf der Seite Zahlungen
+  await page.evaluate(() => { location.hash = "#heute"; }); await warte(page, 300);
+  await page.evaluate(() => { location.hash = "#zahlungen?reiter=verkaeufe"; }); await warte(page, 350);
+  await page.selectOption("#vStatus", "empfohlen"); await warte(page, 350);
+  pruefe("Z9", "Filter im Reiter „Verkäufe“: Adresse bleibt #zahlungen?…, Reiter bleibt", /^#zahlungen\?.*reiter=verkaeufe/.test(await page.evaluate(() => location.hash)) && (await page.locator("#vMonat").count()) === 1 ? null : await page.evaluate(() => location.hash));
   // Kalender
   await page.click('#nav .nav-punkt[href="#kalender"]'); await warte(page, 350);
   const kn = await page.$$eval("#kopfAktionen > *", (l) => l.map((a) => [a.textContent.trim(), a.className, Math.round(a.getBoundingClientRect().top), Math.round(a.getBoundingClientRect().height)]));

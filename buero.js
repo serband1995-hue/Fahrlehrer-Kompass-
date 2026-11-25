@@ -162,7 +162,7 @@ const BEREICHE = [
   { id: "schueler", titel: "Schüler", render: renderSchueler, nachher: bindeSchueler, zahl: () => aktiveSchueler().filter((x) => !x.fahrlehrer_id).length || "" },
   { id: "pruefungen", titel: "Prüfungen", render: renderPruefungen, nachher: bindePruefungen, zahl: () => zaehlePruefungen().handeln || "" },
   { id: "fristen", titel: "Fristen", render: renderFristen, nachher: bindeFristen, zahl: () => zaehleFristen().handeln || "" },
-  { id: "zahlungen", titel: "Zahlungen", render: () => zahlungenVerkaeufe() ? zahlungsReiter("verkaeufe") + renderVerkaeufe() : zahlungsReiter(preisReiter()) + renderPreisSeite(), nachher: (...a) => zahlungenVerkaeufe() ? bindeVerkaeufe(...a) : bindePreisSeite(...a), zahl: () => offeneVerkaeufe() || "" },
+  { id: "zahlungen", titel: "Zahlungen", render: () => { const r = zahlungenReiter(); return r === "verkaeufe" ? zahlungsReiter("verkaeufe") + renderVerkaeufe() : zahlungsReiter(r) + renderPreisSeite(); }, nachher: (...a) => zahlungenReiter() === "verkaeufe" ? bindeVerkaeufe(...a) : bindePreisSeite(...a), zahl: () => offeneVerkaeufe() || "" },
   { id: "fahrchecks", titel: "Fahrcheck", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "zahlen", titel: "Statistik", render: renderZahlen, nachher: bindeZahlen },
   { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
@@ -181,8 +181,17 @@ const BEREICHE = [
 // Reiterzeile der Seite „Zahlungen“ (auch auf #preise und #verkaeufe): EINE Zeile „Preise · Pakete · Verkäufe & Provision“.
 // „Pakete“ gibt es nur mit der Paket-Datenbank (bkDa in buero-pakete.js).
 function offeneVerkaeufe() { return S.verkaeufe.filter((v) => v.status === "empfohlen").length; }
-// #zahlungen öffnet den Reiter „Verkäufe & Provision“, wenn dort etwas wartet (Zähler > 0), sonst „Preise“; ein Hash mit ?reiter=pakete bleibt bei den Preisen
-function zahlungenVerkaeufe() { return offeneVerkaeufe() > 0 && !/[?&]reiter=/.test(location.hash); }
+// #zahlungen legt den Reiter EINMAL beim Öffnen fest (Verkäufe, wenn dort etwas wartet, sonst Preise) und schreibt ihn in die Adresse
+// (#zahlungen?reiter=verkaeufe|preise|pakete, nur ersetzt, kein neuer Verlaufseintrag). Danach hängt die Wahl nur noch am Hash:
+// Speichern oder Nachladen springen nie auf einen anderen Reiter, und „‹ Zurück“ führt auf den Reiter, den man verlassen hat.
+function zahlungenReiter() {
+  const m = location.hash.match(/[?&]reiter=([a-z]+)/);
+  return m ? (m[1] === "verkaeufe" ? "verkaeufe" : m[1] === "pakete" && typeof bkReiter === "function" ? bkReiter() : "preise") : "preise";
+}
+function zahlungenFestlegen() {
+  if (!S.geladenAm || /[?&]reiter=/.test(location.hash)) return;
+  history.replaceState(null, "", "#zahlungen?reiter=" + (offeneVerkaeufe() > 0 ? "verkaeufe" : "preise"));
+}
 function zahlungsReiter(aktiv) {
   const pakete = typeof bkDa === "function" && bkDa();
   const tab = (h, id, t) => `<a class="tab" href="${h}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>`;
@@ -236,7 +245,8 @@ document.addEventListener("click", (e) => {
 });
 function zeichne() {
   wartIndex = null; // Warteliste neu rechnen (Termine können sich geändert haben)
-  const b = aktuellerBereich();
+  let b = aktuellerBereich();
+  if (b.id === "zahlungen") zahlungenFestlegen();
   $("titel").textContent = b.titel;
   if ($("menueKnopf")) $("menueKnopf").innerHTML = `<span>Menü · ${esc(b.titel)}</span><span class="pfeil" aria-hidden="true"></span>`;
   document.body.dataset.bereich = b.id;
@@ -1731,6 +1741,7 @@ function klasseVon(x) {
   return f === "Automatik" ? "B78" : f;
 }
 function setzeFilter(bereich, werte, neuerEintrag) {
+  if (bereich === "verkaeufe" && /^#zahlungen/.test(location.hash)) bereich = "zahlungen"; // Filter im Reiter „Verkäufe“ bleiben auf der Seite Zahlungen
   const p = new URLSearchParams((location.hash.split("?")[1]) || "");
   for (const [k, v] of Object.entries(werte)) { if (v) p.set(k, v); else p.delete(k); }
   const q = p.toString();
@@ -4421,6 +4432,15 @@ function geistMachen(dlg) {
     const root = host.attachShadow({ mode: "closed" });
     root.adoptedStyleSheets = [css];
     const kopie = dlg.cloneNode(true);
+    // aktuelle Eingaben statt der Anfangswerte zeigen (cloneNode kopiert nur Attribute)
+    const vor = dlg.querySelectorAll("input,textarea,select"), nach = kopie.querySelectorAll("input,textarea,select");
+    vor.forEach((o, i) => {
+      const c = nach[i]; if (!c) return;
+      if (o.tagName === "TEXTAREA") c.textContent = o.value;
+      else if (o.tagName === "SELECT") [...c.options].forEach((op, k) => { if (o.options[k] && o.options[k].selected) op.setAttribute("selected", ""); else op.removeAttribute("selected"); });
+      else if (o.type === "checkbox" || o.type === "radio") { if (o.checked) c.setAttribute("checked", ""); else c.removeAttribute("checked"); }
+      else c.setAttribute("value", o.value);
+    });
     kopie.querySelectorAll("[id],[name],[for],[autofocus]").forEach((e) => { e.removeAttribute("id"); e.removeAttribute("name"); e.removeAttribute("for"); e.removeAttribute("autofocus"); });
     const grund = document.createElement("div"); grund.className = "geist-grund";
     const box = document.createElement("div"); box.className = "dialog geist"; box.innerHTML = kopie.innerHTML;
