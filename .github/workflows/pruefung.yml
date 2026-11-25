@@ -48,7 +48,9 @@ jobs:
   rollen:
     name: Rollen und Zugänge (Browser)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Seit 25.11.2026 25 statt 15 Minuten: die Schritte zusammen brauchen lokal gut 15 Minuten, der Job wurde mitten im
+    # letzten Test abgebrochen (W11 und W16), obwohl alles grün war. Gleiche Grenze wie der Büro-Job.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -128,3 +130,7 @@ jobs:
           npx -y playwright@1.63.0 install --with-deps chromium
       - name: "Büro-Test (alle Bereiche, Rollen, Kalender, Schüler, Fristen, Handy-Größen)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-test.mjs
+      - name: "Einstellungen-Baustein KE (Laden, Speichern, Grenzen)"
+        run: node scripts/ke-test.mjs
+      - name: "Büro: Einstellungen nach Themen (Entwürfe, Zurück, Handy)"
+        run: NODE_PATH=$(npm root -g) node scripts/einstellungen-test.mjs
