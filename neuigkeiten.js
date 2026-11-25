@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.5", datum: "2026-11-25", kurz: "Büro: bei 90 Minuten „2 abgegeben“ oder „1 abgegeben“.",
+    punkte: ["Fahrcheck-Kontrolle: Bei einer Stunde mit 90 Minuten wählt das Büro „2 abgegeben“ oder „1 abgegeben“. Im Paket zählt genau diese Zahl.",
+             "Den Fahrcheck-Haken setzt nur noch das Büro oder die Leitung.",
+             "Ändert der Fahrlehrer nach dem Haken den Vermerk oder die Uhrzeit, hakt das Büro die Stunde neu ab."] },
   { version: "2026.11.25.4", datum: "2026-11-25", kurz: "Leitung wählt jetzt die Startseite in den Einstellungen.",
     punkte: ["Leitung und Super-Admin: Unter Einstellungen › Startseite wählst du, wo der Kompass startet: Fahrlehrer-Ansicht, Fahrschule oder Büro-Seite. Ein Tipp wechselt sofort.",
              "Der Streifen oben und der Menüpunkt zum Umschalten sind weg. In der Fahrschul-Ansicht steht dafür „Einstellungen“ im Menü.",
