@@ -17,6 +17,10 @@ if (!KR.EU_EWR) KR.EU_EWR = [];
 // W15: alte kompass-rechnen.js ohne Regel der Reaktivierung → alte Regel (12 Monate, „entfällt“ zählt nicht)
 if (!KR.setzeReaktRegel) { KR.setzeReaktRegel = () => null; KR.holeReaktRegel = () => null; KR.reaktMonate = () => 12; KR.reaktFreiAm = () => false; }
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
+// W15 S3: alte kompass-rechnen.js ohne einstellbare Fristen → die festen Zahlen von vorher
+if (!KR.holeFristen) { const alt = { reaktivierung: { monate: 12, bald_tage: 30, vorwarn_tage: 60 }, theorie: { monate: 12, bald_tage: 30, vorwarn_tage: 60 }, antrag: { monate: 12, bald_tage: 60 }, fc_zettel: { monate: 12, bald_tage: 60 }, behoerde: { bald_tage: 30, vorwarn_tage: 60 }, umschreiber: { bald_tage: 30 }, fahrlehrer: { bald_tage: 90 } }; KR.setzeFristen = () => alt; KR.holeFristen = () => alt; }
+// Eingestellte Fristen der Fahrschule (Thema „Fristen“ in den Einstellungen; ohne Einstellung = Standard)
+function fristWerte() { return KR.holeFristen(); }
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
 // W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
@@ -395,8 +399,8 @@ function renderHeute() {
   const aufgaben = [];
   if (f.gesperrt) aufgaben.push(`<a class="aufgabe rot" href="#fristen"><b>${f.gesperrt}</b> Reaktivierung${f.gesperrt === 1 ? "" : "en"} überfällig · ${euro((f.gesperrtSumme || 0))} offen</a>`);
   if (f.pruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.pruefen}</b> Schüler mit möglicher Reaktivierung: in ClickClickDrive prüfen</a>`);
-  if (f.bald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.bald}</b> Reaktivierung${f.bald === 1 ? "" : "en"} in den nächsten 30 Tagen fällig</a>`);
-  if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in 60 Tagen ab oder ist abgelaufen</a>`);
+  if (f.bald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen"><b>${f.bald}</b> Reaktivierung${f.bald === 1 ? "" : "en"} in den nächsten ${fristWerte().reaktivierung.bald_tage} Tagen fällig</a>`);
+  if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in ${fristWerte().theorie.vorwarn_tage} Tagen ab oder ist abgelaufen</a>`);
   const pz = zaehlePruefungen();
   if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen?ansicht=ergebnis"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
   if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
@@ -409,12 +413,12 @@ function renderHeute() {
   const beiGesperrten = aktiveSchueler().filter((x) => x.fahrlehrer_id && (S.lehrer.find((l) => l.id === x.fahrlehrer_id) || {}).aktiv === false).length;
   if (beiGesperrten) aufgaben.push(`<a class="aufgabe rot" href="#schueler"><b>${beiGesperrten}</b> Schüler ${beiGesperrten === 1 ? "gehört" : "gehören"} zu einem gesperrten Fahrlehrer: neu zuweisen (Bereich „Auslastung“ zeigt, wer Platz hat)</a>`);
   if (f.antragAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.antragAb}</b> ${f.antragAb === 1 ? "Führerscheinantrag" : "Führerscheinanträge"} abgelaufen: neu stellen</a>`);
-  if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten 60 Tagen ab</a>`);
+  if (f.antragBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.antragBald}</b> ${f.antragBald === 1 ? "Führerscheinantrag läuft" : "Führerscheinanträge laufen"} in den nächsten ${fristWerte().antrag.bald_tage} Tagen ab</a>`);
   if (f.fristAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=antrag"><b>${f.fristAb}</b> ${f.fristAb === 1 ? "Schüler hat" : "Schüler haben"} die Theorie-Frist der Behörde überschritten</a>`);
-  if (f.fristBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.fristBald}</b> Theorie-Frist${f.fristBald === 1 ? " läuft" : "en laufen"} in 30 Tagen ab</a>`);
+  if (f.fristBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=antrag"><b>${f.fristBald}</b> Theorie-Frist${f.fristBald === 1 ? " läuft" : "en laufen"} in ${fristWerte().behoerde.bald_tage} Tagen ab</a>`);
   if (f.umPruefen) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umPruefen}</b> Umschreiber: Land oder „Wohnsitz seit“ prüfen (sonst keine 6-Monats-Warnung)</a>`);
   if (f.umAb) aufgaben.push(`<a class="aufgabe rot" href="#fristen?ansicht=umschreiber"><b>${f.umAb}</b> Umschreiber: ausländischer Führerschein gilt nicht mehr (darf nicht selbst fahren)</a>`);
-  if (f.umBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umBald}</b> Umschreiber: ausländischer Führerschein gilt nur noch bis zu 30 Tage</a>`);
+  if (f.umBald) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=umschreiber"><b>${f.umBald}</b> Umschreiber: ausländischer Führerschein gilt nur noch bis zu ${fristWerte().umschreiber.bald_tage} Tage</a>`);
   // Fristen der Fahrlehrer (eigener Führerschein, Schlüsselzahl 95, Fortbildung): eine Zeile je Fahrlehrer
   for (const l of S.lehrer.filter((y) => y.aktiv !== false)) {
     const fr = KR.fahrlehrerFristen(l, heute).filter((x) => x.stufe !== "ok"); if (!fr.length) continue;
@@ -603,6 +607,9 @@ function wartetArt(x) {
 }
 function arbeitendeSchueler() { return aktiveSchueler().filter((x) => !wartetArt(x)); }
 function wartendeSchueler() { return aktiveSchueler().filter((x) => wartetArt(x)); }
+// Vertragsdatum fehlt (Reaktivierung lässt sich nicht berechnen). Auch wenn sie heute entfällt (Fable-Hinweis W15):
+// ändert sich die Preisliste, braucht das Büro das Datum wieder.
+function ohneVertragsdatum(s, r) { return r.stufe === "ohne_datum" || (r.stufe === "entfaellt" && !!s && s.reakt_status !== "befreit" && !KR.reaktFaellig(s)); }
 function zaehleFristen() {
   const heute = KR.todayISO();
   const z = { gesperrt: 0, pruefen: 0, bald: 0, theorie: 0, ohneDatum: 0, handeln: 0, antragAb: 0, antragBald: 0, fristAb: 0, fristBald: 0, umAb: 0, umBald: 0, umPruefen: 0 };
@@ -611,7 +618,7 @@ function zaehleFristen() {
     if (r.stufe === "gesperrt") { z.gesperrt++; z.gesperrtSumme = (z.gesperrtSumme || 0) + reaktBetrag(s); }
     else if (r.stufe === "pruefen_faellig") z.pruefen++;
     else if (r.stufe === "bald") z.bald++;
-    if (r.stufe === "ohne_datum") z.ohneDatum++;
+    if (ohneVertragsdatum(s, r)) z.ohneDatum++;
     if (t.stufe === "abgelaufen" || t.stufe === "bald" || t.stufe === "demnaechst") z.theorie++;
     const a = KR.antragInfo(s, heute);
     if (a.stufe === "abgelaufen") z.antragAb++;
@@ -627,7 +634,7 @@ function zaehleFristen() {
 }
 const REAKT_TEXT = {
   gesperrt: ["rot", "überfällig · gesperrt"], pruefen_faellig: ["rot", "fällig · in CCD prüfen"], bald: ["gelb", "bald fällig"],
-  demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"],
+  get demnaechst() { return ["blau", `in ${fristWerte().reaktivierung.vorwarn_tage} Tagen`]; }, ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"],
   entfaellt: ["", "entfällt"] // W15: laut Preisliste heute oder am Vertragstag frei – keine Fälligkeit, keine Sperre
 };
 /* W15: Regel der Reaktivierung vom Server (rpc reakt_regel, dieselbe Regel wie die Sperre in der Datenbank, ohne Preise).
@@ -659,32 +666,33 @@ function reaktText(s, r) {
   if (r.stufe === "ok" && s.reakt_status !== "bezahlt") return ["gruen", "nichts fällig"];
   return REAKT_TEXT[r.stufe];
 }
-const THEORIE_TEXT = { abgelaufen: ["rot", "abgelaufen"], bald: ["gelb", "läuft bald ab"], demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "gültig"], ohne_datum: ["", "–"] };
+const THEORIE_TEXT = { abgelaufen: ["rot", "abgelaufen"], bald: ["gelb", "läuft bald ab"], get demnaechst() { return ["blau", `in ${fristWerte().theorie.vorwarn_tage} Tagen`]; }, ok: ["gruen", "gültig"], ohne_datum: ["", "–"] };
 function fristenParam(name) {
   const m = location.hash.match(new RegExp("[?&]" + name + "=([^&]*)"));
   if (!m) return "";
   try { return decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { return ""; } // URLSearchParams schreibt Leerzeichen als „+“; kaputte Adresse ignorieren
 }
 const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["bald", "Läuft bald ab"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"], ["antrag", "Antrag & Frist"], ["umschreiber", "Umschreiber"]];
-const FRIST_TEXT = { abgelaufen: ["rot", "Behörden-Frist Theorie abgelaufen"], bald: ["gelb", "Behörden-Frist Theorie bald"], demnaechst: ["blau", "Behörden-Frist Theorie in 60 Tagen"], ok: ["gruen", "Behörden-Frist Theorie ok"], erledigt: ["gruen", "Theorie bestanden"], ohne_datum: ["", "–"] };
+const FRIST_TEXT = { abgelaufen: ["rot", "Behörden-Frist Theorie abgelaufen"], bald: ["gelb", "Behörden-Frist Theorie bald"], get demnaechst() { return ["blau", `Behörden-Frist Theorie in ${fristWerte().behoerde.vorwarn_tage} Tagen`]; }, ok: ["gruen", "Behörden-Frist Theorie ok"], erledigt: ["gruen", "Theorie bestanden"], ohne_datum: ["", "–"] };
 const UMSCHREIB_TEXT = { abgelaufen: ["rot", "darf nicht mehr fahren"], bald: ["gelb", "darf bald nicht mehr fahren"], ok: ["gruen", "darf fahren"], ohne_datum: ["gelb", "Wohnsitz-Datum fehlt"], eu: ["gruen", "EU/EWR, keine Frist"], kein: ["", "Führerschein fehlt"], land_pruefen: ["gelb", "Land prüfen"] };
 const ANTRAG_TEXT = { abgelaufen: ["rot", "abgelaufen · neu stellen"], bald: ["gelb", "läuft bald ab"], ok: ["gruen", "gültig"], ohne_datum: ["", "Antragsdatum fehlt"] };
 const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6, entfaellt: 7 };
 /* W15 S2 (🗣 Serband 24.11.2026: „Es soll angezeigt werden, bei wem was abläuft“): alles, was bald abläuft, in EINER Liste
    nach Datum – Schüler und Fahrlehrer. Nur, was noch nicht abgelaufen ist (Abgelaufenes steht unter „Handlungsbedarf“).
-   Gleiche Regeln und Warnzeiten wie die anderen Reiter: Reaktivierung, Theorie, Theorie-Frist der Behörde 60 Tage,
-   Führerscheinantrag 60, Umschreiber 30, Fahrlehrer 90. stufe: bald (gelb, ≤30 Tage) | demnaechst (blau). */
+   Gleiche Regeln und Warnzeiten wie die anderen Reiter (W15 S3: aus den Einstellungen, Thema „Fristen“; Standard:
+   Reaktivierung, Theorie und Theorie-Frist der Behörde 30/60 Tage, Führerscheinantrag 60, Umschreiber 30, Fahrlehrer 90).
+   stufe: die der Frist selbst – bald (gelb, innerhalb der Warnzeit) | demnaechst (blau, innerhalb der Vorwarnung). */
 function laeuftBaldListe(heute) {
   heute = heute || KR.todayISO();
   const liste = [];
-  const dazu = (o) => { if (o.datum && typeof o.tage === "number" && o.tage >= 0) liste.push(Object.assign(o, { datum: String(o.datum).slice(0, 10), stufe: o.tage <= 30 ? "bald" : "demnaechst" })); };
+  const dazu = (o) => { if (o.datum && typeof o.tage === "number" && o.tage >= 0) liste.push(Object.assign(o, { datum: String(o.datum).slice(0, 10), stufe: o.stufe === "demnaechst" ? "demnaechst" : "bald" })); };
   for (const s of aktiveSchueler()) {
     const r = KR.reaktInfo(s, heute), t = KR.theorieInfo(s, heute), a = KR.antragInfo(s, heute), tf = KR.theorieFristInfo(s, heute), u = KR.umschreibInfo(s, heute);
     const wer = () => ({ wer: "schueler", id: s.id, name: s.name, unter: lehrerName(s.fahrlehrer_id) });
-    if (r.stufe === "bald" || r.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "reaktivierung", was: "Reaktivierung wird fällig", datum: r.faellig, tage: r.tage }));
-    if (t.stufe === "bald" || t.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "theorie", was: t.grund === "praxis" ? "Theorieprüfung läuft ab (Praxisprüfung bis dahin)" : "Theorieunterricht läuft ab", datum: t.ablauf, tage: t.tage }));
+    if (r.stufe === "bald" || r.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "reaktivierung", was: "Reaktivierung wird fällig", datum: r.faellig, tage: r.tage, stufe: r.stufe }));
+    if (t.stufe === "bald" || t.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "theorie", was: t.grund === "praxis" ? "Theorieprüfung läuft ab (Praxisprüfung bis dahin)" : "Theorieunterricht läuft ab", datum: t.ablauf, tage: t.tage, stufe: t.stufe }));
     if (a.stufe === "bald") dazu(Object.assign(wer(), { art: "antrag", was: "Führerscheinantrag läuft ab", datum: a.ablauf, tage: a.tage }));
-    if (tf.stufe === "bald" || tf.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "behoerde", was: "Theorieprüfung bestehen bis (Frist der Behörde)", datum: tf.ablauf, tage: tf.tage }));
+    if (tf.stufe === "bald" || tf.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "behoerde", was: "Theorieprüfung bestehen bis (Frist der Behörde)", datum: tf.ablauf, tage: tf.tage, stufe: tf.stufe }));
     if (u.stufe === "bald") dazu(Object.assign(wer(), { art: "umschreiber", was: "Ausländischer Führerschein gilt nur noch bis", datum: u.bis, tage: u.tage }));
   }
   for (const l of S.lehrer.filter((y) => y.aktiv !== false)) {
@@ -701,7 +709,7 @@ function renderFristen() {
   const kacheln = `<div class="kacheln">
     <div class="kachel${f.gesperrt ? " rot" : ""}"><div class="wert">${euro((f.gesperrtSumme || 0))}</div><div class="name">offen: ${f.gesperrt} Reaktivierung${f.gesperrt === 1 ? "" : "en"} überfällig</div></div>
     <div class="kachel${f.pruefen ? " rot" : ""}"><div class="wert">${f.pruefen}</div><div class="name">fällig, noch nicht geprüft</div></div>
-    <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in 30 Tagen fällig</div></div>
+    <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in ${fristWerte().reaktivierung.bald_tage} Tagen fällig</div></div>
     <div class="kachel"><div class="wert">${f.ohneDatum}</div><div class="name">ohne Vertragsdatum</div></div>
     <div class="kachel${f.antragAb ? " rot" : (f.antragBald ? " gold" : "")}"><div class="wert">${f.antragAb + f.antragBald}</div><div class="name">Führerscheinanträge abgelaufen oder bald (${f.antragAb} abgelaufen)</div></div>
     <a class="kachel" href="#fristen?ansicht=bald" data-kachelbald><div class="wert">${f.laeuftAb}</div><div class="name">läuft bald ab · ansehen →</div></a>
@@ -713,7 +721,7 @@ function renderFristen() {
   const ohneAntrag = liste.filter((x) => x.a.stufe === "ohne_datum").length;
   if (ansicht === "antrag") liste = liste.filter((x) => x.a.stufe !== "ohne_datum" || !["ohne_datum", "erledigt"].includes(x.tf.stufe));
   if (ansicht === "umschreiber") liste = liste.filter((x) => istUmschreiber(x.s));
-  if (ansicht === "ohne") liste = liste.filter((x) => x.r.stufe === "ohne_datum");
+  if (ansicht === "ohne") liste = liste.filter((x) => ohneVertragsdatum(x.s, x.r));
   if (ansicht === "theorie") liste = liste.filter((x) => x.t.stufe !== "ohne_datum");
   if (suche) liste = liste.filter((x) => (x.s.name || "").toLowerCase().includes(suche) || (x.s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, ""))
     || (x.s.bewerbernummer || "").toLowerCase().replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
@@ -3158,7 +3166,7 @@ function renderFcStunden() {
         <select class="suche" id="fcArt" aria-label="Stundenart"><option value="">Alle Stundenarten</option>${["fahrstunde", "sonder", "nacht"].map((k) => `<option value="${k}"${k === f.artF ? " selected" : ""}>${esc(ARTEN[k])}</option>`).join("")}</select>
         <select class="suche" id="fcTyp" aria-label="Fahrcheck-Vermerk">${opt(FC_TYP, f.typF, "Alle Fahrcheck-Typen")}</select>
         <select class="suche" id="fcStatus" aria-label="Status im Büro">${opt(FC_BUERO, f.statusF, "Jeder Status")}</select>
-        <select class="suche" id="fcGueltig" aria-label="Gültigkeit"><option value="">Jede Gültigkeit</option><option value="bald"${f.gueltigF === "bald" ? " selected" : ""}>Läuft in 60 Tagen ab</option><option value="verfallen"${f.gueltigF === "verfallen" ? " selected" : ""}>Verfallen (älter als 12 Monate)</option></select>
+        <select class="suche" id="fcGueltig" aria-label="Gültigkeit"><option value="">Jede Gültigkeit</option><option value="bald"${f.gueltigF === "bald" ? " selected" : ""}>Läuft in ${fristWerte().fc_zettel.bald_tage} Tagen ab</option><option value="verfallen"${f.gueltigF === "verfallen" ? " selected" : ""}>Verfallen (älter als ${fristWerte().fc_zettel.monate} Monate)</option></select>
         <label class="feld-klein">von <input type="date" class="suche" id="fcVon" value="${esc(f.von)}"></label>
         <label class="feld-klein">bis <input type="date" class="suche" id="fcBis" value="${esc(f.bis)}"></label>
         <select class="suche" id="fcSort" aria-label="Sortierung"><option value="ab"${f.richtung < 0 ? " selected" : ""}>Neueste zuerst</option><option value="auf"${f.richtung > 0 ? " selected" : ""}>Älteste zuerst</option></select>
@@ -3168,7 +3176,7 @@ function renderFcStunden() {
       <table class="tabelle"><thead><tr><th>Datum</th><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th class="nur-sehr-breit">Art</th><th class="zahlspalte">FC</th><th>Vermerk</th><th>Status Büro</th><th></th></tr></thead>
       <tbody>${zeilen || `<tr><td colspan="8" class="leer">${filterAktiv ? "Keine Stunde passt zu diesem Filter." : "Keine Fahrstunden in diesem Zeitraum."}</td></tr>`}</tbody></table>
       ${f.alle.length > FC_MAX_ZEILEN ? `<p class="leise klein">Angezeigt: die ersten ${FC_MAX_ZEILEN} von ${f.alle.length}. Bitte oben weiter eingrenzen.</p>` : `<p class="leise klein">${f.alle.length} Stunde${f.alle.length === 1 ? "" : "n"}.</p>`}
-      <p class="leise klein">Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) sind <b>12 Monate</b> ab dem Datum der Stunde gültig. In dieser Liste: <b>${nVerfallen}</b> verfallen, <b>${nBald}</b> laufen in den nächsten 60 Tagen ab.</p>
+      <p class="leise klein">Fahrcheck-Zettel (Übungs-, Sonder- und Testfahrten) sind <b>${fristWerte().fc_zettel.monate} Monate</b> ab dem Datum der Stunde gültig. In dieser Liste: <b>${nVerfallen}</b> verfallen, <b>${nBald}</b> laufen in den nächsten ${fristWerte().fc_zettel.bald_tage} Tagen ab.</p>
       <p class="leise klein">„Vermerk Fahrlehrer“ trägt der Fahrlehrer selbst in seiner App ein (z. B. 1 FC vergessen). „Status Büro“ ist deine Kontrolle: abgegeben, fehlt oder noch nicht geprüft. Beides wird zusammen gezählt.</p>
     </div>`;
 }
@@ -3954,7 +3962,7 @@ function fahrlehrerAkte(id) {
       <fieldset class="voll"><legend>Weitere Erlaubnisse</legend>
         ${FL_ZUSATZ.map(([k, t]) => `<label class="wahl"><input type="checkbox" name="zs" value="${k}"${zs.includes(k) ? " checked" : ""}${dis}> ${esc(t)}</label>`).join("")}</fieldset>
     </div>
-    <p class="leise klein">${darf ? "Die Klassen bestimmen, welche Schüler ihm zugeteilt werden und welche Klassen er in der App eintragen kann (Lkw nur mit Fahrlehrerlaubnis CE). Warnung 90 Tage vor Ablauf." : `Ändern dürfen ${esc(verwalterNamen())} (nach PIN) und die Leitung.`}</p>
+    <p class="leise klein">${darf ? "Die Klassen bestimmen, welche Schüler ihm zugeteilt werden und welche Klassen er in der App eintragen kann (Lkw nur mit Fahrlehrerlaubnis CE). Warnung " + fristWerte().fahrlehrer.bald_tage + " Tage vor Ablauf." : `Ändern dürfen ${esc(verwalterNamen())} (nach PIN) und die Leitung.`}</p>
     <div class="protokoll" id="protokoll"><p class="leise klein">Verlauf wird geladen …</p></div>`;
   const dlg = oeffneDialog(`Fahrlehrer: ${p.name || p.email}`, body, async (form) => {
     if (!darf) return true;
