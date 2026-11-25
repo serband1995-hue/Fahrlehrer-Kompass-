@@ -4,10 +4,15 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.25.4", datum: "2026-11-25", kurz: "Büro: bei 90 Minuten „2 abgegeben“ oder „1 abgegeben“.",
+  { version: "2026.11.25.5", datum: "2026-11-25", kurz: "Büro: bei 90 Minuten „2 abgegeben“ oder „1 abgegeben“.",
     punkte: ["Fahrcheck-Kontrolle: Bei einer Stunde mit 90 Minuten wählt das Büro „2 abgegeben“ oder „1 abgegeben“. Im Paket zählt genau diese Zahl.",
              "Den Fahrcheck-Haken setzt nur noch das Büro oder die Leitung.",
              "Ändert der Fahrlehrer nach dem Haken den Vermerk oder die Uhrzeit, hakt das Büro die Stunde neu ab."] },
+  { version: "2026.11.25.4", datum: "2026-11-25", kurz: "Leitung wählt jetzt die Startseite in den Einstellungen.",
+    punkte: ["Leitung und Super-Admin: Unter Einstellungen › Startseite wählst du, wo der Kompass startet: Fahrlehrer-Ansicht, Fahrschule oder Büro-Seite. Ein Tipp wechselt sofort.",
+             "Der Streifen oben und der Menüpunkt zum Umschalten sind weg. In der Fahrschul-Ansicht steht dafür „Einstellungen“ im Menü.",
+             "Auf der Büro-Seite steht die Wahl unter Einstellungen › Darstellung & Start und unten in der Leiste.",
+             "Fahrlehrer, die die Büro-Seite öffnen, landen direkt in der App. Auf der Anmeldeseite gibt es keinen Büro-Link mehr."] },
   { version: "2026.11.25.3", datum: "2026-11-25", kurz: "Büro: neue Seite „Einstellungen“, nach Themen geordnet.",
     punkte: ["Links unten gibt es jetzt „Einstellungen“. Dort steht alles, was man einstellen kann, nach Themen geordnet.",
              "Die Zahlungsdaten für Mails stehen jetzt unter „Zahlungen & Mails“ statt unten auf der Fristen-Seite.",

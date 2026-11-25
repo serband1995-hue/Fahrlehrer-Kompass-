@@ -163,7 +163,14 @@ async function pruefeBreite(page, name) {
 }
 
 // 2) Rollen und Sperren
-for (const [nutzer, erwartet] of [["fl-x", "Nur für das Büro"], ["gesperrt-1", "Zugang gesperrt"], ["agb-1", "Nutzungsbedingungen"]]) {
+// W16 (24.11.2026): ein Fahrlehrer wird nicht mehr aufgehalten, sondern gleich zur App geschickt (R13 im Rollen-Test)
+{
+  const { page, ctx } = await oeffne({ nutzer: "fl-x" });
+  const weg = await page.waitForURL(/index\.html/, { timeout: 4000 }).then(() => true).catch(() => false);
+  if (!weg) fehler("fl-x: nicht zur App weitergeleitet (" + page.url() + ")");
+  await ctx.close();
+}
+for (const [nutzer, erwartet] of [["gesperrt-1", "Zugang gesperrt"], ["agb-1", "Nutzungsbedingungen"]]) {
   const { page, ctx } = await oeffne({ nutzer });
   const titel = await page.textContent("#hinweisTitel").catch(() => "");
   if (titel !== erwartet) fehler(`${nutzer}: erwartet „${erwartet}“, bekommen „${titel}“`);
@@ -461,7 +468,9 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (konsole.length) fehler("Anmeldung: Konsole: " + konsole.join(" | "));
   await ctx.close();
   const b = await oeffne({ nutzer: "ad-1", breite: 1366, hoehe: 860 });
-  if (!(await b.page.isVisible("#zurApp"))) fehler("Rückweg: Link zur Fahrlehrer-Ansicht fehlt in der Seitenleiste");
+  // W16: Rückweg in die App über die Startseite in der Fußzeile (statt Link „Zur Fahrlehrer-Ansicht“)
+  if (!(await b.page.isVisible('#startWahl [data-ks-start="gesamt"]'))) fehler("Rückweg: Startseite „Fahrschule“ fehlt in der Seitenleiste");
+  if (await b.page.isVisible("#zurApp")) fehler("Rückweg: alter Link „Zur Fahrlehrer-Ansicht“ noch sichtbar");
   const r2 = await b.page.$eval(".marke img", (i) => parseFloat(getComputedStyle(i).borderTopLeftRadius));
   if (!(r2 >= 8)) fehler("Logo in der Seitenleiste: Ecken nicht abgerundet");
   await b.ctx.close();
