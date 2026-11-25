@@ -2882,6 +2882,11 @@ function terminDialog(id, vorgabe) {
     const kollision = S.termine.find((x) => x.id !== id && x.fahrlehrer_id === d.fahrlehrer_id && x.datum === d.datum && x.von && x.bis
       && KR.hm2min(x.von) < KR.hm2min(d.bis) && KR.hm2min(x.bis) > KR.hm2min(d.von));
     if (kollision && !(await bestaetige("Zeit ist schon belegt", `${lehrerName(d.fahrlehrer_id)} hat um ${kollision.von}–${kollision.bis} schon einen Termin. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
+    // W16 Teil 2: Urlaub des Fahrlehrers (buero-verwaltung.js) – in der App sind diese Tage blockiert; hier eine Warnung, wenn Tag oder Fahrlehrer neu sind
+    if (typeof vwUrlaubAm === "function" && (!id || t.datum !== d.datum || t.fahrlehrer_id !== d.fahrlehrer_id)) {
+      const urlaub = await vwUrlaubAm(d.fahrlehrer_id, d.datum);
+      if (urlaub && !(await bestaetige("Urlaub", `${lehrerName(d.fahrlehrer_id)} hat ${urlaub.von === urlaub.bis ? "am " + datumDE(urlaub.von) : "vom " + datumDE(urlaub.von) + " bis " + datumDE(urlaub.bis)} Urlaub. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
+    }
     const werte = { schueler_id: d.schueler_id || null, art: d.art, fahrlehrer_id: d.fahrlehrer_id, datum: d.datum, von: d.von, bis: d.bis, fahrzeug: d.fahrzeug || null, aktualisiert_am: jetzt };
     // Fahrlehrer ohne App: Sonderfahrt-Art und Klasse der Stunde im payload (die App eines Fahrlehrers mit App führt das selbst)
     if (!tdlg.querySelector("#ohneAppFeld").hidden) {
@@ -4995,6 +5000,14 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
+// W16: Link zur App in der Leiste nur noch für das Büro, solange es die App noch braucht (KS_START.bueroNurBueroseite aus).
+// Leitung und Super-Admin wechseln über Einstellungen › Darstellung & Start (buero-einstellungen.js).
+function zeigeAppLink(profil) {
+  const link = $("zurApp");
+  if (!link) return;
+  const ks = window.KS_START;
+  link.hidden = !(profil.rolle === "buero" && !(ks && ks.bueroNurBueroseite));
+}
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
   $("hinweisText").textContent = text;
@@ -5064,6 +5077,7 @@ async function starte(user) {
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
+  zeigeAppLink(profil);
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();

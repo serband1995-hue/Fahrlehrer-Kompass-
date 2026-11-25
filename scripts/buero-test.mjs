@@ -469,7 +469,8 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await ctx.close();
   const b = await oeffne({ nutzer: "ad-1", breite: 1366, hoehe: 860 });
   // W16 Teil 2: kein Link zur App in der Leiste; der Rückweg ist die Startseite unter Einstellungen › Darstellung & Start
-  if (await b.page.$("#zurApp, #startWahl")) fehler("Rückweg: alter Link oder Kasten in der Leiste noch da");
+  if (await b.page.$("#startWahl")) fehler("Rückweg: alter Kasten „Startseite“ in der Leiste noch da");
+  if (await b.page.isVisible("#zurApp")) fehler("Rückweg: Leitung sieht noch den Link zur App (wechselt über die Einstellungen)");
   await b.page.evaluate(() => { location.hash = "#einstellungen?thema=darstellung"; }); await b.page.waitForTimeout(700);
   if (!(await b.page.isVisible('[data-ks-start="gesamt"]'))) fehler("Rückweg: Startseite „Fahrschule“ fehlt unter Einstellungen › Darstellung & Start");
   const r2 = await b.page.$eval(".marke img", (i) => parseFloat(getComputedStyle(i).borderTopLeftRadius));

@@ -7,33 +7,51 @@
    Löschen ohne Rückfrage, 6 Sekunden „Rückgängig“ (K7). */
 "use strict";
 
-const VW = { fsId: null, urlaub: null, schichten: null, backups: null, fehler: {}, laedt: {} };
+const VW = { fsId: null, urlaub: null, schichten: null, backups: null, fehler: {}, lauf: {}, nr: {}, stand: {}, zeitraum: null };
+// So lange gilt eine geladene Liste. Danach lädt das nächste Zeichnen neu (beim Öffnen des Bereichs und im Takt von buero.js),
+// damit Einträge aus der App oder von anderen Büro-PCs ohne Neuladen der Seite erscheinen (Daten-Prüfer W16 Teil 2).
+const VW_FRISCH_MS = 30000;
 const VW_STATUS = { arbeitet: "arbeitet", frei: "frei", krank: "krank" };
 const VW_TAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
 // Andere Fahrschule gewählt (Super-Admin): nichts von der vorigen zeigen
 function vwSchule() {
   if (VW.fsId === S.fsId) return;
-  VW.fsId = S.fsId; VW.urlaub = null; VW.schichten = null; VW.backups = null; VW.fehler = {}; VW.laedt = {};
+  VW.fsId = S.fsId; VW.urlaub = null; VW.schichten = null; VW.backups = null; VW.fehler = {}; VW.lauf = {}; VW.stand = {}; VW.zeitraum = null;
+  Object.keys(VW.nr).forEach((k) => { VW.nr[k]++; }); // Antworten für die vorige Fahrschule zählen nie mehr
 }
 function vwFehlerKarte(was, titel) {
   return `<p class="leer">${VW.fehler[was] ? `${esc(titel)} konnte nicht geladen werden (${esc(VW.fehler[was])}). <button class="knopf klein" type="button" data-vwneu="${was}">Nochmal laden</button>` : "Lade …"}</p>`;
 }
-// Lädt einen Bereich nach und zeichnet ihn neu, wenn er noch offen ist
-async function vwLaden(was, abfrage) {
-  if (VW.laedt[was]) return;
-  VW.laedt[was] = true;
-  const fs = S.fsId;
-  let res;
-  try { res = await abfrage(); } catch (e) { res = { error: e }; }
-  VW.laedt[was] = false;
-  if (fs !== S.fsId) return; // inzwischen andere Fahrschule
-  if (res.error) { VW[was] = null; VW.fehler[was] = dbFehlerText(res.error); }
-  else { VW[was] = res.data || []; delete VW.fehler[was]; }
-  if (aktuellerBereich().id === (was === "schichten" ? "schichtplan" : was)) zeichne();
+// Liste da, aber das Auffrischen ging nicht: alten Stand zeigen und das sagen
+function vwAltHinweis(was) {
+  return VW.fehler[was] ? `<p class="leise klein" role="status">Nicht aktuell: Neu laden ging nicht (${esc(VW.fehler[was])}). <button class="knopf klein" type="button" data-vwneu="${was}">Nochmal laden</button></p>` : "";
+}
+// Nachladen nötig? (noch nichts da, älter als VW_FRISCH_MS; nach einem Fehler ohne Liste erst auf „Nochmal laden“)
+function vwVeraltet(was) {
+  if (!VW[was]) return !VW.fehler[was];
+  return Date.now() - (VW.stand[was] || 0) > VW_FRISCH_MS;
+}
+// Lädt einen Bereich und zeichnet ihn neu, wenn er noch offen ist. Läuft schon eine Abfrage, wird sie geteilt;
+// neu = true (nach Speichern oder Löschen) startet immer eine frische, und nur die jüngste Antwort zählt (Daten-Prüfer).
+function vwLaden(was, abfrage, neu) {
+  if (VW.lauf[was] && !neu) return VW.lauf[was];
+  const nr = (VW.nr[was] = (VW.nr[was] || 0) + 1), fs = S.fsId;
+  const p = (async () => {
+    let res;
+    try { res = await abfrage(); } catch (e) { res = { error: e }; }
+    if (nr !== VW.nr[was] || fs !== S.fsId) return; // überholt: neuere Abfrage oder andere Fahrschule
+    VW.lauf[was] = null;
+    VW.stand[was] = Date.now(); // auch nach einem Fehler: nicht bei jedem Zeichnen erneut versuchen
+    if (res.error) VW.fehler[was] = dbFehlerText(res.error); // eine schon geladene Liste bleibt stehen (mit Hinweis)
+    else { VW[was] = res.data || []; delete VW.fehler[was]; if (res.zeitraum) VW.zeitraum = res.zeitraum; }
+    if (aktuellerBereich().id === (was === "schichten" ? "schichtplan" : was)) zeichne();
+  })();
+  VW.lauf[was] = p;
+  return p;
 }
 function vwBindeNeuLaden(ziel, was, laden) {
-  ziel.querySelectorAll(`[data-vwneu="${was}"]`).forEach((b) => b.addEventListener("click", () => { delete VW.fehler[was]; zeichne(); laden(); }));
+  ziel.querySelectorAll(`[data-vwneu="${was}"]`).forEach((b) => b.addEventListener("click", () => { delete VW.fehler[was]; laden(); zeichne(); }));
 }
 // Zeile löschen; „Rückgängig“ setzt sie unverändert wieder ein (wie _cloudLoeschenMitRueckgaengig in der App)
 async function vwLoeschen(tabelle, zeile, text, neuLaden) {
@@ -49,38 +67,46 @@ async function vwLoeschen(tabelle, zeile, text, neuLaden) {
 }
 
 /* ---------- Urlaub ---------- */
-function vwLadeUrlaub() {
+function vwLadeUrlaub(neu) {
   vwSchule();
-  return vwLaden("urlaub", () => supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id", S.fsId).gte("bis", KR.todayISO()).order("von"));
+  return vwLaden("urlaub", () => supa.from("fahrschule_urlaub").select("*").eq("fahrschule_id", S.fsId).gte("bis", KR.todayISO()).order("von"), neu);
 }
 // Name: bei einem Fahrlehrer der aktuelle Profilname (umbenennen ändert nichts), sonst der eingetragene Name (W14)
 function vwUrlaubName(u) {
   if (u.fahrlehrer_id) { const l = S.lehrer.find((x) => x.id === u.fahrlehrer_id) || (S.team || []).find((x) => x.id === u.fahrlehrer_id); if (l) return l.name || l.email || u.mitarbeiter_name || ""; }
   return u.mitarbeiter_name || "";
 }
-// Blockiert dieser Urlaub keinen Kalender? (keine ID oder die Person unterrichtet nicht mehr)
-function vwUrlaubOhneKalender(u) { return !u.fahrlehrer_id || !S.lehrer.some((l) => l.id === u.fahrlehrer_id); }
+// Blockiert dieser Urlaub keinen Kalender? (keine ID oder die Person unterrichtet nicht mehr). Ältere Datenbank ohne die Spalte: kein Hinweis (wie die App).
+function vwUrlaubOhneKalender(u) { if (!("fahrlehrer_id" in u)) return false; return !u.fahrlehrer_id || !S.lehrer.some((l) => l.id === u.fahrlehrer_id); }
+// Hat dieser Fahrlehrer an dem Tag Urlaub? Für die Warnung beim Termin-Eintragen in buero.js (wie die blockierten Tage in der App).
+// Lädt die Liste nach, wenn sie fehlt oder alt ist; ohne Netz: null (dann keine Warnung, der Termin wird wie bisher gespeichert).
+async function vwUrlaubAm(lehrerId, datum) {
+  if (!lehrerId || !datum || !S.fsId) return null;
+  vwSchule();
+  if (vwVeraltet("urlaub") || !VW.urlaub) { try { await vwLadeUrlaub(); } catch (e) { /* ohne Liste keine Warnung */ } }
+  return (VW.urlaub || []).find((u) => u.fahrlehrer_id === lehrerId && u.von <= datum && u.bis >= datum) || null;
+}
 function renderUrlaub() {
   vwSchule();
   const kopf = `<div class="karte-kopf"><h2>Urlaub${VW.urlaub ? ` (${VW.urlaub.length})` : ""}</h2><button class="knopf haupt" id="vwUrlaubNeu" type="button">+ Urlaub eintragen</button></div>
-    <p class="leise klein">Bei einem Fahrlehrer sind die Tage in seinem Kalender blockiert. Andere Personen (z. B. Büro) stehen nur in der Liste.</p>`;
+    <p class="leise klein">Bei einem Fahrlehrer sind die Tage in der Fahrschul-Ansicht der App blockiert, und hier warnt das Termin-Fenster. Andere Personen (z. B. Büro) stehen nur in der Liste.</p>`;
   if (!VW.urlaub) return `<div class="karte">${kopf}${vwFehlerKarte("urlaub", "Der Urlaub")}</div>`;
-  if (!VW.urlaub.length) return `<div class="karte">${kopf}<p class="leer">Aktuell kein eingetragener Urlaub.</p></div>`;
-  return `<div class="karte">${kopf}<table class="tabelle"><thead><tr><th>Person</th><th>Zeitraum</th><th></th></tr></thead><tbody>${VW.urlaub.map((u) => `<tr>
+  if (!VW.urlaub.length) return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<p class="leer">Aktuell kein eingetragener Urlaub.</p></div>`;
+  return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<table class="tabelle"><thead><tr><th>Person</th><th>Zeitraum</th><th></th></tr></thead><tbody>${VW.urlaub.map((u) => `<tr>
       <td><b>${esc(vwUrlaubName(u))}</b>${vwUrlaubOhneKalender(u) ? '<div class="unter">ohne Kalender (blockiert nichts)</div>' : ""}${u.notiz ? `<div class="unter">${esc(u.notiz)}</div>` : ""}</td>
       <td>${u.von === u.bis ? esc(datumDE(u.von)) : esc(datumDE(u.von)) + " – " + esc(datumDE(u.bis))}</td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-vwurlaubweg="${esc(u.id)}">Löschen</button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function bindeUrlaub(ziel) {
-  if (!VW.urlaub && !VW.fehler.urlaub) vwLadeUrlaub();
-  vwBindeNeuLaden(ziel, "urlaub", vwLadeUrlaub);
+  if (vwVeraltet("urlaub")) vwLadeUrlaub();
+  vwBindeNeuLaden(ziel, "urlaub", () => vwLadeUrlaub(true));
   const neu = ziel.querySelector("#vwUrlaubNeu");
   if (neu) neu.addEventListener("click", () => urlaubDialog());
   ziel.querySelectorAll("[data-vwurlaubweg]").forEach((b) => b.addEventListener("click", () => {
     const u = (VW.urlaub || []).find((x) => x.id === b.dataset.vwurlaubweg);
     if (!u) return;
     b.disabled = true;
-    vwLoeschen("fahrschule_urlaub", u, "Urlaubseintrag gelöscht", () => { VW.urlaub = null; vwLadeUrlaub(); zeichne(); });
+    vwLoeschen("fahrschule_urlaub", u, "Urlaubseintrag gelöscht", () => { VW.urlaub = null; vwLadeUrlaub(true); zeichne(); });
   }));
 }
 // W14: Person aus der Liste (Fahrlehrer der Fahrschule, gespeichert mit Fahrlehrer-ID) oder andere Person ohne Kalender
@@ -112,7 +138,7 @@ function urlaubDialog() {
     const res = await supa.from("fahrschule_urlaub").insert({ fahrschule_id: S.fsId, fahrlehrer_id: lid, mitarbeiter_name: name, von, bis, erstellt_von: S.user.id }).select("id");
     if (res.error) { toast("Nicht eingetragen: " + (res.error.code === "22023" && /gehört nicht zu dieser Fahrschule/.test(res.error.message || "") ? "diese Person gehört nicht zur Fahrschule" : dbFehlerText(res.error)), true); return false; }
     toast("Urlaub eingetragen");
-    VW.urlaub = null; vwLadeUrlaub(); zeichne();
+    VW.urlaub = null; vwLadeUrlaub(true); zeichne();
   }, "Eintragen");
   const sel = dlg.querySelector("select[name=wer]"), nameZeile = dlg.querySelector("[data-vwname]"), von = dlg.querySelector("input[name=von]"), bis = dlg.querySelector("input[name=bis]");
   sel.addEventListener("change", () => { nameZeile.hidden = sel.value !== "_andere"; if (sel.value === "_andere") nameZeile.querySelector("input").focus(); });
@@ -126,13 +152,16 @@ function vwSchichtZeitraum() {
   const montag = KR.addDaysISO(heute, -((d.getDay() + 6) % 7));
   return { montag, bis: KR.addDaysISO(montag, 13) };
 }
-function vwLadeSchichten() {
+function vwLadeSchichten(neu) {
   vwSchule();
   const z = vwSchichtZeitraum();
-  return vwLaden("schichten", () => supa.from("fahrschule_schichten").select("*").eq("fahrschule_id", S.fsId).gte("datum", z.montag).lte("datum", z.bis).order("datum"));
+  // zeitraum merkt, zu welchen zwei Wochen die Liste gehört (Seite über Sonntag/Mitternacht offen → neu laden)
+  return vwLaden("schichten", async () => Object.assign(await supa.from("fahrschule_schichten").select("*").eq("fahrschule_id", S.fsId).gte("datum", z.montag).lte("datum", z.bis).order("datum"), { zeitraum: z.montag }), neu);
 }
+// Liste passt nicht mehr zu den angezeigten zwei Wochen: wie nicht geladen behandeln
+function vwSchichtenPassen() { if (VW.schichten && VW.zeitraum !== vwSchichtZeitraum().montag) { VW.schichten = null; VW.stand.schichten = 0; } }
 function renderSchichtplan() {
-  vwSchule();
+  vwSchule(); vwSchichtenPassen();
   const kopf = `<div class="karte-kopf"><h2>Schichtplan (2 Wochen)</h2></div><p class="leise klein">Wer im Büro arbeitet, frei hat oder krank ist. Ein Tipp auf „+ Eintrag“ trägt jemanden für den Tag ein.</p>`;
   if (!VW.schichten) return `<div class="karte">${kopf}${vwFehlerKarte("schichten", "Der Schichtplan")}</div>`;
   const z = vwSchichtZeitraum(), heute = KR.todayISO();
@@ -146,17 +175,18 @@ function renderSchichtplan() {
         <button class="knopf klein" type="button" data-vwschichtweg="${esc(e.id)}" aria-label="Eintrag ${esc(e.mitarbeiter_name)} löschen">Löschen</button></div>`).join("") : '<span class="leise" aria-label="Keine Einträge">–</span>'}</td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-vwschichtneu="${tag}">+ Eintrag</button></div></td></tr>`);
   }
-  return `<div class="karte">${kopf}<table class="tabelle"><thead><tr><th>Tag</th><th>Einträge</th><th></th></tr></thead><tbody>${zeilen.join("")}</tbody></table></div>`;
+  return `<div class="karte">${kopf}${vwAltHinweis("schichten")}<table class="tabelle"><thead><tr><th>Tag</th><th>Einträge</th><th></th></tr></thead><tbody>${zeilen.join("")}</tbody></table></div>`;
 }
 function bindeSchichtplan(ziel) {
-  if (!VW.schichten && !VW.fehler.schichten) vwLadeSchichten();
-  vwBindeNeuLaden(ziel, "schichten", vwLadeSchichten);
+  vwSchichtenPassen();
+  if (vwVeraltet("schichten")) vwLadeSchichten();
+  vwBindeNeuLaden(ziel, "schichten", () => vwLadeSchichten(true));
   ziel.querySelectorAll("[data-vwschichtneu]").forEach((b) => b.addEventListener("click", () => schichtDialog(b.dataset.vwschichtneu)));
   ziel.querySelectorAll("[data-vwschichtweg]").forEach((b) => b.addEventListener("click", () => {
     const e = (VW.schichten || []).find((x) => x.id === b.dataset.vwschichtweg);
     if (!e) return;
     b.disabled = true;
-    vwLoeschen("fahrschule_schichten", e, "Eintrag gelöscht", () => { VW.schichten = null; vwLadeSchichten(); zeichne(); });
+    vwLoeschen("fahrschule_schichten", e, "Eintrag gelöscht", () => { VW.schichten = null; vwLadeSchichten(true); zeichne(); });
   }));
 }
 // Statt dreier Eingabefenster (wie früher in der App) ein Fenster: Name, Status, Notiz
@@ -173,29 +203,29 @@ function schichtDialog(datum) {
     const res = await supa.from("fahrschule_schichten").insert({ fahrschule_id: S.fsId, mitarbeiter_name: name, datum, status, notiz: form.notiz.value.trim() || null, erstellt_von: S.user.id }).select("id");
     if (res.error) { toast("Nicht eingetragen: " + dbFehlerText(res.error), true); return false; }
     toast("Eingetragen");
-    VW.schichten = null; vwLadeSchichten(); zeichne();
+    VW.schichten = null; vwLadeSchichten(true); zeichne();
   }, "Eintragen");
 }
 
 /* ---------- Backups ---------- */
-function vwLadeBackups() {
+function vwLadeBackups(neu) {
   vwSchule();
-  return vwLaden("backups", () => supa.from("fahrschule_backups").select("id,erstellt_am,automatisch").eq("fahrschule_id", S.fsId).order("erstellt_am", { ascending: false }).limit(30));
+  return vwLaden("backups", () => supa.from("fahrschule_backups").select("id,erstellt_am,automatisch").eq("fahrschule_id", S.fsId).order("erstellt_am", { ascending: false }).limit(30), neu);
 }
 function renderBackups() {
   vwSchule();
   const kopf = `<div class="karte-kopf"><h2>Backups</h2><button class="knopf haupt" id="vwBackupJetzt" type="button">Jetzt alles sichern</button></div>
     <p class="leise klein">Läuft automatisch jeden Sonntag um 23 Uhr. Du kannst jederzeit zusätzlich sichern. Die Datei enthält Personendaten: nur sicher aufbewahren.</p>`;
   if (!VW.backups) return `<div class="karte">${kopf}${vwFehlerKarte("backups", "Die Liste der Backups")}</div>`;
-  if (!VW.backups.length) return `<div class="karte">${kopf}<p class="leer">Noch keine Backups vorhanden.</p></div>`;
-  return `<div class="karte">${kopf}<table class="tabelle"><thead><tr><th>Erstellt</th><th>Art</th><th></th></tr></thead><tbody>${VW.backups.map((b) => `<tr>
+  if (!VW.backups.length) return `<div class="karte">${kopf}${vwAltHinweis("backups")}<p class="leer">Noch keine Backups vorhanden.</p></div>`;
+  return `<div class="karte">${kopf}${vwAltHinweis("backups")}<table class="tabelle"><thead><tr><th>Erstellt</th><th>Art</th><th></th></tr></thead><tbody>${VW.backups.map((b) => `<tr>
       <td>${esc(new Date(b.erstellt_am).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }))}</td>
       <td>${b.automatisch ? "automatisch (wöchentlich)" : "von Hand"}</td>
       <td class="aktionen"><div class="aktionen-box"><button class="knopf klein" type="button" data-vwbackuplade="${esc(b.id)}">Herunterladen</button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function bindeBackups(ziel) {
-  if (!VW.backups && !VW.fehler.backups) vwLadeBackups();
-  vwBindeNeuLaden(ziel, "backups", vwLadeBackups);
+  if (vwVeraltet("backups")) vwLadeBackups();
+  vwBindeNeuLaden(ziel, "backups", () => vwLadeBackups(true));
   const jetzt = ziel.querySelector("#vwBackupJetzt");
   if (jetzt) jetzt.addEventListener("click", async () => {
     jetzt.disabled = true; jetzt.textContent = "Sichere …";
@@ -203,7 +233,7 @@ function bindeBackups(ziel) {
     jetzt.disabled = false; jetzt.textContent = "Jetzt alles sichern";
     if (res.error) { toast("Backup nicht erstellt: " + dbFehlerText(res.error), true); return; }
     toast("Backup erstellt");
-    VW.backups = null; vwLadeBackups(); zeichne();
+    VW.backups = null; vwLadeBackups(true); zeichne();
   });
   ziel.querySelectorAll("[data-vwbackuplade]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;

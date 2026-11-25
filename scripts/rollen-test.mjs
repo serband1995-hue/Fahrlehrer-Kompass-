@@ -653,20 +653,21 @@ for (const R of ROLLEN) {
         return f.concat(konsole);
       });
     }
-    // W16 Teil 2: kein Link zur App mehr in der Leiste. Leitung und Super-Admin wählen die Startseite unter
-    // Einstellungen › Darstellung & Start (🗣 Serband: nur in den Einstellungen); das Büro hat dort keine Wahl und keinen Weg in die App.
+    // W16 Teil 2: Leitung und Super-Admin wählen die Startseite unter Einstellungen › Darstellung & Start (🗣 Serband: nur in den
+    // Einstellungen), ohne Link zur App in der Leiste. Das Büro hat dort keine Wahl; den Link zur App behält es, bis es nur noch die Büro-Seite hat.
     if (B.knoepfe) {
       await page.evaluate(() => { location.hash = "#einstellungen?thema=darstellung"; }); await warte(page, 900);
       const st = await page.evaluate(() => {
         const sichtbar = (e) => !!e && !e.hidden && e.getClientRects().length > 0;
         const k = [...document.querySelectorAll("[data-ks-start]")].filter(sichtbar);
-        return { appLinks: [...document.querySelectorAll('#app a[href="index.html"], #app a[href="./index.html"], #zurApp, #startWahl')].filter(sichtbar).length,
+        return { appLinks: [...new Set(document.querySelectorAll('#app a[href="index.html"], #app a[href="./index.html"], #zurApp, #startWahl'))].filter(sichtbar).length,
           werte: k.map((b) => b.dataset.ksStart), an: k.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.ksStart),
           minH: k.length ? Math.min(...k.map((b) => b.getBoundingClientRect().height)) : 0 };
       });
-      await pruefe("R23", `[${B.n}] Büro-Seite: ${B.wahl.length ? "Startseite " + B.wahl.join(" / ") + " unter Einstellungen › Darstellung & Start" : "keine Startseiten-Wahl, kein Weg in die App"}`, () => {
+      const linkSoll = !B.wahl.length && !NUR_BUERO ? 1 : 0; // nur das Büro, und nur solange der Schalter aus ist
+      await pruefe("R23", `[${B.n}] Büro-Seite: ${B.wahl.length ? "Startseite " + B.wahl.join(" / ") + " unter Einstellungen › Darstellung & Start, kein Link zur App" : linkSoll ? "keine Startseiten-Wahl, Link zur App wie bisher" : "keine Startseiten-Wahl, kein Weg in die App"}`, () => {
         const f = [];
-        if (st.appLinks) f.push(st.appLinks + " Link(s) zur App in der Seite");
+        if (st.appLinks !== linkSoll) f.push(st.appLinks + " Link(s) zur App in der Seite statt " + linkSoll);
         if (st.werte.join() !== B.wahl.join()) f.push("Wahl: " + (st.werte.join(" / ") || "keine"));
         if (B.wahl.length && st.an.join() !== B.wahl[0]) f.push("markiert: " + (st.an.join() || "nichts"));
         if (B.wahl.length && st.minH < 43.5) f.push("Knopf nur " + Math.round(st.minH) + " px hoch");

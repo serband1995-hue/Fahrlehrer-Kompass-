@@ -5,6 +5,7 @@
 //   V3 falsche Eingabe (bis vor von): Fenster bleibt offen, nichts gespeichert · V4 Löschen ohne Rückfrage, „Rückgängig“ holt ihn zurück
 //   V5 Schichtplan: 14 Tage, Eintrag mit Status, Löschen · V6 Backups: jetzt sichern, Liste, Herunterladen
 //   V7 Ladefehler: Hinweis mit „Nochmal laden“ · V8 kein seitliches Verrutschen am Handy · V9 keine JS-Fehler
+//   V10 Termin auf einen Urlaubstag: Warnung im Termin-Fenster (die Büro-Seite kennt keine blockierten Tage wie die App)
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/buero-verwaltung-test.mjs
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
@@ -172,6 +173,51 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
     if (!/kein eingetragener Urlaub/.test(await page.textContent("#ansicht"))) f.push("nach „Nochmal laden“ nicht geladen");
     return f.concat(konsole);
   });
+  await ctx.close();
+}
+// V10 Termin auf einen Urlaubstag (Daten-Prüfer W16 Teil 2): das Termin-Fenster warnt, „Abbrechen“ speichert nichts, „Trotzdem“ speichert
+{
+  const { page, ctx, konsole } = await oeffne({ breite: 1366, hoehe: 860 });
+  const tag = plus(HEUTE, 4);
+  const lid = await page.evaluate(([von, bis]) => {
+    const l = S.lehrer.find((x) => /Anton Muster/.test(x.name || ""));
+    window.__FAKE.tabellen.fahrschule_urlaub.push({ id: "u-v10", fahrschule_id: S.fsId, fahrlehrer_id: l.id, mitarbeiter_name: l.name, von, bis, erstellt_von: "bu-1" });
+    VW.stand.urlaub = 0; // Liste gilt als alt: das Termin-Fenster lädt sie frisch
+    return l.id;
+  }, [plus(HEUTE, 3), plus(HEUTE, 5)]);
+  const anzahl = () => page.evaluate((t) => window.__FAKE.tabellen.kalender_termine.filter((x) => x.datum === t && x.art === "block").length, tag);
+  const vorher = await anzahl();
+  const versuch = async (ja) => {
+    await page.evaluate(([t, l]) => terminDialog(null, { datum: t, von: "20:00", fahrlehrer_id: l }), [tag, lid]); await warte(page, 250);
+    await page.selectOption("dialog[open] select[name=art]", "block");
+    await page.click("dialog[open] footer button[value=ok]"); await warte(page, 600);
+    const text = await page.evaluate(() => { const d = [...document.querySelectorAll("dialog[open]")].pop(); return d ? d.textContent : ""; });
+    if (/Urlaub/.test(text)) {
+      if (ja) await page.locator("dialog[open]").last().locator("footer button[value=ok]").click();
+      else await page.keyboard.press("Escape");
+      await warte(page, 700);
+    }
+    await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close())); await warte(page, 300); // übrige Fenster zu
+    return text;
+  };
+  const t1 = await versuch(false);
+  const nachNein = await anzahl();
+  const t2 = await versuch(true);
+  const nachJa = await anzahl();
+  await pruefe("V10", "Termin auf einen Urlaubstag: Warnung nennt den Urlaub, Abbrechen speichert nichts, Trotzdem speichert", () => {
+    const f = [];
+    if (!/Anton Muster hat vom .* Urlaub/.test(t1)) f.push("keine Warnung: " + t1.slice(0, 120));
+    if (nachNein !== vorher) f.push("trotz Abbrechen gespeichert");
+    if (!/Urlaub/.test(t2) || nachJa !== vorher + 1) f.push(`„Trotzdem“: ${nachJa - vorher} gespeichert`);
+    return f;
+  });
+  // Gegenprobe: anderer Tag ohne Urlaub → keine Warnung
+  await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => d.close()));
+  await page.evaluate(([t, l]) => terminDialog(null, { datum: t, von: "20:00", fahrlehrer_id: l }), [plus(HEUTE, 9), lid]); await warte(page, 250);
+  await page.selectOption("dialog[open] select[name=art]", "block");
+  await page.click("dialog[open] footer button[value=ok]"); await warte(page, 700);
+  await pruefe("V10", "Tag ohne Urlaub: keine Warnung, gespeichert", async () => (/Urlaub/.test(await page.evaluate(() => [...document.querySelectorAll("dialog[open]")].map((d) => d.textContent).join(" "))) ? "Warnung ohne Urlaub" : (await page.evaluate((t) => window.__FAKE.tabellen.kalender_termine.some((x) => x.datum === t && x.art === "block"), plus(HEUTE, 9))) ? null : "nicht gespeichert"));
+  await pruefe("V10", "keine JS-Fehler", () => konsole);
   await ctx.close();
 }
 await browser.close();
