@@ -837,7 +837,8 @@ function renderFristen() {
   const zeilen = liste.map(({ s, r, t, a, tf, u }) => {
     const [rf, rt] = reaktText(s, r);
     const [tfarbe, tt] = THEORIE_TEXT[t.stufe];
-    const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>` : "";
+    const rDatum = r.faellig ? `<div class="unter">${r.tage < 0 ? "seit " + datumDE(r.faellig) : "am " + datumDE(r.faellig)}</div>`
+      : r.stufe === "entfaellt" && ohneVertragsdatum(s, r) ? '<div class="unter" data-ohnedatum>Vertragsdatum fehlt</div>' : ""; // W15 S3: Grund, warum er unter „Ohne Vertragsdatum“ steht
     const tDatum = t.ablauf ? `<div class="unter">${t.tage < 0 ? "seit " : "bis "}${datumDE(t.ablauf)}${t.grund === "praxis" ? " (Praxisprüfung)" : ""}</div>` : "";
     let zahlen = (r.stufe === "gesperrt" || r.stufe === "pruefen_faellig" || r.stufe === "bald")
       ? `<button class="knopf klein haupt" data-zahlung="${esc(s.id)}" type="button">${euro(reaktBetrag(s))} erhalten</button>` : "";
@@ -863,6 +864,7 @@ function renderFristen() {
       + `<p class="leise klein">Hier steht, was in den nächsten Wochen abläuft. Schon Abgelaufenes steht unter „Handlungsbedarf“.</p>` : ""}
     ${ansicht === "antrag" || ansicht === "umschreiber" || ansicht === "bald" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
+    ${ansicht === "ohne" ? `<p class="leise klein" data-ohnehinweis>Hier stehen alle ohne Vertragsdatum, auch wenn die Reaktivierung gerade entfällt. Ändert sich die Preisliste, braucht das Büro das Datum wieder.</p>` : ""}
     <p class="leise klein" data-reaktregel>${KR.reaktFreiAm(undefined, heute)
       ? "Reaktivierung entfällt laut Preisliste. Deshalb wird niemand gesperrt und nichts wird fällig."
       : `Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, ${reaktRegelText()}. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist.`} Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
