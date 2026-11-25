@@ -423,7 +423,7 @@ details summary{cursor:pointer;font-weight:700;margin:6px 0;}
 .wer-kopf b{color:var(--txt);font-size:17px;}
 .wer-knoepfe{display:flex;flex-wrap:wrap;gap:6px;}
 .wer-knoepfe .knopf{min-height:40px;padding:0 10px;font-size:14px;}
-.wer-ganz-ab{font-size:14px;color:var(--muted);margin-top:8px;}
+.wer-ganz-ab{font-size:14px;color:var(--muted);margin-top:8px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;} /* W16 3 B: einziger Ausweg ohne App-Link, Tippfläche 44 px (Fable) */
 .pin-fehler{min-height:72px;margin:0;display:flex;align-items:center;justify-content:center;max-width:380px;}
 .pin-gesperrt .pin-feld button[data-ziffer]{opacity:.35;pointer-events:none;}
 .kopf-wer{border-color:var(--line);color:var(--txt);}

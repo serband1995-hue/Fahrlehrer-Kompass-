@@ -345,7 +345,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   await ctx.close();
 }
 // ---- PC mit kleinem Bildschirm (1366×768, 1280×720): Fuß mit Abmelden immer sichtbar, Punkte scrollen ----
-// Büro (mit „Bedient gerade“ und Link zur App) bei 1280×720: Punkte dürfen scrollen, Abmelden steht trotzdem unten
+// Büro (mit „Bedient gerade“, ohne Link zur App seit W16 Teil 3 B) bei 1280×720: Punkte dürfen scrollen, Abmelden steht trotzdem unten
 for (const [b, h, nutzer, ganz] of [[1366, 768, "bu-1", true], [1280, 720, "ad-1", true], [1280, 720, "bu-1", false]]) {
   const { page, ctx, konsole } = await oeffne({ hash: "#heute", breite: b, hoehe: h, nutzer });
   const r = await page.evaluate(() => {
