@@ -1,8 +1,8 @@
 /* Fahrlehrer-Kompass – Nachrichten-Vorlagen (W15 Schritt 4, 🗣 Serband 24.11.2026: „vorgefertigte Nachrichten … diese kann man
    vorschreiben in den Einstellungen“). EINE Datei für Büro und Server:
    - Büro: Thema „Nachrichten-Vorlagen“ in den Einstellungen (Vorschau) – geladen als <script>, danach window.KV.
-   - Server: Edge-Funktion zahlungs-mail füllt die Vorlage (Kopie supabase/functions/zahlungs-mail/vorlagen.js, wird mit
-     import "./vorlagen.js" geladen, danach globalThis.KV). Beide Dateien müssen Byte für Byte gleich sein
+   - Server: Edge-Funktionen zahlungs-mail und erinnerungs-mail füllen die Vorlage (Kopien supabase/functions/<name>/vorlagen.js,
+     geladen mit import "./vorlagen.js", danach globalThis.KV). Alle Dateien müssen Byte für Byte gleich sein
      (scripts/vorlagen-test.mjs prüft das) – so zeigt die Vorschau genau den Text der Mail.
    Ablage: Einstellungen der Fahrschule (fahrschule_einstellungen, Werkstatt 11), Schlüssel „vorlagen.<art>“,
    Wert { text, text_eltern }. Fehlt ein Text oder ist er leer, gilt der Standard (= die Sätze von vorher).
@@ -40,6 +40,37 @@
       platzhalter: ["Vorname", "Betrag", "Fahrschule"],
       text: "bei Ihnen ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
       text_eltern: "für die Ausbildung von {Vorname} ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
+    },
+    // W15 S5: Erinnerungen ohne Zahlung (Edge-Funktion erinnerungs-mail). Datum = Ende der Frist, Tage = bis dahin.
+    erinnerung_theorie: {
+      titel: "Theorieunterricht läuft ab", wann: "Der Theorieunterricht gilt nicht mehr lange, die Theorieprüfung ist noch nicht bestanden.",
+      platzhalter: ["Vorname", "Datum", "Tage", "Fahrschule"],
+      text: "Ihr Theorieunterricht gilt bis zum {Datum}. Bis dahin sollte die Theorieprüfung bestanden sein. Bitte melden Sie sich bei uns, damit wir einen Termin finden.",
+      text_eltern: "der Theorieunterricht von {Vorname} gilt bis zum {Datum}. Bis dahin sollte die Theorieprüfung bestanden sein. Bitte melden Sie sich bei uns, damit wir einen Termin finden.",
+    },
+    erinnerung_praxis: {
+      titel: "Theorieprüfung läuft ab (Praxisprüfung)", wann: "Die bestandene Theorieprüfung gilt 12 Monate (§ 18 FeV), bis dahin muss die praktische Prüfung bestanden sein.",
+      platzhalter: ["Vorname", "Datum", "Tage", "Fahrschule"],
+      text: "Ihre bestandene Theorieprüfung gilt bis zum {Datum}. Bis dahin muss die praktische Prüfung bestanden sein, sonst muss die Theorieprüfung wiederholt werden. Bitte melden Sie sich bei uns, damit wir die nächsten Fahrstunden und die Prüfung planen.",
+      text_eltern: "die bestandene Theorieprüfung von {Vorname} gilt bis zum {Datum}. Bis dahin muss die praktische Prüfung bestanden sein, sonst muss die Theorieprüfung wiederholt werden. Bitte melden Sie sich bei uns, damit wir die nächsten Fahrstunden und die Prüfung planen.",
+    },
+    erinnerung_antrag: {
+      titel: "Führerscheinantrag läuft ab", wann: "Der Antrag bei der Führerscheinstelle gilt nicht mehr lange.",
+      platzhalter: ["Vorname", "Datum", "Tage", "Fahrschule"],
+      text: "Ihr Führerscheinantrag bei der Führerscheinstelle gilt bis zum {Datum}. Danach muss er neu gestellt werden. Bitte melden Sie sich bei uns.",
+      text_eltern: "der Führerscheinantrag von {Vorname} bei der Führerscheinstelle gilt bis zum {Datum}. Danach muss er neu gestellt werden. Bitte melden Sie sich bei uns.",
+    },
+    erinnerung_behoerde: {
+      titel: "Frist der Führerscheinstelle", wann: "Die Führerscheinstelle hat eine Frist für die Theorieprüfung gesetzt.",
+      platzhalter: ["Vorname", "Datum", "Tage", "Fahrschule"],
+      text: "die Führerscheinstelle hat eine Frist gesetzt: Bis zum {Datum} muss die Theorieprüfung bestanden sein. Bitte melden Sie sich bei uns, damit wir einen Termin finden.",
+      text_eltern: "die Führerscheinstelle hat für {Vorname} eine Frist gesetzt: Bis zum {Datum} muss die Theorieprüfung bestanden sein. Bitte melden Sie sich bei uns, damit wir einen Termin finden.",
+    },
+    erinnerung_umschreiber: {
+      titel: "Ausländischer Führerschein läuft ab", wann: "Umschreiber mit Führerschein aus einem Land außerhalb der EU: 6 Monate ab Wohnsitz (§ 29 FeV).",
+      platzhalter: ["Vorname", "Datum", "Tage", "Fahrschule"],
+      text: "Ihr ausländischer Führerschein gilt in Deutschland nur noch bis zum {Datum}. Danach dürfen Sie damit nicht mehr selbst fahren. Bitte melden Sie sich bei uns, damit wir die Umschreibung rechtzeitig abschließen.",
+      text_eltern: "der ausländische Führerschein von {Vorname} gilt in Deutschland nur noch bis zum {Datum}. Danach darf {Vorname} damit nicht mehr selbst fahren. Bitte melden Sie sich bei uns, damit wir die Umschreibung rechtzeitig abschließen.",
     },
   };
   const ARTEN = Object.keys(VORLAGEN);

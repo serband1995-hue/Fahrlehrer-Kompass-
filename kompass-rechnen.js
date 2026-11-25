@@ -531,7 +531,7 @@
   }
   const api = { paketVerbrauch, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
-    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
