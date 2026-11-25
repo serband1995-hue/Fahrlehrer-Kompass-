@@ -177,16 +177,16 @@ function luZahlenZusatz(f, monate) {
   zaehle(praxis, "p"); zaehle(theorie, "t");
   const bereich = von + ".." + bis;
   const lehrerZeilen = Object.entries(jeLehrer).map(([id, v]) => ({ id, name: id ? lehrerName(id) : "ohne Fahrlehrer", v })).sort((a, b) => b.v.p.n - a.v.p.n || a.name.localeCompare(b.name, "de"));
-  const lt = lehrerZeilen.length ? `<table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Praxis bestanden</th><th class="zahlspalte">Quote Praxis</th><th class="zahlspalte nur-breit">Theorie bestanden</th><th class="zahlspalte nur-breit">Quote Theorie</th></tr></thead><tbody>${lehrerZeilen.map((z) => `<tr>
+  const zelle = (q) => (q.n ? `<b>${luQuote(q.ok, q.n)}</b><div class="unter">${q.ok} von ${q.n}</div>` : '<span class="leise">–</span>');
+  const lt = lehrerZeilen.length ? `<table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Praxis</th><th class="zahlspalte">Theorie</th></tr></thead><tbody>${lehrerZeilen.map((z) => `<tr>
       <td>${z.id ? `<a href="${zLink({ liste: "praxis", monat: bereich, lehrer: z.id })}"><b>${esc(z.name)}</b></a>` : esc(z.name)}</td>
-      <td class="zahlspalte">${z.v.p.ok} von ${z.v.p.n}</td><td class="zahlspalte"><b>${luQuote(z.v.p.ok, z.v.p.n)}</b></td>
-      <td class="zahlspalte nur-breit">${z.v.t.ok} von ${z.v.t.n}</td><td class="zahlspalte nur-breit">${luQuote(z.v.t.ok, z.v.t.n)}</td></tr>`).join("")}</tbody></table>`
+      <td class="zahlspalte">${zelle(z.v.p)}</td><td class="zahlspalte">${zelle(z.v.t)}</td></tr>`).join("")}</tbody></table>`
     : `<p class="leer">Keine Prüfungsergebnisse in diesem Zeitraum.</p>`;
   const jePruefer = {};
   for (const e of praxis) { const k = e.pruefer || ""; jePruefer[k] = jePruefer[k] || { ok: 0, n: 0, letzte: "" }; jePruefer[k].n++; if (e.ok) jePruefer[k].ok++; if (e.datum > jePruefer[k].letzte) jePruefer[k].letzte = e.datum; }
   const pz = Object.entries(jePruefer).filter(([k]) => k).sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0], "de"));
   const ohne = (jePruefer[""] || { n: 0 }).n;
-  const pt = pz.length ? `<table class="tabelle"><thead><tr><th>Prüfer</th><th class="zahlspalte">Prüfungen</th><th class="zahlspalte">Quote</th><th class="zahlspalte nur-breit">zuletzt</th></tr></thead><tbody>${pz.map(([k, v]) => `<tr><td><b>${esc(k)}</b></td><td class="zahlspalte">${v.n}</td><td class="zahlspalte"><b>${luQuote(v.ok, v.n)}</b></td><td class="zahlspalte nur-breit">${esc(datumDE(v.letzte))}</td></tr>`).join("")}</tbody></table>`
+  const pt = pz.length ? `<table class="tabelle"><thead><tr><th>Prüfer</th><th class="zahlspalte">Quote</th></tr></thead><tbody>${pz.map(([k, v]) => `<tr><td><b>${esc(k)}</b><div class="unter">zuletzt ${esc(datumDE(v.letzte))}</div></td><td class="zahlspalte"><b>${luQuote(v.ok, v.n)}</b><div class="unter">${v.ok} von ${v.n}</div></td></tr>`).join("")}</tbody></table>`
     : `<p class="leer">Noch keine Praxisprüfung mit Prüfer in diesem Zeitraum.</p>`;
   return `<div class="raster zwei">
     <div class="karte" id="luQuoteLehrer"><h2>Bestehensquote je Fahrlehrer</h2><p class="leise klein">${esc(zeitraumText(von, bis))}. Namen anklicken für die Liste.</p>${lt}</div>
