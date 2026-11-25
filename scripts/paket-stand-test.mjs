@@ -80,5 +80,11 @@ pruefe("S17 Sonderfahrt ohne Art: ohneArt 1 (mit Haken), zählt keinem Posten", 
 const h1 = KR.paketHinweise({ ohneHaken: 1, ohneArt: 2 }), h2 = KR.paketHinweise({ ohneHaken: 3, ohneArt: 1 });
 pruefe("S18 Hinweise in Einzahl und Mehrzahl", h1[0] === "1 Termin wartet noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket." && /^2 Sonderfahrten haben keine Art/.test(h1[1])
   && h2[0] === "3 Termine warten noch auf den Fahrcheck-Haken vom Büro. Erst danach zählen sie im Paket." && /^1 Sonderfahrt hat keine Art/.test(h2[1]) && KR.paketHinweise({ ohneHaken: 0, ohneArt: 0 }).length === 0, [h1, h2]);
+// 🗣 Serband 25.11.2026: „Wenn 90 min eingetragen ist, muss Kristina abhaken: 2 Fahrchecks abgegeben oder 1.“ Die gewählte Zahl
+// (bueroFcAnzahl) gilt vor dem Vermerk des Fahrlehrers, höchstens die gebuchten; ohne Zahl der Vermerk.
+const Z = (anz, x) => F(null, Object.assign({ bueroFcAnzahl: anz }, x || {}));
+const q6 = KR.paketQuelleAusTerminen([Z(1), Z(2, { fc: "v2" }), Z(5), Z(0), Z(null, { fc: "v1" }), Z(1, { bueroFc: "offen" }), Z(2, { status: "nicht erschienen" })], HEUTE, 600);
+pruefe("S19 Büro-Zahl: 1 + 2 (gegen „2 vergessen“) + 2 (höchstens gebucht) + 0 + Vermerk v1 1 = 6; ohne Haken wartet, ausgefallen nie", q6.fahrstunden === 6 && q6.ohneHaken === 1, q6);
+pruefe("S20 fcVomBuero: Zahl gilt, leer = Vermerk", KR.fcVomBuero(Z(1)) === 1 && KR.fcVomBuero(Z(null, { fc: "nachgereicht" })) === 2 && KR.fcVomBuero(Z("", { fc: "v1" })) === 1);
 console.log(`\n${ok} ok, ${fehler} Fehler`);
 process.exit(fehler ? 1 : 0);

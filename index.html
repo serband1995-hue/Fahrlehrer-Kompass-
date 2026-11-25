@@ -6105,6 +6105,7 @@ function _fsMapTermin(row,lehrerName){
   return Object.assign({id:row.id,sid:row.schueler_id,date:row.datum,von:row.von,bis:row.bis,art:row.art,fahrzeug:row.fahrzeug,status:row.status},row.payload||{},
     {_fahrlehrerId:row.fahrlehrer_id,_fahrlehrerName:lehrerName(row.fahrlehrer_id),id:row.id,sid:row.schueler_id,date:row.datum,von:row.von,bis:row.bis,art:row.art,fahrzeug:row.fahrzeug,status:row.status,
      buero_fc_status:row.buero_fc_status||"offen", buero_fc_nachgereicht_am:row.buero_fc_nachgereicht_am||null,
+     buero_fc_anzahl:("buero_fc_anzahl" in row)?row.buero_fc_anzahl:undefined, // W13: vom Büro gewählte Zahl; undefined = alte Datenbank
      theorie_bestanden:row.theorie_bestanden, theorie_gesperrt_bis:row.theorie_gesperrt_bis||null,
      interessent_name:row.interessent_name||"", interessent_telefon:row.interessent_telefon||"", kurs_bezahlt:!!row.kurs_bezahlt});
 }
@@ -7439,6 +7440,13 @@ async function fsFcStatus(terminId,status,nachgereicht,zurueckZurListe){
   const supa=getSupa();
   const updates={buero_fc_status:status,aktualisiert_am:new Date().toISOString()};
   if(nachgereicht) updates.buero_fc_nachgereicht_am=todayISO();
+  // W13: Hier gibt es keine Zahl zur Wahl: „Abgegeben“ = wie vom Fahrlehrer vermerkt, „nachträglich abgegeben“ = alle gebuchten
+  // (wie im Büro). Nur wenn die Spalte buero_fc_anzahl schon existiert (alte Datenbank: sonst schlüge das Speichern fehl).
+  // Schon abgehakt und noch einmal „Abgegeben“: die Zahl vom Büro bleibt (Büro-Prüfer: sonst gälte still wieder der Vermerk)
+  const l=(DB.lessons||[]).find(x=>x.id===terminId);
+  if((DB.lessons||[]).some(x=>x.buero_fc_anzahl!==undefined)&&!(l&&l.buero_fc_status==="abgegeben"&&status==="abgegeben"&&!nachgereicht)){
+    updates.buero_fc_anzahl=nachgereicht&&l&&window.KR&&KR.fcGebucht?(KR.fcGebucht(l)||null):null;
+  }
   const {error}=await supa.from("kalender_termine").update(updates).eq("id",terminId);
   if(error){toast("Fehler: "+error.message);return;}
   toast(nachgereicht?"Als nachträglich abgegeben markiert ✓":"Aktualisiert ✓");
@@ -8046,7 +8054,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.4";
+const APP_VERSION="2026.11.25.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8162,7 +8170,7 @@ function _fsSyncAggJetzt(){
    Löschen (Entscheidung Hauptsitzung 24.11.2026): Wurde der Eintrag inzwischen woanders geändert, wird er nicht gelöscht,
    er erscheint wieder und ein Hinweis bittet, ihn nochmal anzusehen. */
 // Spalten-Kopien (zeigt _fsMapTermin aus eigenen Spalten) und Merker: gehören nie in die Nutzlast
-const _FS_NUR_SPALTE=["korrekturGrund","_syncedAt","_fahrlehrerId","_fahrlehrerName","buero_fc_status","buero_fc_nachgereicht_am",
+const _FS_NUR_SPALTE=["korrekturGrund","_syncedAt","_fahrlehrerId","_fahrlehrerName","buero_fc_status","buero_fc_nachgereicht_am","buero_fc_anzahl",
   "theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
 const _FS_ART={
   kalender_termine:{ kern:["id","sid","date","von","bis","art","fahrzeug","status"],
@@ -8247,7 +8255,7 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
 // Mitgezählt werden auch die Büro-Spalten (Kurs bezahlt, FC-Status, Theorie …), soweit die Ansicht sie beim Laden kannte
 // (ein hier neu angelegter Eintrag kennt sie nicht und bleibt löschbar). Büro-Prüfer 24.11.2026.
 // Liefert {loeschen:[id], bleibt:[Server-Zeile], weg:[id] (schon gelöscht oder nicht mehr sichtbar)}.
-const _FS_BUERO_SPALTEN=["buero_fc_status","buero_fc_nachgereicht_am","theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
+const _FS_BUERO_SPALTEN=["buero_fc_status","buero_fc_nachgereicht_am","buero_fc_anzahl","theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
 async function _fsLoeschenPruefen(supa,tabelle,liste){
   const a=_FS_ART[tabelle], erg={loeschen:[],bleibt:[],weg:[]};
   if(!liste.length)return erg;
@@ -10293,13 +10301,21 @@ let _paketLadeNr = 0; const _paketNrJe = {};
 // Paket-Schüler im Minutentakt, ohne Unterschriften aus der Nutzlast). schueler_id -> {zeit, rows} bzw. {fehler}
 const _paketTermine = {}, _paketTermineLaeuft = {};
 const _PAKET_TERMINE_MS = 60000;
+// Gibt es kalender_termine.buero_fc_anzahl (Migration 20261125_w13_01)? Fehlt sie, 10 Minuten ohne fragen, dann wieder mit
+// (Fable Z1: sonst rechnete eine vor der Migration geöffnete App bis zum Neustart nach dem Vermerk). Zeit des letzten Fehlschlags
+let _fcAnzahlFehlt = 0;
 async function _paketTermineLaden(sid){
   if(_paketTermineLaeuft[sid]) return;
   _paketTermineLaeuft[sid]=true;
   try{
     const supa=getSupa(); if(!supa) throw new Error("offline");
-    const rows=await _alleSeiten(()=>supa.from("kalender_termine").select("id,art,datum,von,bis,status,buero_fc_status,pst:payload->>status,sonderArt:payload->>sonderArt,srcSonder:payload->>srcSonder,fc:payload->>fc").eq("schueler_id",sid).eq("geloescht",false));
-    _paketTermine[sid]={zeit:Date.now(),rows:rows.map(r=>({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:r.pst||r.status,sonderArt:r.sonderArt||null,srcSonder:r.srcSonder||null,fc:r.fc||null,bueroFc:r.buero_fc_status||"offen"}))};
+    // W13: mit der vom Büro gewählten Zahl (buero_fc_anzahl); alte Datenbank ohne die Spalte: einmal ohne abfragen
+    const abfrage=mitZahl=>_alleSeiten(()=>supa.from("kalender_termine").select("id,art,datum,von,bis,status,buero_fc_status"+(mitZahl?",buero_fc_anzahl":"")+",pst:payload->>status,sonderArt:payload->>sonderArt,srcSonder:payload->>srcSonder,fc:payload->>fc").eq("schueler_id",sid).eq("geloescht",false));
+    let rows;
+    const mitZahl=!_fcAnzahlFehlt||Date.now()-_fcAnzahlFehlt>600000;
+    try{ rows=await abfrage(mitZahl); }
+    catch(e){ if(!mitZahl||!/buero_fc_anzahl/.test(String(e&&e.message||"")))throw e; _fcAnzahlFehlt=Date.now(); rows=await abfrage(false); }
+    _paketTermine[sid]={zeit:Date.now(),rows:rows.map(r=>({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:r.pst||r.status,sonderArt:r.sonderArt||null,srcSonder:r.srcSonder||null,fc:r.fc||null,bueroFc:r.buero_fc_status||"offen",bueroFcAnzahl:r.buero_fc_anzahl==null?null:r.buero_fc_anzahl}))};
   }catch(e){ _paketTermine[sid]=Object.assign({},_paketTermine[sid],{fehler:Date.now()}); } // alten Stand behalten
   finally{ delete _paketTermineLaeuft[sid]; }
   const el=document.querySelector(`.paket-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
@@ -10326,10 +10342,10 @@ async function _ladePakete(supa, ids){
    Fahrcheck-Haken des Büros (Gesamtansicht: DB.lessons, sonst _paketTermine) und die Prüfungen mit Ergebnis (DB.exams).
    Liefert {q} oder {laden:true} bzw. {fehler:true}, solange keine Termine da sind. */
 function _paketQuelle(s){
-  if(!window.KR||!KR.paketQuelleAusTerminen||!KR.fcFuersBuero||!KR.paketHinweise)return {fehler:true}; // alte kompass-rechnen.js: lieber keine Zahl als eine falsche
+  if(!window.KR||!KR.paketQuelleAusTerminen||!KR.fcFuersBuero||!KR.fcVomBuero||!KR.paketHinweise)return {fehler:true}; // alte kompass-rechnen.js: lieber keine Zahl als eine falsche
   let termine;
   if(_fsAgg){
-    termine=(DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,sonderArt:l.sonderArt||null,srcSonder:l.srcSonder||null,fc:l.fc||null,bueroFc:l.buero_fc_status||"offen"}));
+    termine=(DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,sonderArt:l.sonderArt||null,srcSonder:l.srcSonder||null,fc:l.fc||null,bueroFc:l.buero_fc_status||"offen",bueroFcAnzahl:l.buero_fc_anzahl==null?null:l.buero_fc_anzahl}));
   }else{
     const x=_paketTermine[s.id]||{};
     if(!_paketTermineLaeuft[s.id]&&(!x.zeit||Date.now()-x.zeit>_PAKET_TERMINE_MS)&&!(x.fehler&&Date.now()-x.fehler<_PAKET_TERMINE_MS)) setTimeout(()=>_paketTermineLaden(s.id),0);
