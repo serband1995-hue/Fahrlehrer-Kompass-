@@ -506,25 +506,17 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
   // Seitenleiste
-  const sichtbar = () => page.$$eval(".nav-liste:not([hidden]) .nav-punkt", (a) => a.length);
-  // K16: Start mit zugeklappten Gruppen, nur die der offenen Seite („Arbeit“) ist auf
-  const start = await sichtbar();
-  const inArbeit = await page.$$eval('.nav-punkt[href="#heute"], .nav-punkt[href="#pruefungen"], .nav-punkt[href="#fahrchecks"], .nav-punkt[href="#fristen"]', (a) => a.length);
-  if (start !== inArbeit || inArbeit < 2) fehler("Seitenleiste: Start nicht nur mit der Gruppe der offenen Seite (" + start + "/" + inArbeit + ")");
-  await page.click('[data-gruppe="Geld"]');
-  const inGeld = (await sichtbar()) - start;
-  if (inGeld < 2) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht auf");
-  await page.evaluate(() => zeichneNav());
-  if ((await sichtbar()) !== start + inGeld) fehler("Seitenleiste: aufgeklappte Gruppe wird nicht gehalten");
-  await page.click('[data-gruppe="Geld"]');
-  if ((await sichtbar()) !== start) fehler("Seitenleiste: Gruppe „Geld“ klappt nicht zu");
-  const alle = start + inGeld;
+  // Werkstatt 11: flache Leiste, alle 11 Punkte immer sichtbar, keine Gruppen
+  const sichtbar = () => page.$$eval("#nav .nav-punkt", (a) => a.filter((x) => x.offsetParent).length);
+  if ((await sichtbar()) !== 11) fehler("Seitenleiste: nicht alle 11 Punkte sichtbar (" + (await sichtbar()) + ")");
+  if ((await page.locator("[data-gruppe]").count()) !== 0) fehler("Seitenleiste: es gibt noch Gruppen zum Auf- und Zuklappen");
+  const alle = 11;
   // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
   await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
   await page.goto(page.url().split("#")[0] + "#zahlen");
   await page.waitForTimeout(300);
-  if ((await sichtbar()) !== alle) fehler("Seitenleiste: Seite in zugeklappter Gruppe öffnet die Gruppe nicht");
+  if ((await sichtbar()) !== alle) fehler("Seitenleiste: nach Seitenwechsel nicht mehr alle Punkte sichtbar");
   await pruefeLayout(page, "Seitenleiste");
   // Wer bedient: Name und Kopfzeile
   const wer = await page.evaluate(() => ({ s: S.wer, an: document.getElementById("werAnzeige").textContent }));
@@ -663,10 +655,10 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (fern.includes(fernDE)) fehler("Großansicht zeigt eine Prüfung in 40 Tagen");
   await page.goto(page.url().split("#")[0] + "#heute");
   // Fokus bleibt in der Seitenleiste
-  await page.focus('[data-gruppe="Geld"]');
-  await page.keyboard.press("Enter");
-  if ((await page.evaluate(() => document.activeElement && document.activeElement.dataset.gruppe)) !== "Geld") fehler("Seitenleiste: Fokus geht beim Zuklappen verloren");
-  await page.keyboard.press("Enter");
+  // Fokus bleibt auf dem Leistenpunkt, auch wenn die Leiste sich beim Auffrischen neu zeichnet
+  await page.focus('.nav-punkt[href="#kalender"]');
+  await page.evaluate(() => zeichneNav());
+  if ((await page.evaluate(() => document.activeElement && document.activeElement.getAttribute("href"))) !== "#kalender") fehler("Seitenleiste: Fokus geht beim Auffrischen verloren");
   if (konsole.length) fehler("Fehlersuche-Fälle: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
@@ -722,7 +714,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click("[data-notizerledigt]"); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => window.__FAKE.tabellen.schueler_notizen[0].erledigt_am))) fehler("Notiz „Erledigt“ nicht gespeichert");
   await page.click("dialog [data-schliessen] >> nth=0");
-  // Interne Aufgaben je Schüler und „Heute zu tun“
+  // Interne Aufgaben je Schüler und „Heute“
   await page.click("[data-sbearb] >> nth=0");
   await page.fill("#agText", "Unterlagen nachfordern");
   await pruefeLayout(page, "Aufgaben-Block");
@@ -739,11 +731,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.click("dialog [data-schliessen] >> nth=0");
   await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(350);
   const heuteText = await page.textContent("#ansicht");
-  if (!/Unterlagen nachfordern/.test(heuteText)) fehler("„Heute zu tun“ zeigt die Aufgabe nicht");
-  if (/Später anrufen/.test(heuteText)) fehler("Aufgabe mit Datum in der Zukunft steht schon unter „Heute zu tun“");
-  await pruefeLayout(page, "Heute zu tun mit Aufgabe");
+  if (!/Unterlagen nachfordern/.test(heuteText)) fehler("„Heute“ zeigt die Aufgabe nicht");
+  if (/Später anrufen/.test(heuteText)) fehler("Aufgabe mit Datum in der Zukunft steht schon unter „Heute“");
+  await pruefeLayout(page, "Heute mit Aufgabe");
   await page.click("[data-hagerledigt]"); await page.waitForTimeout(300);
-  if ((await page.$$("[data-hagerledigt]")).length !== 0) fehler("Erledigte Aufgabe steht noch unter „Heute zu tun“");
+  if ((await page.$$("[data-hagerledigt]")).length !== 0) fehler("Erledigte Aufgabe steht noch unter „Heute“");
   if (!(await page.evaluate(() => window.__FAKE.tabellen.schueler_aufgaben.find((a) => a.text === "Unterlagen nachfordern").erledigt_am))) fehler("Aufgabe „Erledigt“ nicht gespeichert");
   // Warteliste: Regel und Anzeige
   const warte = await page.evaluate((h) => {
@@ -1864,11 +1856,11 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   if (ag.length !== 1 || ag[0].id !== aid || ag[0].faellig_am !== "2999-05-05") fehler("P2 D13: Rückgängig nach Aufgabe löschen " + JSON.stringify(ag));
   await page.keyboard.press("Escape"); await page.waitForTimeout(150);
 
-  // „Heute zu tun“: Erledigt → Rückgängig stellt „heute“ wieder her; Bearbeiten und Löschen auch dort
+  // „Heute“: Erledigt → Rückgängig stellt „heute“ wieder her; Bearbeiten und Löschen auch dort
   await page.evaluate(async () => { window.__FAKE.tabellen.schueler_aufgaben.length = 0; await supa.from("schueler_aufgaben").insert({ fahrschule_id: S.fsId, schueler_id: null, text: "Heute anrufen", heute: true, faellig_am: null, erstellt_von: S.user.id }); await ladeDaten(); });
   await page.goto(page.url().split("#")[0] + "#heute"); await page.waitForTimeout(500);
   await page.click("[data-hagerledigt]"); await page.waitForTimeout(300);
-  if (!(await undo().isVisible())) fehler("P2: kein Rückgängig bei „Heute zu tun“ erledigt");
+  if (!(await undo().isVisible())) fehler("P2: kein Rückgängig bei „Heute“ erledigt");
   await pruefeLayout(page, "Heute mit Rückgängig");
   await undo().locator("[data-undo]").click(); await page.waitForTimeout(300);
   a = (await tab("schueler_aufgaben"))[0];
@@ -1876,9 +1868,9 @@ for (const nutzer of ["ad-1", "sa-1"]) {
   await page.click("[data-hagbearb]"); await page.waitForTimeout(200);
   await page.locator("dialog[open]").last().locator("textarea[name=text]").fill("Heute zurückrufen");
   await page.locator("dialog[open]").last().locator("button[value=ok]").click(); await page.waitForTimeout(300);
-  if ((await tab("schueler_aufgaben"))[0].text !== "Heute zurückrufen") fehler("P2: Aufgabe auf „Heute zu tun“ bearbeiten klappt nicht");
+  if ((await tab("schueler_aufgaben"))[0].text !== "Heute zurückrufen") fehler("P2: Aufgabe auf „Heute“ bearbeiten klappt nicht");
   await page.click("[data-hagweg]"); await page.waitForTimeout(300); // K7: ohne Rückfrage
-  if ((await tab("schueler_aufgaben")).length !== 0) fehler("P2: Aufgabe auf „Heute zu tun“ löschen klappt nicht");
+  if ((await tab("schueler_aufgaben")).length !== 0) fehler("P2: Aufgabe auf „Heute“ löschen klappt nicht");
   if (konsole.length) fehler("P2 Notizen/Aufgaben: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
@@ -2154,18 +2146,16 @@ async function k2Kontrast(page, sel) {
     if (start.offen) fehler(`K2 ${name}: Menü ist beim Start offen`);
     if (!start.menue) fehler(`K2 ${name}: Knopf „Menü“ fehlt`);
     if (start.drucken) fehler(`K2 ${name}: „Drucken“ ist sichtbar`);
-    if (!/Menü · Heute zu tun/.test(await page.textContent("#menueKnopf"))) fehler(`K2 ${name}: Menü-Knopf nennt den Bereich nicht`);
+    if (!/Menü · Heute/.test(await page.textContent("#menueKnopf"))) fehler(`K2 ${name}: Menü-Knopf nennt den Bereich nicht`);
     // Tippflächen mindestens 44 px (Menü offen: Menüpunkte und Gruppen; Kopf-Knöpfe)
     await page.click("#menueKnopf"); await page.waitForTimeout(100);
-    const klein = await page.evaluate(() => [...document.querySelectorAll(".nav-punkt, .nav-gruppe, .kopf .knopf, #menueKnopf")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 43.5).map((e) => e.textContent.trim().slice(0, 20)));
+    const klein = await page.evaluate(() => [...document.querySelectorAll(".nav-punkt, .kopf .knopf, #menueKnopf")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 43.5).map((e) => e.textContent.trim().slice(0, 20)));
     if (klein.length) fehler(`K2 ${name}: Tippflächen unter 44 px: ${klein.join(", ")}`);
     await k2Breite(page, name + " Menü offen");
     const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
-    if (bereiche.length < 8) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
+    if (bereiche.length !== 11) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
-      // K16: Gruppen starten zu; ein Punkt in einer zugeklappten Gruppe braucht erst den Tipp auf die Gruppe
-      if (!(await page.isVisible(`.nav-punkt[href="${href}"]`))) await page.evaluate((h) => document.querySelector(`.nav-punkt[href="${h}"]`).closest(".nav-block").querySelector(".nav-gruppe").click(), href);
       await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
       const zu = await page.evaluate(() => !document.body.classList.contains("menue-offen"));
       if (!zu) fehler(`K2 ${name} ${href}: Menü bleibt nach dem Tipp offen`);
@@ -2224,7 +2214,6 @@ async function k2Kontrast(page, sel) {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite: 768, hoehe: 1024, hash: "#heute" });
     await page.click("#menueKnopf"); await page.waitForTimeout(100);
     await page.setViewportSize({ width: 1024, height: 768 }); await page.waitForTimeout(150);
-    await page.click('[data-gruppe="Planung"]'); // K16: Gruppen starten zu
     await page.click('.nav-punkt[href="#schueler"]'); await page.waitForTimeout(300);
     await page.setViewportSize({ width: 768, height: 1024 }); await page.waitForTimeout(150);
     const r = await page.evaluate(() => ({ offen: document.body.classList.contains("menue-offen"), aria: document.getElementById("menueKnopf").getAttribute("aria-expanded"), titel: document.getElementById("titel").textContent }));
@@ -2237,8 +2226,8 @@ async function k2Kontrast(page, sel) {
   for (const [w, h] of [[901, 800], [1366, 860]]) {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
     const r = await page.evaluate(() => ({ nav: [...document.querySelectorAll(".nav-punkt")].filter((a) => a.offsetParent).length, menue: !!document.getElementById("menueKnopf").offsetParent, drucken: !!document.getElementById("drucken").offsetParent, wer: !!document.getElementById("werZeile").offsetParent, seite: Math.round(document.querySelector(".seite").getBoundingClientRect().width) }));
-    // K16: nur die Gruppe der offenen Seite ist auf (4 Punkte in „Arbeit“)
-    if (r.nav < 4) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
+    // Werkstatt 11: alle 11 Punkte der flachen Leiste sichtbar
+    if (r.nav !== 11) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
     if (r.menue) fehler(`K2 PC ${w}: Knopf „Menü“ sichtbar`);
     if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
     if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);
@@ -2255,11 +2244,11 @@ async function k2Kontrast(page, sel) {
     }
     await ctx.close();
   }
-  // Vorführung: nur erfundene Büro-Personen „… Muster“, keine Test-Konten, „Heute zu tun“ mit Aufgaben, Notizen und Quittungen
+  // Vorführung: nur erfundene Büro-Personen „… Muster“, keine Test-Konten, „Heute“ mit Aufgaben, Notizen und Quittungen
   {
     const { page, ctx, konsole } = await oeffneVorfuehrung({ breite: 1366, hoehe: 900 });
     const aufgaben = await page.locator(".fuer-dich > .notizliste li").count();
-    if (aufgaben < 4) fehler(`K2 Vorführung: „Heute zu tun“ zeigt nur ${aufgaben} Aufgaben`);
+    if (aufgaben < 4) fehler(`K2 Vorführung: „Heute“ zeigt nur ${aufgaben} Aufgaben`);
     const d = await page.evaluate(() => ({ personen: window.__FAKE.tabellen.buero_personen.map((p) => p.name), notizen: (window.__FAKE.tabellen.schueler_notizen || []).length, quitt: (window.__FAKE.tabellen.fc_abgaben || []).length }));
     if (!d.personen.length || d.personen.some((n) => !/^\S+ Muster$/.test(n))) fehler("K2 Vorführung: Büro-Personen nicht alle „… Muster“: " + d.personen.length);
     if (d.notizen < 3 || d.quitt < 1) fehler(`K2 Vorführung: zu wenig Notizen (${d.notizen}) oder Quittungen (${d.quitt})`);
@@ -2281,7 +2270,7 @@ async function k2Kontrast(page, sel) {
     }
     await page.evaluate(() => { location.hash = "#team"; }); await page.waitForTimeout(400);
     const team = await page.textContent("#ansicht");
-    if (/Gesperrt Test|Ohne AGB|Super-Admin|Elif/.test(team)) fehler("K2 Vorführung: Test-Konten oder Super-Admin in „Fahrlehrer & Zugänge“ sichtbar");
+    if (/Gesperrt Test|Ohne AGB|Super-Admin|Elif/.test(team)) fehler("K2 Vorführung: Test-Konten oder Super-Admin in „Fahrlehrer & Büro“ sichtbar");
     await page.evaluate(() => { location.hash = "#kalender"; }); await page.waitForTimeout(400);
     if (/Super-Admin|Elif/.test(await page.textContent("#ansicht"))) fehler("K2 Vorführung: Super-Admin oder Test-Fahrlehrerin im Kalender");
     const zeilen = await page.$$eval("#ansicht table.tabelle tbody tr td:first-child", (l) => l.map((x) => x.textContent.trim()));

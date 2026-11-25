@@ -352,3 +352,16 @@ CREATE TRIGGER trg_tafelbild_eigener_eintrag BEFORE INSERT ON public.fahrschule_
 CREATE TRIGGER trg_empfehlung_schutz BEFORE INSERT OR UPDATE ON public.fahrschule_empfehlungen FOR EACH ROW EXECUTE FUNCTION empfehlung_schutz();
 -- schueler_buero_felder_schutz (02): Ausnahme – der eigene Fahrlehrer setzt theorie_bestanden_am bis heute (Berlin),
 -- zurücknehmen/ändern nur, wenn er den jetzigen Wert selbst heute gesetzt hat (letzter Spur-Eintrag nach id).
+
+-- ab Migration 20261125_einst_01: fahrschule_einstellungen – lesen alle aktiven Mitglieder der eigenen Fahrschule, schreiben/löschen zm_darf (Büro/Leitung/Super-Admin); fahrschule_einstellung*() nur für Server-Funktionen.
+CREATE TRIGGER fahrschule_einstellungen_spur AFTER INSERT OR DELETE OR UPDATE ON public.fahrschule_einstellungen FOR EACH ROW EXECUTE FUNCTION fahrschule_einstellungen_spur();
+CREATE TRIGGER fahrschule_einstellungen_stempel BEFORE INSERT OR UPDATE ON public.fahrschule_einstellungen FOR EACH ROW EXECUTE FUNCTION fahrschule_einstellungen_stempel();
+create policy "Einstellungen aendern Buero Leitung" on public.fahrschule_einstellungen as PERMISSIVE for UPDATE to authenticated
+  using (zm_darf(fahrschule_id)) with check (zm_darf(fahrschule_id));
+create policy "Einstellungen anlegen Buero Leitung" on public.fahrschule_einstellungen as PERMISSIVE for INSERT to authenticated with check (zm_darf(fahrschule_id));
+create policy "Einstellungen lesen Mitglieder" on public.fahrschule_einstellungen as PERMISSIVE for SELECT to authenticated
+  using (COALESCE(((EXISTS ( SELECT 1
+   FROM profiles p
+  WHERE ((p.id = auth.uid()) AND COALESCE(p.aktiv, true)))) AND (is_super_admin(auth.uid()) OR (fahrschule_id = k5_meine_fahrschule()))), false));
+create policy "Einstellungen loeschen Buero Leitung" on public.fahrschule_einstellungen as PERMISSIVE for DELETE to authenticated
+  using (zm_darf(fahrschule_id));
