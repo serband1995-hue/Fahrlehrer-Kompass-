@@ -73,6 +73,12 @@ async function verwerfenJa(page) {
 // kein Text wird ungewollt abgeschnitten (gewolltes „…“ nur in Kalender-Kacheln und Kalenderköpfen).
 async function pruefeLayout(page, name) {
   const r = await page.evaluate(() => {
+    // Die Seite (nicht den Dialog-Inhalt) nach oben holen: Playwright scrollt beim Klicken, dann läge der klebende
+    // Rollenstreifen über einer Kachel und ergäbe einen Scheinfund. Danach die alte Position wiederherstellen.
+    const sx = window.scrollX, sy = window.scrollY;
+    window.scrollTo(0, 0);
+    try { return layoutPruefen(); } finally { window.scrollTo(sx, sy); }
+    function layoutPruefen() {
     const sichtbar = (el) => { const b = el.getBoundingClientRect(); const st = getComputedStyle(el); return b.width > 0 && b.height > 0 && st.visibility !== "hidden" && st.display !== "none"; };
     const gewolltGekuerzt = (el) => !!el.closest(".k-termin, .k-kopf, .hb-name, .nutzer-name, .nutzer-rolle, details:not([open])");
     const probleme = [];
@@ -129,6 +135,7 @@ async function pruefeLayout(page, name) {
       }
     }
     return [...new Set(probleme)].slice(0, 6);
+    }
   });
   for (const p of r) fehler(`${name}: ${p}`);
 }
