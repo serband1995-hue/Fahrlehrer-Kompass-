@@ -579,6 +579,7 @@ function bkAnmeldungBinden(dlg, x, id) {
       h = `<p class="bk-anm-verkauft">Verkauft am ${esc(datumDE(String(anfang.verkauft_am || "").slice(0, 10)))}${anfang.bearbeiter ? " von " + esc(anfang.bearbeiter) : ""}</p>
         ${(() => {
           if (vollStand === "laden") return bkPostenListeHTML(bkPosten(anfang), null);
+          if (typeof KR_OHNE_HAKEN !== "undefined" && KR_OHNE_HAKEN) return bkPostenListeHTML(bkPosten(anfang), null) + `<p class="leise klein" data-bk-neu-laden>Bitte die Seite neu laden, dann wird „noch offen“ gezählt.</p>`;
           const q = bkVerbrauchQuelle(x, voll);
           return bkPostenListeHTML(bkPosten(anfang), KR.paketVerbrauch(bkPosten(anfang), q))
             + KR.paketHinweise(q).map((h) => `<p class="leise klein" data-bk-ohne-haken>${esc(h)}</p>`).join("");

@@ -14,9 +14,15 @@ const NEU_LADEN_MS = 120000;
 if (!KR.theorieFristInfo) KR.theorieFristInfo = () => ({ stufe: "ohne_datum", ablauf: null, tage: null });
 if (!KR.umschreibInfo) KR.umschreibInfo = () => ({ stufe: "kein", bis: null, tage: null, drittstaat: false });
 if (!KR.EU_EWR) KR.EU_EWR = [];
+// W15: alte kompass-rechnen.js ohne Regel der Reaktivierung → alte Regel (12 Monate, „entfällt“ zählt nicht)
+if (!KR.setzeReaktRegel) { KR.setzeReaktRegel = () => null; KR.holeReaktRegel = () => null; KR.reaktMonate = () => 12; KR.reaktFreiAm = () => false; }
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
+// W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
+const KR_OHNE_HAKEN = !KR.fcFuersBuero;
+if (!KR.fcFuersBuero) KR.fcFuersBuero = KR.fcErhalten;
+if (!KR.paketHinweise) KR.paketHinweise = () => [];
 if (!KR.theorieSoll) { KR.theorieSoll = () => ({ pflicht: false, grund: "Seite bitte neu laden", teile: [] }); KR.theorieStand = (soll) => ({ pflicht: false, grund: soll.grund, teile: [], ist: 0, soll: 0, fertig: false }); }
 
 const ARTEN = {
@@ -616,12 +622,38 @@ function zaehleFristen() {
   }
   z.manuell = aktiveSchueler().filter((s) => zahlungSperre(s) && KR.reaktInfo(s, heute).stufe !== "gesperrt" && KR.reaktInfo(s, heute).stufe !== "pruefen_faellig").length;
   z.handeln = z.manuell + z.gesperrt + z.pruefen + z.antragAb + z.fristAb + z.umAb + z.umBald;
+  z.laeuftAb = laeuftBaldListe(heute).length; // W15: Reiter „Läuft bald ab“ (#fristen?ansicht=bald)
   return z;
 }
 const REAKT_TEXT = {
   gesperrt: ["rot", "überfällig · gesperrt"], pruefen_faellig: ["rot", "fällig · in CCD prüfen"], bald: ["gelb", "bald fällig"],
-  demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"]
+  demnaechst: ["blau", "in 60 Tagen"], ok: ["gruen", "bezahlt"], befreit: ["", "befreit"], ohne_datum: ["", "Vertragsdatum fehlt"],
+  entfaellt: ["", "entfällt"] // W15: laut Preisliste heute oder am Vertragstag frei – keine Fälligkeit, keine Sperre
 };
+/* W15: Regel der Reaktivierung vom Server (rpc reakt_regel, dieselbe Regel wie die Sperre in der Datenbank, ohne Preise).
+   Fehlt die Funktion (Datenbank-Update noch nicht da): alte Regel (12 Monate, „entfällt“ zählt nicht) – wie der Server dann auch.
+   Ein kurzer Ladefehler behält die zuletzt geladene Regel. */
+function reaktRegelFehlt(err) { return !!err && (["PGRST202", "42883"].includes(err.code) || /could not find the function|does not exist|rpc fehlt/i.test(String(err.message || ""))); }
+function uebernimmReaktRegel(res) {
+  if (res && !res.error) { KR.setzeReaktRegel(res.data || null); S.reaktRegelGeladen = true; return; }
+  if (!S.reaktRegelGeladen || reaktRegelFehlt(res && res.error)) { KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; }
+}
+function holeReaktRegel(fsId) {
+  try { return Promise.resolve(supa.rpc("reakt_regel", { p_fs: fsId })).then((r) => r, (e) => ({ data: null, error: e || { message: "Netz" } })); }
+  catch (e) { return Promise.resolve({ data: null, error: e }); }
+}
+// Nach einer Änderung der Reaktivierung in der Preisliste: Regel sofort neu holen (der Server sperrt sofort nach der neuen Liste)
+async function ladeReaktRegelNeu() {
+  const fsId = S.fsId, res = await holeReaktRegel(fsId);
+  if (fsId !== S.fsId) return;
+  uebernimmReaktRegel(res);
+  zeichne();
+}
+// „fällig 12 Monate nach Vertragsabschluss und dann jährlich“ – mit den Monaten der Regel
+function reaktRegelText() {
+  const m = KR.reaktMonate();
+  return `fällig ${m} Monate nach Vertragsabschluss und dann ${m === 12 ? "jährlich" : "alle " + m + " Monate"}`;
+}
 // Stufe „ok“ heißt: nichts fällig; „bezahlt“ steht nur bei Schülern, deren Zahlung das Büro eingetragen hat
 function reaktText(s, r) {
   if (r.stufe === "ok" && s.reakt_status !== "bezahlt") return ["gruen", "nichts fällig"];
@@ -633,11 +665,34 @@ function fristenParam(name) {
   if (!m) return "";
   try { return decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { return ""; } // URLSearchParams schreibt Leerzeichen als „+“; kaputte Adresse ignorieren
 }
-const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"], ["antrag", "Antrag & Frist"], ["umschreiber", "Umschreiber"]];
+const FRISTEN_ANSICHTEN = [["handeln", "Handlungsbedarf"], ["bald", "Läuft bald ab"], ["alle", "Alle Schüler"], ["ohne", "Ohne Vertragsdatum"], ["theorie", "Theorie-Fristen"], ["antrag", "Antrag & Frist"], ["umschreiber", "Umschreiber"]];
 const FRIST_TEXT = { abgelaufen: ["rot", "Behörden-Frist Theorie abgelaufen"], bald: ["gelb", "Behörden-Frist Theorie bald"], demnaechst: ["blau", "Behörden-Frist Theorie in 60 Tagen"], ok: ["gruen", "Behörden-Frist Theorie ok"], erledigt: ["gruen", "Theorie bestanden"], ohne_datum: ["", "–"] };
 const UMSCHREIB_TEXT = { abgelaufen: ["rot", "darf nicht mehr fahren"], bald: ["gelb", "darf bald nicht mehr fahren"], ok: ["gruen", "darf fahren"], ohne_datum: ["gelb", "Wohnsitz-Datum fehlt"], eu: ["gruen", "EU/EWR, keine Frist"], kein: ["", "Führerschein fehlt"], land_pruefen: ["gelb", "Land prüfen"] };
 const ANTRAG_TEXT = { abgelaufen: ["rot", "abgelaufen · neu stellen"], bald: ["gelb", "läuft bald ab"], ok: ["gruen", "gültig"], ohne_datum: ["", "Antragsdatum fehlt"] };
-const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6 };
+const REAKT_RANG = { gesperrt: 0, pruefen_faellig: 1, bald: 2, demnaechst: 3, ohne_datum: 4, ok: 5, befreit: 6, entfaellt: 7 };
+/* W15 S2 (🗣 Serband 24.11.2026: „Es soll angezeigt werden, bei wem was abläuft“): alles, was bald abläuft, in EINER Liste
+   nach Datum – Schüler und Fahrlehrer. Nur, was noch nicht abgelaufen ist (Abgelaufenes steht unter „Handlungsbedarf“).
+   Gleiche Regeln und Warnzeiten wie die anderen Reiter: Reaktivierung, Theorie, Theorie-Frist der Behörde 60 Tage,
+   Führerscheinantrag 60, Umschreiber 30, Fahrlehrer 90. stufe: bald (gelb, ≤30 Tage) | demnaechst (blau). */
+function laeuftBaldListe(heute) {
+  heute = heute || KR.todayISO();
+  const liste = [];
+  const dazu = (o) => { if (o.datum && typeof o.tage === "number" && o.tage >= 0) liste.push(Object.assign(o, { datum: String(o.datum).slice(0, 10), stufe: o.tage <= 30 ? "bald" : "demnaechst" })); };
+  for (const s of aktiveSchueler()) {
+    const r = KR.reaktInfo(s, heute), t = KR.theorieInfo(s, heute), a = KR.antragInfo(s, heute), tf = KR.theorieFristInfo(s, heute), u = KR.umschreibInfo(s, heute);
+    const wer = () => ({ wer: "schueler", id: s.id, name: s.name, unter: lehrerName(s.fahrlehrer_id) });
+    if (r.stufe === "bald" || r.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "reaktivierung", was: "Reaktivierung wird fällig", datum: r.faellig, tage: r.tage }));
+    if (t.stufe === "bald" || t.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "theorie", was: t.grund === "praxis" ? "Theorieprüfung läuft ab (Praxisprüfung bis dahin)" : "Theorieunterricht läuft ab", datum: t.ablauf, tage: t.tage }));
+    if (a.stufe === "bald") dazu(Object.assign(wer(), { art: "antrag", was: "Führerscheinantrag läuft ab", datum: a.ablauf, tage: a.tage }));
+    if (tf.stufe === "bald" || tf.stufe === "demnaechst") dazu(Object.assign(wer(), { art: "behoerde", was: "Theorieprüfung bestehen bis (Frist der Behörde)", datum: tf.ablauf, tage: tf.tage }));
+    if (u.stufe === "bald") dazu(Object.assign(wer(), { art: "umschreiber", was: "Ausländischer Führerschein gilt nur noch bis", datum: u.bis, tage: u.tage }));
+  }
+  for (const l of S.lehrer.filter((y) => y.aktiv !== false)) {
+    for (const x of KR.fahrlehrerFristen(l, heute)) if (x.stufe === "bald") dazu({ wer: "fahrlehrer", id: l.id, name: l.name || l.email, unter: "Fahrlehrer", art: "fahrlehrer", was: x.titel + " läuft ab", datum: x.bis, tage: x.tage });
+  }
+  return liste.sort((x, y) => x.datum.localeCompare(y.datum) || String(x.name || "").localeCompare(String(y.name || ""), "de") || x.art.localeCompare(y.art));
+}
+function noch(tage) { return tage === 0 ? "heute" : tage === 1 ? "morgen" : `in ${tage} Tagen`; }
 function renderFristen() {
   const heute = KR.todayISO();
   const ansicht = FRISTEN_ANSICHTEN.some(([id]) => id === fristenParam("ansicht")) ? fristenParam("ansicht") : "handeln";
@@ -649,6 +704,7 @@ function renderFristen() {
     <div class="kachel${f.bald ? " gold" : ""}"><div class="wert">${f.bald}</div><div class="name">in 30 Tagen fällig</div></div>
     <div class="kachel"><div class="wert">${f.ohneDatum}</div><div class="name">ohne Vertragsdatum</div></div>
     <div class="kachel${f.antragAb ? " rot" : (f.antragBald ? " gold" : "")}"><div class="wert">${f.antragAb + f.antragBald}</div><div class="name">Führerscheinanträge abgelaufen oder bald (${f.antragAb} abgelaufen)</div></div>
+    <a class="kachel" href="#fristen?ansicht=bald" data-kachelbald><div class="wert">${f.laeuftAb}</div><div class="name">läuft bald ab · ansehen →</div></a>
     ${f.fristAb + f.fristBald + f.umAb + f.umBald ? `<a class="kachel${f.fristAb || f.umAb ? " rot" : " gold"}" href="#fristen?ansicht=${f.fristAb + f.fristBald ? "antrag" : "umschreiber"}"><div class="wert">${f.fristAb + f.fristBald + f.umAb + f.umBald}</div><div class="name">Theorie-Frist oder Umschreiber-Frist abgelaufen oder bald</div></a>` : ""}
   </div>`;
   let liste = aktiveSchueler().map((s) => ({ s, r: KR.reaktInfo(s, heute), t: KR.theorieInfo(s, heute), a: KR.antragInfo(s, heute), tf: KR.theorieFristInfo(s, heute), u: KR.umschreibInfo(s, heute) }));
@@ -678,6 +734,16 @@ function renderFristen() {
       <td class="aktionen"><div class="aktionen-box">${a.stufe === "abgelaufen" || a.stufe === "bald" ? `<button class="knopf klein haupt" data-antragneu="${esc(s.id)}" type="button">Neu eingereicht</button>` : ""}<button class="knopf klein" data-fristen="${esc(s.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
+  const baldListe = ansicht !== "bald" ? [] : laeuftBaldListe(heute).filter((x) => !suche || String(x.name || "").toLowerCase().includes(suche)
+    || (x.wer === "schueler" && (() => { const s = S.schueler.find((y) => y.id === x.id) || {}; return (s.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, "")) || (s.bewerbernummer || "").toLowerCase().replace(/\s/g, "").includes(suche.replace(/\s/g, "")); })()));
+  // Am Handy wird jede Zeile eine Karte (buero.css, [data-baldliste]): Name und „Noch“ oben, darunter Was und Datum, Knopf über die ganze Breite
+  const baldZeilen = baldListe.map((x) => `<tr data-bald="${esc(x.art)}">
+      <td class="bald-wer"><b>${esc(x.name || "–")}</b><div class="unter">${esc(x.unter || "")}</div></td>
+      <td class="bald-was">${esc(x.was)}</td>
+      <td class="zeitspalte bald-am">${esc(datumDE(x.datum))}</td>
+      <td class="bald-noch"><span class="marke-pill ${x.stufe === "bald" ? "gelb" : "blau"}">${esc(noch(x.tage))}</span></td>
+      <td class="aktionen bald-akte"><div class="aktionen-box"><button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
+    </tr>`).join("");
   const umschreibZeilen = ansicht !== "umschreiber" ? "" : liste.map(({ s, u }) => {
     const [uf, ut] = UMSCHREIB_TEXT[u.stufe];
     const laender = [...new Set((s.auslands_fs || []).map((f) => f.land).filter(Boolean))];
@@ -714,9 +780,14 @@ function renderFristen() {
     ${ansicht === "antrag" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th class="nur-sehr-breit">Fahrlehrer</th><th>Eingereicht</th><th>Gültig bis</th><th>Status</th><th></th></tr></thead><tbody>${antragZeilen}</tbody></table><p class="leise klein">Der Führerscheinantrag bei der Führerscheinstelle gilt 12 Monate. Nach bestandener Theorieprüfung gilt er 12 Monate ab dem Prüfungsdatum. Danach muss er neu gestellt werden: „Neu eingereicht“ setzt das heutige Datum. ${ohneAntrag} aktive Schüler haben noch kein Antragsdatum (im Fenster „Bearbeiten“ eintragen).</p>` : `<p class="leer">Keine Schüler.</p>`) : ""}
     ${ansicht === "umschreiber" ? (liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Land</th><th class="nur-breit">Wohnsitz seit</th><th>Führerschein</th><th class="nur-breit">Übersetzung</th><th></th></tr></thead><tbody>${umschreibZeilen}</tbody></table>
       <p class="leise klein">Führerscheine aus Ländern außerhalb der EU/des EWR gelten in Deutschland nur 6 Monate ab Wohnsitz (§ 29 FeV). Danach darf der Schüler nicht mehr selbst fahren, bis der deutsche Führerschein da ist. Verlängern kann die Behörde nur, wenn er höchstens 12 Monate in Deutschland bleibt, bei Umschreibern also meist nicht.</p>` : `<p class="leer">Keine Umschreiber.</p>`) : ""}
-    ${ansicht === "antrag" || ansicht === "umschreiber" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
+    ${ansicht === "bald" ? (baldListe.length ? `<table class="tabelle" data-baldliste><thead><tr><th>Wer</th><th>Was</th><th>Am</th><th>Noch</th><th></th></tr></thead><tbody>${baldZeilen}</tbody></table>`
+      : `<p class="leer">${suche ? "Keine Treffer." : "In den nächsten Wochen läuft nichts ab."}</p>`)
+      + `<p class="leise klein">Hier steht, was in den nächsten Wochen abläuft. Schon Abgelaufenes steht unter „Handlungsbedarf“.</p>` : ""}
+    ${ansicht === "antrag" || ansicht === "umschreiber" || ansicht === "bald" ? "" : liste.length ? `<table class="tabelle"><thead><tr><th>Schüler</th><th>Fahrlehrer</th><th class="nur-breit">Vertrag</th><th>Reaktivierung</th><th>Theorie</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`
       : `<p class="leer">${ansicht === "handeln" ? "Kein Handlungsbedarf. Sehr gut." : "Keine Schüler in dieser Ansicht."}</p>`}
-    <p class="leise klein">Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, fällig 12 Monate nach Vertragsabschluss und dann jährlich. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist. Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
+    <p class="leise klein" data-reaktregel>${KR.reaktFreiAm(undefined, heute)
+      ? "Reaktivierung entfällt laut Preisliste. Deshalb wird niemand gesperrt und nichts wird fällig."
+      : `Reaktivierung: ${reaktInPreisliste() ? `${reaktHeuteText()} für neue Verträge (alte Verträge zahlen den Preis ihres Vertragsdatums)` : euro(reaktBetrag())}, ${reaktRegelText()}. „Gesperrt“ heißt: keine weiteren Leistungen, bis bezahlt ist.`} Jede Änderung wird mit Name und Uhrzeit protokolliert.</p>
   </div>${renderBueroEinstellungen()}${typeof zmEinstellungenHTML === "function" ? zmEinstellungenHTML() : ""}`; // Werkstatt 11: Zahlungsdaten für Mails (buero-zahlungsmail.js)
 }
 function renderBueroEinstellungen() {
@@ -768,6 +839,7 @@ function bindeFristen(ziel) {
   bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
+  ziel.querySelectorAll("[data-baldakte]").forEach((b) => b.addEventListener("click", () => (b.dataset.baldwer === "fahrlehrer" ? fahrlehrerAkte(b.dataset.baldakte) : schuelerDialog(b.dataset.baldakte))));
   ziel.querySelectorAll("[data-umschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.umschueler)));
   ziel.querySelectorAll("[data-antragneu]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
@@ -3064,7 +3136,7 @@ function renderFcStunden() {
       <td><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b><div class="unter nur-unter">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)}</div></td>
       <td class="nur-sehr-breit">${esc(lehrerName(t.fahrlehrer_id))}</td>
       <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
-      <td class="zahlspalte"><b>${erwartet}</b><span class="leise"> von ${gebucht}</span></td>
+      <td class="zahlspalte"><b>${KR.fcFuersBuero(ft)}</b><span class="leise"> von ${gebucht}</span></td>
       <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
       <td>${KR.fcFuersBuero(ft) ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
       <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
@@ -4434,7 +4506,7 @@ async function ladeDaten() {
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4460,6 +4532,7 @@ async function ladeDaten() {
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
       alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
+      holeReaktRegel(fsId),   // W15: Regel der Reaktivierung (entfällt, Monate); fehlt die Funktion → alte Regel
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
@@ -4486,6 +4559,7 @@ async function ladeDaten() {
     // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
+    uebernimmReaktRegel(reaktRegel); // W15: vor dem Zeichnen, damit Sperre und Fristen der Regel des Servers folgen
     // Werkstatt 13: null = Tabelle fehlt (alte Datenbank) → alte Paket-Auswahl im Schüler-Fenster. Anderer Ladefehler: letzten Stand behalten
     S.verkauft = verkauft && !verkauft.error ? (verkauft.data || []) : (verkauft && verkauft.error && !prTabelleFehlt(verkauft.error) ? S.verkauft : null);
     // W14: Eltern-Adressen je Schüler. null = Tabelle fehlt (alte Datenbank): Feld nicht zeigen. Anderer Ladefehler: letzten Stand behalten
@@ -4904,6 +4978,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.geladenAm = null;
   S.bkFehlt = false; S.verkauft = null; // Werkstatt 13: neue Fahrschule, Paket-Spalten und verkaufte Pakete neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
+  KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule

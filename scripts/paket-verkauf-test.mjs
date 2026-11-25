@@ -556,6 +556,10 @@ try {
       { id: "g4", sid: "a2", art: "fahrstunde", date: gestern, von: "16:00", bis: "17:30", status: "geplant", buero_fc_status: "abgegeben" }];
     const box = document.createElement("div"); box.innerHTML = paketCard(DB.students.find((x) => x.id === "a1")); await warte(150);
     const kAgg = box.textContent, aggAbruf = ktAufrufe.length - nVorAgg; _fsAgg = null; DB.lessons = [];
+    // Richter: Gerät hat nach dem Update noch die alte kompass-rechnen.js → keine Zahl statt Absturz
+    const kF = KR.fcFuersBuero; delete KR.fcFuersBuero; let kAlt = "";
+    try { const b2 = document.createElement("div"); b2.innerHTML = paketCard(DB.students.find((x) => x.id === "a1")); kAlt = b2.textContent; } catch (e) { kAlt = "AUSNAHME " + e.message; }
+    KR.fcFuersBuero = kF;
     // A6/A8/A9: mehr als im Paket (+2), Grundbetrag „enthalten“, Prüfung mit Ergebnis zählt
     const zeilen2 = [{ schueler_id: "a1", name: "Boost-Paket B", vorlage_id: "v1", posten: [{ art: "grundbetrag", bezeichnung: "Grundbetrag", anzahl: 1, preis_cent: 30000 }, { art: "fahrstunde", bezeichnung: "Übungsstunden", anzahl: 20, preis_cent: 6500 }, { art: "pruefung_praxis", bezeichnung: "Vorstellung zur praktischen Prüfung", anzahl: 1, preis_cent: 15000 }] }];
     ktRows = Array.from({ length: 11 }, (_, i) => kt("m" + i, KR.addDaysISO(KR.todayISO(), -2 - i), "10:00", "11:30"));
@@ -569,7 +573,7 @@ try {
     window.getSupa = () => ({ from: () => { geschrieben = true; return { update: () => ({ eq: () => Promise.resolve({}) }) }; } });
     await schuelerPaketSetzen("a1", "v2");
     window.getSupa = altSupa;
-    return { k0, t1, k2, k3, k4, k4f, k4l, kAgg, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
+    return { k0, t1, k2, k3, k4, k4f, k4l, kAgg, kAlt, aggAbruf, aufruf, nochmal, k5, geschrieben, breit: document.documentElement.scrollWidth <= innerWidth + 1 };
   });
   pruefe("A1 App: Karte „Paket: Boost-Paket B“ mit Posten und Stand (noch nichts gefahren: „0 von 20“)", /Paket: Boost-Paket B/.test(erg.t1) && /Übungsstunden\s*0 von 20/.test(erg.t1) && /Überlandfahrt\s*0 von 5/.test(erg.t1), erg.t1);
   pruefe("A2 App: keine Preise für den Fahrlehrer", !/€|65|80,00/.test(erg.t1), erg.t1);
@@ -583,6 +587,7 @@ try {
   pruefe("A5e App: nicht ladbar → „Stand gerade nicht abrufbar“, „–“ statt Zahlen", /Stand gerade nicht abrufbar/.test(erg.k4f) && /Übungsstunden\s*–/.test(erg.k4f), erg.k4f);
   pruefe("A5f App: Fahrlehrer → Hinweis „Du siehst nur deine eigenen Fahrten“ (Leitung/Büro nicht)", /Du siehst nur deine eigenen Fahrten/.test(erg.k4l) && !/eigenen Fahrten/.test(erg.k4), erg.k4l);
   pruefe("A5g App-Gesamtansicht: Termine samt Haken aus DB.lessons (1 Std. + 1 nachgereicht = 4, 1 wartet), kein eigener Abruf", /Übungsstunden\s*4 von 20/.test(erg.kAgg) && /1 Termin wartet/.test(erg.kAgg) && erg.aggAbruf === 0 && !/eigenen Fahrten/.test(erg.kAgg), { t: erg.kAgg, n: erg.aggAbruf });
+  pruefe("A5h App: alte kompass-rechnen.js im Zwischenspeicher → „nicht abrufbar“, kein Absturz", /Stand gerade nicht abrufbar/.test(erg.kAlt) && !/AUSNAHME/.test(erg.kAlt), erg.kAlt);
   pruefe("A6 App: 22 von 20 Einheiten → „20 von 20 ✓ · +2“", /Übungsstunden\s*20 von 20 ✓ · \+2/.test(erg.k5), erg.k5);
   pruefe("A7 App: verkauftes Paket lässt sich in der App nicht überschreiben", erg.geschrieben === false);
   pruefe("A8 App: Grundbetrag „enthalten“", /Grundbetrag\s*enthalten/.test(erg.k5), erg.k5);

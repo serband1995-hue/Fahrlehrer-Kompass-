@@ -162,6 +162,8 @@ async function prSpeichern(zeile) {
   }
   S.preise = (S.preise || []).concat(res.data);
   zeichne();
+  // W15: „entfällt“ ändert die Sperre: Regel der Reaktivierung neu vom Server holen (gleiche Regel wie die Datenbank)
+  if (zeile.art === "reaktivierung" && typeof ladeReaktRegelNeu === "function") ladeReaktRegelNeu();
   return true;
 }
 function prNeu() {
