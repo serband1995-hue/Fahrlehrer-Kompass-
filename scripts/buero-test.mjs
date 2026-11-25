@@ -2166,7 +2166,7 @@ async function k2Kontrast(page, sel) {
     if (klein.length) fehler(`K2 ${name}: Tippflächen unter 44 px: ${klein.join(", ")}`);
     await k2Breite(page, name + " Menü offen");
     const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
-    // 12 von Werkstatt 11 + Urlaub, Schichtplan, Backups (W16 Teil 2, auch für das Büro: es hat nur noch diese Seite)
+    // 12 von Werkstatt 11 + Urlaub, Schichtplan, Backups (W16 Teil 2, auch für das Büro)
     if (bereiche.length !== 15) fehler(`K2 ${name}: ${bereiche.length} statt 15 Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");

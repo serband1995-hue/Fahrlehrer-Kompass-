@@ -296,7 +296,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const leitung = await sicht("ad-1"), buero = await sicht("bu-1");
   const drei = (r) => ["#urlaub", "#schichtplan", "#backups"].every((h) => r.punkte.includes(h));
   pruefe("B1", "Leitung (Administrator) sieht Urlaub, Schichtplan und Backups", leitung.admin && drei(leitung) ? null : JSON.stringify(leitung));
-  // W16 Teil 2 (mit W11 abgestimmt): das Büro hat nur noch die Büro-Seite und sieht Backups wie bisher in der App (Datenbank: is_buero)
+  // W16 Teil 2 (mit W11 abgestimmt): das Büro sieht Backups wie bisher in der App (Datenbank: is_buero); später hat es nur noch die Büro-Seite
   pruefe("B2", "Büro (kein Administrator) sieht Urlaub, Schichtplan und Backups", !buero.admin && drei(buero) ? null : JSON.stringify(buero));
 }
 // ---- keine Einblendung beim ersten Zeichnen (CI-Fehler „Text überlappt“: Klick während der Einblendung) ----

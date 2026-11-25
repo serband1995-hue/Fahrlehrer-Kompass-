@@ -1,6 +1,7 @@
 /* Kompass Büro – Urlaub, Schichtplan und Backups (Werkstatt 16, 24.11.2026).
-   Bisher gab es diese drei nur in der App-Gesamtansicht („Weitere Verwaltung“). Seit W16 kommt das Büro nur noch auf
-   die Büro-Seite (🗣 Serband: „je nachdem, wo man sich anmeldet, kommt die richtige Seite“), darum stehen sie jetzt hier.
+   Bisher gab es diese drei nur in der App-Gesamtansicht („Weitere Verwaltung“). Ziel von W16 (🗣 Serband: „je nachdem, wo man
+   sich anmeldet, kommt die richtige Seite“): Das Büro soll nur noch die Büro-Seite brauchen. Dafür stehen sie jetzt hier.
+   Die Weiterleitung (startseite.js BUERO_NUR_BUEROSEITE) bleibt aus, bis auch die übrigen Lücken zu sind (Teil 3).
    Gleiche Tabellen und Regeln wie in der App: fahrschule_urlaub (mit Fahrlehrer-ID, W14), fahrschule_schichten,
    fahrschule_backups. Die Datenbank erlaubt sie Büro, Leitung und Super-Admin (Zugriffsregeln „…/Buero verwaltet …“).
    Eingehängt in BEREICHE (buero.js, Einträge von Werkstatt 11, erscheinen, sobald diese Datei vor buero.js geladen ist).
@@ -57,9 +58,10 @@ function vwFehlerKarte(was, titel) {
 function vwAltHinweis(was) {
   return VW.fehler[was] ? `<p class="leise klein" role="status">Nicht aktuell: Neu laden ging nicht (${esc(VW.fehler[was])}). <button class="knopf klein" type="button" data-vwneu="${was}">Nochmal laden</button></p>` : "";
 }
-// Nachladen nötig? (noch nichts da, älter als VW_FRISCH_MS; nach einem Fehler ohne Liste erst auf „Nochmal laden“)
+// Nachladen nötig? (noch nichts da, älter als VW_FRISCH_MS; nach einem Fehler ohne Liste nicht bei jedem Zeichnen,
+// aber nach 2 Minuten von selbst im Takt – oder sofort mit „Nochmal laden“)
 function vwVeraltet(was) {
-  if (!VW[was]) return !VW.fehler[was];
+  if (!VW[was]) return !VW.fehler[was] || Date.now() - (VW.stand[was] || 0) > 4 * VW_FRISCH_MS;
   return Date.now() - (VW.stand[was] || 0) > VW_FRISCH_MS;
 }
 // Lädt einen Bereich und zeichnet ihn neu, wenn er noch offen ist. Läuft schon eine Abfrage, wird sie geteilt;
@@ -121,7 +123,7 @@ function renderUrlaub() {
   vwSchule();
   // Überschrift sagt, was da ist (der Seitentitel heißt schon „Urlaub“)
   const n = VW.urlaub ? VW.urlaub.length : 0;
-  const kopf = `<div class="karte-kopf"><h2>${VW.urlaub ? (n === 1 ? "1 Eintrag" : n + " Einträge") + " ab heute" : "Ab heute"}</h2><button class="knopf haupt" id="vwUrlaubNeu" type="button">+ Urlaub eintragen</button></div>
+  const kopf = `<div class="karte-kopf"><h2>${!VW.urlaub ? "Ab heute" : !n ? "Kein Urlaub ab heute" : (n === 1 ? "1 Eintrag" : n + " Einträge") + " ab heute"}</h2><button class="knopf haupt" id="vwUrlaubNeu" type="button">+ Urlaub eintragen</button></div>
     <p class="leise klein">Urlaub von Fahrlehrern sperrt ihre Tage: In der App sind sie blockiert, hier warnt das Termin-Fenster. Bei anderen Personen (z. B. Büro) gibt es keine Termin-Sperre.</p>`;
   if (!VW.urlaub) return `<div class="karte">${kopf}${vwFehlerKarte("urlaub", "Der Urlaub")}</div>`;
   if (!VW.urlaub.length) return `<div class="karte">${kopf}${vwAltHinweis("urlaub")}<p class="leer">Noch nichts eingetragen. Tippe auf „+ Urlaub eintragen“.</p></div>`;

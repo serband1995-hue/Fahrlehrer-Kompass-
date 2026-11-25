@@ -20,7 +20,7 @@
   var TEXTE = {
     eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler und Termine" },
     gesamt: { titel: "Fahrschule", text: "Alle Fahrlehrer und Schüler" },
-    buero: { titel: "Büro-Seite", text: "Eigene Seite fürs Büro, gut am PC (verlässt die App)" }
+    buero: { titel: "Büro-Seite", text: "Eigene Seite fürs Büro, gut am PC" }
   };
 
   // Welche Startseiten eine Person haben kann. Die erste ist die Vorgabe (so startet die App heute schon).

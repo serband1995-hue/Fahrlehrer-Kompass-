@@ -56,7 +56,7 @@ async function pruefe(id, text, fn) {
 const warte = (page, ms = 250) => page.waitForTimeout(ms);
 
 const FS = "fs-muster";
-// W16: Schalter in startseite.js – erst wenn Urlaub, Schichtplan und Backups auf der Büro-Seite laufen, hat das Büro nur noch diese Seite
+// W16: Schalter in startseite.js – erst wenn auf der Büro-Seite nichts mehr fehlt, was das Büro in der App nutzt, hat es nur noch diese Seite (Teil 3)
 const NUR_BUERO = /BUERO_NUR_BUEROSEITE\s*=\s*true/.test(await readFile(join(ROOT, "startseite.js"), "utf8"));
 // wahl: Startseiten in den Einstellungen (erste = Vorgabe). zumBuero: die App leitet gleich zu buero.html weiter (W16).
 // kurz: nur Start, Menü und Startseite prüfen (Sonderfälle). nurHoch: nur am Handy hoch.

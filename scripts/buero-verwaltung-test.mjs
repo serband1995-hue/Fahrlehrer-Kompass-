@@ -1,5 +1,5 @@
 // Büro-Verwaltung-Test (Werkstatt 16, 24.11.2026): Urlaub, Schichtplan und Backups auf der Büro-Seite.
-// Anlass: Seit W16 Teil 2 (25.11.2026) kommt das Büro nur noch auf die Büro-Seite. Diese drei gab es bisher nur in der App-Gesamtansicht.
+// Anlass: W16 Teil 2 (25.11.2026) bringt diese drei auf die Büro-Seite (bisher nur in der App-Gesamtansicht), damit das Büro später nur noch sie braucht.
 // Geprüft mit der Attrappe (buero-vorfuehrung.js, erfundene Namen „Muster“), am PC (1366) und am Handy (360):
 //   V1 Urlaub für einen Fahrlehrer: mit Fahrlehrer-ID gespeichert, in der Liste · V2 andere Person: ohne ID, „keine Sperre“
 //   V3 falsche Eingabe (bis vor von): Fenster bleibt offen, nichts gespeichert · V4 Löschen ohne Rückfrage, „Rückgängig“ holt ihn zurück
