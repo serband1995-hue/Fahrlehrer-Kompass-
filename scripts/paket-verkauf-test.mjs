@@ -272,6 +272,8 @@ try {
     await page.evaluate(() => { const x = [...document.querySelectorAll("dialog[open]")]; x.forEach((e) => e.close()); });
     if (await knopf.count()) { await knopf.click(); await page.waitForTimeout(300); }
     const st = await page.evaluate(() => (S.termine.find((x) => x.id === "kt-n") || {}).buero_fc_status);
+    const zeile = await page.evaluate(() => { const b = document.querySelector('#ansicht [data-fcbearb="kt-n"]'); return b ? b.closest("tr").innerText : ""; });
+    pruefe("V9g Fahrcheck-Kontrolle: nachgereichte Stunde zeigt nach dem Haken „abgegeben“ (nicht „–“)", /abgegeben/.test(zeile), zeile);
     d = await oeffneAkte(page, S1);
     t = await d.locator("[data-bk-anm-info]").innerText();
     pruefe("V9f Haken über den Knopf gesetzt → Akte: nachgereichte zählt voll („3 von 20 gefahren“), kein Warte-Hinweis mehr", st === "abgegeben" && /(^|\D)3 von 20 gefahren · noch 17 offen/.test(t) && !/wartet noch/.test(t), { st, t });
