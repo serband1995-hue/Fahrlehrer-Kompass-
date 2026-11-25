@@ -195,10 +195,16 @@
      Gezählt wird die gebuchte Zeit (von–bis), nicht eine verschenkte Restzeit.
      Nicht erschienen / abgebrochen = keine FC. */
   const FC_ARTEN = ["fahrstunde", "sonder", "nacht"];
+  /* W13 PR 3: EINE Stelle für die Rundung in 45-Minuten-Stücken (Entscheidung Serband: siehe RUNDUNG).
+     geld     = Fahrchecks und Paket (was bezahlt und abgegeben wird)
+     nachweis = Ausbildungsplan und Ausbildungsnachweis (Pflicht-Sonderfahrten, volle Einheiten)
+     Bei 45, 90, 135 und 180 Minuten sind beide gleich; anders nur bei krummen Längen (68–89, 113–134 Minuten). */
+  const RUNDUNG = { geld: Math.round, nachweis: Math.floor };
+  function einheitenGeld(min) { return min > 0 ? RUNDUNG.geld(min / 45) : 0; }
+  function einheitenNachweis(min, einheit) { return min > 0 ? RUNDUNG.nachweis(min / (einheit || 45)) : 0; }
   function fcGebucht(t) {
     if (!t || !FC_ARTEN.includes(t.art) || !t.von || !t.bis) return 0;
-    const min = hm2min(t.bis) - hm2min(t.von);
-    return min > 0 ? Math.round(min / 45) : 0;
+    return einheitenGeld(terminMinuten(t.von, t.bis)); // W13 PR 3: über Mitternacht zählt mit (bis 6 Std.)
   }
   // Fahrchecks, die das Büro für diesen Termin in der Hand haben soll: wie fcErhalten, ein nachgereichter zählt wieder voll.
   // Daran hängt der Büro-Haken fürs Paket (🗣 Serband 24.11.2026). Ausgefallen = 0.
@@ -246,14 +252,20 @@
     if (d >= 0) return d;
     return d + 1440 <= 360 ? d + 1440 : 0;
   }
+  // Ende eines Termins in Minuten ab Mitternacht SEINES Tages: 22:30–00:00 endet bei 1440 (morgen 0 Uhr), nicht bei 0
+  // (sonst gälte eine Nachtfahrt schon am Morgen als vorbei; Prüfer Büro W13 PR 3).
+  function terminEndeMin(von, bis) {
+    if (!bis) return 0;
+    const b = hm2min(bis);
+    return von && b < hm2min(von) && terminMinuten(von, bis) > 0 ? b + 1440 : b;
+  }
   // Wie viele Kästchen ein Sonder-Termin belegt: volle Einheiten (abgerundet wie Büro und Nachweis, Fable F4), mindestens 1
   // (wie bisher auch kurze oder unvollständige Termine). 90 Min = 2, 80 Min = 1, 135 Min = 3.
   function sonderEinheiten(von, bis) {
-    const m = terminMinuten(von, bis);
-    return Math.max(1, Math.floor(m / sonderMinuten()));
+    return Math.max(1, einheitenNachweis(terminMinuten(von, bis), sonderMinuten()));
   }
   // Volle Sonderfahrt-Einheiten in einer Summe von Minuten (Büro: Ausbildungsnachweis, Zähler ohne App). Abgerundet wie bisher.
-  function sonderEinheitenAusMinuten(min) { return min > 0 ? Math.floor(min / sonderMinuten()) : 0; }
+  function sonderEinheitenAusMinuten(min) { return einheitenNachweis(min, sonderMinuten()); }
   // Führerscheinantrag bei der Führerscheinstelle: 12 Monate ab Antragsdatum (einstellbar: fristen.antrag.monate); nach
   // bestandener Theorieprüfung gilt er 12 Monate ab Prüfungsdatum (wie die Theorie, § 18 FeV, fest; Kristina, 09.10.2026).
   // stufe: ohne_datum | abgelaufen | bald (≤60 Tage, fristen.antrag.bald_tage) | ok
@@ -406,7 +418,7 @@
     heute = heute || todayISO();
     // Heutige Termine zählen erst, wenn sie vorbei sind (sonst stünde die Abend-Fahrstunde schon mittags im Soll).
     if (typeof jetztMin !== "number") { const d = new Date(); jetztMin = heute === todayISO() ? d.getHours() * 60 + d.getMinutes() : 24 * 60; }
-    const ende = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t.bis || ""); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
+    const ende = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t.bis || ""); return m ? terminEndeMin(t.von, t.bis) : 0; }; // über Mitternacht: morgen
     const posten = [];
     let soll = 0;
     for (const t of termine || []) {
@@ -534,7 +546,7 @@
     const ex = extra || {}, pTage = [];
     for (const t of termine || []) {
       if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
-      if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
+      if (t.datum === heute && terminEndeMin(t.von, t.bis) > jetztMin) continue; // über Mitternacht: erst morgen vorbei
       if (PAKET_NICHT.includes(t.status)) continue;
       if (FC_ARTEN.includes(t.art)) {
         // Gezählt wird, was an Fahrchecks beim Büro ist (fcFuersBuero): „1 vergessen“ = einer weniger, nachgereicht = voll,
@@ -570,7 +582,7 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-  const api = { paketVerbrauch, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+  const api = { paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
     FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -28,6 +28,7 @@ if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
 window.addEventListener("ke:geladen", () => { if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE && KE.zahl ? KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90) : null); });
 // W13 PR 2: alte kompass-rechnen.js ohne Sonderfahrt-Einheit → fest 45 Minuten wie bisher
 if (!KR.sonderMinuten) { KR.sonderMinuten = () => 45; KR.setzeSonderMinuten = () => 45; KR.sonderEinheitenAusMinuten = (m) => (m > 0 ? Math.floor(m / 45) : 0); }
+if (!KR.terminEndeMin) KR.terminEndeMin = (v, b) => KR.hm2min(b || "0:00");
 if (!KR.terminMinuten) KR.terminMinuten = (v, b) => (v && b ? Math.max(0, KR.hm2min(b) - KR.hm2min(v)) : 0);
 // W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
 const KR_OHNE_HAKEN = !KR.fcFuersBuero || !KR.fcVomBuero;
@@ -2360,7 +2361,7 @@ function sonderZaehlerHTML(x) {
   let ohneArt = 0;
   for (const t of S.termine) {
     if (t.schueler_id !== x.id || !t.datum || t.datum > heute || !t.von || !t.bis) continue;
-    if (t.datum === heute && KR.hm2min(t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist
+    if (t.datum === heute && KR.terminEndeMin(t.von, t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist (über Mitternacht: morgen)
     const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
     const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
     if (ist[a] != null) ist[a] += KR.sonderEinheitenAusMinuten(KR.terminMinuten(t.von, t.bis)); // W13: Einheit je Fahrschule, über Mitternacht zählt mit

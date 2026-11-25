@@ -39,7 +39,7 @@ function nwArtText(t) {
 }
 function nwAusgefallen(t) { const st = (t.payload || {}).status || t.status; return st === "abgebrochen" || st === "nicht erschienen"; }
 // Stunde ist gelaufen: Datum vorbei, oder heute und schon zu Ende
-function nwVorbei(t, heute, jetztMin) { return t.datum < heute || (t.datum === heute && t.bis && KR.hm2min(t.bis) <= jetztMin); }
+function nwVorbei(t, heute, jetztMin) { return t.datum < heute || (t.datum === heute && t.bis && KR.terminEndeMin(t.von, t.bis) <= jetztMin); } // über Mitternacht: erst morgen vorbei
 // Unterschrift: ok | neu (nach Änderung neu nötig) | offen
 function nwUnterschrift(t) {
   const p = t.payload || {};
