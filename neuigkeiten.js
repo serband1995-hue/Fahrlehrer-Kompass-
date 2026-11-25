@@ -4,10 +4,14 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.25.3", datum: "2026-11-25", kurz: "Büro: bei 90 Minuten „2 abgegeben“ oder „1 abgegeben“.",
+  { version: "2026.11.25.4", datum: "2026-11-25", kurz: "Büro: bei 90 Minuten „2 abgegeben“ oder „1 abgegeben“.",
     punkte: ["Fahrcheck-Kontrolle: Bei einer Stunde mit 90 Minuten wählt das Büro „2 abgegeben“ oder „1 abgegeben“. Im Paket zählt genau diese Zahl.",
              "Den Fahrcheck-Haken setzt nur noch das Büro oder die Leitung.",
              "Ändert der Fahrlehrer nach dem Haken den Vermerk oder die Uhrzeit, hakt das Büro die Stunde neu ab."] },
+  { version: "2026.11.25.3", datum: "2026-11-25", kurz: "Büro: neue Seite „Einstellungen“, nach Themen geordnet.",
+    punkte: ["Links unten gibt es jetzt „Einstellungen“. Dort steht alles, was man einstellen kann, nach Themen geordnet.",
+             "Die Zahlungsdaten für Mails stehen jetzt unter „Zahlungen & Mails“ statt unten auf der Fristen-Seite.",
+             "Am Handy zuerst die Themen als Liste, ein Tipp öffnet das Thema."] },
   { version: "2026.11.25.2", datum: "2026-11-25", kurz: "Büro: links jetzt 8 feste Punkte, alles auf einen Blick.",
     punkte: ["Links stehen jetzt immer dieselben 8 Punkte: Heute, Kalender, Schüler, Prüfungen, Fristen, Zahlungen, Fahrcheck, Statistik. Nichts mehr auf- und zuklappen.",
              "Im Kalender gibt es oben den Knopf „+ Termin“ und „Wer hat Platz?“.",

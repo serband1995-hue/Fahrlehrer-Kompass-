@@ -30,7 +30,7 @@ let ok = 0, schlecht = 0;
 function pruefe(name, bed, info) { if (bed) { ok++; console.log("ok  " + name); } else { schlecht++; console.log("FEHLER  " + name + (info ? " · " + info : "")); } }
 const PIN = { "Paula Muster": "7352" };
 
-async function oeffne({ nutzer, hash = "#fristen", vorbereiten, breite = 1366, hoehe = 860 }) {
+async function oeffne({ nutzer, hash = "#einstellungen?thema=zahlungen", vorbereiten, breite = 1366, hoehe = 860 }) {
   const daten = bauDaten(HEUTE);
   const session = { user: { id: nutzer, email: nutzer + "@example.org" } };
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
@@ -248,7 +248,7 @@ try {
     let dlg = page.locator("dialog[open]").last();
     pruefe("Z5a ohne Zahlungsdaten: Hinweis mit Link „Einstellungen“, Knopf grau", /Zahlungsdaten eintragen/.test(await dlg.locator("[data-zmohnedaten]").innerText()) && await dlg.locator("[data-zmeinst]").count() === 1 && await dlg.locator("[data-zmoeffne]").isDisabled());
     await dlg.locator("[data-zmeinst]").click(); await page.waitForTimeout(400);
-    pruefe("Z5b Link führt zu den Einstellungen (Fenster zu, Fristen-Seite)", (await page.locator("dialog[open]").count()) === 0 && /#fristen/.test(await page.evaluate(() => location.hash)));
+    pruefe("Z5b Link führt zu den Einstellungen (Fenster zu, Einstellungen „Zahlungen & Mails“)", (await page.locator("dialog[open]").count()) === 0 && /#einstellungen\?thema=zahlungen/.test(await page.evaluate(() => location.hash)));
     await ctx.close();
     const e = await oeffne({ nutzer: "ad-1", vorbereiten: vor({ modus: "echt" }) });
     await oeffneAkte(e.page, "s3");
@@ -276,7 +276,7 @@ try {
     pruefe("Z6a Einstellungen: „Noch nicht eingerichtet“, kein Formular", /Noch nicht eingerichtet/.test(await page.locator("#zmEinst").innerText()) && await page.locator("#zmForm").count() === 0);
     await oeffneAkte(page, "s3");
     pruefe("Z6b Akte öffnet sich, kein Block „Zahlung per Mail“", await page.locator("#zmBlock").count() === 0 && await page.locator("dialog[open]").count() === 1);
-    pruefe("Z6c Seite funktioniert weiter (Einstellung Reaktivierung da) und keine JS-Fehler (außer dem erwarteten Ladefehler)", await page.locator("#einstForm").count() === 1 && jsFehler(konsole, /fahrschule_zahlungsdaten|zahlungs_mails/).length === 0, konsole.join(" | "));
+    pruefe("Z6c Seite funktioniert weiter (Themenliste da) und keine JS-Fehler (außer dem erwarteten Ladefehler)", await page.locator(".es-themen").count() === 1 && jsFehler(konsole, /fahrschule_zahlungsdaten|zahlungs_mails/).length === 0, konsole.join(" | "));
     // kurzer Netzfehler beim Laden: letzter Stand bleibt
     await ctx.close();
     const n = await oeffne({ nutzer: "sa-1", vorbereiten: vor() });

@@ -506,11 +506,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
   // Seitenleiste
-  // Werkstatt 11: flache Leiste, alle 11 Punkte immer sichtbar, keine Gruppen
+  // Werkstatt 11: flache Leiste, alle 12 Punkte immer sichtbar, keine Gruppen
   const sichtbar = () => page.$$eval("#nav .nav-punkt", (a) => a.filter((x) => x.offsetParent).length);
-  if ((await sichtbar()) !== 11) fehler("Seitenleiste: nicht alle 11 Punkte sichtbar (" + (await sichtbar()) + ")");
+  if ((await sichtbar()) !== 12) fehler("Seitenleiste: nicht alle 12 Punkte sichtbar (" + (await sichtbar()) + ")");
   if ((await page.locator("[data-gruppe]").count()) !== 0) fehler("Seitenleiste: es gibt noch Gruppen zum Auf- und Zuklappen");
-  const alle = 11;
+  const alle = 12;
   // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
   await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
@@ -585,8 +585,10 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
     const z = await page.evaluate((id) => window.__FAKE.tabellen.schueler.find((x) => x.id === id), sid);
     if (z.reakt_betrag !== 200 || !/Absprache mit Noah Muster/.test(z.reakt_notiz) || z.reakt_status !== "bezahlt") fehler("Reaktivierung gespeichert falsch: " + JSON.stringify([z.reakt_betrag, z.reakt_notiz, z.reakt_status]));
   }
-  // Einstellungen: nur Super-Admin ändert
-  if (!(await page.$("#einstForm input[name=betrag][disabled]"))) fehler("Einstellungen: Büro darf den Standardbetrag ändern");
+  // Einstellungen (jetzt unter #einstellungen, Thema „Preise & Pakete“): nur Super-Admin ändert
+  await page.goto(page.url().split("#")[0] + "#einstellungen?thema=preise");
+  await page.waitForTimeout(500);
+  if (!(await page.$("#esPreiseForm input[name=betrag][disabled]"))) fehler("Einstellungen: Büro darf den Standardbetrag ändern");
   if (konsole.length) fehler("Runde 2: Konsole: " + konsole.join(" | "));
   await ctx.close();
 }
@@ -2153,7 +2155,7 @@ async function k2Kontrast(page, sel) {
     if (klein.length) fehler(`K2 ${name}: Tippflächen unter 44 px: ${klein.join(", ")}`);
     await k2Breite(page, name + " Menü offen");
     const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
-    if (bereiche.length !== 11) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
+    if (bereiche.length !== 12) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
       await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
@@ -2226,8 +2228,8 @@ async function k2Kontrast(page, sel) {
   for (const [w, h] of [[901, 800], [1366, 860]]) {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
     const r = await page.evaluate(() => ({ nav: [...document.querySelectorAll(".nav-punkt")].filter((a) => a.offsetParent).length, menue: !!document.getElementById("menueKnopf").offsetParent, drucken: !!document.getElementById("drucken").offsetParent, wer: !!document.getElementById("werZeile").offsetParent, seite: Math.round(document.querySelector(".seite").getBoundingClientRect().width) }));
-    // Werkstatt 11: alle 11 Punkte der flachen Leiste sichtbar
-    if (r.nav !== 11) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
+    // Werkstatt 11: alle 12 Punkte der flachen Leiste sichtbar
+    if (r.nav !== 12) fehler(`K2 PC ${w}: Menü nicht sichtbar (${r.nav} Punkte)`);
     if (r.menue) fehler(`K2 PC ${w}: Knopf „Menü“ sichtbar`);
     if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
     if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);
