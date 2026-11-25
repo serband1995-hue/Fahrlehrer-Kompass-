@@ -195,13 +195,6 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 @keyframes spIn{from{opacity:0;transform:scale(.94) translateY(12px);}to{opacity:1;transform:none;}}
 
 /* ===== SHELL ===== */
-.sa-streifen{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 14px 6px;font-size:13.5px;font-weight:700;letter-spacing:.02em;line-height:1.2;color:#fff;background:#2b2d33;border-bottom:3px solid #e0b84f;position:relative;z-index:6;}
-.sa-streifen[hidden]{display:none;}
-.sa-streifen svg{width:18px;height:18px;flex:0 0 auto;color:#f0cd72;}
-.sa-streifen .sa-zusatz{font-weight:500;opacity:.92;}
-.sa-streifen.sa-tippbar{min-height:44px;cursor:pointer;flex-wrap:wrap;text-align:center;}
-.sa-streifen.sa-tippbar:active{filter:brightness(1.15);}
-.app.mit-sa-streifen .topbar{padding-top:12px;}
 .app{display:flex;flex-direction:column;height:100dvh;position:relative;overflow:hidden;z-index:1;}
 .topbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;
   padding:calc(8px + env(safe-area-inset-top)) var(--pad) 8px;
@@ -1988,6 +1981,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <script src="kompass-rechnen.js"></script>
 <script src="kompass-einstellungen.js"></script>
 <script src="neuigkeiten.js"></script>
+<script src="startseite.js"></script>
 <script src="lernszenen.js" defer></script>
 <script src="lernszenen-stadt.js" defer></script>
 <script src="lernszenen-neu-a.js" defer></script>
@@ -2015,8 +2009,6 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
   border-radius:24px;padding:32px 28px;
   box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(190,220,200,.08);
 }
-.lo-buero{margin-top:18px;padding-top:16px;border-top:1px solid rgba(150,200,165,.16);display:grid;gap:8px;text-align:center;font-size:13px;color:var(--muted);}
-.lo-buero a{display:block;padding:12px 14px;border-radius:14px;border:1px solid var(--line-soft);background:var(--surface);color:var(--txt);font-weight:700;text-decoration:none;font-size:15px;}
 .lo-field{margin-bottom:18px;}
 .lo-field label{display:block;font-size:11px;color:var(--mint-soft);margin-bottom:7px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
 .lo-field-wrap{position:relative;}
@@ -2850,7 +2842,8 @@ body:not(.light){--clay-text:#e8a283;}
     <button class="lo-btn" id="loBtn" onclick="doLogin()">Einloggen</button>
     <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;min-height:44px;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
-    <div class="lo-buero"><span>Du arbeitest im Büro oder in der Leitung?</span><a href="buero.html">Büro-Anmeldung (am PC)</a></div>
+    <!-- W16: kein eigener Link zur Büro-Anmeldung mehr. Nach der Anmeldung gilt die Startseite (Leitung und Super-Admin wählen sie
+         in den Einstellungen); das Büro startet vorerst wie bisher in der App, bis die Büro-Seite Urlaub, Schichtplan und Backups hat. -->
   </div>
 </div>
 
@@ -2879,8 +2872,7 @@ try{ var _tok=false,_bio=false; for(var _i=0;_i<localStorage.length;_i++){ var _
 if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden"); window._loginVersteckt=true; } }catch(e){}
 </script>
 <div class="app">
-  <!-- Streifen nur für den Super-Admin: zeigt, dass man mit allen Rechten angemeldet ist -->
-  <div class="sa-streifen" id="saStreifen" role="status" hidden><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"/><rect x="5" y="20" width="14" height="2" rx="1"/></svg><span>Super-Admin</span><span class="sa-zusatz">· alle Rechte</span></div>
+  <!-- W16: Der Streifen oben (Super-Admin / „Du bist Leitung · tippen“) ist weggefallen. Gewechselt wird nur in den Einstellungen (Startseite). -->
   <header class="topbar">
     <div class="tb-side tb-left">
       <button class="icon-btn" id="menuBtn" aria-label="Menü" hidden>
@@ -4171,8 +4163,8 @@ function _uidAus(sessionData) {
 function isSuperAdmin() {
   return _authProfile && _authProfile.rolle === "super_admin";
 }
-// Leitung, die selbst fährt (🗣 Serband 21.11.2026, Jelena): eigene Fahrlehrer-Ansicht wie der Betreiber,
-// die Gesamtübersicht über das Menü. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
+// Leitung, die selbst fährt (🗣 Serband 21.11.2026, Jelena): eigene Fahrlehrer-Ansicht wie der Betreiber.
+// W16: Die Gesamtübersicht wählt sie als Startseite in den Einstellungen. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
 function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
 function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
 // K12/K17: Die Gesamtansicht (Gesamtübersicht) und der Weg zur Büro-Seite gehören nur Büro, Leitung und Super-Admin.
@@ -4186,28 +4178,41 @@ function _fsNurUnterrichtende(res) {
 }
 // K13: „Abmelden“ steht ganz unten unter „Mehr“ (nicht mehr in den Einstellungen); nur wenn jemand angemeldet ist
 function _zeigeAbmelden() { const b = document.getElementById("drawerLogout"); if (b) b.hidden = !_authUser; }
-// Streifen oben „Super-Admin · alle Rechte“: nur sichtbar, wenn man als Super-Admin angemeldet ist
-function _zeigeSaStreifen() {
-  const el = document.getElementById("saStreifen");
-  if (!el) return;
-  const an = _hatAdminUmschalter();
-  _zeigeAbmelden();
-  el.hidden = !an;
-  const t = el.querySelectorAll("span");
-  // Leitung, die selbst fährt: Streifen sagt, wo sie gerade ist, und wechselt per Tipp (🗣 Design-Prüfung 21.11.)
-  const leitung = !isSuperAdmin() && an;
-  if (t[0]) t[0].textContent = isSuperAdmin() ? "Super-Admin" : _fsAgg ? "Ganze Fahrschule" : "Du bist Leitung";
-  if (t[1]) t[1].textContent = isSuperAdmin() ? "· alle Rechte" : _fsAgg ? "· zurück zu mir: tippen" : "· ganze Fahrschule: tippen";
-  el.classList.toggle("sa-tippbar", leitung);
-  if (leitung) { el.setAttribute("role", "button"); el.tabIndex = 0; } else { el.setAttribute("role", "status"); el.removeAttribute("tabindex"); }
-  if (!el._tippGebunden) {
-    el._tippGebunden = true;
-    const wechseln = () => { if (!el.classList.contains("sa-tippbar")) return; if (_fsAgg) _fsExitAggMode(); else _fsEnterAggMode((_authProfile && _authProfile.fahrschule_id) || ""); };
-    el.addEventListener("click", wechseln);
-    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); wechseln(); } });
+// W16 (🗣 Serband 24.11.2026): Der Streifen oben zum Umschalten ist weggefallen, gewechselt wird nur noch in den
+// Einstellungen („Startseite“). Der Name bleibt, weil Anmeldung und Ansichtswechsel ihn aufrufen (Abmelden-Knopf).
+function _zeigeSaStreifen() { _zeigeAbmelden(); }
+// W16: Startseite je Rolle (startseite.js): Fahrlehrer → eigene Ansicht, Büro → Büro-Seite, Leitung und Super-Admin wählen.
+// Ohne das Modul (alter Zwischenspeicher) gilt der bisherige Start; ohne bekannte Rolle (Offline-Start) wird nie weitergeleitet.
+function _startZiel(p) { try { return (window.KS_START && KS_START.ziel(p || _authProfile)) || null; } catch (e) { return null; } }
+function _startHatWahl(p) { try { return !!(window.KS_START && KS_START.hatWahl(p || _authProfile)); } catch (e) { return false; } }
+// Passwort-Link offen: erst das neue Passwort festlegen, dann weiter (sonst verschwände das Fenster mit der Seite)
+let _startWeiterWartet = false;
+function _zurBueroWeiter() {
+  if (_startWeiterWartet || !_authUser || !window.KS_START) return false;
+  return !!KS_START.weiter("buero");
+}
+// W16 (Richter): Wer gerade etwas eingibt (Formular geändert, Fenster offen, Feld aktiv), wird nie von selbst weggeschickt.
+function _eingabeOffen() {
+  try {
+    if (_seiteGeaendert && document.querySelector("#view [data-entwurf]")) return true;
+    if (typeof sheetOffen === "function" && sheetOffen()) return true;
+    const a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "search" && a.closest("#view,#sheet")) return true;
+  } catch (e) {}
+  return false;
+}
+const _BLEIBT_TEXT = "Du bleibst in der App, weil du gerade etwas eingibst. Büro-Seite: Menü › Einstellungen › Startseite.";
+// Startseite „Büro-Seite“ beim Start oder nach dem neuen Passwort: mit eigenem Stand erst alles hochladen
+// (sonst bliebe Neues nur auf diesem Gerät), dann weiter. true = Seite wird gewechselt.
+async function _startZumBuero() {
+  if (_startWeiterWartet || !_authUser || !window.KS_START || _startZiel() !== "buero" || !KS_START.weiterMoeglich("buero")) return false;
+  if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+  if (!_nurGesamtansicht()) {
+    toast("Startseite Büro-Seite: sichere kurz deine Daten …");
+    if (!(await _eigenesSichern(8000))) { toast("Nicht alles gesichert (Internet?). Du bleibst in der App."); return false; }
+    if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
   }
-  const app = document.querySelector(".app");
-  if (app) app.classList.toggle("mit-sa-streifen", an);
+  return _zurBueroWeiter();
 }
 
 /* ---- Lokale Daten gehören genau einem Konto ----
@@ -4232,6 +4237,7 @@ function _lokaleNutzerdatenLoeschen() {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
+  try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) {} // W16: Schleifen-Merker gehört zur Sitzung
   try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
   try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
 }
@@ -4342,14 +4348,17 @@ function _openNeuesPasswortSheet(){
       if(error)throw error;
       closeSheet(); toast("Passwort geändert ✓ — du bist jetzt angemeldet.");
       window.location.hash="";
+      _startWeiterWartet=false; // W16: jetzt darf die Startseite gelten (Büro → Büro-Seite)
       const {data:sessionData}=await supa.auth.getSession();
       if(sessionData&&sessionData.session&&!_authUser) afterLogin(sessionData.session.user);
+      else if(_authUser&&_startZiel()==="buero") setTimeout(()=>{ _startZumBuero(); },1500); // wie beim Start: erst sichern
     }catch(e){ toast("Fehler: "+(e.message||"unbekannt")); }
   });
 }
 // Beim Start merken: supabase-js entfernt den Link-Teil der Adresse, sobald es die Sitzung übernommen hat.
 const _PW_RESET_LINK = window.location.hash.includes("type=recovery");
 let _pwResetAusstehend = _PW_RESET_LINK; // gilt nur für die erste Anmeldung auf dieser Seite
+if(_PW_RESET_LINK) _startWeiterWartet = true; // W16: Büro erst nach dem neuen Passwort zur Büro-Seite
 if(_PW_RESET_LINK){
   if(window.supabase) _checkPasswordRecovery();
   else setTimeout(_checkPasswordRecovery,800);
@@ -4489,7 +4498,7 @@ async function afterLogin(user) {
       return;
     }
   }
-  // Umschalter "Admin-Gesamtübersicht" einblenden, nur für dich
+  // Menü der eigenen Ansicht festhalten (W16: ohne Umschalter; gewechselt wird in den Einstellungen)
   if (_hatAdminUmschalter()) {
     _fsSetDrawer(false);
   }
@@ -4504,6 +4513,11 @@ async function afterLogin(user) {
   await _continueLoginFlow(prof);
 }
 async function _continueLoginFlow(prof) {
+  // W16 (🗣 Serband 24.11.2026): Startseite je Rolle. Büro, und wer die Büro-Seite als Startseite gewählt hat, geht gleich zu
+  // buero.html. Geht das nicht (Passwort-Link offen, Weiterleitungs-Schleife), startet die App wie bisher.
+  // Rollen mit eigenem Stand (Super-Admin, Leitung, die selbst fährt) sichern vorher alles (unten, nach dem Abgleich).
+  let startZiel = _startZiel(prof);
+  if (startZiel === "buero" && _nurGesamtansicht(prof)) { if (!_eingabeOffen() && _zurBueroWeiter()) return; startZiel = null; }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (_nurGesamtansicht(prof)) {
     document.getElementById("loginOverlay").classList.add("hidden");
@@ -4544,6 +4558,13 @@ async function _continueLoginFlow(prof) {
     _syncTermineBridge();
     _syncPruefungenBridge();
   }
+  // W16: Leitung, die selbst fährt, oder Super-Admin mit der Startseite „Fahrschule“: nach dem eigenen Abgleich in die
+  // Gesamtansicht (wie früher der Tipp auf den Streifen; die eigenen Daten bleiben gesichert und werden weiter abgeglichen).
+  if (startZiel === "gesamt" && !_fsAgg && _fsDarfGesamt() && prof && prof.fahrschule_id) {
+    if (!(await _fsEnterAggMode(prof.fahrschule_id)) && !_fsAgg) toast("Fahrschule gerade nicht erreichbar. Du bist in deiner Fahrlehrer-Ansicht.");
+  }
+  // Startseite „Büro-Seite“ mit eigenem Stand: erst alles hochladen, dann weiter (nicht, wenn gerade etwas eingegeben wird)
+  if (startZiel === "buero") await _startZumBuero();
 }
 // Zeigt die Nutzungsbedingungen als blockierendes Overlay - erst nach Scrollen ans Ende UND
 // Checkbox wird "Bestätigen" aktiv. Erst danach geht der normale Login-Ablauf weiter.
@@ -4719,6 +4740,17 @@ async function _alleSeiten(bau) {
 }
 // Gemeinsamer Ablauf der drei Brücken: nur Geändertes schreiben, nur Bekanntes löschen.
 // Liefert die IDs, die geschrieben wurden.
+// W16: ganze Läufe der drei Brücken merken (beim Schüler samt Fragebogen-Kopie), damit ein Wechsel zur Büro-Seite sie abwarten
+// kann (die Büro-Seite liest genau diese Tabellen). Ergebnis false = nicht ganz angekommen oder verschoben; _upsertRobust
+// meldet Netzfehler ebenfalls hier (Rechte-Fehler nicht: die gingen auch beim nächsten Versuch nicht, sonst käme man nie weg).
+const _brueckenLauf = new Set();
+let _brueckenOk = true;
+function _brueckeLauf(fn) {
+  const p = (async () => { try { return await fn(); } catch (e) { return false; } })();
+  _brueckenLauf.add(p);
+  p.then(r => { _brueckenLauf.delete(p); if (r === false) _brueckenOk = false; });
+  return p;
+}
 async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
@@ -4804,7 +4836,7 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     // Netzfehler: ganzer Block später. Andere Fehler (Rechte, ungültige Zeile): einzeln weiter, damit eine
     // fehlerhafte Zeile nicht die übrigen blockiert.
     const netzFehler = !error.code || /^PGRST|^5\d\d$/.test(String(error.code)) || /fetch|network|timeout/i.test(error.message || "");
-    if (netzFehler && !rechteFehler) { console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
+    if (netzFehler && !rechteFehler) { _brueckenOk = false; console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
       if (!e1) ok.push(r[konflikt]); else {
@@ -5353,6 +5385,11 @@ const _REAKT_REGEL_KEY="kompass_reakt_regel"; // je Fahrschule: kompass_reakt_re
 let _reaktRegelSoll=null; // für welche Fahrschule die Regel gerade gilt (eigene oder die der Gesamtansicht)
 function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
 function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY+":"+fs)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
+/* W13 PR 2: Länge einer Sonderfahrt-Einheit (ein Kästchen im Plan) je Fahrschule, Vorgabe 45 Minuten (erlaubt 30–90). Quelle:
+   fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten (Hauptsitzung 25.11.2026), gelesen über KE (W11) – KE lädt
+   beim Start, in der Gesamtansicht und zurück, merkt je Fahrschule und leert beim Abmelden. Gelesen wird der Wert sonst NUR über KR.sonderMinuten(). */
+function _sonderMinAusKE(){ if(window.KR&&KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE&&KE.zahl?KE.zahl("fahrstunden.sonderfahrt","minuten",45,30,90):null); }
+window.addEventListener("ke:geladen",_sonderMinAusKE);
 // fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
 async function _ladeReaktRegel(supa,fsId){
   if(!window.KR||!KR.setzeReaktRegel)return;
@@ -5523,7 +5560,7 @@ async function pullSchuelerZuweisungen() {
     const supa = getSupa();
     const gen = _abglGen;
     // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
-    if (window.KE) KE.lade(supa, _authProfile.fahrschule_id); // W11: Einstellungen der eigenen Fahrschule (wirft nie)
+    if (window.KE) { KE.lade(supa, _authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: Einstellungen der eigenen Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
     const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
@@ -5746,6 +5783,8 @@ async function pullTermineZuweisungen() {
       // von der Uhrzeit des Geräts. Ohne Gedächtnis entscheidet die Zeit.
       if (bekannt || !local._syncedAt || remoteTime > local._syncedAt) {
         Object.assign(local, merged, { _syncedAt: remoteTime });
+        // W13 (Daten-Prüfer): Verknüpfung mit dem Plan wie der Server – fehlt sie dort, auch hier weg (Object.assign löscht nichts)
+        for (const k of ["srcSonder", "srcSonderIdx"]) if (!(k in merged)) delete local[k];
         mem.termine[r.id] = _abglWertVon("termine", local);
         geaendert++;
       }
@@ -5923,6 +5962,7 @@ async function checkSession() {
   }
   if (session && session.user) {
     const direkt = !!(nachAnmeldung && nachAnmeldung.uid === session.user.id);
+    if (direkt && nachAnmeldung.pwReset) _startWeiterWartet = true; // W16: erst das neue Passwort, dann die Startseite
     const darfRein = direkt || await _bioVerifyOnUnlock(session.user.id);
     if (darfRein) await afterLogin(session.user); else _loginZeigen();
     if (direkt && nachAnmeldung.pwReset && _authUser) _openNeuesPasswortSheet();
@@ -6009,7 +6049,8 @@ let _fsPersonalBackup=null;
 let _fsBaseline=null; // letzter geladener Stand, für Diff-Erkennung beim Speichern
 let _normalDrawerNavHTML=null;
 
-function _fsDrawerNavHTML(zeigeZurueck){
+// W16: kein Menüpunkt „Zu meiner Fahrlehrer-Ansicht“ mehr; wer eine Startseite wählen kann, findet sie unter „Einstellungen“
+function _fsDrawerNavHTML(zeigeEinstellungen){
   if(!_fsDarfGesamt())return ""; // K12/K17: ein Fahrlehrer bekommt diese Schublade nie
   return `
     ${_fsDarfBueroSeite()?`<a class="nav-item" href="buero.html" onclick="return _fsZurBueroSeite(event)" style="text-decoration:none;font-weight:700;">
@@ -6039,10 +6080,10 @@ function _fsDrawerNavHTML(zeigeZurueck){
     <button class="nav-item" data-nav="neuigkeiten">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
       Neuigkeiten</button>
-    ${zeigeZurueck?`<div class="nav-sep"></div>
-    <button class="nav-item primary" data-nav="fs_exit">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Zu meiner Fahrlehrer-Ansicht</button>`:''}`;
+    ${zeigeEinstellungen?`<div class="nav-sep"></div>
+    <button class="nav-item" data-nav="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Einstellungen</button>`:''}`;
 }
 
 function _fsSetDrawer(fahrschuleMode){
@@ -6050,7 +6091,7 @@ function _fsSetDrawer(fahrschuleMode){
   if(!navEl)return;
   if(_normalDrawerNavHTML===null) _normalDrawerNavHTML=navEl.innerHTML;
   if(fahrschuleMode&&!_fsDarfGesamt())fahrschuleMode=false;
-  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_hatAdminUmschalter()) : (_normalDrawerNavHTML+_fsSuperAdminToggleBtn());
+  navEl.innerHTML = fahrschuleMode ? _fsDrawerNavHTML(_startHatWahl()) : _normalDrawerNavHTML; // W16: kein Umschalter mehr im Menü
   const brandEye=document.querySelector(".brand-eye");
   if(brandEye) brandEye.textContent = fahrschuleMode && _fsAgg ? (_fsAgg.fahrschule.name||"Fahrschule") : (_authProfile&&_authProfile.name?"Fahrlehrer "+_authProfile.name:"Fahrlehrer");
 }
@@ -6071,6 +6112,7 @@ function _fsMapTermin(row,lehrerName){
   return Object.assign({id:row.id,sid:row.schueler_id,date:row.datum,von:row.von,bis:row.bis,art:row.art,fahrzeug:row.fahrzeug,status:row.status},row.payload||{},
     {_fahrlehrerId:row.fahrlehrer_id,_fahrlehrerName:lehrerName(row.fahrlehrer_id),id:row.id,sid:row.schueler_id,date:row.datum,von:row.von,bis:row.bis,art:row.art,fahrzeug:row.fahrzeug,status:row.status,
      buero_fc_status:row.buero_fc_status||"offen", buero_fc_nachgereicht_am:row.buero_fc_nachgereicht_am||null,
+     buero_fc_anzahl:("buero_fc_anzahl" in row)?row.buero_fc_anzahl:undefined, // W13: vom Büro gewählte Zahl; undefined = alte Datenbank
      theorie_bestanden:row.theorie_bestanden, theorie_gesperrt_bis:row.theorie_gesperrt_bis||null,
      interessent_name:row.interessent_name||"", interessent_telefon:row.interessent_telefon||"", kurs_bezahlt:!!row.kurs_bezahlt});
 }
@@ -6164,7 +6206,7 @@ async function _fsEnterAggMode(fahrschuleId){
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE) KE.lade(getSupa(),fahrschuleId); // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht)
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6198,7 +6240,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
-  if(window.KE&&_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); // W11: wieder die Einstellungen der eigenen Fahrschule
+  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -6224,12 +6266,6 @@ async function _fsRefreshAggData(){
     if(offenT.length) DB.lessons=[...DB.lessons,...offenT];
     if(offenP.length) DB.exams=[...DB.exams,...offenP];
   }
-}
-function _fsSuperAdminToggleBtn(){
-  if(!_hatAdminUmschalter()||!_fsDarfGesamt())return "";
-  return `<button class="nav-item" data-nav="__fstoggle" onclick="${_fsAgg?'_fsExitAggMode()':`_fsEnterAggMode(${_jsArg((_authProfile&&_authProfile.fahrschule_id)||'')})`}" style="border-top:1px solid var(--line);">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M14 9h1M14 13h1"/></svg>
-    ${_fsAgg?'Zu meiner Fahrlehrer-Ansicht':'Admin-Gesamtübersicht'}</button>`;
 }
 
 // K2: Knopf „Zur Büro-Seite“ nur für Leitung, Büro und Super-Admin
@@ -6268,7 +6304,7 @@ async function _fsZurBueroSeite(ev){
       if(!ok&&!confirm("Nicht alle Änderungen konnten gespeichert werden. Trotzdem zur Büro-Seite? Ungespeichertes geht dann verloren."))return false;
     }
     location.href="buero.html";
-    return false;
+    return true; // W16: gewechselt (onclick nutzt den Wert nicht, preventDefault ist oben schon geschehen)
   }finally{
     _fsZurBueroLaeuft=false;
     if(hinweisAn){ const t=$("#toast"); if(t.textContent==="Speichere Änderungen …")t.classList.remove("show"); }
@@ -7411,6 +7447,14 @@ async function fsFcStatus(terminId,status,nachgereicht,zurueckZurListe){
   const supa=getSupa();
   const updates={buero_fc_status:status,aktualisiert_am:new Date().toISOString()};
   if(nachgereicht) updates.buero_fc_nachgereicht_am=todayISO();
+  else if(status!=="abgegeben") updates.buero_fc_nachgereicht_am=null; // Richter W13 (Kann 2): „fehlt“/„offen“ ohne altes Nachreich-Datum, wie im Büro
+  // W13: Hier gibt es keine Zahl zur Wahl: „Abgegeben“ = wie vom Fahrlehrer vermerkt, „nachträglich abgegeben“ = alle gebuchten
+  // (wie im Büro). Nur wenn die Spalte buero_fc_anzahl schon existiert (alte Datenbank: sonst schlüge das Speichern fehl).
+  // Schon abgehakt und noch einmal „Abgegeben“: die Zahl vom Büro bleibt (Büro-Prüfer: sonst gälte still wieder der Vermerk)
+  const l=(DB.lessons||[]).find(x=>x.id===terminId);
+  if((DB.lessons||[]).some(x=>x.buero_fc_anzahl!==undefined)&&!(l&&l.buero_fc_status==="abgegeben"&&status==="abgegeben"&&!nachgereicht)){
+    updates.buero_fc_anzahl=nachgereicht&&l&&window.KR&&KR.fcGebucht?(KR.fcGebucht(l)||null):null;
+  }
   const {error}=await supa.from("kalender_termine").update(updates).eq("id",terminId);
   if(error){toast("Fehler: "+error.message);return;}
   toast(nachgereicht?"Als nachträglich abgegeben markiert ✓":"Aktualisiert ✓");
@@ -8018,7 +8062,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.5";
+const APP_VERSION="2026.11.25.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8134,7 +8178,7 @@ function _fsSyncAggJetzt(){
    Löschen (Entscheidung Hauptsitzung 24.11.2026): Wurde der Eintrag inzwischen woanders geändert, wird er nicht gelöscht,
    er erscheint wieder und ein Hinweis bittet, ihn nochmal anzusehen. */
 // Spalten-Kopien (zeigt _fsMapTermin aus eigenen Spalten) und Merker: gehören nie in die Nutzlast
-const _FS_NUR_SPALTE=["korrekturGrund","_syncedAt","_fahrlehrerId","_fahrlehrerName","buero_fc_status","buero_fc_nachgereicht_am",
+const _FS_NUR_SPALTE=["korrekturGrund","_syncedAt","_fahrlehrerId","_fahrlehrerName","buero_fc_status","buero_fc_nachgereicht_am","buero_fc_anzahl",
   "theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
 const _FS_ART={
   kalender_termine:{ kern:["id","sid","date","von","bis","art","fahrzeug","status"],
@@ -8219,7 +8263,7 @@ async function _fsZeilenSicher(supa,tabelle,aend,nowIso){
 // Mitgezählt werden auch die Büro-Spalten (Kurs bezahlt, FC-Status, Theorie …), soweit die Ansicht sie beim Laden kannte
 // (ein hier neu angelegter Eintrag kennt sie nicht und bleibt löschbar). Büro-Prüfer 24.11.2026.
 // Liefert {loeschen:[id], bleibt:[Server-Zeile], weg:[id] (schon gelöscht oder nicht mehr sichtbar)}.
-const _FS_BUERO_SPALTEN=["buero_fc_status","buero_fc_nachgereicht_am","theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
+const _FS_BUERO_SPALTEN=["buero_fc_status","buero_fc_nachgereicht_am","buero_fc_anzahl","theorie_bestanden","theorie_gesperrt_bis","interessent_name","interessent_telefon","kurs_bezahlt"];
 async function _fsLoeschenPruefen(supa,tabelle,liste){
   const a=_FS_ART[tabelle], erg={loeschen:[],bleibt:[],weg:[]};
   if(!liste.length)return erg;
@@ -8465,11 +8509,12 @@ let _schuelerSyncDebounce=null;
 function _syncSchuelerBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.students)return;
   clearTimeout(_schuelerSyncDebounce);
-  _schuelerSyncDebounce=setTimeout(async()=>{
+  _schuelerSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     // Stand erst beim Auslösen lesen - und nie den Fahrschul-Bestand der Gesamtansicht.
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students)||_lokalerSpeicherGehoertAnderem())return;
     // Erst nach einem Abruf schreiben: sonst überschriebe ein leeres Gedächtnis Büro-Änderungen.
-    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); return; }
+    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); return false; }
+    let allesOben=true;
     try{
       const supa=getSupa();
       // Nur geänderte Schüler hochladen; als gelöscht markieren nur, was dieses Gerät kannte.
@@ -8482,7 +8527,7 @@ function _syncSchuelerBridge(warte){
         const bogenOk=new Set(await _upsertRobust("schueler_privat",boegen,"schueler_id"));
         // Fragebogen nicht angekommen: Schüler gilt als nicht abgeglichen, der nächste Lauf versucht es erneut.
         const fehlt=boegen.filter(b=>!bogenOk.has(b.schueler_id));
-        if(fehlt.length){ const m=_abglLaden(); fehlt.forEach(b=>delete m.schueler[b.schueler_id]); _abglSpeichern(m); }
+        if(fehlt.length){ allesOben=false; const m=_abglLaden(); fehlt.forEach(b=>delete m.schueler[b.schueler_id]); _abglSpeichern(m); }
       }
       // Auslastung fürs Fahrschule-Dashboard mitschicken (keine privaten Kalenderdaten, nur die Kennzahl)
       // capacityStats() rechnet auf DB - in der Gesamtansicht wäre das der Bestand aller Fahrlehrer.
@@ -8490,9 +8535,10 @@ function _syncSchuelerBridge(warte){
         const cap=capacityStats();
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
-    }catch(e){ console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
+    }catch(e){ allesOben=false; console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
     try{ _theorieOffenNachholen(); }catch(e3){} // erst nach der Schüler-Brücke: ein neuer Schüler ist jetzt auf dem Server
-  },warte===0?0:4000);
+    return allesOben;
+  }),warte===0?0:4000);
 }
 
 /* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
@@ -8503,16 +8549,16 @@ let _termineSyncDebounce=null;
 function _syncTermineBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
   clearTimeout(_termineSyncDebounce);
-  _termineSyncDebounce=setTimeout(async()=>{
+  _termineSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
-    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return; }
+    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return false; }
     try{ _absagenNachholen(); _stornoAufraeumen(); _theorieOffenNachholen(); }catch(e){}
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false), loeschWertFuer:_stornoWert });
       if(geschrieben.length) _lokalAblegen();
-    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); }
-  },warte===0?0:4000);
+    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); return false; }
+  }),warte===0?0:4000);
 }
 
 /* ===== Prüfungen-Synchronisations-Brücke (gleiches Prinzip) ===== */
@@ -8520,14 +8566,14 @@ let _pruefungenSyncDebounce=null;
 function _syncPruefungenBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
   clearTimeout(_pruefungenSyncDebounce);
-  _pruefungenSyncDebounce=setTimeout(async()=>{
+  _pruefungenSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams)||_lokalerSpeicherGehoertAnderem())return;
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_pruefungen", art:"pruefungen", eintraege:P.exams, zeileVon:_pruefungZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
-    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); }
-  },warte===0?0:4000);
+    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); return false; }
+  }),warte===0?0:4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
    Warteliste-Zuordnung entstehen konnten (z.B. derselbe Schüler in zwei Terminen gleichzeitig).
@@ -9060,7 +9106,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
   if(!b)return;
   if(!_seiteVerlassenOk())return; // ungespeicherte Formular-Eingaben: erst fragen (wie Zurück und Reiterleiste)
   const nav=b.dataset.nav;closeDrawer();
-  if(/^fs_/.test(nav)&&nav!=="fs_exit"&&!_fsDarfGesamt())return; // K12: Gesamtansicht nur für Büro, Leitung, Super-Admin
+  if(/^fs_/.test(nav)&&!_fsDarfGesamt())return; // K12: Gesamtansicht nur für Büro, Leitung, Super-Admin
   _fsFilterWeg();
   setTimeout(()=>{if(nav==="todos")routeTodos();
     else if(nav==="stats")routeStats("cur");
@@ -9074,8 +9120,7 @@ document.querySelector(".drawer-nav").addEventListener("click",(e)=>{
     else if(nav==="fs_lehrer")routeFahrschuleLehrer();
     else if(nav==="fs_fahrzeuge")routeFahrschuleFahrzeuge();
     else if(nav==="fs_stats")routeFahrschuleStatistik();
-    else if(nav==="fs_kalender"){routeKalender();if(_fsAgg)setFab(false);}
-    else if(nav==="fs_exit")_fsExitAggMode();},170);
+    else if(nav==="fs_kalender"){routeKalender();if(_fsAgg)setFab(false);}},170);
 });
 // Plus-Knopf je nach Seite: "termin" (Heute, Kalender) oder true = neuer Schüler (Schülerliste).
 let _fabArt="schueler";
@@ -10264,13 +10309,21 @@ let _paketLadeNr = 0; const _paketNrJe = {};
 // Paket-Schüler im Minutentakt, ohne Unterschriften aus der Nutzlast). schueler_id -> {zeit, rows} bzw. {fehler}
 const _paketTermine = {}, _paketTermineLaeuft = {};
 const _PAKET_TERMINE_MS = 60000;
+// Gibt es kalender_termine.buero_fc_anzahl (Migration 20261125_w13_01)? Fehlt sie, 10 Minuten ohne fragen, dann wieder mit
+// (Fable Z1: sonst rechnete eine vor der Migration geöffnete App bis zum Neustart nach dem Vermerk). Zeit des letzten Fehlschlags
+let _fcAnzahlFehlt = 0;
 async function _paketTermineLaden(sid){
   if(_paketTermineLaeuft[sid]) return;
   _paketTermineLaeuft[sid]=true;
   try{
     const supa=getSupa(); if(!supa) throw new Error("offline");
-    const rows=await _alleSeiten(()=>supa.from("kalender_termine").select("id,art,datum,von,bis,status,buero_fc_status,pst:payload->>status,sonderArt:payload->>sonderArt,srcSonder:payload->>srcSonder,fc:payload->>fc").eq("schueler_id",sid).eq("geloescht",false));
-    _paketTermine[sid]={zeit:Date.now(),rows:rows.map(r=>({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:r.pst||r.status,sonderArt:r.sonderArt||null,srcSonder:r.srcSonder||null,fc:r.fc||null,bueroFc:r.buero_fc_status||"offen"}))};
+    // W13: mit der vom Büro gewählten Zahl (buero_fc_anzahl); alte Datenbank ohne die Spalte: einmal ohne abfragen
+    const abfrage=mitZahl=>_alleSeiten(()=>supa.from("kalender_termine").select("id,art,datum,von,bis,status,buero_fc_status"+(mitZahl?",buero_fc_anzahl":"")+",pst:payload->>status,sonderArt:payload->>sonderArt,srcSonder:payload->>srcSonder,fc:payload->>fc").eq("schueler_id",sid).eq("geloescht",false));
+    let rows;
+    const mitZahl=!_fcAnzahlFehlt||Date.now()-_fcAnzahlFehlt>600000;
+    try{ rows=await abfrage(mitZahl); }
+    catch(e){ if(!mitZahl||!/buero_fc_anzahl/.test(String(e&&e.message||"")))throw e; _fcAnzahlFehlt=Date.now(); rows=await abfrage(false); }
+    _paketTermine[sid]={zeit:Date.now(),rows:rows.map(r=>({art:r.art,datum:r.datum,von:r.von,bis:r.bis,status:r.pst||r.status,sonderArt:r.sonderArt||null,srcSonder:r.srcSonder||null,fc:r.fc||null,bueroFc:r.buero_fc_status||"offen",bueroFcAnzahl:r.buero_fc_anzahl==null?null:r.buero_fc_anzahl}))};
   }catch(e){ _paketTermine[sid]=Object.assign({},_paketTermine[sid],{fehler:Date.now()}); } // alten Stand behalten
   finally{ delete _paketTermineLaeuft[sid]; }
   const el=document.querySelector(`.paket-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
@@ -10297,10 +10350,10 @@ async function _ladePakete(supa, ids){
    Fahrcheck-Haken des Büros (Gesamtansicht: DB.lessons, sonst _paketTermine) und die Prüfungen mit Ergebnis (DB.exams).
    Liefert {q} oder {laden:true} bzw. {fehler:true}, solange keine Termine da sind. */
 function _paketQuelle(s){
-  if(!window.KR||!KR.paketQuelleAusTerminen||!KR.fcFuersBuero||!KR.paketHinweise)return {fehler:true}; // alte kompass-rechnen.js: lieber keine Zahl als eine falsche
+  if(!window.KR||!KR.paketQuelleAusTerminen||!KR.fcFuersBuero||!KR.fcVomBuero||!KR.paketHinweise)return {fehler:true}; // alte kompass-rechnen.js: lieber keine Zahl als eine falsche
   let termine;
   if(_fsAgg){
-    termine=(DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,sonderArt:l.sonderArt||null,srcSonder:l.srcSonder||null,fc:l.fc||null,bueroFc:l.buero_fc_status||"offen"}));
+    termine=(DB.lessons||[]).filter(l=>l.sid===s.id).map(l=>({art:l.art,datum:l.date,von:l.von,bis:l.bis,status:l.status,sonderArt:l.sonderArt||null,srcSonder:l.srcSonder||null,fc:l.fc||null,bueroFc:l.buero_fc_status||"offen",bueroFcAnzahl:l.buero_fc_anzahl==null?null:l.buero_fc_anzahl}));
   }else{
     const x=_paketTermine[s.id]||{};
     if(!_paketTermineLaeuft[s.id]&&(!x.zeit||Date.now()-x.zeit>_PAKET_TERMINE_MS)&&!(x.fehler&&Date.now()-x.fehler<_PAKET_TERMINE_MS)) setTimeout(()=>_paketTermineLaden(s.id),0);
@@ -10738,6 +10791,48 @@ function spaetOffenWarnung(s){
 }
 // Sonderfahrt-Notiz: vorn steht das Label, dahinter angehängte Notizen (z. B. aus dem Fahrstunden-Modus) bleiben erhalten.
 function _sonderNotiz(alt,label){ const t=String(alt||"").split(" · "); return t.length>1?[label].concat(t.slice(1)).join(" · "):label; }
+/* W13 PR 2: Ein Sonder-Termin belegt so viele Kästchen, wie Sonderfahrt-Einheiten hineinpassen (KR.sonderEinheiten:
+   90 Minuten = 2 Kästchen bei 45 Minuten je Einheit). l.srcSonder = Schlüssel des ERSTEN Kästchens (alte Geräte lesen nur ihn),
+   l.srcSonderIdx = alle belegten Kästchen (nur bei mehr als einem). Belegt werden das gewählte Kästchen und danach die nächsten
+   freien (nicht abgehakt, an keinem anderen Termin), höchstens bis zum Soll. Von Hand abgehakte Kästchen bleiben, wie sie sind. */
+function _sfEinh(von,bis){ return (window.KR&&KR.sonderEinheiten)?KR.sonderEinheiten(von,bis):1; }
+function _sfIdx(l){
+  if(!l||!l.srcSonder)return [];
+  const i0=+String(l.srcSonder).split(":")[2]; if(!Number.isInteger(i0)||i0<0)return [];
+  // Die Liste gilt nur, wenn sie mit dem Kästchen aus srcSonder beginnt (Fable F3: ein altes Gerät setzt srcSonder neu und lässt die Liste stehen)
+  const roh=Array.isArray(l.srcSonderIdx)?l.srcSonderIdx.map(Number):[];
+  if(!roh.length||roh[0]!==i0)return [i0];
+  const a=roh.filter(n=>Number.isInteger(n)&&n>=0&&n!==i0);
+  return [i0].concat(a.filter((n,k)=>a.indexOf(n)===k));
+}
+function _sfTerminZu(sid,grp,idx,ohne){
+  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
+}
+// Merkt sich die Kästchen vor einer Änderung (für Rückgängig): [{i,o}]
+function _sfStand(arr,liste){ return liste.map(i=>({i,o:arr[i]?Object.assign({},arr[i]):null})); }
+// Fable F1: das Feld immer frisch holen. ensure(s) baut s.plan.sonder[grp] bei jedem Aufruf neu, ein festgehaltenes Feld ginge ins Leere.
+function _sfZurueck(s,grp,stand){ if(!s||!stand||!stand.length)return; ensure(s); const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]); stand.forEach(x=>{ arr[x.i]=x.o; }); }
+// Gibt die Kästchen eines Termins frei; liefert ihren alten Stand. Der Termin selbst behält srcSonder (das macht der Aufrufer).
+function _sfFreigeben(s,grp,l){
+  const arr=(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])||null; if(!arr)return [];
+  const liste=_sfIdx(l), stand=_sfStand(arr,liste);
+  liste.forEach(i=>{ arr[i]=null; });
+  return stand;
+}
+// Belegt ab idx0 die Kästchen für den Termin l (Datum = l.date) und setzt srcSonder/srcSonderIdx. Liefert den alten Stand der Kästchen.
+// anzahl (freiwillig): so viele Kästchen statt der aus der Länge (neue Zeit bei gleicher Länge: Anzahl bleibt, Bedienung Fund 2)
+function _sfBelegen(s,grp,l,idx0,anzahl){
+  const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+  const soll=Math.max(sfSoll(grp,s),idx0+1), n=anzahl>0?anzahl:_sfEinh(l.von,l.bis), liste=[idx0];
+  const frei=i=>!sfDone(arr[i])&&!_sfTerminZu(s.id,grp,i,l);
+  for(let i=idx0+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
+  for(let i=0;i<idx0&&liste.length<n;i++) if(frei(i))liste.push(i);
+  const stand=_sfStand(arr,liste);
+  liste.forEach(i=>{ arr[i]={d:isoToShort(l.date),iso:l.date}; });
+  l.srcSonder=s.id+":"+grp+":"+idx0;
+  if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx;
+  return stand;
+}
 function buildSonder(s){
   const pl=s.plan;
   sonderDefFuer(s).forEach(sd=>{
@@ -10778,8 +10873,7 @@ function openSonderKalenderSheet(sid,grp,idx){
   const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
   const cur=arr[idx];
   const label=SF_LABEL[grp]||"Sonderfahrt";
-  const key=sid+":"+grp+":"+idx;
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(sid,grp,idx); // W13: auch das 2. Kästchen eines 90-Minuten-Termins gehört zu ihm
   const defDate=(ex&&ex.date)||(cur&&cur.iso)||todayISO();
   const defTime=(ex&&ex.von)||(grp==="nacht"?"19:30":"10:00");
   const kandidat=!ex&&(DB.lessons||[]).find(l=>l.sid===sid&&l.date===defDate&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
@@ -10814,41 +10908,51 @@ function _stoppErlaubt(sid,datum){
 function commitSonderZeit(s,grp,idx,date,von){
   ensure(s);
   // Nur wenn wirklich ein neuer Termin entsteht (kein verknüpfter, kein umwandelbarer am selben Tag), bei Büro-Stopp nachfragen – vor jeder Änderung
-  { const k0=s.id+":"+grp+":"+idx;
-    const schonDa=(DB.lessons||[]).some(l=>l.srcSonder===k0)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
-    const exVorab=(DB.lessons||[]).find(l=>l.srcSonder===k0);
+  { const exVorab=_sfTerminZu(s.id,grp,idx);
+    const schonDa=!!exVorab||(DB.lessons||[]).some(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
     if(exVorab&&exVorab.date!==date&&_zahlungStopp(s.id,date,"sonder")){ buildSonder(s); return; } // K8: bestehende Sonderfahrt nur bei Datumsänderung sperren
     if(!schonDa&&!_stoppErlaubt(s.id,date)){ buildSonder(s); return; } }
   const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
-  const vorherPlan=arr[idx]?Object.assign({},arr[idx]):null;
-  arr[idx]={d:isoToShort(date),iso:date};
-  const key=s.id+":"+grp+":"+idx;
   const label=SF_LABEL[grp]||"Sonderfahrt",kuerzel=SF_KUERZEL[grp]||"SF";
   const bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(s.id,grp,idx);
   if(ex){
+    // Neue Zeit: Kästchen neu belegen (die Länge kann sich ändern), ab dem ersten Kästchen des Termins
+    const idx0=_sfIdx(ex)[0], vorherLesson={date:ex.date,von:ex.von,bis:ex.bis,art:ex.art,note:ex.note,srcSonder:ex.srcSonder,srcSonderIdx:ex.srcSonderIdx};
+    const standAlt=_sfFreigeben(s,grp,ex);
+    // Gleiche Länge (z. B. nur ein anderer Tag): die Zahl der Kästchen bleibt. Ein alter Termin mit 1 Kästchen bekommt nicht still
+    // ein zweites, das neben einem von Hand abgehakten Kästchen sonst doppelt zählte (Bedienung Fund 2).
+    const gleicheLaenge=(window.KR&&KR.terminMinuten)?KR.terminMinuten(ex.von,ex.bis)===KR.terminMinuten(von,bis):false;
     ex.date=date;ex.von=von;ex.bis=bis;ex.art="sonder";ex.note=_sonderNotiz(ex.note,label);
+    const standNeu=_sfBelegen(s,grp,ex,idx0,gleicheLaenge?standAlt.length:0);
     save();refreshPlanRing(s);buildSonder(s);
-    toast(`${label}-Termin aktualisiert`);
+    toastUndo(`${label}-Termin aktualisiert`,()=>{
+      _sfZurueck(s,grp,standNeu);_sfZurueck(s,grp,standAlt);
+      Object.assign(ex,vorherLesson); if(vorherLesson.srcSonderIdx===undefined)delete ex.srcSonderIdx;
+      save();refreshPlanRing(s);buildSonder(s);
+    });
     return;
   }
   const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   if(kandidat){
     const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
-    kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
+    kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;
+    const stand=_sfBelegen(s,grp,kandidat,idx);
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
-      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;
-      arr[idx]=vorherPlan;
+      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;delete kandidat.srcSonderIdx;
+      _sfZurueck(s,grp,stand);
       save();refreshPlanRing(s);buildSonder(s);
     });
     return;
   }
-  addLesson({date,von,bis,art:"sonder",sid:s.id,note:label,srcSonder:key});
+  const neu={date,von,bis,art:"sonder",sid:s.id,note:label};
+  const stand=_sfBelegen(s,grp,neu,idx);
+  const l=addLesson(Object.assign({},neu)); if(neu.srcSonderIdx) l.srcSonderIdx=neu.srcSonderIdx; save();
   refreshPlanRing(s);buildSonder(s);
   toastUndo(`${label} für ${isoDE(date)} in den Kalender übernommen`,()=>{
-    const l=(DB.lessons||[]).find(x=>x.srcSonder===key);if(l)deleteLesson(l.id);
-    arr[idx]=vorherPlan;
+    if((DB.lessons||[]).some(x=>x.id===l.id)){ delete l.srcSonder; delete l.srcSonderIdx; deleteLesson(l.id); } // ohne Verknüpfung: deleteLesson lässt die Kästchen stehen
+    _sfZurueck(s,grp,stand);
     save();refreshPlanRing(s);buildSonder(s);
   });
 }
@@ -10869,27 +10973,28 @@ function _mtFahrzeugFrei(typ,date,von,bis){
 }
 function findeMultiSlots(sid,cfg){
   const s=DB.students.find(x=>x.id===sid);if(!s)return [];
-  let maxAnzahl=Infinity;
+  // W13: gedeckelt wird nach offenen Kästchen, nicht nach Terminen: ein Termin mit 90 Minuten füllt 2 (KR.sonderEinheiten)
+  let maxKaestchen=Infinity, belegt=0;
   if(cfg.art==="sonder"){
-    const arr=s.plan.sonder[cfg.grp]||[];
-    maxAnzahl=sfOffen(s,cfg.grp);
-    if(!maxAnzahl)return [];
+    maxKaestchen=sfOffen(s,cfg.grp);
+    if(!maxKaestchen)return [];
   }
   const zv=hm2min(cfg.zeitVon),zb=hm2min(cfg.zeitBis);
   const treffer=[];
   const proWoche=Math.max(1,cfg.proWoche||2);
   let woche=0,inDieserWoche=0,wochenStart=cfg.von;
   let cur=cfg.von;
-  while(cur<=cfg.bis&&treffer.length<maxAnzahl){
+  while(cur<=cfg.bis&&belegt<maxKaestchen){
     if(addDays(wochenStart,7)<=cur){wochenStart=cur;inDieserWoche=0;}
     if(inDieserWoche<proWoche){
       const frei=dayFreeSlots(cur).filter(sl=>hm2min(sl.von)>=zv&&hm2min(sl.bis)<=zb);
       for(const sl of frei){
-        if(treffer.length>=maxAnzahl||inDieserWoche>=proWoche)break;
+        if(belegt>=maxKaestchen||inDieserWoche>=proWoche)break;
         if(treffer.some(t=>t.date===cur))continue; // max 1 Vorschlag pro Tag, bleibt übersichtlich
         const fz=cfg.fahrzeugTyp&&cfg.fahrzeugTyp!=="egal"?_mtFahrzeugFrei(cfg.fahrzeugTyp,cur,sl.von,sl.bis):null;
         if(cfg.fahrzeugTyp&&cfg.fahrzeugTyp!=="egal"&&!fz)continue;
         treffer.push({date:cur,von:sl.von,bis:sl.bis,fahrzeug:fz});
+        belegt+=cfg.art==="sonder"?_sfEinh(sl.von,sl.bis):1;
         inDieserWoche++;
       }
     }
@@ -10946,7 +11051,11 @@ function openMultiTerminSheet(sid){
 function openMultiTerminErgebnis(sid,cfg,treffer){
   const s=DB.students.find(x=>x.id===sid);if(!s)return;
   const gewuenscht=cfg.art==="sonder"?sfOffen(s,cfg.grp):null;
-  const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Automatisch gedeckelt auf ${gewuenscht} noch offene ${SF_LABEL[cfg.grp]||"Sonderfahrt"}${gewuenscht===1?'':'en'}.</p>`:'';
+  // W13: offen sind Kästchen; ein längerer Termin füllt mehrere (Bedienung Fund 3: Zahl aus dem echten Vorschlag, nicht fest „2“)
+  const mehr=cfg.art==="sonder"?treffer.find(t=>_sfEinh(t.von,t.bis)>1):null;
+  const einheit=(window.KR&&KR.sonderMinuten)?KR.sonderMinuten():45;
+  const sfName=SF_LABEL[cfg.grp]||"Sonderfahrt";
+  const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Noch ${gewuenscht} ${sfName}${gewuenscht===1?'':'en'} offen (je ${einheit} Minuten).${mehr?` Ein Termin mit ${(window.KR&&KR.terminMinuten)?KR.terminMinuten(mehr.von,mehr.bis):""} Minuten zählt als ${_sfEinh(mehr.von,mehr.bis)}.`:''}</p>`:'';
   if(!treffer.length){
     const ohneFz=!(DB.workCfg.fahrzeuge||[]).length;
     openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
@@ -10990,12 +11099,13 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   ausgewaehlt.forEach(t=>{
     if(cfg.art==="sonder"){
       const soll=sfSoll(cfg.grp,s)||arr.length;
-      while(idxCursor<soll&&sfDone(arr[idxCursor]))idxCursor++;
+      const arrJetzt=s.plan.sonder[cfg.grp]||arr; // frisch (Fable F1)
+      while(idxCursor<soll&&(sfDone(arrJetzt[idxCursor])||_sfTerminZu(s.id,cfg.grp,idxCursor)))idxCursor++;
       if(idxCursor>=soll)return;
-      vorherPlan.push({idx:idxCursor,vorher:arr[idxCursor]?Object.assign({},arr[idxCursor]):null});
-      arr[idxCursor]={d:isoToShort(t.date),iso:t.date};
-      const key=s.id+":"+cfg.grp+":"+idxCursor;
-      const l=addLesson({date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,srcSonder:key,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null});
+      // W13: ein Termin mit 90 Minuten belegt 2 Kästchen (das gewählte und das nächste freie)
+      const neu={date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null};
+      vorherPlan.push(..._sfBelegen(s,cfg.grp,neu,idxCursor));
+      const l=addLesson(neu); if(neu.srcSonderIdx)l.srcSonderIdx=neu.srcSonderIdx;
       erstellteIds.push(l.id);
       idxCursor++;
     }else{
@@ -11007,7 +11117,7 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   const cur=$("#stdGrid")?buildSonder(s):null;
   toastUndo(`${erstellteIds.length} ${label}${erstellteIds.length===1?'':'en'} gebucht`,()=>{
     erstellteIds.forEach(id=>deleteLesson(id));
-    vorherPlan.forEach(vp=>{arr[vp.idx]=vp.vorher;});
+    if(cfg.art==="sonder")_sfZurueck(s,cfg.grp,vorherPlan);
     save();refreshPlanRing(s);buildSonder(s);
   });
 }
@@ -12926,8 +13036,62 @@ function _settingsAccToggle(key){
   _settingsAccOpen=(_settingsAccOpen===key)?null:key;
   document.querySelectorAll(".set-acc").forEach(el=>{ el.classList.toggle("open",el.dataset.acckey===_settingsAccOpen); });
 }
+// W16 (Daten-Prüfer): Vor dem Sprung zur Büro-Seite den eigenen Stand UND die Brücken (Schüler, Termine, Prüfungen) sofort
+// hochladen und abwarten – die Büro-Seite liest die Fahrschul-Tabellen, und ein Seitenwechsel bricht laufende Anfragen ab.
+// true = alles oben (oder nichts offen), false = nicht sicher gesichert (dann nicht wechseln).
+async function _eigenesSichern(ms){
+  if(!_authUser||!_pullOk||_nurGesamtansicht())return !!_authUser&&_nurGesamtansicht();
+  clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null;
+  const ende=Date.now()+ms;
+  _brueckenOk=true; // ab hier zählt: kam alles an (Netzfehler, verschobene oder gescheiterte Läufe → false)
+  const push=pushToCloud();
+  _brueckenSofort();
+  await new Promise(r=>setTimeout(r,60)); // die Brücken starten mit 0 ms Verzögerung
+  const alles=(async()=>{
+    const ok=await push;
+    while(_brueckenLauf.size&&Date.now()<ende) await Promise.race([Promise.allSettled([..._brueckenLauf]),new Promise(r=>setTimeout(r,Math.max(0,ende-Date.now())))]);
+    return ok!==false&&!_brueckenLauf.size&&_brueckenOk;
+  })();
+  return await Promise.race([alles,new Promise(r=>setTimeout(()=>r(false),ms+200))]);
+}
+// W16 (🗣 Serband 24.11.2026): Startseite in den Einstellungen (Leitung und Super-Admin, startseite.js).
+// Tippen merkt die Wahl auf diesem Gerät und wechselt sofort; einen anderen Umschalter gibt es nicht mehr.
+function _startseiteEinbauen(){
+  const k=document.getElementById("ksStartKasten"); if(!k||!window.KS_START)return;
+  KS_START.einbauen(k,_authProfile,{hier:_fsAgg?"gesamt":"eigen",wechseln:_startseiteWechseln});
+}
+// Gibt false zurück, wenn der Wechsel abgebrochen wurde (dann gilt in startseite.js wieder die alte Startseite).
+async function _startseiteWechseln(wert){
+  if(!_startHatWahl())return false;
+  if(wert==="buero"){
+    // Gesamtansicht: _fsZurBueroSeite speichert offene Änderungen vorher; true nur, wenn wirklich gewechselt wird
+    if(_fsAgg) return (await _fsZurBueroSeite(null))===true?undefined:false;
+    if(!_seiteVerlassenOk())return false;
+    toast("Sichere deine Daten …");
+    if(!(await _eigenesSichern(8000))){ toast("Noch nicht alles gesichert (Internet?). Bitte gleich nochmal tippen."); return false; }
+    KS_START.gehe("buero"); return;
+  }
+  if(wert==="gesamt"){
+    if(_fsAgg)return;
+    const ok=await _fsEnterAggMode((_authProfile&&_authProfile.fahrschule_id)||"");
+    if(!ok&&!_fsAgg){ toast("Fahrschule gerade nicht erreichbar. Beim nächsten Start geht es dort los."); routeSettings(); }
+    return;
+  }
+  if(wert==="eigen"&&_fsAgg){ await _fsExitAggMode(); if(_fsAgg)return false; } // „Trotzdem wechseln?“ verneint
+}
+// Gesamtansicht: Die Einstellungen der eigenen Ansicht gehören nicht hierher (sie schrieben sonst in den Fahrschul-Stand), nur die Startseite
+function _einstellungenGesamtansicht(){
+  view.innerHTML=`<div class="view-inner view-read fade-up">
+    <h1 class="sec-h set-titel">Einstellungen</h1>
+    ${_startHatWahl()?'<div class="res-block" id="ksStartKasten" style="animation:none;"></div>':''}
+    ${isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>`:''}
+    ${_hatAdminUmschalter()?'<div class="res-block" style="animation:none;"><h4>⚙️ Weitere Einstellungen</h4><p>Alle anderen Einstellungen (App, Kalender, Verdienst) findest du in der Fahrlehrer-Ansicht. Dorthin: oben „Fahrlehrer-Ansicht“ antippen.</p></div>':''}
+  </div>`;
+  _startseiteEinbauen();
+}
 function routeSettings(){
   $("#tbTitle").textContent="Einstellungen";setFab(false);view.scrollTop=0;
+  if(_fsAgg){ _einstellungenGesamtansicht(); return; }
   const adminBtn=isSuperAdmin()?`<div class="res-block" style="animation:none;"><h4>👑 Admin-Panel</h4><p>Nutzer verwalten, Kill-Switch und Sync-Status.</p><div class="btn-row"><button class="btn btn-ghost" onclick="openAdminPanel()">Admin öffnen</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🏫 Fahrschulen</h4><p>Fahrschulen, Fahrlehrer, Schüler und Pakete verwalten.</p><div class="btn-row"><button class="btn btn-ghost" onclick="routeFahrschulenListe()">Fahrschulen verwalten</button></div></div>
   <div class="res-block" style="animation:none;"><h4>🎓 Akademie-Vermittlung</h4><p style="font-size:13px;color:var(--muted);">Beträge & Aufteilung für Simulator-/Videoakademie-Empfehlungen. Solange leer, wird bei einer Auszahlung nur "noch nicht konfiguriert" angezeigt — nichts wird stillschweigend falsch berechnet.</p><div id="akadVermittlungCfg"><p class="muted-p" style="font-size:12.5px;">Lade …</p></div></div>`:"";
@@ -12937,6 +13101,7 @@ function routeSettings(){
   const kapWoche=kapazitaetAutoWoche();
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
+    ${_startHatWahl()?'<div class="res-block" id="ksStartKasten" style="animation:none;"></div>':''}
     ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:var(--muted);font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
@@ -13157,6 +13322,7 @@ function routeSettings(){
     await doLogout({ alleGeraete: true });
   });
   if(isSuperAdmin())renderAkademieVermittlungCfg();
+  _startseiteEinbauen();
 }
 /* ===================== ERWEITERUNG: Dashboard · Prüfungen · Statistik · Archiv ===================== */
 const READY_MIN=90;
@@ -13589,7 +13755,9 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
     const arr=s.plan.sonder[sd.key]||(s.plan.sonder[sd.key]=[]);
     for(let i=0;i<sd.soll;i++){
       const done=sfDone(arr[i]);
-      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}">${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}</button>`;
+      // Fable F2: Ein Kästchen, das schon zu einem anderen Termin gehört, ist nicht wählbar (sonst gehörte es zwei Terminen)
+      const belegt=!!_sfTerminZu(sid,sd.key,i,(DB.lessons||[]).find(x=>x.id===lessonId));
+      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}"${belegt?' disabled aria-disabled="true" title="Gehört schon zu einem anderen Termin"':''}>${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}${belegt?' · belegt':''}</button>`;
     }
   });
   openSheet(`<div class="sheet-h">Welche Sonderfahrt?</div>
@@ -13597,13 +13765,15 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
     <div class="sf-grid">${opts}</div>
     <button class="btn btn-ghost btn-full" id="sfSkip" style="margin-top:4px;">Ohne Zuordnung speichern</button>`);
   document.querySelectorAll('.sf-opt').forEach(b=>b.addEventListener('click',()=>{
+    if(b.disabled)return;
     const grp=b.dataset.grp, idx=+b.dataset.idx;
-    const key=`${sid}:${grp}:${idx}`;
     ensure(s);
-    const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
-    arr[idx]={d:isoToShort(date),iso:date};
-    updateLesson(lessonId,{date,von,bis,art:'sonder',note,srcSonder:key,fahrzeug:fahrzeug||null});
-    save(); closeSheet(); toast('Sonderfahrt eingetragen ✓'); routeKalender();
+    updateLesson(lessonId,{date,von,bis,art:'sonder',note,fahrzeug:fahrzeug||null});
+    // W13: 90 Minuten füllen 2 Kästchen (das gewählte und das nächste freie). Eine alte Verknüpfung des Termins wird vorher gelöst.
+    const l=(DB.lessons||[]).find(x=>x.id===lessonId);
+    let n=1;
+    if(l){ if(l.srcSonder){ const g0=String(l.srcSonder).split(":")[1]; if(g0)_sfFreigeben(s,g0,l); } _sfBelegen(s,grp,l,idx); n=_sfIdx(l).length; }
+    save(); closeSheet(); toast(n>1?`Sonderfahrt eingetragen ✓ (zählt als ${n})`:'Sonderfahrt eingetragen ✓'); routeKalender();
   }));
   $('#sfSkip').addEventListener('click',()=>{
     updateLesson(lessonId,{date,von,bis,art:'sonder',note,fahrzeug:fahrzeug||null});
@@ -14760,7 +14930,7 @@ const SF_LABEL={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nacht
 function syncSonderToKalender(s,grp,idx,iso){
   if(!iso)return;
   const key=s.id+":"+grp+":"+idx;
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(s.id,grp,idx);
   if(iso<todayISO()){
     // Historische/bereits absolvierte Sonderfahrt (z. B. Wechsler) -> kein automatischer Kalendereintrag
     if(ex)deleteLesson(ex.id);
@@ -14775,8 +14945,7 @@ function syncSonderToKalender(s,grp,idx,iso){
   toast(`${SF_LABEL[grp]||"Sonderfahrt"} in den Kalender übernommen`);
 }
 function removeSonderFromKalender(s,grp,idx){
-  const key=s.id+":"+grp+":"+idx;
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(s.id,grp,idx); // W13: auch über das 2. Kästchen; deleteLesson leert alle Kästchen des Termins
   if(ex)deleteLesson(ex.id);
 }
 /* Benachrichtigt (per E-Mail) den Schüler, falls dieser Termin ursprünglich online gebucht wurde.
@@ -14893,14 +15062,15 @@ function _absagenNachholen(){ if(!_authUser)return; const uid=_authUser.id, jetz
   try{ const t=$("#toast"); if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(_absagenNachholen,1500); return; } }catch(e){}
   _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>7000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
 function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig, ohneAbsage){
-  let sonderAlt;
-  if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp]){ sonderAlt=st.plan.sonder[grp][+idx]; st.plan.sonder[grp][+idx]=null; } }
+  // W13: alle Kästchen des Termins leeren (90 Minuten = 2), Rückgängig stellt alle wieder her
+  let sonderAlt=null;
+  if(l.srcSonder){ const [sid,grp]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st)sonderAlt=_sfFreigeben(st,grp,l); }
   const id=l.id; const absage=!!l.onlineBookingId&&!ohneAbsage;
   if(absage)_absageMerken(id);
   _loeschenMitRueckgaengig(()=>DB.lessons||(DB.lessons=[]), l, text, neuZeichnen,
     // Online gebucht: Die Absage an den Schüler geht erst raus, wenn nicht rückgängig gemacht wurde
     ()=>{ if(absage)_absageSenden(id); try{ nachAblauf&&nachAblauf(); }catch(e){} },
-    ()=>{ if(absage)_absageVergessen(id); if(l.srcSonder&&sonderAlt!==undefined){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp])st.plan.sonder[grp][+idx]=sonderAlt; }
+    ()=>{ if(absage)_absageVergessen(id); if(l.srcSonder&&sonderAlt&&sonderAlt.length){ const [sid,grp]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st)_sfZurueck(st,grp,sonderAlt); }
       try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){} });
 }
 // Termin löschen mit Rückgängig (ohne Rückfrage). Gelaufene/unterschriebene Stunde: stattdessen Stornieren mit Grund.
@@ -14949,7 +15119,7 @@ function stornoLesson(id, grund, neuZeichnen){
 }
 function deleteLesson(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
-  if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
+  if(l.srcSonder){ const [sid,grp]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s)_sfFreigeben(s,grp,l); } // W13: alle Kästchen des Termins
   DB.lessons=(DB.lessons||[]).filter(x=>x.id!==id); save();
   _notifyOnlineBookingChange(id,"cancelled");
 }

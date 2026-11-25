@@ -191,21 +191,22 @@ for (const g of GROESSEN) {
     const b = window.__aufrufe.find((x) => x.action === "update_account");
     return b && b.rolle === "fahrschule_admin" && b.faehrt_selbst === true && Array.isArray(b.klassen) ? null : JSON.stringify(b);
   }));
-  // Ansicht: Leitung mit Kennzeichen hat den Umschalter wie der Betreiber, reine Leitung nicht
-  await pruefe("A21", `${P} Leitung fährt selbst: eigene Ansicht + Umschalter + Streifen; reine Leitung nur Gesamtansicht`, () => page.evaluate(() => {
+  // Ansicht: Leitung mit Kennzeichen hat eine eigene Ansicht wie der Betreiber, reine Leitung nicht.
+  // W16 (24.11.2026): kein Umschalter und kein Streifen mehr; gewechselt wird über die Startseite in den Einstellungen.
+  await pruefe("A21", `${P} Leitung fährt selbst: eigene Ansicht + Startseite (3 Möglichkeiten), kein Umschalter; reine Leitung nur Gesamtansicht`, () => page.evaluate(() => {
     const f = [];
     _fsAgg = null;
     _authProfile = { id: "u1", rolle: "fahrschule_admin", fahrschule_id: "f1", name: "Leitung Muster", faehrt_selbst: true };
     if (_nurGesamtansicht()) f.push("fährt selbst gilt als nur Gesamtansicht");
     _fsSetDrawer(false); _zeigeSaStreifen();
-    if (!/Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter fehlt");
-    const st = document.getElementById("saStreifen");
-    if (st.hidden || !/Du bist Leitung/.test(st.textContent) || !st.classList.contains("sa-tippbar") || st.getBoundingClientRect().height < 43.5) f.push("Streifen fehlt/zu klein: " + st.textContent);
+    if (/Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("Umschalter im Menü");
+    if (document.getElementById("saStreifen")) f.push("Streifen oben noch da");
+    if (KS_START.erlaubt(_authProfile).join() !== "eigen,gesamt,buero") f.push("Startseite: " + KS_START.erlaubt(_authProfile).join());
     _authProfile = { id: "u1", rolle: "fahrschule_admin", fahrschule_id: "f1", name: "Leitung Muster", faehrt_selbst: false };
     if (!_nurGesamtansicht()) f.push("reine Leitung nicht nur Gesamtansicht");
     _fsSetDrawer(false); _zeigeSaStreifen();
-    if (/Admin-Gesamtübersicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("reine Leitung hat Umschalter");
-    if (!st.hidden) f.push("reine Leitung hat Streifen");
+    if (/Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("reine Leitung hat Umschalter");
+    if (KS_START.erlaubt(_authProfile).join() !== "gesamt,buero") f.push("Startseite reine Leitung: " + KS_START.erlaubt(_authProfile).join());
     _authProfile = { id: "u2", rolle: "buero", fahrschule_id: "f1" };
     if (!_nurGesamtansicht()) f.push("Büro nicht nur Gesamtansicht");
     const r = _fsNurUnterrichtende({ data: [{ rolle: "fahrlehrer" }, { rolle: "fahrschule_admin", faehrt_selbst: true }, { rolle: "fahrschule_admin" }, { rolle: "super_admin" }] });

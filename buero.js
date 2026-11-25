@@ -23,9 +23,16 @@ if (!KR.holeFristen) { const alt = { reaktivierung: { monate: 12, bald_tage: 30,
 function fristWerte() { return KR.holeFristen(); }
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
+// W13 PR 2: Länge einer Sonderfahrt-Einheit (fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten; Vorgabe 45,
+// erlaubt 30–90), gelesen über KE (W11, lädt in ladeDaten). Sonst nur über KR.sonderMinuten() lesen. Einstellung: W11 „Fahrstunden & Kalender“.
+window.addEventListener("ke:geladen", () => { if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE && KE.zahl ? KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90) : null); });
+// W13 PR 2: alte kompass-rechnen.js ohne Sonderfahrt-Einheit → fest 45 Minuten wie bisher
+if (!KR.sonderMinuten) { KR.sonderMinuten = () => 45; KR.setzeSonderMinuten = () => 45; KR.sonderEinheitenAusMinuten = (m) => (m > 0 ? Math.floor(m / 45) : 0); }
+if (!KR.terminMinuten) KR.terminMinuten = (v, b) => (v && b ? Math.max(0, KR.hm2min(b) - KR.hm2min(v)) : 0);
 // W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
-const KR_OHNE_HAKEN = !KR.fcFuersBuero;
+const KR_OHNE_HAKEN = !KR.fcFuersBuero || !KR.fcVomBuero;
 if (!KR.fcFuersBuero) KR.fcFuersBuero = KR.fcErhalten;
+if (!KR.fcVomBuero) KR.fcVomBuero = KR.fcFuersBuero;
 if (!KR.paketHinweise) KR.paketHinweise = () => [];
 if (!KR.theorieSoll) { KR.theorieSoll = () => ({ pflicht: false, grund: "Seite bitte neu laden", teile: [] }); KR.theorieStand = (soll) => ({ pflicht: false, grund: soll.grund, teile: [], ist: 0, soll: 0, fertig: false }); }
 
@@ -2342,10 +2349,10 @@ function sonderZaehlerHTML(x) {
     if (t.datum === heute && KR.hm2min(t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist
     const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
     const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
-    if (ist[a] != null) ist[a] += Math.floor((KR.hm2min(t.bis) - KR.hm2min(t.von)) / 45);
+    if (ist[a] != null) ist[a] += KR.sonderEinheitenAusMinuten(KR.terminMinuten(t.von, t.bis)); // W13: Einheit je Fahrschule, über Mitternacht zählt mit
     else if (t.art === "sonder") ohneArt++;
   }
-  return `<h3>Sonderfahrten (aus dem Kalender, je 45 Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
+  return `<h3>Sonderfahrten (aus dem Kalender, je ${KR.sonderMinuten()} Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
     ${ohneArt ? `<p class="fl-warnung bald">${ohneArt} ${ohneArt === 1 ? "Sonderfahrt" : "Sonderfahrten"} ohne Art – bitte im Termin Überland, Autobahn oder Nacht wählen.</p>` : ""}
     <p class="leise klein">${esc(lehrerName(x.fahrlehrer_id))} nutzt keine App: Bitte bei jeder Sonderfahrt im Termin die Art wählen. Dieser Zähler sieht nur die Termine im Büro-Kalender.</p>`;
 }
@@ -3179,9 +3186,16 @@ function renderFcStunden() {
   const nVerfallen = f.alle.filter((x) => x.g.stufe === "verfallen").length, nBald = f.alle.filter((x) => x.g.stufe === "bald").length;
   const zeilen = sicht.map(({ t, ft, gebucht, erwartet, typ, buero, g }) => {
     const [tf, tn] = FC_TYP[typ], [bf, bn] = FC_BUERO[buero];
-    // Knöpfe, sobald das Büro Fahrchecks bekommen soll, auch für nachgereichte: Am Haken hängt das Paket (🗣 Serband 24.11.2026)
-    const knoepfe = KR.fcFuersBuero(ft) ? [
-      buero !== "abgegeben" ? `<button class="knopf klein haupt" data-fcstatus="abgegeben" data-id="${esc(t.id)}" type="button">Abgegeben</button>` : "",
+    // Knöpfe, sobald das Büro Fahrchecks bekommen soll, auch für nachgereichte: Am Haken hängt das Paket (🗣 Serband 24.11.2026).
+    // Ab 2 gebuchten Fahrchecks wählt das Büro die Zahl („2 abgegeben“ / „1 abgegeben“, 🗣 Serband 25.11.2026), auch gegen den
+    // Vermerk des Fahrlehrers. Ohne Spalte buero_fc_anzahl (alte Datenbank) nur „Abgegeben“ wie bisher.
+    const mitZahl = fcAnzahlDa() && gebucht > 1 && !fcAusgefallen(ft), erw = KR.fcFuersBuero(ft), jetzt = fcGezaehlt(t, ft);
+    const abKnoepfe = mitZahl
+      ? Array.from({ length: gebucht }, (_, i) => gebucht - i).filter((n) => !(buero === "abgegeben" && jetzt === n))
+        .map((n) => `<button class="knopf klein${n === erw && buero !== "abgegeben" ? " haupt" : ""}" data-fcstatus="abgegeben" data-anzahl="${n}" data-id="${esc(t.id)}" type="button">${n} abgegeben</button>`).join("")
+      : buero !== "abgegeben" ? `<button class="knopf klein haupt" data-fcstatus="abgegeben" data-id="${esc(t.id)}" type="button">Abgegeben</button>` : "";
+    const knoepfe = erw || mitZahl ? [
+      abKnoepfe,
       buero !== "fehlt" ? `<button class="knopf klein" data-fcstatus="fehlt" data-id="${esc(t.id)}" type="button">Fehlt</button>` : "",
       buero === "fehlt" ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
     ].join("") : "";
@@ -3190,9 +3204,9 @@ function renderFcStunden() {
       <td><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b><div class="unter nur-unter">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)}</div></td>
       <td class="nur-sehr-breit">${esc(lehrerName(t.fahrlehrer_id))}</td>
       <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
-      <td class="zahlspalte"><b>${KR.fcFuersBuero(ft)}</b><span class="leise"> von ${gebucht}</span></td>
+      <td class="zahlspalte"><b>${buero === "abgegeben" ? jetzt : erw}</b><span class="leise"> von ${gebucht}</span></td>
       <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
-      <td>${KR.fcFuersBuero(ft) ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
+      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 && !fcAusgefallen(ft) ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
       <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
     </tr>`;
   }).join("");
@@ -3227,9 +3241,17 @@ function renderFcStunden() {
     </div>`;
 }
 // Status einer Stunde im Büro setzen (ohne aktualisiert_am: sonst überschreibt die Fahrlehrer-App ihre eigenen Vermerke)
-async function fcSetzeStatus(id, status, nachAm) {
+// Gibt es die Spalte buero_fc_anzahl schon (Migration 20261125_w13_01)? Das Büro lädt Termine mit select("*").
+function fcAnzahlDa() { return (S.termine || []).some((t) => t && "buero_fc_anzahl" in t); }
+function fcAusgefallen(ft) { return ft.status === "abgebrochen" || ft.status === "nicht erschienen"; }
+// Fahrchecks, die mit Haken zählen: die vom Büro gewählte Zahl, sonst der Vermerk des Fahrlehrers
+function fcGezaehlt(t, ft) { return KR.fcVomBuero(Object.assign({}, ft, { bueroFcAnzahl: t.buero_fc_anzahl == null ? null : t.buero_fc_anzahl })); }
+// anzahl: vom Büro gewählte Zahl (nur mit „abgegeben“); sonst wird sie geleert. Ohne Spalte (alte Datenbank) bleibt sie weg.
+async function fcSetzeStatus(id, status, nachAm, anzahl) {
   const upd = { buero_fc_status: status };
   if (nachAm !== undefined) upd.buero_fc_nachgereicht_am = nachAm || null;
+  if (fcAnzahlDa()) upd.buero_fc_anzahl = status === "abgegeben" && anzahl != null ? anzahl : null;
+  if (status !== "abgegeben") upd.buero_fc_nachgereicht_am = null; // „fehlt“/„offen“ und zugleich „nachgereicht am …“ passt nicht (Bedienung)
   const res = await supa.from("kalender_termine").update(upd).eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const t = S.termine.find((x) => x.id === id);
@@ -3269,16 +3291,25 @@ function renderFcVerlauf() {
     <td>${esc(new Date(q.bestaetigt_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }))}</td>
     <td>${esc(q.notiz || "")}</td></tr>`).join("")}</tbody></table>${!lehrerF && gefiltert.length > 15 && fristenParam("alle") !== "1" ? `<p class="leise klein"><a href="${pLinkFc({ alle: "1" })}">Alle ${gefiltert.length} Quittungen anzeigen</a></p>` : ""}</div>`;
 }
+// Nach einem Klick in der Stundenliste neu zeichnen, ohne dass die (am Handy waagrecht gewischte) Tabelle nach links springt
+function fcNeuZeichnen() {
+  const vorher = [...document.querySelectorAll("#ansicht .tabelle")].map((t) => t.scrollLeft);
+  zeichne();
+  document.querySelectorAll("#ansicht .tabelle").forEach((t, i) => { if (vorher[i]) t.scrollLeft = vorher[i]; });
+}
 function bindeFahrchecks(ziel) {
   bindeFcFilter(ziel);
   ziel.querySelectorAll("[data-fcabgabe]").forEach((b) => b.addEventListener("click", () => fcAbgabeDialog(b.dataset.fcabgabe)));
   ziel.querySelectorAll("[data-fcstatus]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
-    if (await fcSetzeStatus(b.dataset.id, b.dataset.fcstatus)) { toast(b.dataset.fcstatus === "abgegeben" ? "Als abgegeben markiert ✓" : "Als fehlend markiert"); zeichne(); } else b.disabled = false;
+    const n = b.dataset.anzahl ? Number(b.dataset.anzahl) : null;
+    if (await fcSetzeStatus(b.dataset.id, b.dataset.fcstatus, undefined, n)) { toast(b.dataset.fcstatus === "abgegeben" ? (n ? `${n} Fahrcheck${n === 1 ? "" : "s"} als abgegeben markiert ✓` : "Als abgegeben markiert ✓") : "Als fehlend markiert"); fcNeuZeichnen(); } else b.disabled = false;
   }));
   ziel.querySelectorAll("[data-fcnach]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
-    if (await fcSetzeStatus(b.dataset.fcnach, "abgegeben", KR.todayISO())) { toast("Als nachgereicht eingetragen ✓"); zeichne(); } else b.disabled = false;
+    // Nachgereicht vom Büro: alle gebuchten Fahrchecks sind jetzt da
+    const t = S.termine.find((x) => x.id === b.dataset.fcnach), voll = t ? KR.fcGebucht(fcTermin(t)) : null;
+    if (await fcSetzeStatus(b.dataset.fcnach, "abgegeben", KR.todayISO(), voll)) { toast("Als nachgereicht eingetragen ✓"); fcNeuZeichnen(); } else b.disabled = false;
   }));
   ziel.querySelectorAll("[data-fcbearb]").forEach((b) => b.addEventListener("click", () => fcStundeDialog(b.dataset.fcbearb)));
 }
@@ -3295,12 +3326,15 @@ function fcStundeDialog(id) {
         <select name="status">${Object.entries(FC_BUERO).map(([k, v]) => `<option value="${k}"${k === status ? " selected" : ""}>${esc(v[1])}</option>`).join("")}</select></label>
       <label>Nachgereicht am (leer = nicht nachgereicht)
         <input type="date" name="nach" value="${esc(t.buero_fc_nachgereicht_am || "")}"></label>
+      ${fcAnzahlDa() && KR.fcGebucht(ft) > 1 && !fcAusgefallen(ft) ? `<label>Abgegeben (nur bei „abgegeben“)
+        <select name="anzahl"><option value="">wie vom Fahrlehrer vermerkt (${KR.fcFuersBuero(ft)})</option>${Array.from({ length: KR.fcGebucht(ft) }, (_, i) => KR.fcGebucht(ft) - i).map((n) => `<option value="${n}"${t.buero_fc_anzahl === n ? " selected" : ""}>${n} Fahrcheck${n === 1 ? "" : "s"}</option>`).join("")}</select></label>` : ""}
     </div>
     <p class="leise klein">Den Vermerk des Fahrlehrers (z. B. „1 FC vergessen“) ändert nur er selbst in seiner App; sonst würde seine Eingabe beim nächsten Abgleich überschrieben.</p>`;
   oeffneDialog("Fahrcheck ändern", body, async (form) => {
     const nach = form.nach.value;
     if (nach && !/^\d{4}-\d\d-\d\d$/.test(nach)) { toast("Bitte ein gültiges Datum wählen.", true); return false; }
-    if (!(await fcSetzeStatus(id, form.status.value, nach || null))) return false;
+    const anzahl = form.anzahl && form.anzahl.value !== "" ? Number(form.anzahl.value) : null;
+    if (!(await fcSetzeStatus(id, form.status.value, nach || null, anzahl))) return false;
     toast("Gespeichert ✓");
     zeichne();
     return true;
@@ -3338,10 +3372,12 @@ function fcAbgabeDialog(lehrerId) {
     // Bewusst ohne aktualisiert_am: sonst hält die Fahrlehrer-App die Zeile für neuer und überschreibt
     // ihre eigenen, vielleicht noch nicht hochgeladenen Fahrcheck-Vermerke.
     const a = ok.length ? await supa.from("kalender_termine").update({ buero_fc_status: "abgegeben" }).in("id", ok) : { error: null };
-    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt" }).in("id", fehlend) : { error: null };
+    // „fehlt“ ohne altes Nachreich-Datum, wie beim Knopf „Fehlt“ (fcSetzeStatus); die Zahl leert der Trigger
+    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", buero_fc_nachgereicht_am: null }).in("id", fehlend) : { error: null };
     if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
     else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
-    S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) t.buero_fc_status = "fehlt"; });
+    // Richter W13 (Kann 1): „fehlt“ leert in der Datenbank die Zahl (Trigger) und das Nachreich-Datum (Update oben), hier gleich mit
+    S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
     zeichne();
     return true;
   }, "Abgabe bestätigen");
@@ -4608,7 +4644,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
-  if (window.KE) KE.lade(supa, fsId); // W11: Einstellungen der Fahrschule (wirft nie)
+  if (window.KE) { KE.lade(supa, fsId); if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90)); } // W11: Einstellungen der Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
   try {
     const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
@@ -5004,6 +5040,17 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
+// W16: Fußzeile. Leitung und Super-Admin wählen hier vorläufig ihre Startseite (KS_START aus startseite.js); Werkstatt 11
+// hängt dieselbe Wahl in die Büro-Einstellungen. Das Büro behält den Link zur App, bis es nur noch die Büro-Seite hat
+// (KS_START.bueroNurBueroseite; danach schickte die App es gleich zurück).
+function zeigeStartWahl(profil) {
+  const kasten = $("startWahl"), link = $("zurApp");
+  if (!kasten || !link) return;
+  const ks = window.KS_START;
+  const hatWahl = !!(ks && ks.hatWahl(profil));
+  link.hidden = hatWahl || (profil.rolle === "buero" && !!(ks && ks.bueroNurBueroseite));
+  if (hatWahl) ks.einbauen(kasten, profil, { kompakt: true }); else kasten.hidden = true;
+}
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
   $("hinweisText").textContent = text;
@@ -5012,6 +5059,7 @@ function zeigeHinweis(titel, text, knoepfe) {
 }
 async function abmelden() {
   verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
+  try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) { /* egal */ } // W16: Schleifen-Merker gehört zur Sitzung
   if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
   // Erst die PIN-Sitzung auf dem Server beenden (höchstens 3 s warten), dann lokal abmelden: sonst ginge der Aufruf ohne Anmeldung raus.
   try { await Promise.race([beendeSitzung(), new Promise((r) => setTimeout(r, 3000))]); } catch (e) { /* egal */ }
@@ -5038,6 +5086,9 @@ async function starte(user) {
     return;
   }
   if (!ROLLEN[profil.rolle]) {
+    // W16 (🗣 Serband 24.11.2026): Fahrlehrer arbeiten nur in der App, also gleich dorthin (gleiche Anmeldung).
+    // Nur wenn das nicht geht (die App hat in diesem Tab eben erst hierher geschickt), bleibt der Hinweis.
+    if (window.KS_START && KS_START.weiter("app")) return;
     zeigeHinweis("Nur für das Büro", "Diese Seite ist für Büro und Fahrschul-Leitung. Als Fahrlehrer arbeitest du in der Kompass-App.",
       `<a class="knopf haupt" href="index.html">Zur Kompass-App</a><button class="knopf" type="button" data-abmelden>Abmelden</button>`);
     return;
@@ -5069,6 +5120,7 @@ async function starte(user) {
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
+  zeigeStartWahl(profil);
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();
@@ -5084,6 +5136,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.bkFehlt = false; S.verkauft = null; // Werkstatt 13: neue Fahrschule, Paket-Spalten und verkaufte Pakete neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
+  KR.setzeSonderMinuten(null); // W13 PR 2: Sonderfahrt-Einheit der vorigen Fahrschule nicht mitnehmen
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule

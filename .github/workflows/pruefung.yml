@@ -38,6 +38,8 @@ jobs:
         run: node scripts/cache-test.mjs
       - name: Zugang-Regeln (bearbeiten/löschen, Rechte)
         run: node scripts/zugang-regeln-test.mjs
+      - name: Startseite je Rolle (Weiterleitung ohne Schleife)
+        run: node scripts/startseite-test.mjs
       - name: "W15 Reaktivierung: Sperre der Datenbank in echtem Postgres (PGlite), gleich wie Büro und App"
         run: |
           npm i --silent --no-save --prefix /tmp/w15-pg @electric-sql/pglite@0.2.17
@@ -48,7 +50,9 @@ jobs:
   rollen:
     name: Rollen und Zugänge (Browser)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Seit 25.11.2026 25 statt 15 Minuten: die Schritte zusammen brauchen lokal gut 15 Minuten, der Job wurde mitten im
+    # letzten Test abgebrochen (W11 und W16), obwohl alles grün war. Gleiche Grenze wie der Büro-Job.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -100,6 +104,10 @@ jobs:
         run: |
           node scripts/paket-stand-test.mjs
           NODE_PATH=$(npm root -g) node scripts/paket-verkauf-test.mjs
+      - name: Sonderfahrt-Kästchen im Plan (90 Minuten = 2, Werkstatt 13)
+        run: |
+          NODE_PATH=$(npm root -g) node scripts/sonder-kaestchen-test.mjs
+          SONDER_SCHNELL=1 NODE_PATH=$(npm root -g) node scripts/sonder-stopp-test.mjs
       - name: "Zahlungsaufforderung per Mail (Mail-Inhalt, GiroCode)"
         run: |
           npm i --silent --no-save --prefix /tmp/zm-qr jsqr@1.4.0 pngjs@7.0.0
