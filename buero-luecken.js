@@ -113,6 +113,8 @@ function luBetrag(t) {
   const norm = /,/.test(s) || /^\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "").replace(",", ".") : s; // „1.250“ = 1250 wie in der App
   return /^\d+(\.\d{1,2})?$/.test(norm) ? Number(norm) : NaN;
 }
+// Betrag mit Cent (euro() in buero.js rundet auf ganze Euro)
+function luEuroCent(n) { return Number(n || 0).toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function luProvisionDialog() {
   const aktive = S.lehrer.filter((l) => l.aktiv !== false);
   const body = `<div class="formular">
@@ -129,13 +131,13 @@ function luProvisionDialog() {
     if (!typ) { toast("Bitte eintragen, wofür die Provision ist.", true); return false; }
     const betrag = luBetrag(d.betrag);
     if (!(betrag > 0)) { toast("Bitte einen Betrag über 0 € eintragen, z. B. 15,00.", true); return false; }
-    if (betrag > 10000 && !(await bestaetige("Hoher Betrag", `${euro(betrag)} als Provision eintragen?`, "Ja, eintragen", "Abbrechen", true))) return false;
+    if (betrag > 10000 && !(await bestaetige("Hoher Betrag", `${luEuroCent(betrag)} als Provision eintragen?`, "Ja, eintragen", "Abbrechen", true))) return false;
     const res = await supa.from("provisionen").insert({ fahrlehrer_id: d.fahrlehrer_id, fahrschule_id: S.fsId, typ, betrag, status: "offen" }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
     const neu = res.data[0];
     S.provisionen.unshift(neu);
     zeichne();
-    toastUndo(`${euro(betrag)} für ${lehrerName(d.fahrlehrer_id)} eingetragen`, async () => {
+    toastUndo(`${luEuroCent(betrag)} für ${lehrerName(d.fahrlehrer_id)} eingetragen`, async () => {
       const r = await supa.from("provisionen").update({ status: "storniert" }).eq("id", neu.id).eq("status", "offen").select("id");
       if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "schon ausgezahlt oder keine Berechtigung"), true); return; }
       neu.status = "storniert";
