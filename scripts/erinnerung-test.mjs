@@ -157,6 +157,39 @@ try {
     pruefe("E8e keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
     await ctx.close();
   }
+  // E9 (Prüf-Team W15 PR 2, Muss 1 und 2): Zahlungs- und Erinnerungs-Mail sperren sich gegenseitig, die Knöpfe zeigen das sofort
+  // und sind danach sofort wieder frei; Fahrschule gewechselt während „Rückgängig“ → nichts geht los
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", vorbereiten: vor({ extra: `Object.assign(s("s5"), { zahlung_gesperrt_seit: ${JSON.stringify(HEUTE)}, zahlung_gesperrt_grund: "Rechnung offen" });` }) });
+    await page.evaluate(() => { window.ZM_WARTE_MS = 1500; });
+    await page.evaluate(() => schuelerDialog("s5")); await page.waitForSelector("dialog[open] #emBlock"); await page.waitForTimeout(150);
+    const dlg = page.locator("dialog[open]").last();
+    const zmAufrufe = () => page.evaluate(() => window.__FAKE.log.filter((l) => l.function === "zahlungs-mail").length);
+    pruefe("E9a Akte zeigt beide Blöcke (Zahlung offen, Behörden-Frist)", (await dlg.locator('#zmBlock [data-zmart="zahlung_offen"]').count()) === 1 && (await dlg.locator('#emBlock [data-emart="behoerde"]').count()) === 1);
+    await dlg.locator('[data-emsenden="behoerde"]').click(); await page.locator(".toast-undo").waitFor({ timeout: 2000 }); await page.waitForTimeout(100);
+    pruefe("E9b Erinnerung wartet: Zahlungs-Knopf sofort gesperrt, mit Grund", await dlg.locator('[data-zmoeffne="zahlung_offen"]').isDisabled() && /Erst die laufende Mail abwarten/.test(await dlg.locator('[data-zmart="zahlung_offen"]').innerText()));
+    // Senden der Zahlungs-Mail trotzdem auslösen (z. B. älterer Bildschirm): die Sperre im Code hält
+    await page.evaluate(() => { const z = document.querySelector('#zmBlock [data-zmart="zahlung_offen"]'); z.querySelector("[data-zmbetrag]").value = "50,00"; const k = z.querySelector("[data-zmsenden]"); k.disabled = false; k.click(); });
+    await page.waitForTimeout(2200);
+    pruefe("E9c keine Zahlungs-Mail, solange die Erinnerung läuft; Erinnerung gesendet", (await zmAufrufe()) === 0 && (await anrufe(page)).length === 1);
+    pruefe("E9d danach: Zahlungs-Knopf sofort wieder frei", await dlg.locator('[data-zmoeffne="zahlung_offen"]').isEnabled());
+    // umgekehrt: Zahlungs-Mail wartet → Erinnerungs-Knopf gesperrt; Rückgängig → wieder frei
+    await dlg.locator('[data-zmoeffne="zahlung_offen"]').click();
+    await dlg.locator('[data-zmart="zahlung_offen"] [data-zmbetrag]').fill("50,00");
+    await dlg.locator('[data-zmsenden="zahlung_offen"]').click(); await page.locator(".toast-undo").waitFor({ timeout: 2000 }); await page.waitForTimeout(100);
+    const emKnopf = dlg.locator('[data-emsenden="behoerde"]');
+    pruefe("E9e Zahlungs-Mail wartet: Erinnerungs-Knopf sofort gesperrt, mit Grund", await emKnopf.isDisabled() && /Erst die laufende Mail abwarten/.test(await dlg.locator('#emBlock [data-emart="behoerde"]').innerText()));
+    await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(300);
+    pruefe("E9f Rückgängig: Erinnerungs-Knopf sofort wieder frei, keine Zahlungs-Mail", await emKnopf.isEnabled() && (await zmAufrufe()) === 0);
+    // Fahrschule gewechselt, während „Rückgängig“ läuft
+    await emKnopf.click(); await page.locator(".toast-undo").waitFor({ timeout: 2000 });
+    await page.evaluate(() => { window.__altFs = S.fsId; S.fsId = "fs-andere"; });
+    await page.waitForTimeout(2200);
+    pruefe("E9g Fahrschule gewechselt: nichts gesendet, Hinweis", (await anrufe(page)).length === 1 && /Fahrschule gewechselt, an .* wurde nichts gesendet/.test(await page.locator("#toast").innerText()));
+    await page.evaluate(() => { S.fsId = window.__altFs; });
+    pruefe("E9h keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
+    await ctx.close();
+  }
 } finally {
   await browser.close();
   server.close();

@@ -1,6 +1,7 @@
 /* Fahrlehrer-Kompass – Nachrichten-Vorlagen (W15 Schritt 4, 🗣 Serband 24.11.2026: „vorgefertigte Nachrichten … diese kann man
    vorschreiben in den Einstellungen“). EINE Datei für Büro und Server:
-   - Büro: Thema „Nachrichten-Vorlagen“ in den Einstellungen (Vorschau) – geladen als <script>, danach window.KV.
+   - Büro: Thema „Nachrichten-Vorlagen“ in den Einstellungen mit Vorschau (kommt mit PR 3; bis dahin gelten die Standard-Texte,
+     solange niemand einen Text speichert) – geladen als <script>, danach window.KV.
    - Server: Edge-Funktionen zahlungs-mail und erinnerungs-mail füllen die Vorlage (Kopien supabase/functions/<name>/vorlagen.js,
      geladen mit import "./vorlagen.js", danach globalThis.KV). Alle Dateien müssen Byte für Byte gleich sein
      (scripts/vorlagen-test.mjs prüft das) – so zeigt die Vorschau genau den Text der Mail.

@@ -243,11 +243,19 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const z = (F.tabellen.fahrschule_zahlungsdaten || []).find((x) => x.fahrschule_id === ich.fahrschule_id);
     if (!z || !z.kontoinhaber || !z.iban) return { fehler: "zahlungsdaten_fehlen" };
     if (b.art === "zahlung_offen" && !s.zahlung_gesperrt_seit) return { fehler: "nicht_gesperrt" }; // wie der Server (409): die Sperre ist inzwischen weg
+    if (b.art === "reaktivierung" && window.KR && window.KR.reaktInfo) { // W15 S4 wie der Server (20261128_w15_03): gleiche Regel und Warnzeiten wie die Büro-Seite
+      const ri = window.KR.reaktInfo(s, window.KR.todayISO());
+      if (ri.stufe === "befreit") return { fehler: "reakt_befreit" };
+      if (ri.stufe === "entfaellt") return { fehler: "reakt_entfaellt" };
+      if (ri.stufe === "ohne_datum") return { fehler: "reakt_ohne_datum" };
+      if (ri.stufe === "ok") return { fehler: "reakt_nicht_faellig" };
+    }
     if (b.erwarteter_modus !== "test" && b.erwarteter_modus !== "echt") return { fehler: "ungueltige_anfrage" }; // Pflichtfeld seit Commit 963ac7d
     if (b.erwarteter_modus !== z.modus) return { fehler: "modus_geaendert", modus: z.modus }; // wie der Server (409): nichts wird gesendet
     const heute = new Date().toISOString().slice(0, 10);
     const mails = F.tabellen.zahlungs_mails || (F.tabellen.zahlungs_mails = []);
-    const echt = z.modus === "echt", heuteMails = mails.filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute);
+    // W15 S5: gemeinsames Limit mit den Erinnerungs-Mails (mail_limit in der Datenbank); gescheiterte zählen nicht
+    const echt = z.modus === "echt", heuteMails = [...mails, ...(F.tabellen.erinnerungs_mails || [])].filter((m) => String(m.angelegt_am || "").slice(0, 10) === heute && m.status !== "fehler");
     if (heuteMails.length >= 100) return { fehler: "zu_viele_schule" };
     if (heuteMails.filter((m) => m.schueler_id === s.id && m.modus === (echt ? "echt" : "test")).length >= 5) return { fehler: "zu_viele" }; // je Schüler, Test und Echt getrennt
     // W14: Empfänger nach der Wahl in der Akte (schueler_eltern), wie der Server; Test: nur die Test-Adresse

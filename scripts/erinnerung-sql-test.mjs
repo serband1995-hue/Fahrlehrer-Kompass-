@@ -232,9 +232,16 @@ let wirft = false; try { MAIL.betreff({ vorlage_art: "pruefung" }); } catch (e) 
 gleich("Mail: fremde Vorlage-Art wird abgelehnt", true, wirft);
 
 // ---------- 5. Rückweg und wieder einspielen ----------
+// Prüf-Team Daten: Rückweg w15_03 vor dem Rückweg w15_04 bricht ab (sonst wäre das Limit nicht mehr gemeinsam)
+const RUECK3 = sql("rueckweg/20261128_w15_03_rueckweg.sql");
+gleich("Rückweg w15_03 zu früh: bricht ab, nichts geändert", true, /Zuerst den Rückweg zu w15_04/.test(await db.exec(RUECK3).then(() => "ok", (e) => String(e.message)))
+  && (await vorbereiten("v1", "behoerde")).vorlage_art === "erinnerung_behoerde");
 await db.exec(RUECK);
 gleich("Rückweg: Ergebnis-Abfrage", { funktion_weg: true, zahlung_wie_s4: true, spur_bleibt: 1 }, Object.assign(await erg(RUECK), { spur_bleibt: Number((await erg(RUECK)).spur_bleibt) }));
 gleich("Rückweg: Zahlungs-Mail geht weiter", "ok", (await db.query("select public.zahlungs_mail_vorbereiten('v1', 'pruefung', 12000, 'Prüfung') as d")).rows[0].d.ok ? "ok" : "nein");
+await db.exec(RUECK3); // jetzt in der richtigen Reihenfolge: geht
+gleich("Rückweg w15_03 danach: Ergebnis-Abfrage", { funktion_w14: true, fuer_anon: false }, await erg(RUECK3));
+await db.exec(sql("migrations/20261128_w15_03_vorlagen_mail.sql"));
 await db.exec(S5);
 gleich("wieder eingespielt", { vorlage_art: "erinnerung_behoerde", frist_am: tag(12), tage: 12 }, kurz(await vorbereiten("v1", "behoerde")));
 

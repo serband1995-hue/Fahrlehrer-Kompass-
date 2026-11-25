@@ -2,6 +2,15 @@
 -- zahlungs_mail_vorbereiten() wieder genau wie W14 (20261125_w14_02): keine Prüfung der Fälligkeit, keine Vorlagen.
 -- Die Edge-Funktion zahlungs-mail kommt damit klar (ohne Vorlage = Standard-Sätze). Gespeicherte Vorlagen bleiben in
 -- fahrschule_einstellungen liegen, werden aber nicht mehr benutzt.
+-- Reihenfolge (Prüf-Team Daten): ist w15_04 eingespielt (gemeinsames Limit mail_limit), zuerst dessen Rückweg ausführen.
+-- Sonst stünde hier die W14-Fassung, während erinnerungs_mail_vorbereiten weiter läuft – Limit nicht mehr gemeinsam.
+do $$
+begin
+  if to_regprocedure('public.mail_limit(uuid,text,text)') is not null then
+    raise exception 'Zuerst den Rückweg zu w15_04 (supabase/rueckweg/20261129_w15_04_rueckweg.sql) ausführen, dann diesen.';
+  end if;
+end $$;
+
 create or replace function public.zahlungs_mail_vorbereiten(p_schueler text, p_art text, p_betrag_cent integer, p_wofuer text)
  returns jsonb
  language plpgsql

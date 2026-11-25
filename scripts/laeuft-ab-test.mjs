@@ -145,8 +145,8 @@ try {
     pruefe("L5 nichts da: „In den nächsten Wochen läuft nichts ab.“", /In den nächsten Wochen läuft nichts ab\./.test(t));
     await ctx.close();
   }
-  // L6 Handy 360 und 412 px, hoch und quer: kein waagrechtes Scrollen, Reiter erreichbar
-  for (const [b, h] of [[360, 740], [412, 860], [740, 360]]) {
+  // L6 Handy 360 und 412 px, hoch und quer, Tablet: kein waagrechtes Scrollen, Reiter erreichbar
+  for (const [b, h] of [[360, 740], [412, 860], [740, 360], [820, 1180], [1024, 768]]) { // dazu Tablet hoch und quer (Prüf-Team W15 PR 2)
     const { page, ctx, konsole } = await oeffne({ breite: b, vorbereiten: zusatzCode(ZUSATZ) });
     await page.setViewportSize({ width: b, height: h });
     await page.waitForTimeout(200);
