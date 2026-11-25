@@ -206,5 +206,92 @@ pruefe("Offline: gespeicherter Stand bleibt", KE.zahl("fristen.a", "monate", 12,
 pruefe("lade ohne fsId wirft nicht", (await wirft(() => KE.lade(fakeSb([]), null))) === null);
 { const s = fakeSb([]); await KE.lade(s, F1); pruefe("lade: nur die Einstellungs-Tabelle", s.aufrufe.length === 1 && s.aufrufe[0] === "fahrschule_einstellungen"); }
 
+// 9 Prüf-Team: alter Stand darf Frischgespeichertes nicht überschreiben
+reset();
+{
+  const zeilen = [{ fahrschule_id: F1, schluessel: "fristen.a", wert: { monate: 12 } }];
+  let freigeben;
+  const langsam = { zeilen, from(t) { // erste Leseanfrage hängt, liefert den ALTEN Stand erst später
+    const q = fakeSb(zeilen).from(t); const orig = q.then; let erste = !langsam.schon; langsam.schon = true;
+    if (erste) { q.then = (a, b) => new Promise((r) => { freigeben = () => r(); }).then(() => ({ data: [{ schluessel: "fristen.a", wert: { monate: 12 } }], error: null })).then(a, b); }
+    return q; } };
+  const sbl = fakeSb(zeilen);
+  const lade1 = KE.lade(langsam, F1);
+  await KE.setze(sbl, F1, "fristen.a", { monate: 6 });
+  freigeben(); await lade1;
+  pruefe("alter lade-Stand überschreibt setze nicht", KE.zahl("fristen.a", "monate", 12, 1, 60) === 6);
+  await new Promise((r) => setTimeout(r, 10));
+  pruefe("nach Nachladen weiter 6", KE.zahl("fristen.a", "monate", 12, 1, 60) === 6);
+}
+reset();
+{
+  const zeilen = [{ fahrschule_id: F1, schluessel: "fristen.a", wert: { monate: 5 } }];
+  let freigeben;
+  const langsam = { from(t) { const q = fakeSb(zeilen).from(t); q.then = (a, b) => new Promise((r) => { freigeben = r; }).then(() => ({ data: [{ schluessel: "fristen.a", wert: { monate: 5 } }], error: null })).then(a, b); return q; } };
+  const sbl = fakeSb(zeilen);
+  const lade1 = KE.lade(langsam, F1);
+  await KE.zuruecksetzen(sbl, F1, "fristen.a");
+  freigeben(); await lade1;
+  pruefe("alter lade-Stand bringt gelöschte Zeile nicht zurück", KE.zahl("fristen.a", "monate", 12, 1, 60) === 12);
+}
+// Nachladen holt Änderung eines anderen
+reset();
+{
+  const zeilen = [];
+  const sbn = fakeSb(zeilen); await KE.lade(sbn, F1);
+  const nebenbei = { from(t) { const q = sbn.from(t); if (!nebenbei.einmal) { nebenbei.einmal = true; zeilen.push({ fahrschule_id: F1, schluessel: "fristen.b", wert: { monate: 3 } }); } return q; } };
+  await KE.setze({ from: (t) => { const q = fakeSb(zeilen).from(t); return q; } }, F1, "fristen.a", { monate: 4 });
+  await new Promise((r) => setTimeout(r, 10));
+  pruefe("Nachladen: eigene Änderung bleibt", KE.zahl("fristen.a", "monate", 12, 1, 60) === 4);
+}
+
+// 10 Größe in Bytes (Umlaute zählen doppelt)
+reset();
+sb = fakeSb([]); await KE.lade(sb, F1);
+pruefe("7000 Umlaute = 14000 Bytes + Rahmen ok? (unter 15000)", (await wirft(() => KE.setze(sb, F1, "vorlagen.a", { t: "ä".repeat(7000) }))) === null);
+pruefe("8000 Umlaute (16000 Bytes) abgelehnt, Text", (await wirft(() => KE.setze(sb, F1, "vorlagen.a", { t: "ä".repeat(8000) }))) === "Text zu lang – bitte kürzen");
+pruefe("14000 ASCII ok", (await wirft(() => KE.setze(sb, F1, "vorlagen.b", { t: "a".repeat(14000) }))) === null);
+pruefe("15500 ASCII abgelehnt", (await wirft(() => KE.setze(sb, F1, "vorlagen.b", { t: "a".repeat(15500) }))) === "Text zu lang – bitte kürzen");
+
+// 11 leeren / geladen
+reset();
+sb = fakeSb([{ fahrschule_id: F1, schluessel: "fristen.a", wert: { monate: 5 } }]);
+pruefe("geladen() vor lade = false", KE.geladen() === false);
+const pg = KE.lade(sb, F1);
+pruefe("geladen() während lade = false", KE.geladen() === false);
+await pg;
+pruefe("geladen() nach lade = true", KE.geladen() === true);
+await KE.lade(fakeSb([], { wirft: "Failed to fetch" }), F2);
+pruefe("geladen() nach Fehler = true", KE.geladen() === true);
+await KE.lade(sb, F1); ereignisse.length = 0;
+KE.leeren();
+pruefe("leeren: fsId null, Standard, nicht geladen", KE.fsId() === null && KE.geladen() === false && KE.zahl("fristen.a", "monate", 12, 1, 60) === 12);
+pruefe("leeren: Ereignis {fsId:null}", ereignisse.length === 1 && ereignisse[0].fsId === null);
+pruefe("leeren: localStorage der Fahrschule weg", !speicher.has("ke:" + F1));
+{ // späte Antwort nach leeren() wird verworfen
+  reset(); let frei;
+  const spaet = { from() { const q = fakeSb([]).from("x"); q.then = (a, b) => new Promise((r) => { frei = r; }).then(() => ({ data: [{ schluessel: "fristen.a", wert: { monate: 5 } }], error: null })).then(a, b); return q; } };
+  const p = KE.lade(spaet, F1); await new Promise((r) => setTimeout(r, 0)); KE.leeren(); frei(); await p;
+  pruefe("lade nach leeren: Antwort verworfen", KE.fsId() === null && KE.zahl("fristen.a", "monate", 12, 1, 60) === 12);
+}
+
+// 12 ausSpeicher nur mit Werten
+reset();
+speicher.set("ke:" + F1, JSON.stringify({ zeit: 1, werte: {} }));
+await KE.lade(fakeSb([]), F1);
+pruefe("leerer Speicher: kein ausSpeicher-Ereignis", ereignisse.every((e) => !e.ausSpeicher) && ereignisse.length === 1);
+
+// 13 abgelaufene Sitzung
+for (const fe of [{ status: 401, message: "x" }, { code: "PGRST301", message: "x" }, { message: "JWT expired" }]) {
+  pruefe("Sitzung abgelaufen: " + (fe.code || fe.status || fe.message), (await wirft(() => KE.setze(fakeSb([], { fehler: fe }), F1, "fristen.a", { m: 1 }))) === "Bitte neu anmelden – nicht gespeichert");
+}
+
+// 14 zahl: 5.0 (JSON.stringify(5.0) === "5")
+reset();
+await KE.lade(fakeSb([{ fahrschule_id: F1, schluessel: "fristen.z", wert: JSON.parse('{"a":5.0,"b":5.5,"c":1e2}') }]), F1);
+pruefe("5.0 zählt als 5", KE.zahl("fristen.z", "a", 12, 1, 60) === 5);
+pruefe("5.5 → Standard", KE.zahl("fristen.z", "b", 12, 1, 60) === 12);
+pruefe("1e2 (=100) in JS ganze Zahl 100", KE.zahl("fristen.z", "c", 12, 1, 600) === 100);
+
 console.log(`\nke-test: ${ok} ok, ${schlecht} Fehler`);
 process.exit(schlecht ? 1 : 0);

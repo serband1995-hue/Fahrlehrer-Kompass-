@@ -5813,6 +5813,7 @@ async function doLogout(opts) {
   }
   if (_syncTimer) clearInterval(_syncTimer);
   _pullOk = false;
+  if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
   if (!opts.alleGeraete) {
     // Nur dieses Gerät abmelden: signOut() ohne scope meldet in supabase-js v2 ALLE Geräte ab (Handy, PC, Laptop).
     try { if (supa) await Promise.race([supa.auth.signOut({ scope: "local" }), new Promise(r => setTimeout(r, 4000))]); } catch (e) {}

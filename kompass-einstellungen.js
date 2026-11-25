@@ -14,12 +14,14 @@
   "use strict";
   var TABELLE = "fahrschule_einstellungen";
   var SCHLUESSEL = /^(fristen|vorlagen|fahrstunden|papierkorb|rueckgaengig)(\.[a-z][a-z0-9_]*)+$/;
-  var MAX_ZEICHEN = 16000; // wie die Prüfung fe_groesse in der Datenbank
+  var MAX_BYTES = 15000; // die Datenbank erlaubt 16000 (octet_length von wert::text); Postgres fügt beim Ausgeben Leerzeichen hinzu, darum Luft
 
   var _fs = null;      // Fahrschule im Speicher
   var _werte = {};     // schluessel → Objekt (nur die gespeicherten, ohne Standard)
-  var _lauf = 0;       // jüngste lade()-Anfrage gewinnt
+  var _lauf = 0;       // jüngste lade()-Anfrage gewinnt; setze/zuruecksetzen/leeren entwerten ältere Anfragen
+  var _fertig = false; // Antwort der Datenbank (oder Fehler) für _fs ist da
 
+  function bytes(t) { try { return new TextEncoder().encode(t).length; } catch (e) { return unescape(encodeURIComponent(t)).length; } }
   function kopie(x) { return JSON.parse(JSON.stringify(x)); }
   function einfachesObjekt(o) { return Object.prototype.toString.call(o) === "[object Object]"; }
   function speicher() {
@@ -55,7 +57,11 @@
   function netzFehler(err) {
     return !err || /fetch|network|netz|timeout|offline|Failed to|Load failed/i.test(String(err.message || err)) || err.status === 0;
   }
+  function sitzungAbgelaufen(err) {
+    return !!err && (err.status === 401 || err.code === "PGRST301" || /jwt expired|JWT/i.test(err.message || ""));
+  }
   function fehlerText(err, art) {
+    if (sitzungAbgelaufen(err)) return "Bitte neu anmelden – nicht gespeichert";
     if (err && (err.code === "42501" || err.status === 401 || err.status === 403 || /row-level security|permission denied|not allowed/i.test(err.message || ""))) return "Keine Berechtigung zum Ändern";
     if (tabelleFehlt(err)) return "Die Einstellungen sind noch nicht eingerichtet";
     if (err && (err.code === "23514" || err.code === "22023")) return "Dieser Wert ist nicht erlaubt";
@@ -63,17 +69,37 @@
     return art === "loeschen" ? "Keine Verbindung – nicht zurückgesetzt" : "Keine Verbindung – nicht gespeichert";
   }
 
+  // Nach dem Speichern still frisch holen (ändert sich nur etwas, wenn jemand anderes zwischendurch geändert hat)
+  function nachladen(sb, fsId) {
+    if (_fs !== fsId) return;
+    var nr = ++_lauf;
+    Promise.resolve().then(function () { return sb.from(TABELLE).select("schluessel,wert").eq("fahrschule_id", fsId); }).then(function (r) {
+      if (nr !== _lauf || _fs !== fsId || !r || r.error) return;
+      var neu = {};
+      (r.data || []).forEach(function (z) { if (z && SCHLUESSEL.test(z.schluessel) && einfachesObjekt(z.wert)) neu[z.schluessel] = kopie(z.wert); });
+      if (JSON.stringify(neu) === JSON.stringify(_werte)) return;
+      _werte = neu; inSpeicherSchreiben(); ereignis({ fsId: fsId });
+    }).catch(function () { /* still */ });
+  }
+
   var KE = {
     fsId: function () { return _fs; },
+    geladen: function () { return !!_fs && _fertig; },
+    // Beim Abmelden: nichts von dieser Fahrschule im Speicher oder auf dem Gerät lassen
+    leeren: function () {
+      var alt = _fs; _lauf++; _fs = null; _werte = {}; _fertig = false;
+      try { var sp = speicher(); if (sp && alt) sp.removeItem("ke:" + alt); } catch (e) { /* egal */ }
+      ereignis({ fsId: null });
+    },
 
     lade: async function (sb, fsId) {
       if (!fsId) return;
       var nr = ++_lauf;
       try {
         var c = null;
-        if (_fs !== fsId) { _fs = fsId; c = ausSpeicherLesen(fsId); _werte = c || {}; }
+        if (_fs !== fsId) { _fs = fsId; _fertig = false; c = ausSpeicherLesen(fsId); _werte = c || {}; }
         else if (!Object.keys(_werte).length) { c = ausSpeicherLesen(fsId); if (c) _werte = c; }
-        if (c) ereignis({ fsId: fsId, ausSpeicher: true });
+        if (c && Object.keys(c).length) ereignis({ fsId: fsId, ausSpeicher: true });
       } catch (e) { /* weiter mit der Datenbank */ }
       var neu = null, fehler = null;
       try {
@@ -88,6 +114,7 @@
       } catch (e) { fehler = "Keine Verbindung – gespeicherte Einstellungen werden genutzt"; }
       if (nr !== _lauf) return; // inzwischen wurde eine andere Fahrschule (oder neu) geladen
       if (neu) { _werte = neu; inSpeicherSchreiben(); }
+      _fertig = true;
       var d = { fsId: fsId };
       if (fehler) d.fehler = fehler;
       ereignis(d);
@@ -114,14 +141,16 @@
       if (!einfachesObjekt(objekt)) throw new Error("Ungültiger Wert");
       var wert;
       try { wert = kopie(objekt); } catch (e) { throw new Error("Ungültiger Wert"); }
-      if (JSON.stringify(wert).length > MAX_ZEICHEN) throw new Error("Der Wert ist zu groß");
+      if (bytes(JSON.stringify(wert)) > MAX_BYTES) throw new Error("Text zu lang – bitte kürzen");
       var r;
       try {
         r = await sb.from(TABELLE).upsert({ fahrschule_id: fsId, schluessel: schluessel, wert: wert }, { onConflict: "fahrschule_id,schluessel" });
       } catch (e) { throw new Error("Keine Verbindung – nicht gespeichert"); }
       if (r && r.error) throw new Error(fehlerText(r.error, "setzen"));
+      _lauf++; // ein früher abgeschicktes lade() bringt sonst den alten Stand zurück
       if (_fs === fsId) { _werte[schluessel] = wert; inSpeicherSchreiben(); }
       ereignis({ fsId: fsId, geaendert: schluessel });
+      nachladen(sb, fsId);
     },
 
     zuruecksetzen: async function (sb, fsId, schluessel) {
@@ -134,12 +163,14 @@
       if (r && r.error) throw new Error(fehlerText(r.error, "loeschen"));
       // Die Sicherheitsregel löscht bei fehlendem Recht still nichts: gab es die Zeile, muss sie jetzt auch zurückkommen
       if (_fs === fsId && _werte[schluessel] && r && Array.isArray(r.data) && r.data.length === 0) throw new Error("Keine Berechtigung zum Ändern");
+      _lauf++;
       if (_fs === fsId) { delete _werte[schluessel]; inSpeicherSchreiben(); }
       ereignis({ fsId: fsId, geaendert: schluessel });
+      nachladen(sb, fsId);
     },
 
     // nur für Tests
-    _leeren: function () { _fs = null; _werte = {}; _lauf++; }
+    _leeren: function () { _fs = null; _werte = {}; _lauf++; _fertig = false; }
   };
 
   if (typeof window !== "undefined") window.KE = KE;

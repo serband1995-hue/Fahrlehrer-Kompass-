@@ -5002,6 +5002,7 @@ function zeigeHinweis(titel, text, knoepfe) {
 }
 async function abmelden() {
   verwirfGeparkt(); // sonst fragt der Browser beim Neuladen nach versteckten Eingaben
+  if (window.KE) KE.leeren(); // W11: Einstellungen dieser Fahrschule nicht auf dem Gerät lassen
   // Erst die PIN-Sitzung auf dem Server beenden (höchstens 3 s warten), dann lokal abmelden: sonst ginge der Aufruf ohne Anmeldung raus.
   try { await Promise.race([beendeSitzung(), new Promise((r) => setTimeout(r, 3000))]); } catch (e) { /* egal */ }
   try { await supa.auth.signOut({ scope: "local" }); } catch (e) { /* trotzdem neu laden */ } // nur dieser PC, andere Geräte bleiben angemeldet
