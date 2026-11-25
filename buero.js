@@ -4775,7 +4775,7 @@ function zeigeWerAnzeige() {
   $("werAnzeige").textContent = S.werAnzeige || "";
   $("werZeile").hidden = !S.sitzung;
   if (werNoetig()) {
-    $("nutzerName").textContent = S.sitzung ? S.werAnzeige : "Bitte anmelden";
+    $("nutzerName").textContent = S.sitzung ? S.werAnzeige : "Bitte anmelden"; $("nutzerName").title = $("nutzerName").textContent;
     $("nutzerRolle").textContent = "Büro";
   }
   $("kopfWer").hidden = !S.sitzung;
@@ -5132,7 +5132,7 @@ async function starte(user) {
     }
   }
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
-  $("nutzerName").textContent = profil.name || user.email;
+  $("nutzerName").textContent = profil.name || user.email; $("nutzerName").title = $("nutzerName").textContent;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
   zeigeAppLink(profil);
   zeigeWerAnzeige();

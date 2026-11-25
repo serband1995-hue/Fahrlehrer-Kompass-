@@ -345,16 +345,26 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   await ctx.close();
 }
 // ---- PC mit kleinem Bildschirm (1366×768, 1280×720): Fuß mit Abmelden immer sichtbar, Punkte scrollen ----
-for (const [b, h] of [[1366, 768], [1280, 720]]) {
-  const { page, ctx, konsole } = await oeffne({ hash: "#heute", breite: b, hoehe: h, nutzer: "bu-1" });
+// Büro (mit „Bedient gerade“ und Link zur App) bei 1280×720: Punkte dürfen scrollen, Abmelden steht trotzdem unten
+for (const [b, h, nutzer, ganz] of [[1366, 768, "bu-1", true], [1280, 720, "ad-1", true], [1280, 720, "bu-1", false]]) {
+  const { page, ctx, konsole } = await oeffne({ hash: "#heute", breite: b, hoehe: h, nutzer });
   const r = await page.evaluate(() => {
     const ab = document.getElementById("abmelden").getBoundingClientRect(), nav = document.getElementById("nav");
     const ein = document.querySelector('#nav .nav-punkt[href="#einstellungen"]');
     nav.scrollTop = nav.scrollHeight; const e = ein.getBoundingClientRect(), n = nav.getBoundingClientRect();
-    return { abUnten: Math.round(ab.bottom), hoehe: innerHeight, einDrin: e.bottom <= n.bottom + 1 && e.top >= n.top - 1, seiteScroll: document.querySelector(".seite").scrollHeight - document.querySelector(".seite").clientHeight };
+    const navScroll = nav.scrollHeight - nav.clientHeight;
+    return { abUnten: Math.round(ab.bottom), hoehe: innerHeight, einDrin: e.bottom <= n.bottom + 1 && e.top >= n.top - 1, seiteScroll: document.querySelector(".seite").scrollHeight - document.querySelector(".seite").clientHeight, navScroll };
   });
-  pruefe("F1-" + b, `${b}×${h}: „Abmelden“ sichtbar ohne Scrollen, „Einstellungen“ in der Leiste erreichbar`, r.abUnten <= r.hoehe && r.einDrin && r.seiteScroll <= 1 ? null : JSON.stringify(r));
-  pruefe("F2-" + b, "keine Konsolenfehler", konsole);
+  pruefe(`F1-${b}-${nutzer}`, `${b}×${h} (${nutzer}): „Abmelden“ sichtbar ohne Scrollen, ${ganz ? "alle 12 Punkte ohne Scrollen" : "„Einstellungen“ per Scrollen in der Leiste erreichbar"}`, r.abUnten <= r.hoehe && r.einDrin && r.seiteScroll <= 1 && (!ganz || r.navScroll <= 1) ? null : JSON.stringify(r));
+  pruefe(`F2-${b}-${nutzer}`, "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+// ---- Handy 360: Kalender-Knöpfe ganz zu sehen (umbrechen statt abschneiden) ----
+{
+  const { page, ctx, konsole } = await oeffne({ hash: "#kalender", breite: 360, hoehe: 780 });
+  const r = await page.$$eval("#kopfAktionen > *", (l) => l.map((a) => { const b = a.getBoundingClientRect(); return [a.textContent.trim(), Math.round(b.left), Math.round(b.right), Math.round(b.height)]; }));
+  pruefe("G5", "Handy 360: Wer hat Platz? · Urlaub · + Termin ganz im Bild, ≥ 44 px", r.length === 3 && r.every((x) => x[1] >= 0 && x[2] <= 360 && x[3] >= 44) ? null : JSON.stringify(r));
+  pruefe("G5k", "keine Konsolenfehler", konsole);
   await ctx.close();
 }
 // ---- „Darstellung & Start“: das Büro wählt keine Startseite ----

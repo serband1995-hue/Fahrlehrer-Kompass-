@@ -195,7 +195,7 @@
         const buero = meineRolle() === "buero"; // das Büro wählt keine Startseite: es startet, wo es sich anmeldet
         el.innerHTML = `${abschnitt(this.titel)}
           ${zeile("Hell oder dunkel", `<div class="es-wert es-text">folgt dem Gerät</div>`, { hinweis: "Die Büro-Seite richtet sich nach der Einstellung deines Geräts." })}
-          ${buero ? zeile("Startseite", `<div class="es-wert es-text">wo du dich anmeldest</div>`, { hinweis: "Das Büro startet, wo es sich anmeldet." }) : ""}`;
+          ${buero ? `<p class="es-hinweis es-satz">Das Büro startet, wo es sich anmeldet.</p>` : ""}`;
         if (buero) return;
         const kasten = document.createElement("div"); kasten.className = "es-kasten";
         el.appendChild(kasten);
