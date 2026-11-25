@@ -190,6 +190,22 @@ try {
     pruefe("E9h keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
     await ctx.close();
   }
+  // E10 (Richter W15 PR 2): unerwarteter Fehler beim Senden und „Seite verlassen“ lösen die Sperre, der Knopf ist gleich wieder frei
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", vorbereiten: vor() });
+    await page.evaluate(() => schuelerDialog("s5")); await page.waitForSelector("dialog[open] #emBlock"); await page.waitForTimeout(150);
+    const knopf = page.locator('dialog[open] [data-emsenden="behoerde"]');
+    await page.evaluate(() => { window.__emSendeEcht = window.emSende; window.emSende = async () => { throw new Error("unerwartet"); }; });
+    await knopf.click(); await page.waitForTimeout(1300);
+    const meldung = await page.locator('dialog[open] [data-emart="behoerde"] [data-emmeldung]').innerText().catch(() => "");
+    pruefe("E10a unerwarteter Fehler: Knopf wieder frei, verständliche Meldung", await knopf.isEnabled() && /Versand gerade nicht möglich/.test(meldung), meldung);
+    await page.evaluate(() => { window.emSende = window.__emSendeEcht; });
+    await knopf.click(); await page.locator(".toast-undo").waitFor({ timeout: 2000 });
+    await page.evaluate(() => window.dispatchEvent(new Event("pagehide"))); await page.waitForTimeout(800);
+    pruefe("E10b Seite verlassen während „Rückgängig“: nichts gesendet, Knopf wieder frei", (await anrufe(page)).length === 0 && await knopf.isEnabled());
+    pruefe("E10c keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
+    await ctx.close();
+  }
 } finally {
   await browser.close();
   server.close();

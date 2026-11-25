@@ -355,10 +355,12 @@ function zmBinde(block, dlg, sid) {
       }, {
         ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
         nachAblauf: async (verlassen) => {
-          if (verlassen) { ZM.laeuft.delete(schluessel); return; } // Seite wird verlassen: lieber nichts senden
+          if (verlassen) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); return; } // Seite wird verlassen: lieber nichts senden (Knopf frei, falls die Seite zurückkommt)
           if (S.fsId !== fs0) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
-          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr);
-          ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
+          let erg;
+          try { erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr, fs0); }
+          catch (e) { erg = { ok: false, code: null, text: ZM_NICHT_MOEGLICH }; } // unerwarteter Fehler: Sperre trotzdem lösen (Richter W15 PR 2)
+          finally { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); }
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
           if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert" || /^reakt_/.test(erg.code || "")) && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
@@ -450,6 +452,7 @@ function emLaden(res) {
     S.erinnerungsMails = liste;
   } else if (!res || zmTabelleFehlt(res.error)) S.erinnerungsMails = null; // Tabelle fehlt: keine Knöpfe
   // anderer Ladefehler: letzten Stand behalten
+  emBloeckAktualisieren(); // wie zmLaden: offene Akten zeigen z. B. einen Moduswechsel an einem anderen PC gleich (Richter W15 PR 2)
 }
 function emBloeckAktualisieren() { document.querySelectorAll("#emBlock").forEach((b) => { if (b.dataset.emsid) emNeuZeichnen(b.dataset.emsid, null, null, true); }); }
 function emFinde(sid) { return [...document.querySelectorAll("#emBlock")].find((b) => b.dataset.emsid === sid) || null; }
@@ -502,10 +505,12 @@ function emBinde(block, sid) {
     }, {
       ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000,
       nachAblauf: async (verlassen) => {
-        if (verlassen) { EM.laeuft.delete(schluessel); return; }
+        if (verlassen) { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); return; }
         if (S.fsId !== fs0) { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
-        const erg = await emSende(sid, art, modus, sitz, name, empfAdr);
-        EM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
+        let erg;
+        try { erg = await emSende(sid, art, modus, sitz, name, empfAdr, fs0); }
+        catch (e) { erg = { ok: false, code: null, text: ZM_NICHT_MOEGLICH }; } // unerwarteter Fehler: Sperre trotzdem lösen (Richter W15 PR 2)
+        finally { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); }
         if (erg.ok) { emNeuZeichnen(sid); if (typeof zeichne === "function" && /#fristen/.test(location.hash)) zeichne(); return; }
         if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
         if ((erg.code === "empfaenger_geaendert" || EM_FEHLER[erg.code] && !ZM_FEHLER[erg.code]) && typeof ladeDaten === "function") ladeDaten(); // Stand auffrischen
@@ -516,7 +521,7 @@ function emBinde(block, sid) {
     if (u && u.el) u.el.classList.add("zm-toast");
   }));
 }
-async function emSende(sid, art, erwarteterModus, sitz, name, empfAdr) {
+async function emSende(sid, art, erwarteterModus, sitz, name, empfAdr, fs0) {
   let data = null, error = null;
   try {
     ({ data, error } = await supa.functions.invoke("erinnerungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, erwartete_empfaenger: erwarteterModus === "echt" && Array.isArray(empfAdr) ? empfAdr : undefined, erwarteter_modus: erwarteterModus } }));
@@ -531,10 +536,13 @@ async function emSende(sid, art, erwarteterModus, sitz, name, empfAdr) {
   if (error || !data || data.ok === false) return { ok: false, code: null, text: ZM_NICHT_MOEGLICH };
   const jetzt = data.gesendet_am || new Date().toISOString();
   const person = (typeof PIN !== "undefined" && PIN && PIN.person && PIN.person.name) || (S.profil && S.profil.name) || null;
-  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, frist_am: data.frist_am || null, modus: data.modus || erwarteterModus,
+  const fs = fs0 || S.fsId;
+  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: fs, schueler_id: sid, art, frist_am: data.frist_am || null, modus: data.modus || erwarteterModus,
     empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt };
-  if (!Array.isArray(S.erinnerungsMails)) S.erinnerungsMails = [];
-  S.erinnerungsMails.unshift(zeile); EM.lokal.push({ t: Date.now(), row: zeile });
+  if (fs === S.fsId) { // inzwischen andere Fahrschule gewählt: die Zeile gehört nicht in deren Liste (Richter W15 PR 2)
+    if (!Array.isArray(S.erinnerungsMails)) S.erinnerungsMails = [];
+    S.erinnerungsMails.unshift(zeile); EM.lokal.push({ t: Date.now(), row: zeile });
+  }
   const nichtAn = Array.isArray(data.nicht_an) ? data.nicht_an.filter((w) => w === "Eltern" || w === "Schüler") : [];
   if (nichtAn.length) toast(`Erinnerung gesendet, aber nicht an ${nichtAn.map((w) => (w === "Eltern" ? "die Eltern" : "den Schüler")).join(" und ")}.`, true);
   else toast(`Erinnerung gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
@@ -552,7 +560,7 @@ function emErinnern(sid, art) {
   });
 }
 // Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, code, text }
-async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr) {
+async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr, fs0) {
   let data = null, error = null;
   try {
     ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwartete_empfaenger: erwarteterModus === "echt" && Array.isArray(empfAdr) ? empfAdr : undefined, erwarteter_modus: erwarteterModus } }));
@@ -573,9 +581,10 @@ async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name
   const jetzt = data.gesendet_am || new Date().toISOString();
   const person = (typeof PIN !== "undefined" && PIN && PIN.person && PIN.person.name) || (S.profil && S.profil.name) || null;
   if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
-  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
+  const fs = fs0 || S.fsId;
+  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: fs, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
     empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt };
-  S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); // ein gerade laufendes Laden darf den Eintrag nicht verlieren
+  if (fs === S.fsId) { S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); } // ein gerade laufendes Laden darf den Eintrag nicht verlieren; andere Fahrschule: nicht in deren Liste
   // W14: je Empfänger eine eigene Mail; ging eine davon nicht raus, deutlich sagen (die andere ist gesendet)
   const nichtAn = Array.isArray(data.nicht_an) ? data.nicht_an.filter((w) => w === "Eltern" || w === "Schüler") : [];
   if (nichtAn.length) toast(`Gesendet, aber nicht an ${nichtAn.map((w) => w === "Eltern" ? "die Eltern" : "den Schüler").join(" und ")}. Die andere Mail ist angekommen. Zum Nachsenden in der Akte „${nichtAn[0] === "Eltern" ? "nur Eltern" : "nur Schüler"}“ wählen, sonst bekommt sie der andere doppelt.`, true);
