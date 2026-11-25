@@ -193,6 +193,13 @@
     if (d >= 0) return d;
     return d + 1440 <= 360 ? d + 1440 : 0;
   }
+  // Ende eines Termins in Minuten ab Mitternacht SEINES Tages: 22:30–00:00 endet bei 1440 (morgen 0 Uhr), nicht bei 0
+  // (sonst gälte eine Nachtfahrt schon am Morgen als vorbei; Prüfer Büro W13 PR 3).
+  function terminEndeMin(von, bis) {
+    if (!bis) return 0;
+    const b = hm2min(bis);
+    return von && b < hm2min(von) && terminMinuten(von, bis) > 0 ? b + 1440 : b;
+  }
   // Wie viele Kästchen ein Sonder-Termin belegt: volle Einheiten (abgerundet wie Büro und Nachweis, Fable F4), mindestens 1
   // (wie bisher auch kurze oder unvollständige Termine). 90 Min = 2, 80 Min = 1, 135 Min = 3.
   function sonderEinheiten(von, bis) {
@@ -348,7 +355,7 @@
     heute = heute || todayISO();
     // Heutige Termine zählen erst, wenn sie vorbei sind (sonst stünde die Abend-Fahrstunde schon mittags im Soll).
     if (typeof jetztMin !== "number") { const d = new Date(); jetztMin = heute === todayISO() ? d.getHours() * 60 + d.getMinutes() : 24 * 60; }
-    const ende = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t.bis || ""); return m ? (+m[1]) * 60 + (+m[2]) : 0; };
+    const ende = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t.bis || ""); return m ? terminEndeMin(t.von, t.bis) : 0; }; // über Mitternacht: morgen
     const posten = [];
     let soll = 0;
     for (const t of termine || []) {
@@ -476,7 +483,7 @@
     const ex = extra || {}, pTage = [];
     for (const t of termine || []) {
       if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
-      if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
+      if (t.datum === heute && terminEndeMin(t.von, t.bis) > jetztMin) continue; // über Mitternacht: erst morgen vorbei
       if (PAKET_NICHT.includes(t.status)) continue;
       if (FC_ARTEN.includes(t.art)) {
         // Gezählt wird, was an Fahrchecks beim Büro ist (fcFuersBuero): „1 vergessen“ = einer weniger, nachgereicht = voll,
@@ -512,7 +519,7 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-  const api = { paketVerbrauch, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+  const api = { paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;

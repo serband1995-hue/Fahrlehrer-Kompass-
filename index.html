@@ -5743,7 +5743,8 @@ async function pullTermineZuweisungen() {
     // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
     // die Datenbank sagt, welche der eigenen IDs inzwischen jemand anderem gehören.
     // (Vor dem Lesen des Gedächtnisses: nach dem letzten await darf es sich nicht mehr ändern.)
-    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && !l._syncedAt && l.id).map(l => l.id);
+    // W13 PR 3 (Fable H2): auch verknüpfte Sonderfahrten nachfragen – einem anderen Fahrlehrer gegeben ist nicht „abgesagt“
+    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && (!l._syncedAt || l.srcSonder) && l.id).map(l => l.id);
     let weggegeben = new Set();
     if (unklar.length) {
       const { data: fremd, error: fErr } = await supa.rpc("termine_nicht_mehr_meine", { p_ids: unklar });
@@ -5801,7 +5802,8 @@ async function pullTermineZuweisungen() {
         if (!bleibt) {
           delete mem.termine[l.id];
           // W13 PR 3: vom Büro abgesagt oder gelöscht → die Kästchen im Plan werden frei (wie beim Löschen auf dem Gerät)
-          if (l.srcSonder && !weggegeben.has(l.id)) { const [sid, grp] = String(l.srcSonder).split(":"); const st = (DB.students || []).find(x => x.id === sid); if (st) _sfFreigeben(st, grp, l); }
+          // Eine schon gefahrene Sonderfahrt bleibt im Plan abgehakt (Daten 2); nur künftige werden frei.
+          if (l.srcSonder && !weggegeben.has(l.id) && !isAbsolved(l.date, l.bis)) { const [sid, grp] = String(l.srcSonder).split(":"); const st = (DB.students || []).find(x => x.id === sid); if (st) _sfFreigeben(st, grp, l); }
         }
         return bleibt;
       });
@@ -10812,8 +10814,9 @@ function _sfIdx(l){
   const a=roh.filter(n=>Number.isInteger(n)&&n>=0&&n!==i0);
   return [i0].concat(a.filter((n,k)=>a.indexOf(n)===k));
 }
+// W13 PR 3 (Fable H1): Ein Termin, der gerade nicht zählt („nicht erschienen“, „abgebrochen“, Art ≠ Sonderfahrt), hält keine Kästchen.
 function _sfTerminZu(sid,grp,idx,ohne){
-  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
+  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; if(l.srcSonderMin!=null&&!_sfZaehlt(l))return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
 }
 // Merkt sich die Kästchen vor einer Änderung (für Rückgängig): [{i,o}]
 function _sfStand(arr,liste){ return liste.map(i=>({i,o:arr[i]?Object.assign({},arr[i]):null})); }
@@ -10852,30 +10855,44 @@ function _sfMin(l){ return (window.KR&&KR.terminMinuten)?KR.terminMinuten(l.von,
 function _sfKaestchen(l){ return {d:isoToShort(l.date),iso:l.date,tid:l.id}; }
 function _sfZaehlt(l){ return l.art==="sonder"&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"; }
 function _sfAbgleichen(){
+  const GR=["ueberland","autobahn","nacht"];
   const studs={}; (DB.students||[]).forEach(s=>{ if(s&&s.id)studs[s.id]=s; });
   let geaendert=false;
+  const leeren=(arr,l,ausser)=>{ (arr||[]).forEach((o,i)=>{ if(o&&o.tid===l.id&&!(ausser&&ausser.includes(i))){ arr[i]=null; geaendert=true; } }); };
+  const loesen=l=>{ delete l.srcSonder; delete l.srcSonderIdx; delete l.srcSonderMin; geaendert=true; };
   for(const l of (DB.lessons||[])){
     if(!l||!l.srcSonder||l.srcSonderMin==null||!l.id)continue;
     const [sid,grp]=String(l.srcSonder).split(":"), s=studs[sid];
-    if(!s||l.sid!==sid||!s.plan||!s.plan.sonder||!["ueberland","autobahn","nacht"].includes(grp))continue;
-    const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
-    let liste=_sfIdx(l);
-    if(!_sfZaehlt(l)){ liste.forEach(i=>{ if(arr[i]&&arr[i].tid===l.id){ arr[i]=null; geaendert=true; } }); continue; }
-    const min=_sfMin(l);
-    if(min!==l.srcSonderMin){
-      const n=_sfEinh(l.von,l.bis);
-      if(n<liste.length){ liste.slice(n).forEach(i=>{ if(arr[i]&&arr[i].tid===l.id)arr[i]=null; }); liste=liste.slice(0,n); }
-      else if(n>liste.length){
-        const soll=Math.max(sfSoll(grp,s),liste[0]+1), letzt=liste[liste.length-1];
-        const frei=i=>!liste.includes(i)&&!sfDone(arr[i])&&!_sfTerminZu(s.id,grp,i,l);
-        for(let i=letzt+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
-        for(let i=0;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
-      }
-      if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx;
-      l.srcSonderMin=min; geaendert=true;
+    if(!s||!s.plan||!s.plan.sonder||!GR.includes(grp))continue;
+    // „Mit anderem Schüler gefahren“ (Fable H4): beim alten Schüler frei, Verknüpfung weg
+    if(l.sid!==sid){ leeren(s.plan.sonder[grp],l); loesen(l); continue; }
+    // Das Büro hat die Art geändert (payload.sonderArt, Prüfer Büro 2): in die neue Gruppe umziehen
+    if(l.sonderArt&&GR.includes(l.sonderArt)&&l.sonderArt!==grp&&_sfZaehlt(l)){
+      leeren(s.plan.sonder[grp],l);
+      const ziel=s.plan.sonder[l.sonderArt]||(s.plan.sonder[l.sonderArt]=[]), zs=sfSoll(l.sonderArt,s);
+      let i0=-1; for(let i=0;i<zs;i++){ if(!sfDone(ziel[i])&&!_sfTerminZu(s.id,l.sonderArt,i,l)){ i0=i; break; } }
+      if(i0<0) loesen(l); else { _sfBelegen(s,l.sonderArt,l,i0); geaendert=true; }
+      continue;
     }
-    liste.forEach(i=>{ const o=arr[i];
-      if(!sfDone(o)||(o.tid===l.id&&o.iso!==l.date)){ arr[i]=_sfKaestchen(l); geaendert=true; } });
+    const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+    if(!_sfZaehlt(l)){ leeren(arr,l); continue; } // „nicht erschienen“, „abgebrochen“, Art ≠ Sonderfahrt: frei, Verknüpfung bleibt
+    const vorher=JSON.stringify([l.srcSonder,l.srcSonderIdx||null,l.srcSonderMin]);
+    const alt=_sfIdx(l), min=_sfMin(l), soll=Math.max(sfSoll(grp,s),(alt[0]||0)+1);
+    // Länge geändert → neue Zahl; nicht bei einem Tippfehler mit 0 Minuten (Daten 4)
+    const n=(min>0&&min!==l.srcSonderMin)?_sfEinh(l.von,l.bis):alt.length;
+    // Kästchen, die inzwischen einem anderen Termin gehören oder von Hand abgehakt wurden (z. B. nach „nicht erschienen“
+    // und zurück), werden durch die nächsten freien ersetzt (Fable H1)
+    let liste=alt.filter(i=>{ const o=arr[i]; return (o&&o.tid===l.id)||(!sfDone(o)&&!_sfTerminZu(s.id,grp,i,l)); }).slice(0,n);
+    const frei=i=>!liste.includes(i)&&!sfDone(arr[i])&&!_sfTerminZu(s.id,grp,i,l);
+    const ab=liste.length?liste[liste.length-1]:(alt[0]||0)-1;
+    for(let i=ab+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
+    for(let i=0;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
+    leeren(arr,l,liste); // eigene Kästchen, die nicht mehr dazugehören (z. B. ein anderes Gerät hat gekürzt; Fable H3)
+    liste.forEach(i=>{ const o=arr[i]; if(!sfDone(o)||(o.tid===l.id&&o.iso!==l.date)){ arr[i]=_sfKaestchen(l); geaendert=true; } });
+    if(liste.length){ l.srcSonder=sid+":"+grp+":"+liste[0]; if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx; }
+    // Länge erst als abgeglichen merken, wenn genug Kästchen frei waren (sonst nächstes Speichern erneut; Prüfer Büro 3)
+    if(min>0&&liste.length===n) l.srcSonderMin=min;
+    if(JSON.stringify([l.srcSonder,l.srcSonderIdx||null,l.srcSonderMin])!==vorher) geaendert=true;
   }
   return geaendert;
 }
@@ -10941,9 +10958,11 @@ function openSonderKalenderSheet(sid,grp,idx){
     commitSonderZeit(s,grp,idx,date,von);
   });
   const rmBtn=$("#sfkRemove");
+  // W13 PR 3 (Bedienung 2): Entfernen mit Rückgängig; eine gelaufene oder unterschriebene Stunde wird storniert (wie im Kalender)
   if(rmBtn)rmBtn.addEventListener("click",()=>{
-    removeSonderFromKalender(s,grp,idx);
-    closeSheet();toast("Kalendereintrag entfernt");buildSonder(s);
+    closeSheet();
+    deleteLessonMitRueckgaengig(ex.id,()=>{ try{ buildSonder(s); refreshPlanRing(s); }catch(e){} });
+    try{ buildSonder(s); refreshPlanRing(s); }catch(e){}
   });
 }
 // Büro-Stopp: vor jedem NEUEN Fahrtermin nachfragen, genau wie beim normalen „Termin vergeben“ (finishBooking). true = eintragen.
