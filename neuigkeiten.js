@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.9", datum: "2026-11-25", kurz: "Büro: kürzere Leiste, „Abmelden“ immer zu sehen.",
+    punkte: ["Die Leiste links ist kürzer und passt jetzt auch auf kleinere PC-Bildschirme. „Abmelden“ steht immer unten.",
+             "Urlaub findest du im Kalender oben rechts. Daneben, als Reiter: „Wer hat Platz?“ und „Schichtplan“.",
+             "Backups findest du unter Einstellungen › Backups.",
+             "Für das Büro heißt das Thema jetzt nur „Darstellung“: Das Büro startet, wo es sich anmeldet."] },
   { version: "2026.11.25.8", datum: "2026-11-25", kurz: "Fristen: überall dieselbe Farbe für dieselbe Frist.",
     punkte: ["Unter „Läuft bald ab“ hat jede Frist jetzt dieselbe Farbe wie in ihrem eigenen Reiter. Ein Führerscheinantrag, der in zwei Monaten abläuft, ist also überall gelb.",
              "„Ohne Vertragsdatum“ zeigt jetzt auch Schüler, bei denen die Reaktivierung gerade entfällt. So fällt ein fehlendes Datum trotzdem auf."] },

@@ -63,7 +63,12 @@ const gehe = async (page, hash) => { await page.evaluate((h) => { location.hash 
 for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, ["Paula Muster", "7352"]], ["Handy, Büro mit Verwalten-Recht", 360, 780, ["Mia Muster", "5917"]]]) {
   const P = `[${n}]`;
   const { page, ctx, konsole } = await oeffne({ breite: w, hoehe: h, person });
-  await pruefe("V0", `${P} Leiste: Urlaub, Schichtplan und Backups da`, () => page.evaluate(() => { const h = [...document.querySelectorAll("#nav .nav-punkt")].map((a) => a.getAttribute("href")); const f = ["#urlaub", "#schichtplan", "#backups"].filter((x) => !h.includes(x)); return f.length ? "fehlt: " + f.join(", ") : null; }));
+  // W11: Urlaub über den Kalender-Kopf, Schichtplan als Reiter daneben, Backups unter Einstellungen (Leiste passt so auf jeden PC)
+  await gehe(page, "#kalender");
+  const wege = { urlaub: await page.locator('#kopfAktionen a[href="#urlaub"]').count() };
+  await gehe(page, "#urlaub"); wege.schichtplan = await page.locator('.plan-reiter a[href="#schichtplan"]').count();
+  await gehe(page, "#einstellungen?thema=backups"); wege.backups = await page.locator('#esBox a[href="#backups"]').count();
+  await pruefe("V0", `${P} Wege: Kalender › Urlaub, Urlaub › Schichtplan, Einstellungen › Backups`, () => Object.values(wege).every((n) => n === 1) ? null : JSON.stringify(wege));
   await gehe(page, "#urlaub");
   // V1 Urlaub für einen Fahrlehrer
   await page.click("#vwUrlaubNeu");

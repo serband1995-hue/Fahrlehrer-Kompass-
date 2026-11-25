@@ -74,7 +74,7 @@ async function verwerfenJa(page) {
 async function pruefeLayout(page, name) {
   const r = await page.evaluate(() => {
     const sichtbar = (el) => { const b = el.getBoundingClientRect(); const st = getComputedStyle(el); return b.width > 0 && b.height > 0 && st.visibility !== "hidden" && st.display !== "none"; };
-    const gewolltGekuerzt = (el) => !!el.closest(".k-termin, .k-kopf, .hb-name, details:not([open])");
+    const gewolltGekuerzt = (el) => !!el.closest(".k-termin, .k-kopf, .hb-name, .nutzer-name, .nutzer-rolle, details:not([open])");
     const probleme = [];
     // 1) Inhalt ragt aus Kästchen
     for (const box of document.querySelectorAll(".kachel, .karte, .dialog-form, .aufgabe, .login-karte, .seite")) {
@@ -517,11 +517,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
   // Seitenleiste
-  // Werkstatt 11: flache Leiste, alle Punkte immer sichtbar, keine Gruppen. W16 Teil 2: + Urlaub, Schichtplan, Backups = 15
+  // Werkstatt 11: flache Leiste, alle Punkte immer sichtbar, keine Gruppen. W16 Teil 2 + W11: Urlaub/Schichtplan im Kalender, Backups unter Einstellungen = 12
   const sichtbar = () => page.$$eval("#nav .nav-punkt", (a) => a.filter((x) => x.offsetParent).length);
-  if ((await sichtbar()) !== 15) fehler("Seitenleiste: nicht alle 15 Punkte sichtbar (" + (await sichtbar()) + ")");
+  if ((await sichtbar()) !== 12) fehler("Seitenleiste: nicht alle 12 Punkte sichtbar (" + (await sichtbar()) + ")");
   if ((await page.locator("[data-gruppe]").count()) !== 0) fehler("Seitenleiste: es gibt noch Gruppen zum Auf- und Zuklappen");
-  const alle = 15;
+  const alle = 12;
   // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
   await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
@@ -2167,7 +2167,7 @@ async function k2Kontrast(page, sel) {
     await k2Breite(page, name + " Menü offen");
     const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
     // 12 von Werkstatt 11 + Urlaub, Schichtplan, Backups (W16 Teil 2, auch für das Büro)
-    if (bereiche.length !== 15) fehler(`K2 ${name}: ${bereiche.length} statt 15 Menüpunkte`);
+    if (bereiche.length !== 12) fehler(`K2 ${name}: ${bereiche.length} statt 12 Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
       await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
@@ -2240,8 +2240,8 @@ async function k2Kontrast(page, sel) {
   for (const [w, h] of [[901, 800], [1366, 860]]) {
     const { page, ctx } = await oeffne({ nutzer: "bu-1", breite: w, hoehe: h, hash: "#heute" });
     const r = await page.evaluate(() => ({ nav: [...document.querySelectorAll(".nav-punkt")].filter((a) => a.offsetParent).length, menue: !!document.getElementById("menueKnopf").offsetParent, drucken: !!document.getElementById("drucken").offsetParent, wer: !!document.getElementById("werZeile").offsetParent, seite: Math.round(document.querySelector(".seite").getBoundingClientRect().width) }));
-    // Werkstatt 11: alle Punkte der flachen Leiste sichtbar (W16 Teil 2: 15 mit Urlaub, Schichtplan, Backups)
-    if (r.nav !== 15) fehler(`K2 PC ${w}: ${r.nav} statt 15 Punkte sichtbar`);
+    // Werkstatt 11: alle Punkte der flachen Leiste sichtbar (12; Urlaub/Schichtplan im Kalender, Backups unter Einstellungen)
+    if (r.nav !== 12) fehler(`K2 PC ${w}: ${r.nav} statt 12 Punkte sichtbar`);
     if (r.menue) fehler(`K2 PC ${w}: Knopf „Menü“ sichtbar`);
     if (!r.drucken) fehler(`K2 PC ${w}: „Drucken“ fehlt`);
     if (!r.wer) fehler(`K2 PC ${w}: „Bedient gerade“ fehlt in der Seitenleiste`);
