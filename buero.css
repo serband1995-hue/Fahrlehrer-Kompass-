@@ -181,8 +181,6 @@ nav{display:flex;flex-direction:column;gap:12px;}
 .filterzeile input[type=search]{flex:1 1 260px;}
 .feld-klein{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:600;}
 .feld-klein .suche{min-width:0;}
-.seite-links{display:grid;gap:6px;}
-.seite-links .knopf{width:100%;}
 .suche{min-height:44px;min-width:260px;padding:0 14px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--bg);}
 .unter{color:var(--muted);font-size:15px;margin-top:2px;}
 .aktionen{width:1%;}

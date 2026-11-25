@@ -325,7 +325,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const { page, ctx, konsole } = await oeffne({ hash: "#flotte", breite: 375, hoehe: 740 });
   await page.click("#menueKnopf"); await warte(page, 200);
   const m = await page.$$eval("#nav .nav-punkt", (l) => l.filter((a) => a.offsetParent).map((a) => Math.round(a.getBoundingClientRect().height)));
-  pruefe("G4a", "Handy: Menü auf, 12 Punkte, alle ≥ 44 px", m.length === 12 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
+  pruefe("G4a", "Handy: Menü auf, 15 Punkte (mit Urlaub, Schichtplan, Backups), alle ≥ 44 px", m.length === 15 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
   await page.click('.nav-punkt[href="#pruefungen"]'); await warte(page, 400);
   pruefe("G4b", "Handy: Seite wechseln schließt das Menü", !(await page.evaluate(() => document.body.classList.contains("menue-offen"))) && /Prüfungen/.test(await page.textContent("#menueKnopf")) ? null : "Menü offen");
   pruefe("G4c", "Handy: nichts wischt seitlich", (await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)) ? null : "seitlich wischbar");

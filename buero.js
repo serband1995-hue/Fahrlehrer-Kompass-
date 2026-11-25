@@ -4994,17 +4994,6 @@ function zeigeRollenStreifen() {
   el.hidden = false;
   document.body.classList.add("mit-streifen");
 }
-// W16: Fußzeile. Leitung und Super-Admin wählen hier vorläufig ihre Startseite (KS_START aus startseite.js); Werkstatt 11
-// hängt dieselbe Wahl in die Büro-Einstellungen. Das Büro behält den Link zur App, bis es nur noch die Büro-Seite hat
-// (KS_START.bueroNurBueroseite; danach schickte die App es gleich zurück).
-function zeigeStartWahl(profil) {
-  const kasten = $("startWahl"), link = $("zurApp");
-  if (!kasten || !link) return;
-  const ks = window.KS_START;
-  const hatWahl = !!(ks && ks.hatWahl(profil));
-  link.hidden = hatWahl || (profil.rolle === "buero" && !!(ks && ks.bueroNurBueroseite));
-  if (hatWahl) ks.einbauen(kasten, profil, { kompakt: true }); else kasten.hidden = true;
-}
 function zeigeHinweis(titel, text, knoepfe) {
   $("hinweisTitel").textContent = titel;
   $("hinweisText").textContent = text;
@@ -5074,7 +5063,6 @@ async function starte(user) {
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
-  zeigeStartWahl(profil);
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();

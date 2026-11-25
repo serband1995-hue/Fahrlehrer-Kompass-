@@ -13,9 +13,9 @@
   var WEITER_KEY = "kompass-weiterleitung"; // { nach: "buero" | "app", t: Zeit } – nur in diesem Tab, gegen Schleifen
   var SCHLEIFE_MS = 20000;
   var MAX_KONTEN = 8;
-  // Rolle Büro nur auf der Büro-Seite: erst an, wenn dort Urlaub, Schichtplan und Backups laufen (Hauptsitzung 24.11.:
-  // „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“). Bis dahin arbeitet das Büro wie bisher auch in der App.
-  var BUERO_NUR_BUEROSEITE = false;
+  // Rolle Büro nur auf der Büro-Seite: an seit Teil 2 (W16, 25.11.2026), weil dort jetzt Urlaub, Schichtplan und Backups laufen
+  // (Hauptsitzung 24.11.: „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“; buero-verwaltung.js).
+  var BUERO_NUR_BUEROSEITE = true;
   var TEXTE = {
     eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler und Termine" },
     gesamt: { titel: "Fahrschule", text: "Alle Fahrlehrer und Schüler" },

@@ -468,9 +468,10 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   if (konsole.length) fehler("Anmeldung: Konsole: " + konsole.join(" | "));
   await ctx.close();
   const b = await oeffne({ nutzer: "ad-1", breite: 1366, hoehe: 860 });
-  // W16: Rückweg in die App über die Startseite in der Fußzeile (statt Link „Zur Fahrlehrer-Ansicht“)
-  if (!(await b.page.isVisible('#startWahl [data-ks-start="gesamt"]'))) fehler("Rückweg: Startseite „Fahrschule“ fehlt in der Seitenleiste");
-  if (await b.page.isVisible("#zurApp")) fehler("Rückweg: alter Link „Zur Fahrlehrer-Ansicht“ noch sichtbar");
+  // W16 Teil 2: kein Link zur App in der Leiste; der Rückweg ist die Startseite unter Einstellungen › Darstellung & Start
+  if (await b.page.$("#zurApp, #startWahl")) fehler("Rückweg: alter Link oder Kasten in der Leiste noch da");
+  await b.page.evaluate(() => { location.hash = "#einstellungen?thema=darstellung"; }); await b.page.waitForTimeout(700);
+  if (!(await b.page.isVisible('[data-ks-start="gesamt"]'))) fehler("Rückweg: Startseite „Fahrschule“ fehlt unter Einstellungen › Darstellung & Start");
   const r2 = await b.page.$eval(".marke img", (i) => parseFloat(getComputedStyle(i).borderTopLeftRadius));
   if (!(r2 >= 8)) fehler("Logo in der Seitenleiste: Ecken nicht abgerundet");
   await b.ctx.close();
@@ -515,11 +516,11 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 {
   const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#heute", breite: 1366, hoehe: 900 });
   // Seitenleiste
-  // Werkstatt 11: flache Leiste, alle 12 Punkte immer sichtbar, keine Gruppen
+  // Werkstatt 11: flache Leiste, alle Punkte immer sichtbar, keine Gruppen. W16 Teil 2: + Urlaub, Schichtplan, Backups = 15
   const sichtbar = () => page.$$eval("#nav .nav-punkt", (a) => a.filter((x) => x.offsetParent).length);
-  if ((await sichtbar()) !== 12) fehler("Seitenleiste: nicht alle 12 Punkte sichtbar (" + (await sichtbar()) + ")");
+  if ((await sichtbar()) !== 15) fehler("Seitenleiste: nicht alle 15 Punkte sichtbar (" + (await sichtbar()) + ")");
   if ((await page.locator("[data-gruppe]").count()) !== 0) fehler("Seitenleiste: es gibt noch Gruppen zum Auf- und Zuklappen");
-  const alle = 12;
+  const alle = 15;
   // PIN-Anmeldung merkt sich der Browser-Tab (auch nach Neuladen), bis 20 Minuten nichts angeklickt wurde
   await page.evaluate(async () => { S.sitzung = null; S.wer = ""; await starteWer(); });
   if (await page.isVisible("#wer:not([hidden])")) fehler("PIN: Anmeldung wird nach Neuladen nicht übernommen");
@@ -2164,7 +2165,8 @@ async function k2Kontrast(page, sel) {
     if (klein.length) fehler(`K2 ${name}: Tippflächen unter 44 px: ${klein.join(", ")}`);
     await k2Breite(page, name + " Menü offen");
     const bereiche = await page.$$eval(".nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.textContent.replace(/\d+$/, "").trim()]));
-    if (bereiche.length !== 12) fehler(`K2 ${name}: nur ${bereiche.length} Menüpunkte`);
+    // 12 von Werkstatt 11 + Urlaub, Schichtplan, Backups (W16 Teil 2, auch für das Büro: es hat nur noch diese Seite)
+    if (bereiche.length !== 15) fehler(`K2 ${name}: ${bereiche.length} statt 15 Menüpunkte`);
     for (const [href, titel] of bereiche) {
       if (!(await page.evaluate(() => document.body.classList.contains("menue-offen")))) await page.click("#menueKnopf");
       await page.click(`.nav-punkt[href="${href}"]`); await page.waitForTimeout(300);
