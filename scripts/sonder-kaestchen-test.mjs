@@ -59,6 +59,11 @@ await pruefe("K1", "KR: Vorgabe 45 Minuten; volle Einheiten (90 = 2, 45 = 1, 60 
   KR.setzeSonderMinuten(null);
   if (KR.fcGebucht({ art: "sonder", von: "10:00", bis: "11:30" }) !== 2) f.push("Fahrchecks bleiben nicht bei 45 Minuten");
   if (KR.fcVomBuero({ art: "sonder", von: "10:00", bis: "11:30", status: "nicht erschienen", bueroFcAnzahl: 2 }) !== 0) f.push("ausgefallen zählt mit Zahl vom Büro");
+  // W13 PR 3: eine Stelle für die Rundung; Fahrchecks zählen über Mitternacht
+  if (KR.fcGebucht({ art: "nacht", von: "22:30", bis: "00:00" }) !== 2) f.push("Fahrchecks über Mitternacht nicht 2");
+  if (KR.fcGebucht({ art: "fahrstunde", von: "10:00", bis: "09:00" }) !== 0) f.push("Tippfehler 10–09 Uhr ergibt Fahrchecks");
+  if (KR.einheitenGeld(80) !== 2 || KR.einheitenNachweis(80, 45) !== 1 || KR.einheitenGeld(135) !== 3 || KR.einheitenNachweis(135, 45) !== 3) f.push("Rundung Geld/Nachweis falsch");
+  if (KR.fcGebucht({ art: "sonder", von: "10:00", bis: "11:20" }) !== KR.einheitenGeld(80) || KR.sonderEinheiten("10:00", "11:20") !== Math.max(1, KR.einheitenNachweis(80, 45))) f.push("fcGebucht/sonderEinheiten nutzen nicht die gemeinsame Rundung");
   return f;
 });
 
@@ -509,6 +514,158 @@ await pruefe("K28", "Abruf vom Server: hat ein anderes Gerät den Termin auf 1 K
     } finally { window.getSupa = altSupa; _authProfile = altP; _authUser = altU; }
   });
   return r.bis === "10:45" && r.idx === null && r.key === "s1:ueberland:1" ? null : JSON.stringify(r);
+});
+
+// ---------- W13 PR 3: Kästchen folgen ihrem Termin ----------
+// Hilfe: Abruf vom Server mit einer Zeile für Termin id (oder ohne Zeile = abgesagt/gelöscht)
+async function abruf(id, zeile) {
+  return p.evaluate(async ({ id, zeile }) => {
+    const altSupa = window.getSupa, altP = _authProfile, altU = _authUser;
+    // ohne Zeile: die anderen Termine kommen weiter vom Server (sonst greift die Sicherheitssperre „Server liefert nichts“)
+    const rows = zeile ? [zeile] : DB.lessons.filter((x) => x.id !== id).map((x) => ({ id: x.id, schueler_id: x.sid, datum: x.date, von: x.von, bis: x.bis, art: x.art, fahrzeug: x.fahrzeug || null, status: x.status, aktualisiert_am: new Date(0).toISOString(), payload: { note: x.note, fc: x.fc } }));
+    const mk = () => { const q = { select: () => q, eq: () => q, order: () => q, range: async () => ({ data: rows, error: null }), then: undefined }; return q; };
+    window.getSupa = () => ({ from: () => mk(), rpc: async () => ({ data: [], error: null }) });
+    _authUser = { id: "u-erfunden" }; _authProfile = { fahrschule_id: "fs-erfunden" };
+    try {
+      const l = DB.lessons.find((x) => x.id === id);
+      l._syncedAt = 1;
+      const mem = _abglLaden(); DB.lessons.forEach((x) => { mem.termine[x.id] = _abglWertVon("termine", x); }); _abglSpeichern(mem); // wie nach dem Hochladen
+      await pullTermineZuweisungen();
+    } finally { window.getSupa = altSupa; _authProfile = altP; _authUser = altU; }
+  }, { id, zeile });
+}
+const serverZeile = (t, aend) => Object.assign({ id: t.id, schueler_id: "s1", datum: t.date, von: t.von, bis: t.bis, art: "sonder", fahrzeug: null, status: "geplant",
+  aktualisiert_am: new Date(Date.now() + 1e5).toISOString(), payload: { note: "Überlandfahrt", fc: null, srcSonder: t.key, srcSonderIdx: t.idx, srcSonderMin: 90 } }, aend);
+
+await pruefe("K30", "Büro verschiebt den Termin (Abruf vom Server): beide Kästchen bekommen das neue Datum", async () => {
+  const t = await mitTermin();
+  await abruf(t.id, serverZeile(t, { datum: T2 }));
+  const plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  return plan[1] === T2 && plan[2] === T2 && plan[0] === "2026-10-01" ? null : `Plan ${JSON.stringify(plan)}`;
+});
+
+await pruefe("K31", "Büro ändert die Länge: 135 Minuten → 3 Kästchen, danach 45 Minuten → 1 Kästchen (die anderen frei)", async () => {
+  const f = [], t = await mitTermin();
+  await abruf(t.id, serverZeile(t, { bis: "12:15" }));
+  let plan = await p.evaluate(() => __t.plan("s1", "ueberland")), l = await p.evaluate((id) => __t.lesson(id), t.id);
+  if (plan[1] !== T || plan[2] !== T || plan[3] !== T || JSON.stringify(l.srcSonderIdx) !== "[1,2,3]") f.push(`135: Plan ${JSON.stringify(plan)} idx ${JSON.stringify(l.srcSonderIdx)}`);
+  await abruf(t.id, serverZeile(Object.assign({}, t, { idx: [1, 2, 3] }), { bis: "10:45", payload: { note: "Überlandfahrt", fc: null, srcSonder: t.key, srcSonderIdx: [1, 2, 3], srcSonderMin: 135 } }));
+  plan = await p.evaluate(() => __t.plan("s1", "ueberland")); l = await p.evaluate((id) => __t.lesson(id), t.id);
+  if (plan[1] !== T || plan[2] || plan[3] || l.srcSonderIdx) f.push(`45: Plan ${JSON.stringify(plan)} idx ${JSON.stringify(l.srcSonderIdx)}`);
+  return f;
+});
+
+await pruefe("K32", "Büro sagt ab bzw. löscht (Termin kommt nicht mehr vom Server): beide Kästchen frei, das von Hand abgehakte bleibt", async () => {
+  const t = await mitTermin();
+  await p.evaluate(() => { DB.lessons.push({ id: "ANDERS", date: "2026-10-30", von: "08:00", bis: "09:30", art: "fahrstunde", sid: "s2", status: "geplant", note: "", fc: null, _syncedAt: 1 }); });
+  await abruf(t.id, null);
+  const plan = await p.evaluate(() => __t.plan("s1", "ueberland")), da = await p.evaluate((id) => !!__t.lesson(id), t.id);
+  return !da && plan[0] === "2026-10-01" && !plan[1] && !plan[2] ? null : `Termin ${da} Plan ${JSON.stringify(plan)}`;
+});
+
+await pruefe("K33", "„Nicht erschienen“ gibt die Kästchen frei, die Verknüpfung bleibt; zurück auf „geplant“ füllt sie wieder", async () => {
+  const f = [], t = await mitTermin();
+  await p.evaluate((id) => { const l = DB.lessons.find((x) => x.id === id); l.status = "nicht erschienen"; save(); }, t.id);
+  let plan = await p.evaluate(() => __t.plan("s1", "ueberland")), l = await p.evaluate((id) => __t.lesson(id), t.id);
+  if (plan[1] || plan[2] || l.srcSonder !== "s1:ueberland:1") f.push(`nicht erschienen: Plan ${JSON.stringify(plan)} key ${l.srcSonder}`);
+  await p.evaluate((id) => { const l = DB.lessons.find((x) => x.id === id); l.status = "geplant"; save(); }, t.id);
+  plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] !== T || plan[2] !== T) f.push(`zurück: Plan ${JSON.stringify(plan)}`);
+  await p.evaluate((id) => { const l = DB.lessons.find((x) => x.id === id); l.status = "abgebrochen"; save(); }, t.id);
+  plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] || plan[2]) f.push(`abgebrochen: Plan ${JSON.stringify(plan)}`);
+  return f;
+});
+
+await pruefe("K34", "Art auf Übungsfahrt geändert: Kästchen frei; zurück auf Sonderfahrt: wieder gefüllt", async () => {
+  const f = [], t = await mitTermin();
+  await p.evaluate((id) => updateLesson(id, { art: "fahrstunde" }), t.id);
+  let plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] || plan[2]) f.push(`Übungsfahrt: Plan ${JSON.stringify(plan)}`);
+  await p.evaluate((id) => updateLesson(id, { art: "sonder" }), t.id);
+  plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] !== T || plan[2] !== T) f.push(`Sonderfahrt: Plan ${JSON.stringify(plan)}`);
+  return f;
+});
+
+await pruefe("K35", "Verschieben im Kalender (Datum geändert, gespeichert) und zurück: die Kästchen folgen jedes Mal", async () => {
+  const f = [], t = await mitTermin();
+  await p.evaluate(({ id, T2 }) => { const l = DB.lessons.find((x) => x.id === id); l.date = T2; l.von = "14:00"; l.bis = "15:30"; save(); }, { id: t.id, T2 });
+  let plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] !== T2 || plan[2] !== T2) f.push(`verschoben: Plan ${JSON.stringify(plan)}`);
+  await p.evaluate(({ id, T }) => { const l = DB.lessons.find((x) => x.id === id); l.date = T; save(); }, { id: t.id, T });
+  plan = await p.evaluate(() => __t.plan("s1", "ueberland"));
+  if (plan[1] !== T || plan[2] !== T) f.push(`zurück: Plan ${JSON.stringify(plan)}`);
+  return f;
+});
+
+await pruefe("K36", "Tipp im Plan: Kästchen eines Termins öffnet das Termin-Blatt (nichts wird geleert); von Hand abgehaktes wird leer; leeres bekommt heute", async () => {
+  const f = [];
+  await mitTermin();
+  const r = await p.evaluate(async () => {
+    try { routePlan && routePlan(DB.students.find((x) => x.id === "s1").id); } catch (e) {}
+    try { openStudent && openStudent("s1"); } catch (e) {}
+    await new Promise((ok) => setTimeout(ok, 300));
+    const zelle = (i) => document.querySelector(`[data-sgrid="ueberland"] .std[data-sn="${i}"]`);
+    if (!zelle(1)) return { keinPlan: true };
+    zelle(1).click(); await new Promise((ok) => setTimeout(ok, 200));
+    const blatt = !!document.querySelector("#sfkSave");
+    try { closeSheet(); } catch (e) {}
+    await new Promise((ok) => setTimeout(ok, 200));
+    const nachTermin = __t.plan("s1", "ueberland");
+    zelle(0).click(); await new Promise((ok) => setTimeout(ok, 100));
+    const nachHand = __t.plan("s1", "ueberland");
+    zelle(4).click(); await new Promise((ok) => setTimeout(ok, 100));
+    const nachLeer = __t.plan("s1", "ueberland");
+    return { blatt, nachTermin, nachHand, nachLeer, heute: todayISO() };
+  });
+  if (r.keinPlan) return "Plan-Ansicht nicht gefunden";
+  if (!r.blatt) f.push("Termin-Blatt öffnet sich nicht");
+  if (r.nachTermin[1] !== T || r.nachTermin[2] !== T) f.push(`Termin-Kästchen geleert: ${JSON.stringify(r.nachTermin)}`);
+  if (r.nachHand[0]) f.push(`von Hand abgehaktes bleibt: ${JSON.stringify(r.nachHand)}`);
+  if (r.nachLeer[4] !== r.heute) f.push(`leeres nicht abgehakt: ${JSON.stringify(r.nachLeer)}`);
+  return f;
+});
+
+await pruefe("K37", "Alter Termin (ohne Länge beim Belegen): „nicht erschienen“ ändert die Kästchen nicht (kein stilles Umbauen alter Pläne)", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(() => {
+    const s = DB.students.find((x) => x.id === "s1");
+    s.plan.sonder.autobahn = [{ d: "26.10.26", iso: "2026-10-26" }];
+    DB.lessons.push({ id: "ALT3", date: "2026-10-26", von: "10:00", bis: "11:30", art: "sonder", sid: "s1", status: "nicht erschienen", note: "", fc: null, srcSonder: "s1:autobahn:0" });
+    save();
+    return __t.plan("s1", "autobahn");
+  });
+  return r[0] === "2026-10-26" && !r[1] ? null : `Plan ${JSON.stringify(r)}`;
+});
+
+await pruefe("K38", "Freigeben lässt Kästchen stehen, die inzwischen einem anderen Termin gehören", async () => {
+  await p.evaluate(() => __t.setze(90));
+  const r = await p.evaluate(() => {
+    const s = DB.students.find((x) => x.id === "s1");
+    s.plan.sonder.nacht = [{ d: "26.10.26", iso: "2026-10-26", tid: "A" }, { d: "27.10.26", iso: "2026-10-27", tid: "B" }];
+    const a = { id: "A", srcSonder: "s1:nacht:0", srcSonderIdx: [0, 1] };
+    _sfFreigeben(s, "nacht", a);
+    return __t.plan("s1", "nacht");
+  });
+  return !r[0] && r[1] === "2026-10-27" ? null : `Plan ${JSON.stringify(r)}`;
+});
+
+await pruefe("K39", "Picker: „belegt“ sieht anders aus als „von Hand abgehakt“ (durchgezogener statt gestrichelter Rand, volle Deckkraft)", async () => {
+  await mitTermin();
+  const r = await p.evaluate(async () => {
+    const s = DB.students.find((x) => x.id === "s1"); s.plan.sonder.autobahn = [{ d: "01.10.26", iso: "2026-10-01" }]; save();
+    openSFPickerForLesson("L1", "s1", "2026-10-20", "08:00", "09:30", "", "sonder", null);
+    await new Promise((ok) => setTimeout(ok, 200));
+    const st = (sel) => { const b = document.querySelector(sel); if (!b) return null; const c = getComputedStyle(b); return { rand: c.borderTopStyle, deck: c.opacity, kl: b.className }; };
+    const o = { belegt: st('.sf-opt[data-grp="ueberland"][data-idx="1"]'), hand: st('.sf-opt[data-grp="autobahn"][data-idx="0"]') };
+    try { closeSheet(); } catch (e) {}
+    return o;
+  });
+  const f = [];
+  if (!r.belegt || !/belegt/.test(r.belegt.kl) || r.belegt.rand !== "solid" || +r.belegt.deck < 0.9) f.push(`belegt ${JSON.stringify(r.belegt)}`);
+  if (!r.hand || r.hand.rand !== "dashed") f.push(`von Hand ${JSON.stringify(r.hand)}`);
+  return f;
 });
 
 await pruefe("K19", "keine JS-Fehler und keine echten Dialogfenster im ganzen Lauf", async () => jsFehler);
