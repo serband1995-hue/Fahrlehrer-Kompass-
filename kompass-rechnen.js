@@ -141,6 +141,12 @@
     const min = hm2min(t.bis) - hm2min(t.von);
     return min > 0 ? Math.round(min / 45) : 0;
   }
+  // Fahrchecks, die das Büro für diesen Termin in der Hand haben soll: wie fcErhalten, ein nachgereichter zählt wieder voll.
+  // Daran hängt der Büro-Haken fürs Paket (🗣 Serband 24.11.2026). Ausgefallen = 0.
+  function fcFuersBuero(t) {
+    if (t && t.fc === "nachgereicht") return t.status === "abgebrochen" || t.status === "nicht erschienen" ? 0 : fcGebucht(t);
+    return fcErhalten(t);
+  }
   function fcErhalten(t) {
     const voll = fcGebucht(t);
     if (!voll || t.status === "abgebrochen" || t.status === "nicht erschienen") return 0;
@@ -394,13 +400,17 @@
     }
     return liste;
   }
-  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, tatsaechlicheDauer}): nur vorbei (heute erst
-     nach dem Ende), ohne abgebrochen/nicht erschienen/abgesagt/geplatzt (wie countRange in der App). Fahrstunden, Nacht- und
-     Sonderfahrten in UE zu 45 min mit der tatsächlichen Dauer (ueOf). extra (beides freiwillig):
-     - pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach sind
-       dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später.
-     - plan: Ausbildungsplan der App (plan.sonder). Je Art zählt das Größere aus Plan und Kalender: dieselbe Fahrt steht oft in beiden,
-       nachgetragene Büro-Fahrten oder alte Plan-Einträge nur in einem. jetztMin = Minuten seit Mitternacht. */
+  /* Verbrauch aus Kalender-Terminen ({art, datum, von, bis, status, sonderArt, srcSonder, fc, bueroFc}).
+     🗣 Serband 24.11.2026: „Eine Fahrstunde zählt erst dann, wenn sie von Kristina abgehakt wird, dass die Fahrchecks da sind. Wird
+     der Termin gelöscht, weil der Schüler nicht da war, zählt das natürlich nicht.“ Darum zählen Fahrstunde, Sonder- und Nachtfahrt
+     nur mit Büro-Haken (bueroFc = kalender_termine.buero_fc_status = „abgegeben“), und zwar je Fahrcheck, der beim Büro ist
+     (fcFuersBuero: 45 min = 1, Vermerk fc des Fahrlehrers wie in der Fahrcheck-Kontrolle, nachgereicht = voll).
+     Ohne Haken (offen, fehlt) zählt der Termin bei „ohneHaken“ (Hinweis „warten noch auf den Haken vom Büro“).
+     Sonderfahrt ohne Art (weder sonderArt noch srcSonder): bei „ohneArt“ (Hinweis), keinem Posten zuzuordnen.
+     Nie: Zukunft, heute vor dem Ende, abgebrochen/nicht erschienen/abgesagt/geplatzt (gelöschte Termine kommen gar nicht erst an).
+     Der Ausbildungsplan der App zählt fürs Paket nicht: dort hakt niemand vom Büro ab.
+     extra.pruefDaten: Tage mit Ergebnis einer Praxisprüfung (App oder Prüfungstafel). Kalendertermin und Ergebnis bis 3 Tage danach
+     sind dieselbe Prüfung (wie dayEvents); eine Wiederholung liegt frühestens 2 Wochen später. jetztMin = Minuten seit Mitternacht. */
   const PAKET_NICHT = ["abgebrochen", "nicht erschienen", "abgesagt", "geplatzt"];
   function paketSonderArt(t) {
     if (t.art === "nacht") return "nacht";
@@ -417,23 +427,37 @@
     return n;
   }
   function paketQuelleAusTerminen(termine, heute, jetztMin, extra) {
-    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0 };
+    const q = { fahrstunden: 0, sonder: { ueberland: 0, autobahn: 0, nacht: 0 }, pruefungen: 0, simulator: 0, ohneHaken: 0, ohneArt: 0 };
     const ex = extra || {}, pTage = [];
     for (const t of termine || []) {
       if (!t || !t.datum || !t.von || !t.bis || t.datum > heute) continue;
       if (t.datum === heute && hm2min(t.bis) > jetztMin) continue;
       if (PAKET_NICHT.includes(t.status)) continue;
-      if (t.art === "fahrstunde") q.fahrstunden += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer);
-      else if (t.art === "nacht" || t.art === "sonder") { const a = paketSonderArt(t); if (a) q.sonder[a] += ueOf(t.art, t.von, t.bis, t.tatsaechlicheDauer); }
-      else if (t.art === "pruefung") pTage.push(t.datum);
+      if (FC_ARTEN.includes(t.art)) {
+        // Gezählt wird, was an Fahrchecks beim Büro ist (fcFuersBuero): „1 vergessen“ = einer weniger, nachgereicht = voll,
+        // geschenkt oder beide vergessen = keiner (dann wartet auch nichts auf den Haken).
+        const n = fcFuersBuero(t);
+        if (!n) continue;
+        const a = t.art === "fahrstunde" ? "" : paketSonderArt(t);
+        if (t.art !== "fahrstunde" && !a) { q.ohneArt++; continue; } // Sonderfahrt ohne Art: keinem Posten zuzuordnen, mit Hinweis
+        if (t.bueroFc !== "abgegeben") { q.ohneHaken++; continue; }
+        if (t.art === "fahrstunde") q.fahrstunden += n; else q.sonder[a] += n;
+      } else if (t.art === "pruefung") pTage.push(t.datum);
       else if (t.art === "simulator") q.simulator += 1;
     }
     for (const d of ex.pruefDaten || []) if (d && String(d).slice(0, 10) <= heute) pTage.push(String(d).slice(0, 10));
     q.pruefungen = paketPruefZahl(pTage);
-    const plan = paketSonderAusPlan(ex.plan, heute);
-    for (const a of Object.keys(q.sonder)) q.sonder[a] = Math.round(Math.max(q.sonder[a], plan ? plan[a] : 0) * 100) / 100;
-    q.fahrstunden = Math.round(q.fahrstunden * 100) / 100;
     return q;
+  }
+  // Hinweise unter dem Paket, gleich in Büro-Akte und App-Karte (Text, ohne HTML)
+  function paketHinweise(q) {
+    const h = [];
+    if (!q) return h;
+    if (q.ohneHaken === 1) h.push("1 Termin wartet noch auf den Fahrcheck-Haken vom Büro. Erst danach zählt er im Paket.");
+    else if (q.ohneHaken > 1) h.push(q.ohneHaken + " Termine warten noch auf den Fahrcheck-Haken vom Büro. Erst danach zählen sie im Paket.");
+    if (q.ohneArt === 1) h.push("1 Sonderfahrt hat keine Art (Überland, Autobahn oder Nacht) und zählt darum nicht. Das Büro kann die Art am Termin eintragen.");
+    else if (q.ohneArt > 1) h.push(q.ohneArt + " Sonderfahrten haben keine Art (Überland, Autobahn oder Nacht) und zählen darum nicht. Das Büro kann die Art am Termin eintragen.");
+    return h;
   }
   // heute (freiwillig): nur Fahrten bis heute zählen; ein für nächste Woche eingetragenes Feld ist noch nicht gefahren (Fable W5)
   function paketSonderAusPlan(plan, heute) {
@@ -442,8 +466,8 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
-  const api = { paketVerbrauch, paketQuelleAusTerminen, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
-    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
+  const api = { paketVerbrauch, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+    setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
