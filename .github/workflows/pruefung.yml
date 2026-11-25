@@ -44,6 +44,7 @@ jobs:
         run: |
           npm i --silent --no-save --prefix /tmp/w15-pg @electric-sql/pglite@0.2.17
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/reakt-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/papierkorb-sql-test.mjs
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
   # fand keinen Weg, Schüler anzulegen). Jede Rolle wird vom Start bis zum gespeicherten Schüler durchgespielt.
