@@ -4,10 +4,20 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.25.9", datum: "2026-11-25", kurz: "Büro: Erinnerung an Fristen per Mail auf Knopfdruck.",
+  { version: "2026.11.25.11", datum: "2026-11-25", kurz: "Büro: Erinnerung an Fristen per Mail auf Knopfdruck.",
     punkte: ["Unter „Läuft bald ab“ gibt es bei Reaktivierung, Theorie, Führerscheinantrag, Frist der Behörde und Umschreiber den Knopf „Erinnern“. Er öffnet die Akte, dort geht die Mail nach 5 Sekunden raus (vorher „Rückgängig“ möglich).",
              "An die Reaktivierung kann man jetzt schon erinnern, bevor sie fällig ist. In der Mail steht, wann sie fällig ist.",
              "Neben jeder Frist steht, wann zuletzt erinnert wurde. Im Test-Modus gehen alle Mails nur an die Test-Adresse."] },
+  { version: "2026.11.25.10", datum: "2026-11-25", kurz: "Plan: Sonderfahrt-Kästchen folgen jetzt ihrem Termin.",
+    punkte: ["Verschiebt oder ändert jemand eine Sonderfahrt, zum Beispiel das Büro, ändern sich die Kästchen im Ausbildungsplan mit. Das gilt für Sonderfahrten, die ab jetzt aus dem Plan eingetragen werden. Sagt das Büro eine künftige Fahrt ab, werden ihre Kästchen wieder frei.",
+             "Bei „nicht erschienen“ oder „abgebrochen“ werden die Kästchen frei, und du kannst die Fahrt neu eintragen. Stellst du den Termin zurück, zählt er wieder.",
+             "Tippst du auf ein Kästchen, das zu einem Termin gehört, öffnet sich der Termin. Dort kannst du ihn verschieben oder entfernen, mit „Rückgängig“.",
+             "Büro: Eine Nachtfahrt über Mitternacht zählt jetzt mit ihren Fahrchecks (zum Beispiel 22:30–0:00 = 2)."] },
+  { version: "2026.11.25.9", datum: "2026-11-25", kurz: "Büro: kürzere Leiste, „Abmelden“ immer zu sehen.",
+    punkte: ["Die Leiste links ist kürzer und passt jetzt auch auf kleinere PC-Bildschirme. „Abmelden“ steht immer unten.",
+             "Urlaub findest du im Kalender oben rechts. Daneben, als Reiter: „Wer hat Platz?“ und „Schichtplan“.",
+             "Backups findest du unter Einstellungen › Backups.",
+             "Für das Büro heißt das Thema jetzt nur „Darstellung“: Das Büro startet, wo es sich anmeldet."] },
   { version: "2026.11.25.8", datum: "2026-11-25", kurz: "Fristen: überall dieselbe Farbe für dieselbe Frist.",
     punkte: ["Unter „Läuft bald ab“ hat jede Frist jetzt dieselbe Farbe wie in ihrem eigenen Reiter. Ein Führerscheinantrag, der in zwei Monaten abläuft, ist also überall gelb.",
              "„Ohne Vertragsdatum“ zeigt jetzt auch Schüler, bei denen die Reaktivierung gerade entfällt. So fällt ein fehlendes Datum trotzdem auf."] },

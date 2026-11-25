@@ -185,10 +185,19 @@
         const klick = (sel, id) => { const b = el.querySelector(sel); if (b) b.addEventListener("click", () => document.getElementById(id).click()); }; // vorhandene Funktionen der Fußzeile
         klick("[data-es-pin]", "werPinAendern"); klick("[data-es-sperren]", "werSperren");
       } },
-    { id: "darstellung", titel: "Darstellung & Start", reihenfolge: 90,
+    { id: "backups", titel: "Backups", reihenfolge: 85,
       render(el) {
-        el.innerHTML = `${abschnitt("Darstellung & Start")}
-          ${zeile("Hell oder dunkel", `<div class="es-wert es-text">folgt dem Gerät</div>`, { hinweis: "Die Büro-Seite richtet sich nach der Einstellung deines Geräts." })}`;
+        el.innerHTML = `${abschnitt("Backups")}
+          ${typeof W.renderBackups === "function" ? linkZeile("#backups", "Backups ansehen und sichern", "Läuft jeden Sonntag von selbst. Hier sicherst du zusätzlich oder lädst eine Sicherung herunter.")
+            : leer("Backups sind gerade nicht verfügbar. Bitte die Seite neu laden.")}`; // alter Zwischenspeicher ohne buero-verwaltung.js
+      } },
+    { id: "darstellung", get titel() { return meineRolle() === "buero" ? "Darstellung" : "Darstellung & Start"; }, reihenfolge: 90,
+      render(el) {
+        const buero = meineRolle() === "buero"; // das Büro wählt keine Startseite: es startet, wo es sich anmeldet
+        el.innerHTML = `${abschnitt(this.titel)}
+          ${zeile("Hell oder dunkel", `<div class="es-wert es-text">folgt dem Gerät</div>`, { hinweis: "Die Büro-Seite richtet sich nach der Einstellung deines Geräts." })}
+          ${buero ? `<p class="es-hinweis es-satz">Das Büro startet, wo es sich anmeldet.</p>` : ""}`;
+        if (buero) return;
         const kasten = document.createElement("div"); kasten.className = "es-kasten";
         el.appendChild(kasten);
         if (typeof KS_START !== "undefined") KS_START.einbauen(kasten, S.profil);
