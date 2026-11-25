@@ -138,3 +138,5 @@ jobs:
         run: node scripts/ke-test.mjs
       - name: "Büro: Einstellungen nach Themen (Entwürfe, Zurück, Handy)"
         run: NODE_PATH=$(npm root -g) node scripts/einstellungen-test.mjs
+      - name: "Büro: Urlaub, Schichtplan und Backups auf der Büro-Seite (W16 Teil 2, Urlaubs-Warnung im Termin-Fenster)"
+        run: NODE_PATH=$(npm root -g) node scripts/buero-verwaltung-test.mjs

@@ -13,13 +13,14 @@
   var WEITER_KEY = "kompass-weiterleitung"; // { nach: "buero" | "app", t: Zeit } – nur in diesem Tab, gegen Schleifen
   var SCHLEIFE_MS = 20000;
   var MAX_KONTEN = 8;
-  // Rolle Büro nur auf der Büro-Seite: erst an, wenn dort Urlaub, Schichtplan und Backups laufen (Hauptsitzung 24.11.:
-  // „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“). Bis dahin arbeitet das Büro wie bisher auch in der App.
+  // Rolle Büro nur auf der Büro-Seite: erst an, wenn dort alles läuft, was das Büro bisher in der App nutzt (Hauptsitzung 24.11.:
+  // „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“). Urlaub, Schichtplan und Backups sind seit Teil 2 da
+  // (buero-verwaltung.js); offen laut Büro-Prüfer: Buchungslinks, Erste-Hilfe „bezahlt“, Erinnerungen, Monatsbericht, Provision von Hand.
   var BUERO_NUR_BUEROSEITE = false;
   var TEXTE = {
     eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler und Termine" },
     gesamt: { titel: "Fahrschule", text: "Alle Fahrlehrer und Schüler" },
-    buero: { titel: "Büro-Seite", text: "Eigene Seite fürs Büro, gut am PC (verlässt die App)" }
+    buero: { titel: "Büro-Seite", text: "Eigene Seite fürs Büro, gut am PC" }
   };
 
   // Welche Startseiten eine Person haben kann. Die erste ist die Vorgabe (so startet die App heute schon).

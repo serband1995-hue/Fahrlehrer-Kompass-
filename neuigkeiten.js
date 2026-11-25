@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.7", datum: "2026-11-25", kurz: "Büro: Urlaub, Schichtplan und Backups jetzt hier.",
+    punkte: ["Auf der Büro-Seite gibt es jetzt Urlaub, Schichtplan und Backups. Bisher gab es sie nur in der App.",
+             "Trägst du einen Termin an einem Urlaubstag des Fahrlehrers ein, warnt das Termin-Fenster vorher.",
+             "Die Listen sind von selbst aktuell, auch wenn jemand an einem anderen Gerät etwas einträgt.",
+             "Leitung und Super-Admin wählen ihre Startseite auf der Büro-Seite unter Einstellungen › Darstellung & Start."] },
   { version: "2026.11.25.6", datum: "2026-11-25", kurz: "Plan: 90 Minuten Sonderfahrt füllen jetzt 2 Kästchen.",
     punkte: ["Im Ausbildungsplan füllt eine Sonderfahrt mit 90 Minuten jetzt 2 Kästchen (je 45 Minuten eins). Bitte nicht zusätzlich von Hand abhaken.",
              "Das gilt beim Eintragen aus dem Plan, bei „Mehrere Termine planen“ und bei „Welche Sonderfahrt?“. Löschen und „Rückgängig“ nehmen beide Kästchen mit.",
