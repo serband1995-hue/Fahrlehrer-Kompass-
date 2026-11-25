@@ -5385,6 +5385,11 @@ const _REAKT_REGEL_KEY="kompass_reakt_regel"; // je Fahrschule: kompass_reakt_re
 let _reaktRegelSoll=null; // für welche Fahrschule die Regel gerade gilt (eigene oder die der Gesamtansicht)
 function _reaktRegelFehlt(err){ return !!err&&(["PGRST202","42883"].includes(err.code)||/could not find the function|does not exist/i.test(String(err.message||""))); }
 function _reaktRegelAusSpeicher(fs){ try{ const o=JSON.parse(localStorage.getItem(_REAKT_REGEL_KEY+":"+fs)||"null"); if(o&&o.fs===fs) KR.setzeReaktRegel(o.regel||null); }catch(e){ /* kaputter Eintrag: alte Regel */ } }
+/* W13 PR 2: Länge einer Sonderfahrt-Einheit (ein Kästchen im Plan) je Fahrschule, Vorgabe 45 Minuten (erlaubt 30–90). Quelle:
+   fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten (Hauptsitzung 25.11.2026), gelesen über KE (W11) – KE lädt
+   beim Start, in der Gesamtansicht und zurück, merkt je Fahrschule und leert beim Abmelden. Gelesen wird der Wert sonst NUR über KR.sonderMinuten(). */
+function _sonderMinAusKE(){ if(window.KR&&KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE&&KE.zahl?KE.zahl("fahrstunden.sonderfahrt","minuten",45,30,90):null); }
+window.addEventListener("ke:geladen",_sonderMinAusKE);
 // fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
 async function _ladeReaktRegel(supa,fsId){
   if(!window.KR||!KR.setzeReaktRegel)return;
@@ -5555,7 +5560,7 @@ async function pullSchuelerZuweisungen() {
     const supa = getSupa();
     const gen = _abglGen;
     // W15: Regel der Reaktivierung gleichzeitig holen, damit die Sperre beim ersten Zeichnen schon stimmt
-    if (window.KE) KE.lade(supa, _authProfile.fahrschule_id); // W11: Einstellungen der eigenen Fahrschule (wirft nie)
+    if (window.KE) { KE.lade(supa, _authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: Einstellungen der eigenen Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
     const [{ data: rows, error: schErr }] = await Promise.all([supa.from("schueler").select("*").eq("fahrlehrer_id", _authUser.id).eq("status", "aktiv"), _ladeReaktRegel(supa)]);
     if (schErr) throw schErr;
     _merkeFristen(rows);
@@ -5778,6 +5783,8 @@ async function pullTermineZuweisungen() {
       // von der Uhrzeit des Geräts. Ohne Gedächtnis entscheidet die Zeit.
       if (bekannt || !local._syncedAt || remoteTime > local._syncedAt) {
         Object.assign(local, merged, { _syncedAt: remoteTime });
+        // W13 (Daten-Prüfer): Verknüpfung mit dem Plan wie der Server – fehlt sie dort, auch hier weg (Object.assign löscht nichts)
+        for (const k of ["srcSonder", "srcSonderIdx"]) if (!(k in merged)) delete local[k];
         mem.termine[r.id] = _abglWertVon("termine", local);
         geaendert++;
       }
@@ -6199,7 +6206,7 @@ async function _fsEnterAggMode(fahrschuleId){
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE) KE.lade(getSupa(),fahrschuleId); // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht)
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6233,7 +6240,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
-  if(window.KE&&_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); // W11: wieder die Einstellungen der eigenen Fahrschule
+  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -7440,6 +7447,7 @@ async function fsFcStatus(terminId,status,nachgereicht,zurueckZurListe){
   const supa=getSupa();
   const updates={buero_fc_status:status,aktualisiert_am:new Date().toISOString()};
   if(nachgereicht) updates.buero_fc_nachgereicht_am=todayISO();
+  else if(status!=="abgegeben") updates.buero_fc_nachgereicht_am=null; // Richter W13 (Kann 2): „fehlt“/„offen“ ohne altes Nachreich-Datum, wie im Büro
   // W13: Hier gibt es keine Zahl zur Wahl: „Abgegeben“ = wie vom Fahrlehrer vermerkt, „nachträglich abgegeben“ = alle gebuchten
   // (wie im Büro). Nur wenn die Spalte buero_fc_anzahl schon existiert (alte Datenbank: sonst schlüge das Speichern fehl).
   // Schon abgehakt und noch einmal „Abgegeben“: die Zahl vom Büro bleibt (Büro-Prüfer: sonst gälte still wieder der Vermerk)
@@ -8054,7 +8062,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.5";
+const APP_VERSION="2026.11.25.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -10783,6 +10791,48 @@ function spaetOffenWarnung(s){
 }
 // Sonderfahrt-Notiz: vorn steht das Label, dahinter angehängte Notizen (z. B. aus dem Fahrstunden-Modus) bleiben erhalten.
 function _sonderNotiz(alt,label){ const t=String(alt||"").split(" · "); return t.length>1?[label].concat(t.slice(1)).join(" · "):label; }
+/* W13 PR 2: Ein Sonder-Termin belegt so viele Kästchen, wie Sonderfahrt-Einheiten hineinpassen (KR.sonderEinheiten:
+   90 Minuten = 2 Kästchen bei 45 Minuten je Einheit). l.srcSonder = Schlüssel des ERSTEN Kästchens (alte Geräte lesen nur ihn),
+   l.srcSonderIdx = alle belegten Kästchen (nur bei mehr als einem). Belegt werden das gewählte Kästchen und danach die nächsten
+   freien (nicht abgehakt, an keinem anderen Termin), höchstens bis zum Soll. Von Hand abgehakte Kästchen bleiben, wie sie sind. */
+function _sfEinh(von,bis){ return (window.KR&&KR.sonderEinheiten)?KR.sonderEinheiten(von,bis):1; }
+function _sfIdx(l){
+  if(!l||!l.srcSonder)return [];
+  const i0=+String(l.srcSonder).split(":")[2]; if(!Number.isInteger(i0)||i0<0)return [];
+  // Die Liste gilt nur, wenn sie mit dem Kästchen aus srcSonder beginnt (Fable F3: ein altes Gerät setzt srcSonder neu und lässt die Liste stehen)
+  const roh=Array.isArray(l.srcSonderIdx)?l.srcSonderIdx.map(Number):[];
+  if(!roh.length||roh[0]!==i0)return [i0];
+  const a=roh.filter(n=>Number.isInteger(n)&&n>=0&&n!==i0);
+  return [i0].concat(a.filter((n,k)=>a.indexOf(n)===k));
+}
+function _sfTerminZu(sid,grp,idx,ohne){
+  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
+}
+// Merkt sich die Kästchen vor einer Änderung (für Rückgängig): [{i,o}]
+function _sfStand(arr,liste){ return liste.map(i=>({i,o:arr[i]?Object.assign({},arr[i]):null})); }
+// Fable F1: das Feld immer frisch holen. ensure(s) baut s.plan.sonder[grp] bei jedem Aufruf neu, ein festgehaltenes Feld ginge ins Leere.
+function _sfZurueck(s,grp,stand){ if(!s||!stand||!stand.length)return; ensure(s); const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]); stand.forEach(x=>{ arr[x.i]=x.o; }); }
+// Gibt die Kästchen eines Termins frei; liefert ihren alten Stand. Der Termin selbst behält srcSonder (das macht der Aufrufer).
+function _sfFreigeben(s,grp,l){
+  const arr=(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])||null; if(!arr)return [];
+  const liste=_sfIdx(l), stand=_sfStand(arr,liste);
+  liste.forEach(i=>{ arr[i]=null; });
+  return stand;
+}
+// Belegt ab idx0 die Kästchen für den Termin l (Datum = l.date) und setzt srcSonder/srcSonderIdx. Liefert den alten Stand der Kästchen.
+// anzahl (freiwillig): so viele Kästchen statt der aus der Länge (neue Zeit bei gleicher Länge: Anzahl bleibt, Bedienung Fund 2)
+function _sfBelegen(s,grp,l,idx0,anzahl){
+  const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+  const soll=Math.max(sfSoll(grp,s),idx0+1), n=anzahl>0?anzahl:_sfEinh(l.von,l.bis), liste=[idx0];
+  const frei=i=>!sfDone(arr[i])&&!_sfTerminZu(s.id,grp,i,l);
+  for(let i=idx0+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
+  for(let i=0;i<idx0&&liste.length<n;i++) if(frei(i))liste.push(i);
+  const stand=_sfStand(arr,liste);
+  liste.forEach(i=>{ arr[i]={d:isoToShort(l.date),iso:l.date}; });
+  l.srcSonder=s.id+":"+grp+":"+idx0;
+  if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx;
+  return stand;
+}
 function buildSonder(s){
   const pl=s.plan;
   sonderDefFuer(s).forEach(sd=>{
@@ -10823,8 +10873,7 @@ function openSonderKalenderSheet(sid,grp,idx){
   const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
   const cur=arr[idx];
   const label=SF_LABEL[grp]||"Sonderfahrt";
-  const key=sid+":"+grp+":"+idx;
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(sid,grp,idx); // W13: auch das 2. Kästchen eines 90-Minuten-Termins gehört zu ihm
   const defDate=(ex&&ex.date)||(cur&&cur.iso)||todayISO();
   const defTime=(ex&&ex.von)||(grp==="nacht"?"19:30":"10:00");
   const kandidat=!ex&&(DB.lessons||[]).find(l=>l.sid===sid&&l.date===defDate&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
@@ -10859,41 +10908,51 @@ function _stoppErlaubt(sid,datum){
 function commitSonderZeit(s,grp,idx,date,von){
   ensure(s);
   // Nur wenn wirklich ein neuer Termin entsteht (kein verknüpfter, kein umwandelbarer am selben Tag), bei Büro-Stopp nachfragen – vor jeder Änderung
-  { const k0=s.id+":"+grp+":"+idx;
-    const schonDa=(DB.lessons||[]).some(l=>l.srcSonder===k0)||(DB.lessons||[]).some(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
-    const exVorab=(DB.lessons||[]).find(l=>l.srcSonder===k0);
+  { const exVorab=_sfTerminZu(s.id,grp,idx);
+    const schonDa=!!exVorab||(DB.lessons||[]).some(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
     if(exVorab&&exVorab.date!==date&&_zahlungStopp(s.id,date,"sonder")){ buildSonder(s); return; } // K8: bestehende Sonderfahrt nur bei Datumsänderung sperren
     if(!schonDa&&!_stoppErlaubt(s.id,date)){ buildSonder(s); return; } }
   const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
-  const vorherPlan=arr[idx]?Object.assign({},arr[idx]):null;
-  arr[idx]={d:isoToShort(date),iso:date};
-  const key=s.id+":"+grp+":"+idx;
   const label=SF_LABEL[grp]||"Sonderfahrt",kuerzel=SF_KUERZEL[grp]||"SF";
   const bis=min2hm(hm2min(von)+(DB.workCfg.blockMin||90));
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(s.id,grp,idx);
   if(ex){
+    // Neue Zeit: Kästchen neu belegen (die Länge kann sich ändern), ab dem ersten Kästchen des Termins
+    const idx0=_sfIdx(ex)[0], vorherLesson={date:ex.date,von:ex.von,bis:ex.bis,art:ex.art,note:ex.note,srcSonder:ex.srcSonder,srcSonderIdx:ex.srcSonderIdx};
+    const standAlt=_sfFreigeben(s,grp,ex);
+    // Gleiche Länge (z. B. nur ein anderer Tag): die Zahl der Kästchen bleibt. Ein alter Termin mit 1 Kästchen bekommt nicht still
+    // ein zweites, das neben einem von Hand abgehakten Kästchen sonst doppelt zählte (Bedienung Fund 2).
+    const gleicheLaenge=(window.KR&&KR.terminMinuten)?KR.terminMinuten(ex.von,ex.bis)===KR.terminMinuten(von,bis):false;
     ex.date=date;ex.von=von;ex.bis=bis;ex.art="sonder";ex.note=_sonderNotiz(ex.note,label);
+    const standNeu=_sfBelegen(s,grp,ex,idx0,gleicheLaenge?standAlt.length:0);
     save();refreshPlanRing(s);buildSonder(s);
-    toast(`${label}-Termin aktualisiert`);
+    toastUndo(`${label}-Termin aktualisiert`,()=>{
+      _sfZurueck(s,grp,standNeu);_sfZurueck(s,grp,standAlt);
+      Object.assign(ex,vorherLesson); if(vorherLesson.srcSonderIdx===undefined)delete ex.srcSonderIdx;
+      save();refreshPlanRing(s);buildSonder(s);
+    });
     return;
   }
   const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   if(kandidat){
     const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
-    kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;kandidat.srcSonder=key;
+    kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;
+    const stand=_sfBelegen(s,grp,kandidat,idx);
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
-      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;
-      arr[idx]=vorherPlan;
+      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;delete kandidat.srcSonderIdx;
+      _sfZurueck(s,grp,stand);
       save();refreshPlanRing(s);buildSonder(s);
     });
     return;
   }
-  addLesson({date,von,bis,art:"sonder",sid:s.id,note:label,srcSonder:key});
+  const neu={date,von,bis,art:"sonder",sid:s.id,note:label};
+  const stand=_sfBelegen(s,grp,neu,idx);
+  const l=addLesson(Object.assign({},neu)); if(neu.srcSonderIdx) l.srcSonderIdx=neu.srcSonderIdx; save();
   refreshPlanRing(s);buildSonder(s);
   toastUndo(`${label} für ${isoDE(date)} in den Kalender übernommen`,()=>{
-    const l=(DB.lessons||[]).find(x=>x.srcSonder===key);if(l)deleteLesson(l.id);
-    arr[idx]=vorherPlan;
+    if((DB.lessons||[]).some(x=>x.id===l.id)){ delete l.srcSonder; delete l.srcSonderIdx; deleteLesson(l.id); } // ohne Verknüpfung: deleteLesson lässt die Kästchen stehen
+    _sfZurueck(s,grp,stand);
     save();refreshPlanRing(s);buildSonder(s);
   });
 }
@@ -10914,27 +10973,28 @@ function _mtFahrzeugFrei(typ,date,von,bis){
 }
 function findeMultiSlots(sid,cfg){
   const s=DB.students.find(x=>x.id===sid);if(!s)return [];
-  let maxAnzahl=Infinity;
+  // W13: gedeckelt wird nach offenen Kästchen, nicht nach Terminen: ein Termin mit 90 Minuten füllt 2 (KR.sonderEinheiten)
+  let maxKaestchen=Infinity, belegt=0;
   if(cfg.art==="sonder"){
-    const arr=s.plan.sonder[cfg.grp]||[];
-    maxAnzahl=sfOffen(s,cfg.grp);
-    if(!maxAnzahl)return [];
+    maxKaestchen=sfOffen(s,cfg.grp);
+    if(!maxKaestchen)return [];
   }
   const zv=hm2min(cfg.zeitVon),zb=hm2min(cfg.zeitBis);
   const treffer=[];
   const proWoche=Math.max(1,cfg.proWoche||2);
   let woche=0,inDieserWoche=0,wochenStart=cfg.von;
   let cur=cfg.von;
-  while(cur<=cfg.bis&&treffer.length<maxAnzahl){
+  while(cur<=cfg.bis&&belegt<maxKaestchen){
     if(addDays(wochenStart,7)<=cur){wochenStart=cur;inDieserWoche=0;}
     if(inDieserWoche<proWoche){
       const frei=dayFreeSlots(cur).filter(sl=>hm2min(sl.von)>=zv&&hm2min(sl.bis)<=zb);
       for(const sl of frei){
-        if(treffer.length>=maxAnzahl||inDieserWoche>=proWoche)break;
+        if(belegt>=maxKaestchen||inDieserWoche>=proWoche)break;
         if(treffer.some(t=>t.date===cur))continue; // max 1 Vorschlag pro Tag, bleibt übersichtlich
         const fz=cfg.fahrzeugTyp&&cfg.fahrzeugTyp!=="egal"?_mtFahrzeugFrei(cfg.fahrzeugTyp,cur,sl.von,sl.bis):null;
         if(cfg.fahrzeugTyp&&cfg.fahrzeugTyp!=="egal"&&!fz)continue;
         treffer.push({date:cur,von:sl.von,bis:sl.bis,fahrzeug:fz});
+        belegt+=cfg.art==="sonder"?_sfEinh(sl.von,sl.bis):1;
         inDieserWoche++;
       }
     }
@@ -10991,7 +11051,11 @@ function openMultiTerminSheet(sid){
 function openMultiTerminErgebnis(sid,cfg,treffer){
   const s=DB.students.find(x=>x.id===sid);if(!s)return;
   const gewuenscht=cfg.art==="sonder"?sfOffen(s,cfg.grp):null;
-  const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Automatisch gedeckelt auf ${gewuenscht} noch offene ${SF_LABEL[cfg.grp]||"Sonderfahrt"}${gewuenscht===1?'':'en'}.</p>`:'';
+  // W13: offen sind Kästchen; ein längerer Termin füllt mehrere (Bedienung Fund 3: Zahl aus dem echten Vorschlag, nicht fest „2“)
+  const mehr=cfg.art==="sonder"?treffer.find(t=>_sfEinh(t.von,t.bis)>1):null;
+  const einheit=(window.KR&&KR.sonderMinuten)?KR.sonderMinuten():45;
+  const sfName=SF_LABEL[cfg.grp]||"Sonderfahrt";
+  const hinweis=cfg.art==="sonder"&&gewuenscht!=null?`<p class="muted-p" style="font-size:12px;margin:-4px 0 10px;">Noch ${gewuenscht} ${sfName}${gewuenscht===1?'':'en'} offen (je ${einheit} Minuten).${mehr?` Ein Termin mit ${(window.KR&&KR.terminMinuten)?KR.terminMinuten(mehr.von,mehr.bis):""} Minuten zählt als ${_sfEinh(mehr.von,mehr.bis)}.`:''}</p>`:'';
   if(!treffer.length){
     const ohneFz=!(DB.workCfg.fahrzeuge||[]).length;
     openSheet(`<div class="sheet-h">Keine freien Slots gefunden</div>
@@ -11035,12 +11099,13 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   ausgewaehlt.forEach(t=>{
     if(cfg.art==="sonder"){
       const soll=sfSoll(cfg.grp,s)||arr.length;
-      while(idxCursor<soll&&sfDone(arr[idxCursor]))idxCursor++;
+      const arrJetzt=s.plan.sonder[cfg.grp]||arr; // frisch (Fable F1)
+      while(idxCursor<soll&&(sfDone(arrJetzt[idxCursor])||_sfTerminZu(s.id,cfg.grp,idxCursor)))idxCursor++;
       if(idxCursor>=soll)return;
-      vorherPlan.push({idx:idxCursor,vorher:arr[idxCursor]?Object.assign({},arr[idxCursor]):null});
-      arr[idxCursor]={d:isoToShort(t.date),iso:t.date};
-      const key=s.id+":"+cfg.grp+":"+idxCursor;
-      const l=addLesson({date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,srcSonder:key,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null});
+      // W13: ein Termin mit 90 Minuten belegt 2 Kästchen (das gewählte und das nächste freie)
+      const neu={date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null};
+      vorherPlan.push(..._sfBelegen(s,cfg.grp,neu,idxCursor));
+      const l=addLesson(neu); if(neu.srcSonderIdx)l.srcSonderIdx=neu.srcSonderIdx;
       erstellteIds.push(l.id);
       idxCursor++;
     }else{
@@ -11052,7 +11117,7 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
   const cur=$("#stdGrid")?buildSonder(s):null;
   toastUndo(`${erstellteIds.length} ${label}${erstellteIds.length===1?'':'en'} gebucht`,()=>{
     erstellteIds.forEach(id=>deleteLesson(id));
-    vorherPlan.forEach(vp=>{arr[vp.idx]=vp.vorher;});
+    if(cfg.art==="sonder")_sfZurueck(s,cfg.grp,vorherPlan);
     save();refreshPlanRing(s);buildSonder(s);
   });
 }
@@ -13690,7 +13755,9 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
     const arr=s.plan.sonder[sd.key]||(s.plan.sonder[sd.key]=[]);
     for(let i=0;i<sd.soll;i++){
       const done=sfDone(arr[i]);
-      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}">${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}</button>`;
+      // Fable F2: Ein Kästchen, das schon zu einem anderen Termin gehört, ist nicht wählbar (sonst gehörte es zwei Terminen)
+      const belegt=!!_sfTerminZu(sid,sd.key,i,(DB.lessons||[]).find(x=>x.id===lessonId));
+      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}"${belegt?' disabled aria-disabled="true" title="Gehört schon zu einem anderen Termin"':''}>${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}${belegt?' · belegt':''}</button>`;
     }
   });
   openSheet(`<div class="sheet-h">Welche Sonderfahrt?</div>
@@ -13698,13 +13765,15 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
     <div class="sf-grid">${opts}</div>
     <button class="btn btn-ghost btn-full" id="sfSkip" style="margin-top:4px;">Ohne Zuordnung speichern</button>`);
   document.querySelectorAll('.sf-opt').forEach(b=>b.addEventListener('click',()=>{
+    if(b.disabled)return;
     const grp=b.dataset.grp, idx=+b.dataset.idx;
-    const key=`${sid}:${grp}:${idx}`;
     ensure(s);
-    const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
-    arr[idx]={d:isoToShort(date),iso:date};
-    updateLesson(lessonId,{date,von,bis,art:'sonder',note,srcSonder:key,fahrzeug:fahrzeug||null});
-    save(); closeSheet(); toast('Sonderfahrt eingetragen ✓'); routeKalender();
+    updateLesson(lessonId,{date,von,bis,art:'sonder',note,fahrzeug:fahrzeug||null});
+    // W13: 90 Minuten füllen 2 Kästchen (das gewählte und das nächste freie). Eine alte Verknüpfung des Termins wird vorher gelöst.
+    const l=(DB.lessons||[]).find(x=>x.id===lessonId);
+    let n=1;
+    if(l){ if(l.srcSonder){ const g0=String(l.srcSonder).split(":")[1]; if(g0)_sfFreigeben(s,g0,l); } _sfBelegen(s,grp,l,idx); n=_sfIdx(l).length; }
+    save(); closeSheet(); toast(n>1?`Sonderfahrt eingetragen ✓ (zählt als ${n})`:'Sonderfahrt eingetragen ✓'); routeKalender();
   }));
   $('#sfSkip').addEventListener('click',()=>{
     updateLesson(lessonId,{date,von,bis,art:'sonder',note,fahrzeug:fahrzeug||null});
@@ -14861,7 +14930,7 @@ const SF_LABEL={ueberland:"Überlandfahrt",autobahn:"Autobahnfahrt",nacht:"Nacht
 function syncSonderToKalender(s,grp,idx,iso){
   if(!iso)return;
   const key=s.id+":"+grp+":"+idx;
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(s.id,grp,idx);
   if(iso<todayISO()){
     // Historische/bereits absolvierte Sonderfahrt (z. B. Wechsler) -> kein automatischer Kalendereintrag
     if(ex)deleteLesson(ex.id);
@@ -14876,8 +14945,7 @@ function syncSonderToKalender(s,grp,idx,iso){
   toast(`${SF_LABEL[grp]||"Sonderfahrt"} in den Kalender übernommen`);
 }
 function removeSonderFromKalender(s,grp,idx){
-  const key=s.id+":"+grp+":"+idx;
-  const ex=(DB.lessons||[]).find(l=>l.srcSonder===key);
+  const ex=_sfTerminZu(s.id,grp,idx); // W13: auch über das 2. Kästchen; deleteLesson leert alle Kästchen des Termins
   if(ex)deleteLesson(ex.id);
 }
 /* Benachrichtigt (per E-Mail) den Schüler, falls dieser Termin ursprünglich online gebucht wurde.
@@ -14994,14 +15062,15 @@ function _absagenNachholen(){ if(!_authUser)return; const uid=_authUser.id, jetz
   try{ const t=$("#toast"); if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(_absagenNachholen,1500); return; } }catch(e){}
   _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>7000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
 function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig, ohneAbsage){
-  let sonderAlt;
-  if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp]){ sonderAlt=st.plan.sonder[grp][+idx]; st.plan.sonder[grp][+idx]=null; } }
+  // W13: alle Kästchen des Termins leeren (90 Minuten = 2), Rückgängig stellt alle wieder her
+  let sonderAlt=null;
+  if(l.srcSonder){ const [sid,grp]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st)sonderAlt=_sfFreigeben(st,grp,l); }
   const id=l.id; const absage=!!l.onlineBookingId&&!ohneAbsage;
   if(absage)_absageMerken(id);
   _loeschenMitRueckgaengig(()=>DB.lessons||(DB.lessons=[]), l, text, neuZeichnen,
     // Online gebucht: Die Absage an den Schüler geht erst raus, wenn nicht rückgängig gemacht wurde
     ()=>{ if(absage)_absageSenden(id); try{ nachAblauf&&nachAblauf(); }catch(e){} },
-    ()=>{ if(absage)_absageVergessen(id); if(l.srcSonder&&sonderAlt!==undefined){ const [sid,grp,idx]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp])st.plan.sonder[grp][+idx]=sonderAlt; }
+    ()=>{ if(absage)_absageVergessen(id); if(l.srcSonder&&sonderAlt&&sonderAlt.length){ const [sid,grp]=l.srcSonder.split(":"); const st=DB.students.find(x=>x.id===sid); if(st)_sfZurueck(st,grp,sonderAlt); }
       try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){} });
 }
 // Termin löschen mit Rückgängig (ohne Rückfrage). Gelaufene/unterschriebene Stunde: stattdessen Stornieren mit Grund.
@@ -15050,7 +15119,7 @@ function stornoLesson(id, grund, neuZeichnen){
 }
 function deleteLesson(id){
   const l=(DB.lessons||[]).find(x=>x.id===id); if(!l)return;
-  if(l.srcSonder){ const [sid,grp,idx]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])s.plan.sonder[grp][+idx]=null; }
+  if(l.srcSonder){ const [sid,grp]=l.srcSonder.split(":"); const s=DB.students.find(x=>x.id===sid); if(s)_sfFreigeben(s,grp,l); } // W13: alle Kästchen des Termins
   DB.lessons=(DB.lessons||[]).filter(x=>x.id!==id); save();
   _notifyOnlineBookingChange(id,"cancelled");
 }

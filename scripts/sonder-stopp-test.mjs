@@ -44,7 +44,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium" });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); // wie die anderen Tests: in GitHub ohne festen Pfad
 
 let fehlerZahl = 0, okZahl = 0, uebersprungen = 0;
 // fn liefert: nichts/true/[] = ok, Text/Liste = Fehlergrund, { skip: "Grund" } = übersprungen
@@ -277,10 +277,14 @@ await pruefe("T5c", "buchMultiTermine mit Stopp, „Ja“: Sonderfahrt → 2 Ter
   if (a.err) f.push(`sonder: JS-Fehler ${a.err}`);
   if (a.c.n > 1) f.push(`sonder: confirm ${a.c.n}×`);
   if (a.neu.length !== 2) f.push(`sonder: ${a.neu.length} Termine statt 2`);
+  // W13 PR 2: Ein Termin mit 90 Minuten füllt 2 Kästchen (45 Minuten je Sonderfahrt-Einheit). Der 1. Termin belegt Kästchen 1 und 2,
+  // der 2. das 3. (Nacht hat bei Klasse B 3 Kästchen).
   const keys = a.neu.map((l) => l.srcSonder).sort().join(",");
-  if (a.neu.some((l) => l.art !== "sonder") || keys !== "s1:nacht:0,s1:nacht:1") f.push(`sonder: ${a.neu.map((l) => `${l.art}/${l.srcSonder}`).join(", ")}`);
+  if (a.neu.some((l) => l.art !== "sonder") || keys !== "s1:nacht:0,s1:nacht:2") f.push(`sonder: ${a.neu.map((l) => `${l.art}/${l.srcSonder}`).join(", ")}`);
+  const erster = a.neu.find((l) => l.srcSonder === "s1:nacht:0");
+  if (!erster || JSON.stringify(erster.srcSonderIdx) !== "[0,1]") f.push(`sonder: 1. Termin belegt ${erster ? JSON.stringify(erster.srcSonderIdx) : "–"} statt [0,1]`);
   const nacht = JSON.parse(a.nachPlan).nacht;
-  if (!(nacht[0] && nacht[0].iso === SLOTS[0].date && nacht[1] && nacht[1].iso === SLOTS[1].date)) f.push(`sonder: Plan nacht ${JSON.stringify(nacht)}`);
+  if (!(nacht[0] && nacht[0].iso === SLOTS[0].date && nacht[1] && nacht[1].iso === SLOTS[0].date && nacht[2] && nacht[2].iso === SLOTS[1].date)) f.push(`sonder: Plan nacht ${JSON.stringify(nacht)}`);
   const b = await multi("s1", CFG_UEBUNG, true);
   if (b.err) f.push(`Übungsfahrt: JS-Fehler ${b.err}`);
   if (b.c.n > 1) f.push(`Übungsfahrt: confirm ${b.c.n}×`);

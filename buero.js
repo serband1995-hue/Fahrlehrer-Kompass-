@@ -19,6 +19,12 @@ if (!KR.setzeReaktRegel) { KR.setzeReaktRegel = () => null; KR.holeReaktRegel = 
 if (!KR.DRITTSTAATEN) KR.DRITTSTAATEN = [];
 if (!KR.fahrlehrerFristen) { KR.fahrlehrerFristen = () => []; KR.ausbildungsKlassen = () => []; }
 if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
+// W13 PR 2: Länge einer Sonderfahrt-Einheit (fahrschule_einstellungen, Schlüssel fahrstunden.sonderfahrt, Feld minuten; Vorgabe 45,
+// erlaubt 30–90), gelesen über KE (W11, lädt in ladeDaten). Sonst nur über KR.sonderMinuten() lesen. Einstellung: W11 „Fahrstunden & Kalender“.
+window.addEventListener("ke:geladen", () => { if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE && KE.zahl ? KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90) : null); });
+// W13 PR 2: alte kompass-rechnen.js ohne Sonderfahrt-Einheit → fest 45 Minuten wie bisher
+if (!KR.sonderMinuten) { KR.sonderMinuten = () => 45; KR.setzeSonderMinuten = () => 45; KR.sonderEinheitenAusMinuten = (m) => (m > 0 ? Math.floor(m / 45) : 0); }
+if (!KR.terminMinuten) KR.terminMinuten = (v, b) => (v && b ? Math.max(0, KR.hm2min(b) - KR.hm2min(v)) : 0);
 // W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
 const KR_OHNE_HAKEN = !KR.fcFuersBuero || !KR.fcVomBuero;
 if (!KR.fcFuersBuero) KR.fcFuersBuero = KR.fcErhalten;
@@ -2334,10 +2340,10 @@ function sonderZaehlerHTML(x) {
     if (t.datum === heute && KR.hm2min(t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist
     const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
     const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
-    if (ist[a] != null) ist[a] += Math.floor((KR.hm2min(t.bis) - KR.hm2min(t.von)) / 45);
+    if (ist[a] != null) ist[a] += KR.sonderEinheitenAusMinuten(KR.terminMinuten(t.von, t.bis)); // W13: Einheit je Fahrschule, über Mitternacht zählt mit
     else if (t.art === "sonder") ohneArt++;
   }
-  return `<h3>Sonderfahrten (aus dem Kalender, je 45 Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
+  return `<h3>Sonderfahrten (aus dem Kalender, je ${KR.sonderMinuten()} Minuten)</h3><p>${SONDER_ARTEN.map(([k, n], i) => `<span class="marke-pill${ist[k] >= soll[i] ? " gruen" : ""}">${n} ${ist[k]}/${soll[i]}</span>`).join(" ")}</p>
     ${ohneArt ? `<p class="fl-warnung bald">${ohneArt} ${ohneArt === 1 ? "Sonderfahrt" : "Sonderfahrten"} ohne Art – bitte im Termin Überland, Autobahn oder Nacht wählen.</p>` : ""}
     <p class="leise klein">${esc(lehrerName(x.fahrlehrer_id))} nutzt keine App: Bitte bei jeder Sonderfahrt im Termin die Art wählen. Dieser Zähler sieht nur die Termine im Büro-Kalender.</p>`;
 }
@@ -3198,7 +3204,7 @@ function renderFcStunden() {
       <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
       <td class="zahlspalte"><b>${buero === "abgegeben" ? jetzt : erw}</b><span class="leise"> von ${gebucht}</span></td>
       <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
-      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
+      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 && !fcAusgefallen(ft) ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
       <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
     </tr>`;
   }).join("");
@@ -3318,7 +3324,7 @@ function fcStundeDialog(id) {
         <select name="status">${Object.entries(FC_BUERO).map(([k, v]) => `<option value="${k}"${k === status ? " selected" : ""}>${esc(v[1])}</option>`).join("")}</select></label>
       <label>Nachgereicht am (leer = nicht nachgereicht)
         <input type="date" name="nach" value="${esc(t.buero_fc_nachgereicht_am || "")}"></label>
-      ${fcAnzahlDa() && KR.fcGebucht(ft) > 1 ? `<label>Abgegeben (nur bei „abgegeben“)
+      ${fcAnzahlDa() && KR.fcGebucht(ft) > 1 && !fcAusgefallen(ft) ? `<label>Abgegeben (nur bei „abgegeben“)
         <select name="anzahl"><option value="">wie vom Fahrlehrer vermerkt (${KR.fcFuersBuero(ft)})</option>${Array.from({ length: KR.fcGebucht(ft) }, (_, i) => KR.fcGebucht(ft) - i).map((n) => `<option value="${n}"${t.buero_fc_anzahl === n ? " selected" : ""}>${n} Fahrcheck${n === 1 ? "" : "s"}</option>`).join("")}</select></label>` : ""}
     </div>
     <p class="leise klein">Den Vermerk des Fahrlehrers (z. B. „1 FC vergessen“) ändert nur er selbst in seiner App; sonst würde seine Eingabe beim nächsten Abgleich überschrieben.</p>`;
@@ -3364,10 +3370,12 @@ function fcAbgabeDialog(lehrerId) {
     // Bewusst ohne aktualisiert_am: sonst hält die Fahrlehrer-App die Zeile für neuer und überschreibt
     // ihre eigenen, vielleicht noch nicht hochgeladenen Fahrcheck-Vermerke.
     const a = ok.length ? await supa.from("kalender_termine").update({ buero_fc_status: "abgegeben" }).in("id", ok) : { error: null };
-    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt" }).in("id", fehlend) : { error: null };
+    // „fehlt“ ohne altes Nachreich-Datum, wie beim Knopf „Fehlt“ (fcSetzeStatus); die Zahl leert der Trigger
+    const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", buero_fc_nachgereicht_am: null }).in("id", fehlend) : { error: null };
     if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
     else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
-    S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) t.buero_fc_status = "fehlt"; });
+    // Richter W13 (Kann 1): „fehlt“ leert in der Datenbank die Zahl (Trigger) und das Nachreich-Datum (Update oben), hier gleich mit
+    S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
     zeichne();
     return true;
   }, "Abgabe bestätigen");
@@ -4634,7 +4642,7 @@ async function ladeDaten() {
   const fsId = S.fsId;
   const zmT0 = Date.now(); // Werkstatt 11: ein Eintrag, der nach Ladebeginn entsteht, darf nicht verloren gehen
   setStatus("", "lade …");
-  if (window.KE) KE.lade(supa, fsId); // W11: Einstellungen der Fahrschule (wirft nie)
+  if (window.KE) { KE.lade(supa, fsId); if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90)); } // W11: Einstellungen der Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
   try {
     const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
@@ -5123,6 +5131,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.bkFehlt = false; S.verkauft = null; // Werkstatt 13: neue Fahrschule, Paket-Spalten und verkaufte Pakete neu prüfen
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
+  KR.setzeSonderMinuten(null); // W13 PR 2: Sonderfahrt-Einheit der vorigen Fahrschule nicht mitnehmen
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule
