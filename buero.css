@@ -95,13 +95,6 @@ nav{display:flex;flex-direction:column;gap:12px;}
       linear-gradient(transparent,var(--nav-schatten)) center bottom/100% 10px no-repeat scroll;}
   .seite-fuss{margin-top:0;}
 }
-/* PC mit wenig Höhe (1280×720): Kopf und Abstände etwas kleiner, damit alle 12 Punkte ohne Scrollen passen */
-@media screen and (min-width:901px) and (max-height:760px){
-  .seite{gap:6px;padding:12px 14px;}
-  .marke{padding-bottom:0;} .marke img{width:34px;height:34px;} .marke-name{font-size:18px;}
-  .nav-neben{padding-top:8px;}
-  .seite-fuss{padding-top:10px;}
-}
 .nav-neben{padding-top:12px;border-top:1px solid var(--line-soft);}
 .nav-punkt{position:relative;display:flex;align-items:center;gap:14px;min-height:44px;padding:6px 12px;line-height:1.25;border-radius:var(--r-klein);text-decoration:none;color:var(--txt);font-weight:500;transition:background-color .18s cubic-bezier(.2,.8,.2,1),color .18s cubic-bezier(.2,.8,.2,1);}
 .nav-punkt::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--akzent);opacity:0;transform:scaleY(.4);transition:opacity .18s cubic-bezier(.2,.8,.2,1),transform .18s cubic-bezier(.2,.8,.2,1);}
@@ -1069,3 +1062,10 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 }
 .es-inhalt .formular .zm-modus-wahl{grid-template-columns:minmax(0,1fr);}
 .es-inhalt .formular{grid-template-columns:minmax(0,1fr);}
+/* PC mit wenig Höhe (1280×720): Kopf und Abstände etwas kleiner, damit alle 12 Punkte ohne Scrollen passen (steht am Dateiende, damit es die Grundregeln und max-height:820 überschreibt) */
+@media screen and (min-width:901px) and (max-height:760px){
+  .seite{gap:6px;padding:12px 14px;}
+  .marke{padding-bottom:0;} .marke img{width:34px;height:34px;} .marke-name{font-size:18px;}
+  .nav-neben{padding-top:8px;}
+  .seite-fuss{padding-top:10px;}
+}
