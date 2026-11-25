@@ -81,6 +81,7 @@
   function zeichen(s) { return Array.from(String(s)); }
   // Zeichenklassen aus Zahlenwerten gebaut: im Quelltext steht kein Backslash-u, denn manche Übertragungswege (Deploy der
   // Edge-Funktion) machen daraus echte Zeilentrenner und der Code bricht (HS7, 25.11.2026). Verhalten wie vorher.
+  // Achtung: klasse() maskiert nichts – keine Bereichsgrenze ], Backslash, ^ oder - (Zeichen 5D, 5C, 5E, 2D) ergänzen.
   const klasse = (bereiche) => new RegExp("[" + bereiche.map(([a, b]) => String.fromCharCode(a) + (b === undefined ? "" : "-" + String.fromCharCode(b))).join("") + "]", "g");
   const ZEILENTRENNER = klasse([[0x85], [0x2028], [0x2029]]); // NEL, Zeilen- und Absatztrenner → Zeilenumbruch
   const UNSICHTBAR = klasse([[0x00, 0x08], [0x0b, 0x1f], [0x7f, 0x9f], [0x200b, 0x200f], [0x202a, 0x202e], [0x2066, 0x2069], [0xfeff]]); // Steuer- und Richtungszeichen

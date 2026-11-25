@@ -28,7 +28,9 @@ gleich("keine unsichtbaren Zeichen im Quelltext", [], [...quelle].filter((c) => 
 {
   const { readdirSync } = await import("node:fs");
   const BS = String.fromCharCode(92), ch = (n) => String.fromCharCode(n);
-  const dateien = ["kompass-vorlagen.js", ...["zahlungs-mail", "erinnerungs-mail"].flatMap((f) => readdirSync(join(ROOT, "supabase/functions", f)).map((d) => "supabase/functions/" + f + "/" + d))];
+  // alle Edge-Funktionen (auch künftige), jeweils alle Dateien
+  const fn = readdirSync(join(ROOT, "supabase/functions"), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  const dateien = ["kompass-vorlagen.js", ...fn.flatMap((f) => readdirSync(join(ROOT, "supabase/functions", f), { withFileTypes: true }).filter((e) => e.isFile()).map((e) => "supabase/functions/" + f + "/" + e.name))];
   const funde = [], uMuster = new RegExp(BS + BS + "u[0-9a-fA-F{]"), xMuster = new RegExp(BS + BS + "x[0-9a-fA-F]");
   for (const d of dateien) {
     const t = readFileSync(join(ROOT, d), "utf8");
