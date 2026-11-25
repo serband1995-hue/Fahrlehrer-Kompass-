@@ -1,7 +1,7 @@
 /* Kompass Büro – Urlaub, Schichtplan und Backups (Werkstatt 16, 24.11.2026).
    Bisher gab es diese drei nur in der App-Gesamtansicht („Weitere Verwaltung“). Ziel von W16 (🗣 Serband: „je nachdem, wo man
    sich anmeldet, kommt die richtige Seite“): Das Büro soll nur noch die Büro-Seite brauchen. Dafür stehen sie jetzt hier.
-   Die Weiterleitung (startseite.js BUERO_NUR_BUEROSEITE) bleibt aus, bis auch die übrigen Lücken zu sind (Teil 3).
+   Seit Teil 3 B ist die Weiterleitung an (startseite.js BUERO_NUR_BUEROSEITE): das Büro arbeitet nur noch hier.
    Gleiche Tabellen und Regeln wie in der App: fahrschule_urlaub (mit Fahrlehrer-ID, W14), fahrschule_schichten,
    fahrschule_backups. Die Datenbank erlaubt sie Büro, Leitung und Super-Admin (Zugriffsregeln „…/Buero verwaltet …“).
    Eingehängt in BEREICHE (buero.js, Einträge von Werkstatt 11, erscheinen, sobald diese Datei vor buero.js geladen ist).
