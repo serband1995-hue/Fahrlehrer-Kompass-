@@ -540,6 +540,7 @@ function renderHeute() {
       <div class="notiz-aktion"><button type="button" class="knopf klein" data-hagoeffnen="${esc(a.id)}">Wieder öffnen</button></div></li>`).join("")}</ul></details>` : ""}
     ${vonMir.length ? `<details class="von-mir"><summary>Von dir an andere vergeben, noch offen (${vonMir.length})</summary><ul class="notizliste">${vonMir.map((a) => aufgabeZeile(a, true)).join("")}</ul></details>` : ""}
     <p class="leise klein legende"><span class="punkt-rot"></span> rot = überfällig oder dringend · <span class="punkt-orange"></span> orange = heute fällig · grau = später</p></div>`;
+  if (typeof luHeuteHinweise === "function") aufgaben.push(...luHeuteHinweise()); // W16 Teil 3: Erste Hilfe unbezahlt, lange ohne Fahrstunde
   const todo = `<div class="karte"><div class="karte-kopf"><h2>Fristen und Warnungen</h2></div>${aufgaben.length ? `<div class="aufgaben">${aufgaben.join("")}</div>` : `<p class="leer">Gerade ist nichts offen.</p>`}</div>`;
   return fuerKarte + todo + liste + kacheln;
 }

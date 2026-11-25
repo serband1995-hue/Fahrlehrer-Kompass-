@@ -427,3 +427,64 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-luserie]");
   if (b && b.closest("dialog[open]")) luSerienDialog(b.dataset.luserie);
 });
+
+/* ---------- Heute › „Fristen und Warnungen“: Erste Hilfe unbezahlt, lange ohne Fahrstunde (Hauptsitzung 25.11.2026) ---------- */
+// Erste Hilfe: Termine der Art „ersthilfe“ mit kurs_bezahlt = false (wie der Schalter „Bezahlt“ der App, fsKursBezahltToggle).
+function luErsteHilfeOffen() {
+  return S.termine.filter((t) => t.art === "ersthilfe" && !t.geloescht && "kurs_bezahlt" in t && !t.kurs_bezahlt)
+    .sort((a, b) => String(a.datum).localeCompare(String(b.datum)) || String(a.von || "").localeCompare(String(b.von || "")));
+}
+// Wie App routeFahrschuleStatistik: aktive Schüler, deren letzte Fahrstunde (auch geplante) über 28 Tage zurückliegt oder die keine haben.
+// Zusätzlich hier: nicht, wer die Praxisprüfung schon hat, keinen Fahrlehrer hat oder sich erst in den letzten 28 Tagen angemeldet hat.
+function luLangeOhneFahrstunde() {
+  const vor28 = KR.addDaysISO(KR.todayISO(), -28);
+  const letzte = {};
+  for (const t of S.termine) {
+    if (t.geloescht || !t.schueler_id || !KR.FAHR_ARTEN.includes(t.art || "fahrstunde") || ((t.payload || {}).status || t.status) === "abgebrochen") continue;
+    if (!letzte[t.schueler_id] || t.datum > letzte[t.schueler_id]) letzte[t.schueler_id] = t.datum;
+  }
+  return aktiveSchueler().filter((x) => {
+    if (!x.fahrlehrer_id || x.praxis_bestanden_am) return false;
+    const anm = anmeldeDatum(x);
+    if (!letzte[x.id] && anm && anm >= vor28) return false;
+    return !letzte[x.id] || letzte[x.id] < vor28;
+  }).map((x) => ({ x, letzte: letzte[x.id] || null })).sort((a, b) => String(a.letzte || "").localeCompare(String(b.letzte || "")));
+}
+function luHeuteHinweise() {
+  const out = [], eh = luErsteHilfeOffen(), weg = luLangeOhneFahrstunde();
+  if (eh.length) out.push(`<a class="aufgabe" href="#heute" data-luliste="ersthilfe"><b>${eh.length}</b> Erste-Hilfe-${eh.length === 1 ? "Kurs" : "Kurse"} noch nicht bezahlt</a>`);
+  if (weg.length) out.push(`<a class="aufgabe" href="#heute" data-luliste="ohnefahrt"><b>${weg.length}</b> Schüler seit über 4 Wochen ohne Fahrstunde</a>`);
+  return out;
+}
+function luListeErsteHilfe() {
+  const eh = luErsteHilfeOffen();
+  const zeilen = eh.map((t) => `<li class="lu-gl-zeile"><span class="lu-gl-text"><span><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "ohne Namen")}</b></span><span class="leise klein">${esc(datumDE(t.datum))}${t.von ? " · " + esc(t.von) + " Uhr" : ""}${t.fahrlehrer_id ? " · " + esc(lehrerName(t.fahrlehrer_id)) : ""}</span></span><button type="button" class="knopf klein" data-luehbezahlt="${esc(t.id)}">Bezahlt</button></li>`).join("");
+  const dlg = luInfoFenster("Erste Hilfe: noch nicht bezahlt", zeilen ? `<ul class="lu-gl-liste">${zeilen}</ul>` : `<p class="leise">Alle Kurse sind bezahlt.</p>`);
+  dlg.querySelectorAll("[data-luehbezahlt]").forEach((b) => b.addEventListener("click", async () => {
+    if (b.disabled) return; b.disabled = true;
+    const id = b.dataset.luehbezahlt, t = S.termine.find((y) => y.id === id);
+    const res = await supa.from("kalender_termine").update({ kurs_bezahlt: true }).eq("id", id).select("id");
+    if (res.error || !res.data || !res.data.length) { b.disabled = false; toast("Nicht gespeichert: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
+    if (t) t.kurs_bezahlt = true;
+    const li = b.closest("li"); if (li) li.remove();
+    zeichne();
+    toastUndo("Als bezahlt vermerkt", async () => {
+      const r = await supa.from("kalender_termine").update({ kurs_bezahlt: false }).eq("id", id).select("id");
+      if (r.error || !r.data || !r.data.length) { toast("Rückgängig ging nicht: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return; }
+      if (t) t.kurs_bezahlt = false;
+      toast("Wieder offen"); zeichne();
+    });
+  }));
+}
+function luListeOhneFahrt() {
+  const weg = luLangeOhneFahrstunde();
+  const zeilen = weg.map(({ x, letzte }) => `<li class="lu-gl-zeile"><span class="lu-gl-text"><span><b>${esc(x.name)}</b></span><span class="leise klein">${esc(lehrerName(x.fahrlehrer_id))} · ${letzte ? "letzte Fahrstunde " + esc(datumDE(letzte)) : "noch keine Fahrstunde"}</span></span><button type="button" class="knopf klein" data-luakte="${esc(x.id)}">Akte</button></li>`).join("");
+  const dlg = luInfoFenster("Seit über 4 Wochen ohne Fahrstunde", `<p class="leise klein">Nachfassen: Will der Schüler weitermachen? Gezählt werden auch geplante Fahrstunden.</p>${zeilen ? `<ul class="lu-gl-liste">${zeilen}</ul>` : `<p class="leise">Niemand.</p>`}`);
+  dlg.querySelectorAll("[data-luakte]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.luakte)));
+}
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("[data-luliste]");
+  if (!a || document.querySelector("dialog[open]")) return;
+  e.preventDefault();
+  if (a.dataset.luliste === "ersthilfe") luListeErsteHilfe(); else luListeOhneFahrt();
+});

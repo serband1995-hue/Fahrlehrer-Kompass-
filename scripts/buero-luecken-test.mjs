@@ -437,6 +437,51 @@ if (!NUR || NUR === "L11") {
   await ctx.close();
 }
 
+// L13 Heute › „Fristen und Warnungen“: Erste Hilfe unbezahlt (mit „Bezahlt“ und Rückgängig) und Schüler lange ohne Fahrstunde
+if (!NUR || NUR === "L13") for (const [n, opt] of [["PC, Büro", {}], ["Handy, Büro mit Verwalten-Recht", { person: ["Mia Muster", "5917"], breite: 360, hoehe: 780 }]]) {
+  const P = `[${n}]`;
+  const { page, ctx, konsole, dialoge } = await oeffne(opt);
+  await page.evaluate(async (tag) => {
+    window.__FAKE.tabellen.kalender_termine.push({ id: "eh-1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-2", schueler_id: null, interessent_name: "Kai Muster", interessent_telefon: null, datum: tag, von: "09:00", bis: "17:00", art: "ersthilfe", status: "geplant", geloescht: false, payload: {}, kurs_bezahlt: false });
+    // s5: lange keine Fahrstunde (alle eigenen Termine weg, Anmeldung vor 2 Monaten)
+    const x = window.__FAKE.tabellen.schueler.find((y) => y.id === "s5"); x.vertrag_am = null; x.ausbildung = Object.assign({}, x.ausbildung, { anmeldedatum: null }); x.erstellt_am = "2025-01-01T10:00:00Z"; x.praxis_bestanden_am = null; x.inaktiv_seit = null;
+    window.__FAKE.tabellen.kalender_termine.forEach((t) => { if (t.schueler_id === "s5") t.geloescht = true; });
+    await ladeDaten();
+  }, plus(HEUTE, -3));
+  await gehe(page, "#heute");
+  const ehLink = await page.locator('[data-luliste="ersthilfe"]').count(), wegLink = await page.locator('[data-luliste="ohnefahrt"]').count();
+  let ehText = "", nachBezahlt = null, nachUndo = null;
+  if (ehLink) {
+    await page.click('[data-luliste="ersthilfe"]'); await warte(page, 400);
+    ehText = await offenText(page);
+    await page.click('dialog[open] [data-luehbezahlt="eh-1"]'); await warte(page, 600);
+    nachBezahlt = (await tab(page, "kalender_termine")).find((t) => t.id === "eh-1").kurs_bezahlt;
+    await page.click("[data-undo]").catch(() => {}); await warte(page, 800);
+    nachUndo = (await tab(page, "kalender_termine")).find((t) => t.id === "eh-1").kurs_bezahlt;
+    await alleZu(page);
+  }
+  await pruefe("L13", `${P} Erste Hilfe unbezahlt: Hinweis auf Heute, Liste mit Name, „Bezahlt“ speichert, Rückgängig nimmt zurück`, () => {
+    const f = [];
+    if (!ehLink) return "kein Hinweis auf Heute";
+    if (!/Kai Muster/.test(ehText)) f.push("Liste: " + ehText.slice(0, 80));
+    if (nachBezahlt !== true) f.push("Bezahlt nicht gespeichert");
+    if (nachUndo !== false) f.push("Rückgängig ging nicht");
+    return f;
+  });
+  let wegText = "", akte = false;
+  if (wegLink) {
+    await page.click('[data-luliste="ohnefahrt"]'); await warte(page, 400);
+    wegText = await offenText(page);
+    const name = await page.evaluate(() => S.schueler.find((y) => y.id === "s5").name);
+    if (wegText.includes(name)) { await page.click('dialog[open] [data-luakte="s5"]'); await warte(page, 500); akte = (await offenText(page)).includes(name) && (await page.locator("dialog[open]").count()) === 2; }
+    else wegText = "s5 fehlt: " + wegText;
+    await alleZu(page);
+  }
+  await pruefe("L13", `${P} Lange ohne Fahrstunde: Hinweis auf Heute, Schüler in der Liste, „Akte“ öffnet die Akte`, () => (!wegLink ? "kein Hinweis" : /^s5 fehlt/.test(wegText) ? wegText.slice(0, 100) : akte ? null : "Akte nicht geöffnet"));
+  await pruefe("L13", `${P} keine JS-Fehler, keine Browser-Fenster`, () => konsole.concat(dialoge));
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 console.log(`\n${ok} ok, ${fehler} Fehler`);
