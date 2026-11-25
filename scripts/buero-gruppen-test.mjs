@@ -1,5 +1,5 @@
 // Büro-Test Werkstatt 11 Schritt 1 (flache Leiste, Zahlungen, Kalender „+ Termin“, Bewegung) + K18, erfundene Daten, keine Datenbank.
-//   L   Leiste: 8 Hauptpunkte + 3 Nebenpunkte, Symbole, Zähler, keine Gruppen
+//   L   Leiste: 8 Hauptpunkte + 4 Nebenpunkte, Symbole, Zähler, keine Gruppen
 //   U   Unterseiten (#auslastung, #preise, #verkaeufe) markieren den Elternpunkt
 //   Z   #zahlungen mit Reitern; K  Kalender „+ Termin“ vorbelegt; A/R  Animation, reduzierte Bewegung
 //   G4  Handy 375 px: Menü aufklappen, Seite wechseln, nichts wischt seitlich
@@ -70,7 +70,7 @@ const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filt
 
 // ---- Werkstatt 11 Schritt 1: flache Leiste ----
 const HAUPT = [["#heute", "Heute"], ["#kalender", "Kalender"], ["#schueler", "Schüler"], ["#pruefungen", "Prüfungen"], ["#fristen", "Fristen"], ["#zahlungen", "Zahlungen"], ["#fahrchecks", "Fahrcheck"], ["#zahlen", "Statistik"]];
-const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#neuigkeiten", "Neuigkeiten"]];
+const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#neuigkeiten", "Neuigkeiten"], ["#einstellungen", "Einstellungen"]];
 const punkte = (page) => page.$$eval("#nav .nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.querySelector(".nav-text").textContent.trim(), !!a.querySelector("svg"), Math.round(a.getBoundingClientRect().height), a.getAttribute("aria-current") === "page"]));
 const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (l) => l.map((a) => a.getAttribute("href")).join(","));
 {
@@ -78,7 +78,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const { page, ctx, konsole } = await oeffne({ hash: "#heute", uhr: heuteUm(10, 20) });
   const p = await punkte(page);
   const soll = HAUPT.concat(NEBEN).map((x) => x.join("|")).join(" / ");
-  pruefe("L1", "Leiste: 8 Hauptpunkte + 3 darunter in der richtigen Reihenfolge, jeder mit Symbol", p.map((x) => x[0] + "|" + x[1]).join(" / ") === soll && p.every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
+  pruefe("L1", "Leiste: 8 Hauptpunkte + 4 darunter (Einstellungen ganz unten) in der richtigen Reihenfolge, jeder mit Symbol", p.map((x) => x[0] + "|" + x[1]).join(" / ") === soll && p.every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
   pruefe("L2", "keine Gruppen mehr (kein Auf-/Zuklappen)", (await page.locator("[data-gruppe], .nav-gruppe").count()) === 0 ? null : "Gruppenknopf da");
   const h = new Set(p.slice(0, 8).map((x) => x[3]));
   pruefe("L3", "alle 8 Hauptpunkte gleich hoch (≥ 40 px)", h.size === 1 && [...h][0] >= 40 ? null : [...h].join(","));
@@ -220,8 +220,8 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const att = `window.renderUrlaub = () => '<div class="karte" id="attUrlaub">Urlaub-Attrappe</div>'; window.renderSchichtplan = () => '<div class="karte" id="attSchicht">Schichtplan-Attrappe</div>'; window.renderBackups = () => '<div class="karte" id="attBackups">Backups-Attrappe</div>'; window.bindeBackups = () => { window.__backupsGebunden = true; };`;
   const m = await oeffne({ hash: "#schichtplan", vorher: att });
   const p = await punkte(m.page);
-  const sollNeben = ["Fahrlehrer & Büro", "Fahrzeuge", "Urlaub", "Schichtplan", "Backups", "Neuigkeiten"].join(" / ");
-  pruefe("V2", "mit den Funktionen: Urlaub, Schichtplan, Backups unten nach „Fahrzeuge“ und vor „Neuigkeiten“, mit Symbol", p.slice(8).map((x) => x[1]).join(" / ") === sollNeben && p.length === 14 && p.slice(8).every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
+  const sollNeben = ["Fahrlehrer & Büro", "Fahrzeuge", "Urlaub", "Schichtplan", "Backups", "Neuigkeiten", "Einstellungen"].join(" / ");
+  pruefe("V2", "mit den Funktionen: Urlaub, Schichtplan, Backups unten nach „Fahrzeuge“ und vor „Neuigkeiten“ und „Einstellungen“, mit Symbol", p.slice(8).map((x) => x[1]).join(" / ") === sollNeben && p.length === 15 && p.slice(8).every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
   pruefe("V3", "#schichtplan rendert die Seite, Punkt markiert, Titel „Schichtplan“", (await m.page.locator("#attSchicht").count()) === 1 && (await markiert(m.page)) === "#schichtplan" && (await m.page.textContent("#titel")) === "Schichtplan" ? null : await markiert(m.page));
   await m.page.click('#nav .nav-punkt[href="#backups"]'); await warte(m.page, 350);
   pruefe("V4", "Klick auf „Backups“ rendert die Seite und ruft bindeBackups", (await m.page.locator("#attBackups").count()) === 1 && (await m.page.evaluate(() => window.__backupsGebunden === true)) ? null : "nicht gerendert");
@@ -325,7 +325,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const { page, ctx, konsole } = await oeffne({ hash: "#flotte", breite: 375, hoehe: 740 });
   await page.click("#menueKnopf"); await warte(page, 200);
   const m = await page.$$eval("#nav .nav-punkt", (l) => l.filter((a) => a.offsetParent).map((a) => Math.round(a.getBoundingClientRect().height)));
-  pruefe("G4a", "Handy: Menü auf, 11 Punkte, alle ≥ 44 px", m.length === 11 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
+  pruefe("G4a", "Handy: Menü auf, 12 Punkte, alle ≥ 44 px", m.length === 12 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
   await page.click('.nav-punkt[href="#pruefungen"]'); await warte(page, 400);
   pruefe("G4b", "Handy: Seite wechseln schließt das Menü", !(await page.evaluate(() => document.body.classList.contains("menue-offen"))) && /Prüfungen/.test(await page.textContent("#menueKnopf")) ? null : "Menü offen");
   pruefe("G4c", "Handy: nichts wischt seitlich", (await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)) ? null : "seitlich wischbar");
