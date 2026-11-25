@@ -1856,6 +1856,8 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 .sf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
 .sf-opt{padding:11px 10px;border-radius:11px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:700;text-align:left;}
 .sf-opt.done{opacity:.45;border-style:dashed;}
+/* W13 PR 3: gehört schon zu einem anderen Termin – nicht wählbar, anders als „von Hand abgehakt“ (gestrichelt) */
+.sf-opt.belegt{opacity:1;border-style:solid;background:transparent;color:var(--muted);font-weight:600;cursor:not-allowed;}
 .sf-opt:active{background:var(--gruen-soft);}
 /* Assign-Sheet */
 .as-list{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto;}
@@ -5395,6 +5397,8 @@ window.addEventListener("ke:geladen",_sonderMinAusKE);
    (wie bei der Regel der Reaktivierung), so geht keine Eingabe verloren. */
 function _fristenAusKE(){ if(window.KR&&KR.setzeFristen) KR.setzeFristen(KR.fristenAusKE?KR.fristenAusKE(window.KE):null); }
 window.addEventListener("ke:geladen",_fristenAusKE);
+/* W11 S3: wie lange der „Rückgängig“-Hinweis steht (Einstellung rueckgaengig.sekunden, 4–30, Vorgabe 6). Fehlt KE: 6 s. */
+function _undoMs(){ try{ return (window.KE&&KE.zahl?KE.zahl("rueckgaengig.sekunden","sekunden",6,4,30):6)*1000; }catch(e){ return 6000; } }
 // fsId: Fahrschule der Gesamtansicht (Büro, Leitung, Super-Admin auch für eine fremde Fahrschule); ohne = eigene Fahrschule
 async function _ladeReaktRegel(supa,fsId){
   if(!window.KR||!KR.setzeReaktRegel)return;
@@ -5746,7 +5750,8 @@ async function pullTermineZuweisungen() {
     // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
     // die Datenbank sagt, welche der eigenen IDs inzwischen jemand anderem gehören.
     // (Vor dem Lesen des Gedächtnisses: nach dem letzten await darf es sich nicht mehr ändern.)
-    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && !l._syncedAt && l.id).map(l => l.id);
+    // W13 PR 3 (Fable H2): auch verknüpfte Sonderfahrten nachfragen – einem anderen Fahrlehrer gegeben ist nicht „abgesagt“
+    const unklar = DB.lessons.filter(l => !remoteIds.has(l.id) && (!l._syncedAt || l.srcSonder) && l.id).map(l => l.id);
     let weggegeben = new Set();
     if (unklar.length) {
       const { data: fremd, error: fErr } = await supa.rpc("termine_nicht_mehr_meine", { p_ids: unklar });
@@ -5789,7 +5794,7 @@ async function pullTermineZuweisungen() {
       if (bekannt || !local._syncedAt || remoteTime > local._syncedAt) {
         Object.assign(local, merged, { _syncedAt: remoteTime });
         // W13 (Daten-Prüfer): Verknüpfung mit dem Plan wie der Server – fehlt sie dort, auch hier weg (Object.assign löscht nichts)
-        for (const k of ["srcSonder", "srcSonderIdx"]) if (!(k in merged)) delete local[k];
+        for (const k of ["srcSonder", "srcSonderIdx", "srcSonderMin"]) if (!(k in merged)) delete local[k];
         mem.termine[r.id] = _abglWertVon("termine", local);
         geaendert++;
       }
@@ -5801,7 +5806,13 @@ async function pullTermineZuweisungen() {
     if (rows.length || abgeglichen <= 3) {
       DB.lessons = DB.lessons.filter(l => {
         const bleibt = !weggegeben.has(l.id) && (remoteIds.has(l.id) || !l._syncedAt);
-        if (!bleibt) delete mem.termine[l.id];
+        if (!bleibt) {
+          delete mem.termine[l.id];
+          // W13 PR 3: vom Büro abgesagt oder gelöscht → die Kästchen im Plan werden frei (wie beim Löschen auf dem Gerät)
+          // Eine schon gefahrene Sonderfahrt bleibt im Plan abgehakt (Daten 2); nur künftige werden frei.
+          const vorbei = (window.KR && KR.terminEndeMin) ? (l.date < todayISO() || (l.date === todayISO() && KR.terminEndeMin(l.von, l.bis) <= new Date().getHours() * 60 + new Date().getMinutes())) : isAbsolved(l.date, l.bis); // über Mitternacht: erst morgen vorbei
+          if (l.srcSonder && !weggegeben.has(l.id) && !vorbei) { const [sid, grp] = String(l.srcSonder).split(":"); const st = (DB.students || []).find(x => x.id === sid); if (st) _sfFreigeben(st, grp, l); }
+        }
         return bleibt;
       });
     } else console.warn("[Kompass] Kalender-Abgleich: Server liefert keine Termine - lokal wird nichts entfernt.");
@@ -6202,17 +6213,20 @@ async function _fsEnterAggMode(fahrschuleId){
   if(neuGesichert){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule gleich holen, unabhängig vom Laden der Daten (offline gilt der Gerätespeicher)
   if(!(await _fsLoadAggData(fahrschuleId))){
     // Nicht in die Gesamtansicht gekommen: die Sicherung der eigenen Daten wieder freigeben, sonst würde
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
     // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
-    if(!_fsAgg&&meinGen===_fsAggGen) _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
+    if(!_fsAgg&&meinGen===_fsAggGen){ _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
+      if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); else KE.leeren(); _sonderMinAusKE(); } } // W11: und die Einstellungen der eigenen
+    else if(_fsAgg&&meinGen===_fsAggGen&&window.KE&&KE.fsId()!==_fsAgg.fahrschuleId){ KE.lade(getSupa(),_fsAgg.fahrschuleId); _sonderMinAusKE(); } // Wechsel A→B gescheitert: wieder die Einstellungen von A
     return false;
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
   if(_reaktRegelSoll!==fahrschuleId) _ladeReaktRegel(getSupa(),fahrschuleId);
-  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); _fristenAusKE(); } // W11: Einstellungen der gewählten Fahrschule (Gesamtansicht); W13: nie die Einheit der vorigen
+  if(window.KE&&KE.fsId()!==fahrschuleId){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); _fristenAusKE(); } // W11: ebenso die Einstellungen
   _fsSetDrawer(true);
   _zeigeSaStreifen();
   routeFahrschuleDashboard();
@@ -6246,8 +6260,7 @@ async function _fsExitAggModeJetzt(){
   _fsSetDrawer(false);
   _zeigeSaStreifen();
   _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule (die der Gesamtansicht gilt hier nicht)
-  if(window.KE&&_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); _fristenAusKE(); } // W11: wieder die Einstellungen der eigenen Fahrschule; W13: Einheit sofort
-  else { if(window.KE) KE.leeren(); _sonderMinAusKE(); _fristenAusKE(); } // W15 PR 3: ohne eigene Fahrschule (Super-Admin) nichts aus der Gesamtansicht behalten
+  if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id){ KE.lade(getSupa(),_authProfile.fahrschule_id); _sonderMinAusKE(); _fristenAusKE(); } else { KE.leeren(); _sonderMinAusKE(); _fristenAusKE(); } } // W11: wieder die Einstellungen der eigenen Fahrschule; ohne eigene Fahrschule (Super-Admin) die fremden loswerden; W13: Einheit sofort
   routeDashboard();
   // Was in der Gesamtansicht verschoben wurde (Zusammenführen mit dem anderen Gerät), jetzt nachholen.
   if(_authUser&&_pullOk) pushToCloud();
@@ -6255,6 +6268,7 @@ async function _fsExitAggModeJetzt(){
 async function _fsRefreshAggData(){
   if(!_fsAgg)return;
   if(!_fsDarfGesamt()){ await _fsExitAggModeJetzt(); return; } // Rolle weg: sauber zurück (speichert, stellt eigene Daten wieder her)
+  if(window.KE&&_fsAgg) KE.lade(getSupa(),_fsAgg.fahrschuleId); // W11: Einstellungen im Takt mit auffrischen (wirft nie)
   // W14b (Daten-Prüfer): erst ein laufendes Speichern abwarten – sonst läse das Neuladen den Stand davor und das
   // nächste Speichern drehte die eigene Änderung zurück
   if(_fsSyncLaeuftP){ try{ await _fsSyncLaeuftP; }catch(e){} }
@@ -6994,7 +7008,7 @@ async function fsFahrzeugLoeschen(id,name){
   const supa=getSupa();
   const {error}=await supa.from("fahrschule_fahrzeuge").update({aktiv:false}).eq("id",id);
   if(error){toast("Fehler: "+error.message);return;}
-  toastUndo(`${name} entfernt`,async()=>{ const {error:e2}=await supa.from("fahrschule_fahrzeuge").update({aktiv:true}).eq("id",id); if(e2){ toast("Fehler: "+e2.message); return; } toast("Wiederhergestellt ✓"); await _fsRefreshAggData(); if(typeof routeFahrschuleFahrzeuge==="function"&&_navStack.length&&_navStack[_navStack.length-1].name==="routeFahrschuleFahrzeuge")routeFahrschuleFahrzeuge(); },6000);
+  toastUndo(`${name} entfernt`,async()=>{ const {error:e2}=await supa.from("fahrschule_fahrzeuge").update({aktiv:true}).eq("id",id); if(e2){ toast("Fehler: "+e2.message); return; } toast("Wiederhergestellt ✓"); await _fsRefreshAggData(); if(typeof routeFahrschuleFahrzeuge==="function"&&_navStack.length&&_navStack[_navStack.length-1].name==="routeFahrschuleFahrzeuge")routeFahrschuleFahrzeuge(); },_undoMs());
   await _fsRefreshAggData();
   routeFahrschuleFahrzeuge();
 }
@@ -7515,7 +7529,7 @@ async function fsSchichtHinzufuegen(datum){
   toast("Eingetragen ✓");
   _fsLadeSchichtplan();
 }
-/* K7 (🗣 „keine Meldungen, wo ich etwas bestätigen soll“): Zeile sofort löschen, 6 s „Rückgängig“ setzt sie wieder ein */
+/* K7 (🗣 „keine Meldungen, wo ich etwas bestätigen soll“): Zeile sofort löschen, „Rückgängig“ (Einstellung, Vorgabe 6 s) setzt sie wieder ein */
 async function _cloudLoeschenMitRueckgaengig(tabelle,id,text,neuLaden){
   const supa=getSupa();
   const {data:alt,error:e0}=await supa.from(tabelle).select("*").eq("id",id).maybeSingle();
@@ -7524,7 +7538,7 @@ async function _cloudLoeschenMitRueckgaengig(tabelle,id,text,neuLaden){
   const {error}=await supa.from(tabelle).delete().eq("id",id);
   if(error){toast("Fehler: "+error.message);return false;}
   try{ neuLaden&&neuLaden(); }catch(e){}
-  toastUndo(text,async()=>{ const {error:e2}=await supa.from(tabelle).insert(alt); if(e2){ toast("Nicht wiederhergestellt: "+e2.message); return; } toast("Wiederhergestellt ✓"); try{ neuLaden&&neuLaden(); }catch(e){} },6000);
+  toastUndo(text,async()=>{ const {error:e2}=await supa.from(tabelle).insert(alt); if(e2){ toast("Nicht wiederhergestellt: "+e2.message); return; } toast("Wiederhergestellt ✓"); try{ neuLaden&&neuLaden(); }catch(e){} },_undoMs());
   return true;
 }
 async function fsSchichtLoeschen(id){
@@ -8069,7 +8083,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.9";
+const APP_VERSION="2026.11.25.12";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8150,6 +8164,9 @@ function save(){
 // Gezählt wird nur Speichern kurz nach einer Bedienung (Tippen/Taste) – ein Abruf im Hintergrund macht das Fenster darunter nicht veraltet.
 var _letzteBedienung=0; ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>{ _letzteBedienung=Date.now(); },true));
 { const _saveOhneZaehler=save; save=function(){ if(typeof _saveZaehler==="number"&&Date.now()-_letzteBedienung<3000)_saveZaehler++; return _saveOhneZaehler.apply(this,arguments); }; }
+// W13 PR 3: Sonderfahrt-Kästchen folgen ihrem Termin (_sfAbgleichen) – ebenfalls als Hülle, save() selbst bleibt unverändert.
+// Nicht in der Gesamtansicht (dort schreibt save() nur die echten Änderungen beim jeweiligen Fahrlehrer zurück).
+{ const _saveOhneSonder=save; save=function(){ if(!_fsAgg){ try{ _sfAbgleichen(); }catch(e){ console.warn("[Kompass] Sonderfahrt-Kästchen:", e&&e.message); } } return _saveOhneSonder.apply(this,arguments); }; }
 /* ===== Stufe 2: Schreib-Umleitung im Fahrschul-Modus =====
    Vergleicht DB.students/lessons/exams gegen den zuletzt geladenen Stand (_fsBaseline) und
    schreibt NUR echte Änderungen - jede beim ursprünglichen (oder neu gewählten) Fahrlehrer,
@@ -8928,7 +8945,7 @@ function theorieBestandenSetzen(s,an,leise){
   if(an){ delete s.wartelisteRaus; if(!s.theoryPassed)s.theoryPassed=new Date().toISOString(); if(!(s.hist||[]).some(h=>h.typ==="theorie"||h.type==="theorie"))logHist(s,"theorie","Theorieprüfung bestanden"); if(stand(s)>=90&&!s.ready&&!s.passed){ s.ready=s.theoryPassed; if(!leise)toast("Theorie bestanden – auf die Praxis-Warteliste gesetzt"); } else if(stand(s)<90&&!s.ready&&!s.passed){ if(!leise)toast("Theorie bestanden – erst ab 90 % kommt er auf die Warteliste"); } if(s.theorieWait)s.theorieWaitBis=new Date().toISOString(); delete s.theorieWait; } else { if(s.ready&&s.ready===s.theoryPassed&&!s.pruefungsreifManuell)delete s.ready; delete s.theoryPassed; delete s.theorieWaitBis; }
 }
 function toastUndo(msg,onUndo,ms,knopf){ // knopf: eigene Beschriftung (nur wenn nicht mit einem früheren Hinweis zusammengefasst)
-  const t=$("#toast"); ms=ms||5000; t.classList.remove("t-ok","t-info","t-fehler");
+  const t=$("#toast"); ms=ms||_undoMs(); t.classList.remove("t-ok","t-info","t-fehler");
   // Läuft noch ein Rückgängig: zusammenfassen, ein Tipp macht beides rückgängig (neueste zuerst)
   // Hinweise mit eigenem Knopf (z. B. „Meine nehmen“) nie zusammenfassen: ein Tipp darf nur das tun, was dort steht
   if(!knopf&&t._undos&&t._undos.length&&!t._eigenerKnopf&&t.classList.contains("undo")&&t.classList.contains("show")){
@@ -9523,7 +9540,7 @@ function openErgebnisKorrektur(exId,nachher){
     if(s&&geaendert.length)logHist(s,"note",`Prüfungsergebnis korrigiert (${geaendert.join(", ")})`);
     save(); closeSheet(); toastUndo(alt.date!==ex.date&&_authProfile&&_authProfile.fahrschule_id?"Ergebnis geändert – bitte auch die Prüfungstafel im Büro anpassen":"Ergebnis geändert",()=>{ const neu={result:ex.result,date:ex.date,b197:ex.b197};
       Object.assign(ex,{result:alt.result,date:alt.date,pruefer:alt.pruefer,earnAt:alt.earnAt,faults:alt.faults,eingriff:alt.eingriff,eingNote:alt.eingNote}); delete ex.faultsVorher; _ergebnisAnwenden(s,ex,neu);
-      if(s&&stAlt){ if(stAlt.ready)s.ready=stAlt.ready; else delete s.ready; if(typeof stAlt.waitOrder==="number")s.waitOrder=stAlt.waitOrder; else delete s.waitOrder; } save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },6000);
+      if(s&&stAlt){ if(stAlt.ready)s.ready=stAlt.ready; else delete s.ready; if(typeof stAlt.waitOrder==="number")s.waitOrder=stAlt.waitOrder; else delete s.waitOrder; } save(); nachher&&nachher(); toast("Wiederhergestellt ✓"); },_undoMs());
     nachher&&nachher();
   });
   $("#ekLoeschen").addEventListener("click",()=>{
@@ -9577,7 +9594,7 @@ function routeWaitlist(){
       const alt={ready:s.ready,waitOrder:s.waitOrder,raus:s.wartelisteRaus};
       delete s.ready;delete s.waitOrder;s.wartelisteRaus=true;save();routeWaitlist();
       const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],()=>routeWaitlist());
-      toastUndo(s.name+" von der Warteliste entfernt",()=>{ ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+      toastUndo(s.name+" von der Warteliste entfernt",()=>{ ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
     }
   }));
 }
@@ -10477,7 +10494,7 @@ async function _tbEntfernen(sid,lektion,datum,btn){
       _tbBusy=true;
       try{ const r2=await _tbSetzen(sid,datum,[String(lektion)],true); if(r2.erledigt&&r2.erledigt.length)_tbLokal(sid,datum,r2.erledigt,true);
         toast(r2.ok?"Wiederhergestellt ✓":r2.fehler); } finally { _tbBusy=false; }
-      _tbCardNeu(sid); },6000);
+      _tbCardNeu(sid); },_undoMs());
   } finally { _tbBusy=false; }
   _tbCardNeu(sid);
 }
@@ -10812,17 +10829,22 @@ function _sfIdx(l){
   const a=roh.filter(n=>Number.isInteger(n)&&n>=0&&n!==i0);
   return [i0].concat(a.filter((n,k)=>a.indexOf(n)===k));
 }
+// W13 PR 3 (Fable H1): Ein Termin, der gerade nicht zählt („nicht erschienen“, „abgebrochen“, Art ≠ Sonderfahrt), hält keine Kästchen.
 function _sfTerminZu(sid,grp,idx,ohne){
-  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
+  // Richter Empf. 1: Trägt das Kästchen die Nummer eines Termins, gehört es nur diesem (nicht einem zurückgestellten mit alter Liste)
+  const st=(DB.students||[]).find(x=>x.id===sid), box=st&&st.plan&&st.plan.sonder&&st.plan.sonder[grp]?st.plan.sonder[grp][+idx]:null, boxTid=box&&box.tid||null;
+  return (DB.lessons||[]).find(l=>{ if(!l.srcSonder||l===ohne)return false; if(boxTid&&l.id!==boxTid&&l.srcSonderMin!=null)return false; if(l.srcSonderMin!=null&&!_sfZaehlt(l))return false; const p=String(l.srcSonder).split(":"); return p[0]===sid&&p[1]===grp&&_sfIdx(l).includes(+idx); });
 }
 // Merkt sich die Kästchen vor einer Änderung (für Rückgängig): [{i,o}]
 function _sfStand(arr,liste){ return liste.map(i=>({i,o:arr[i]?Object.assign({},arr[i]):null})); }
 // Fable F1: das Feld immer frisch holen. ensure(s) baut s.plan.sonder[grp] bei jedem Aufruf neu, ein festgehaltenes Feld ginge ins Leere.
 function _sfZurueck(s,grp,stand){ if(!s||!stand||!stand.length)return; ensure(s); const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]); stand.forEach(x=>{ arr[x.i]=x.o; }); }
 // Gibt die Kästchen eines Termins frei; liefert ihren alten Stand. Der Termin selbst behält srcSonder (das macht der Aufrufer).
+// W13 PR 3: Ein Kästchen, das schon einem anderen Termin gehört (tid), bleibt.
 function _sfFreigeben(s,grp,l){
   const arr=(s&&s.plan&&s.plan.sonder&&s.plan.sonder[grp])||null; if(!arr)return [];
-  const liste=_sfIdx(l), stand=_sfStand(arr,liste);
+  // Richter B1: ein Kästchen mit fremder tid oder ein von Hand gesetzter Haken (ohne tid, anderes Datum) bleibt stehen
+  const liste=_sfIdx(l).filter(i=>{ const o=arr[i]; if(!o)return true; if(o.tid)return o.tid===l.id; return l.srcSonderMin==null||o.iso===l.date; }), stand=_sfStand(arr,liste);
   liste.forEach(i=>{ arr[i]=null; });
   return stand;
 }
@@ -10835,10 +10857,65 @@ function _sfBelegen(s,grp,l,idx0,anzahl){
   for(let i=idx0+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
   for(let i=0;i<idx0&&liste.length<n;i++) if(frei(i))liste.push(i);
   const stand=_sfStand(arr,liste);
-  liste.forEach(i=>{ arr[i]={d:isoToShort(l.date),iso:l.date}; });
+  liste.forEach(i=>{ arr[i]=_sfKaestchen(l); });
   l.srcSonder=s.id+":"+grp+":"+idx0;
   if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx;
+  if(l.sonderArt&&l.sonderArt!==grp) l.sonderArt=grp; // Fable N2: eine vom Büro gesetzte Art folgt der Wahl im Plan
+  l.srcSonderMin=_sfMin(l); // W13 PR 3: Länge beim Belegen; ändert sie sich (z. B. durch das Büro), passt _sfAbgleichen die Kästchen an
   return stand;
+}
+/* W13 PR 3: Die Kästchen folgen ihrem Termin. Ein Kästchen merkt sich seinen Termin (tid), der Termin seine Länge beim Belegen
+   (srcSonderMin). _sfAbgleichen läuft bei jedem Speichern (save, nicht in der Gesamtansicht) und gleicht ab:
+   neues Datum → in die Kästchen; neue Länge → mehr oder weniger Kästchen; „nicht erschienen“, „abgebrochen“ oder Art ungleich
+   Sonderfahrt → Kästchen frei (die Verknüpfung bleibt: zurückgestellt füllen sie sich wieder). Gelöschte Termine geben ihre Kästchen
+   beim Löschen frei (deleteLesson, _lessonEntfernen, Abruf vom Server). Nur Termine mit srcSonderMin (seit PR 3) werden angepasst;
+   ältere Verknüpfungen und von Hand abgehakte Kästchen fasst der Abgleich nie an. */
+function _sfMin(l){ return (window.KR&&KR.terminMinuten)?KR.terminMinuten(l.von,l.bis):(l.von&&l.bis?Math.max(0,hm2min(l.bis)-hm2min(l.von)):0); }
+function _sfKaestchen(l){ return {d:isoToShort(l.date),iso:l.date,tid:l.id}; }
+function _sfZaehlt(l){ return (l.art==="sonder"||(l.art==="nacht"&&String(l.srcSonder||"").split(":")[1]==="nacht"))&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"; } // Richter Empf. 2: Büro-Art „Nachtfahrt“
+function _sfAbgleichen(){
+  const GR=["ueberland","autobahn","nacht"];
+  const studs={}; (DB.students||[]).forEach(s=>{ if(s&&s.id)studs[s.id]=s; });
+  let geaendert=false;
+  const leeren=(arr,l,ausser)=>{ (arr||[]).forEach((o,i)=>{ if(o&&o.tid===l.id&&!(ausser&&ausser.includes(i))){ arr[i]=null; geaendert=true; } }); };
+  const loesen=l=>{ delete l.srcSonder; delete l.srcSonderIdx; delete l.srcSonderMin; geaendert=true; };
+  for(const l of (DB.lessons||[])){
+    if(!l||!l.srcSonder||l.srcSonderMin==null||!l.id)continue;
+    const [sid,grp]=String(l.srcSonder).split(":"), s=studs[sid];
+    if(!s||!s.plan||!s.plan.sonder||!GR.includes(grp))continue;
+    // „Mit anderem Schüler gefahren“ (Fable H4): beim alten Schüler frei, Verknüpfung weg
+    if(l.sid!==sid){ leeren(s.plan.sonder[grp],l); loesen(l); continue; }
+    // Das Büro hat die Art geändert (payload.sonderArt, Prüfer Büro 2): in die neue Gruppe umziehen
+    if(l.sonderArt&&GR.includes(l.sonderArt)&&l.sonderArt!==grp&&_sfZaehlt(l)){
+      leeren(s.plan.sonder[grp],l);
+      const ziel=s.plan.sonder[l.sonderArt]||(s.plan.sonder[l.sonderArt]=[]), zs=sfSoll(l.sonderArt,s);
+      let i0=-1; for(let i=0;i<zs;i++){ if(!sfDone(ziel[i])&&!_sfTerminZu(s.id,l.sonderArt,i,l)){ i0=i; break; } }
+      if(i0<0) loesen(l); else { _sfBelegen(s,l.sonderArt,l,i0); geaendert=true; }
+      continue;
+    }
+    const arr=s.plan.sonder[grp]||(s.plan.sonder[grp]=[]);
+    if(!_sfZaehlt(l)){ leeren(arr,l); continue; } // „nicht erschienen“, „abgebrochen“, Art ≠ Sonderfahrt: frei, Verknüpfung bleibt
+    const vorher=JSON.stringify([l.srcSonder,l.srcSonderIdx||null,l.srcSonderMin]);
+    const alt=_sfIdx(l), min=_sfMin(l), soll=Math.max(sfSoll(grp,s),(alt[0]||0)+1);
+    // Länge geändert → neue Zahl; nicht bei einem Tippfehler mit 0 Minuten (Daten 4)
+    const n=(min>0&&min!==l.srcSonderMin)?_sfEinh(l.von,l.bis):alt.length;
+    // Kästchen, die inzwischen einem anderen Termin gehören oder von Hand abgehakt wurden (z. B. nach „nicht erschienen“
+    // und zurück), werden durch die nächsten freien ersetzt (Fable H1)
+    // Ein Kästchen ohne tid mit dem Datum des Termins gehört ihm (so schreibt es ein Gerät vor PR 3; Fable N1) – es bekommt die tid
+    const eigen=o=>!!o&&(o.tid===l.id||(!o.tid&&o.iso===l.date));
+    let liste=alt.filter(i=>{ const o=arr[i]; return eigen(o)||(!sfDone(o)&&!_sfTerminZu(s.id,grp,i,l)); }).slice(0,n);
+    const frei=i=>!liste.includes(i)&&!sfDone(arr[i])&&!_sfTerminZu(s.id,grp,i,l);
+    const ab=liste.length?liste[liste.length-1]:(alt[0]||0)-1;
+    for(let i=ab+1;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
+    for(let i=0;i<soll&&liste.length<n;i++) if(frei(i))liste.push(i);
+    leeren(arr,l,liste); // eigene Kästchen, die nicht mehr dazugehören (z. B. ein anderes Gerät hat gekürzt; Fable H3)
+    liste.forEach(i=>{ const o=arr[i]; if(!sfDone(o)||(o.tid===l.id&&o.iso!==l.date)||(!o.tid&&o.iso===l.date)){ arr[i]=_sfKaestchen(l); geaendert=true; } });
+    if(liste.length){ l.srcSonder=sid+":"+grp+":"+liste[0]; if(liste.length>1) l.srcSonderIdx=liste; else delete l.srcSonderIdx; }
+    // Länge erst als abgeglichen merken, wenn genug Kästchen frei waren (sonst nächstes Speichern erneut; Prüfer Büro 3)
+    if(min>0&&liste.length===n) l.srcSonderMin=min;
+    if(JSON.stringify([l.srcSonder,l.srcSonderIdx||null,l.srcSonderMin])!==vorher) geaendert=true;
+  }
+  return geaendert;
 }
 function buildSonder(s){
   const pl=s.plan;
@@ -10856,13 +10933,16 @@ function buildSonder(s){
       const i=+cell.dataset.sn;
       cell.addEventListener("click",e=>{
         if(e.target.closest(".cal"))return;
-        if(sfDone(arr[i])){ arr[i]=null; } else { arr[i]=heute(); }
-        pl.sonder[sd.key]=arr;
-        const done=sfDone(arr[i]);
+        // W13 PR 3: Gehört das Kästchen zu einem Termin, öffnet ein Tipp dessen Blatt (verschieben oder entfernen, mit Rückgängig)
+        // statt still nur dieses eine Kästchen zu leeren. Feld frisch holen (ensure baut es neu).
+        const a=pl.sonder[sd.key]||(pl.sonder[sd.key]=[]);
+        if(sfDone(a[i])&&_sfTerminZu(s.id,sd.key,i)){ openSonderKalenderSheet(s.id,sd.key,i); return; }
+        if(sfDone(a[i])){ a[i]=null; } else { a[i]=heute(); }
+        const done=sfDone(a[i]);
         cell.classList.toggle("filled",done);
-        cell.querySelector(".d").textContent=done?arr[i].d:"";
+        cell.querySelector(".d").textContent=done?a[i].d:"";
         cell.classList.remove("pop");void cell.offsetWidth;cell.classList.add("pop");
-        const c=$("#c_"+sd.key);if(c)c.textContent=sfCount(arr);
+        const c=$("#c_"+sd.key);if(c)c.textContent=sfCount(a);
         save();refreshPlanRing(s);});
       cell.querySelector(".cal").addEventListener("click",e=>{e.stopPropagation();
         openSonderKalenderSheet(s.id,sd.key,i);});
@@ -10899,9 +10979,11 @@ function openSonderKalenderSheet(sid,grp,idx){
     commitSonderZeit(s,grp,idx,date,von);
   });
   const rmBtn=$("#sfkRemove");
+  // W13 PR 3 (Bedienung 2): Entfernen mit Rückgängig; eine gelaufene oder unterschriebene Stunde wird storniert (wie im Kalender)
   if(rmBtn)rmBtn.addEventListener("click",()=>{
-    removeSonderFromKalender(s,grp,idx);
-    closeSheet();toast("Kalendereintrag entfernt");buildSonder(s);
+    closeSheet();
+    deleteLessonMitRueckgaengig(ex.id,()=>{ try{ buildSonder(s); refreshPlanRing(s); }catch(e){} });
+    try{ buildSonder(s); refreshPlanRing(s); }catch(e){}
   });
 }
 // Büro-Stopp: vor jedem NEUEN Fahrtermin nachfragen, genau wie beim normalen „Termin vergeben“ (finishBooking). true = eintragen.
@@ -10925,7 +11007,7 @@ function commitSonderZeit(s,grp,idx,date,von){
   const ex=_sfTerminZu(s.id,grp,idx);
   if(ex){
     // Neue Zeit: Kästchen neu belegen (die Länge kann sich ändern), ab dem ersten Kästchen des Termins
-    const idx0=_sfIdx(ex)[0], vorherLesson={date:ex.date,von:ex.von,bis:ex.bis,art:ex.art,note:ex.note,srcSonder:ex.srcSonder,srcSonderIdx:ex.srcSonderIdx};
+    const idx0=_sfIdx(ex)[0], vorherLesson={date:ex.date,von:ex.von,bis:ex.bis,art:ex.art,note:ex.note,srcSonder:ex.srcSonder,srcSonderIdx:ex.srcSonderIdx,srcSonderMin:ex.srcSonderMin};
     const standAlt=_sfFreigeben(s,grp,ex);
     // Gleiche Länge (z. B. nur ein anderer Tag): die Zahl der Kästchen bleibt. Ein alter Termin mit 1 Kästchen bekommt nicht still
     // ein zweites, das neben einem von Hand abgehakten Kästchen sonst doppelt zählte (Bedienung Fund 2).
@@ -10935,30 +11017,29 @@ function commitSonderZeit(s,grp,idx,date,von){
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`${label}-Termin aktualisiert`,()=>{
       _sfZurueck(s,grp,standNeu);_sfZurueck(s,grp,standAlt);
-      Object.assign(ex,vorherLesson); if(vorherLesson.srcSonderIdx===undefined)delete ex.srcSonderIdx;
+      Object.assign(ex,vorherLesson); if(vorherLesson.srcSonderIdx===undefined)delete ex.srcSonderIdx; if(vorherLesson.srcSonderMin===undefined)delete ex.srcSonderMin;
       save();refreshPlanRing(s);buildSonder(s);
     });
     return;
   }
   const kandidat=(DB.lessons||[]).find(l=>l.sid===s.id&&l.date===date&&!l.srcSonder&&["fahrstunde","sonder"].includes(l.art)&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen");
   if(kandidat){
-    const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis};
+    const vorherLesson={art:kandidat.art,note:kandidat.note,von:kandidat.von,bis:kandidat.bis,sonderArt:kandidat.sonderArt};
     kandidat.art="sonder";kandidat.note=[label,(kandidat.note||"").trim()].filter(Boolean).join(" · ");kandidat.von=von;kandidat.bis=bis;
     const stand=_sfBelegen(s,grp,kandidat,idx);
     save();refreshPlanRing(s);buildSonder(s);
     toastUndo(`Termin zu ${label} (${kuerzel}) umgewandelt`,()=>{
-      Object.assign(kandidat,vorherLesson);delete kandidat.srcSonder;delete kandidat.srcSonderIdx;
+      Object.assign(kandidat,vorherLesson);if(vorherLesson.sonderArt===undefined)delete kandidat.sonderArt;delete kandidat.srcSonder;delete kandidat.srcSonderIdx;delete kandidat.srcSonderMin;
       _sfZurueck(s,grp,stand);
       save();refreshPlanRing(s);buildSonder(s);
     });
     return;
   }
-  const neu={date,von,bis,art:"sonder",sid:s.id,note:label};
-  const stand=_sfBelegen(s,grp,neu,idx);
-  const l=addLesson(Object.assign({},neu)); if(neu.srcSonderIdx) l.srcSonderIdx=neu.srcSonderIdx; save();
+  const l=addLesson({date,von,bis,art:"sonder",sid:s.id,note:label});
+  const stand=_sfBelegen(s,grp,l,idx); save(); // erst anlegen, dann belegen: das Kästchen merkt sich die Termin-Nummer
   refreshPlanRing(s);buildSonder(s);
   toastUndo(`${label} für ${isoDE(date)} in den Kalender übernommen`,()=>{
-    if((DB.lessons||[]).some(x=>x.id===l.id)){ delete l.srcSonder; delete l.srcSonderIdx; deleteLesson(l.id); } // ohne Verknüpfung: deleteLesson lässt die Kästchen stehen
+    if((DB.lessons||[]).some(x=>x.id===l.id)){ delete l.srcSonder; delete l.srcSonderIdx; delete l.srcSonderMin; deleteLesson(l.id); } // ohne Verknüpfung: deleteLesson lässt die Kästchen stehen
     _sfZurueck(s,grp,stand);
     save();refreshPlanRing(s);buildSonder(s);
   });
@@ -11110,9 +11191,8 @@ function buchMultiTermine(sid,cfg,ausgewaehlt){
       while(idxCursor<soll&&(sfDone(arrJetzt[idxCursor])||_sfTerminZu(s.id,cfg.grp,idxCursor)))idxCursor++;
       if(idxCursor>=soll)return;
       // W13: ein Termin mit 90 Minuten belegt 2 Kästchen (das gewählte und das nächste freie)
-      const neu={date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null};
-      vorherPlan.push(..._sfBelegen(s,cfg.grp,neu,idxCursor));
-      const l=addLesson(neu); if(neu.srcSonderIdx)l.srcSonderIdx=neu.srcSonderIdx;
+      const l=addLesson({date:t.date,von:t.von,bis:t.bis,art:"sonder",sid:s.id,note:label,fahrzeug:t.fahrzeug&&t.fahrzeug!=='—'?t.fahrzeug:null});
+      vorherPlan.push(..._sfBelegen(s,cfg.grp,l,idxCursor));
       erstellteIds.push(l.id);
       idxCursor++;
     }else{
@@ -11259,7 +11339,7 @@ function routePlanVorlagen(){
     if(!DB.ausbildungsplaene.some(x=>x.standard))DB.ausbildungsplaene[0].standard=true;
     save();routePlanVorlagen();
     const zeichne=_undoNeuZeichnen(_navStack[_navStack.length-1],()=>routePlanVorlagen());
-    toastUndo(`Vorlage „${p.name}“ gelöscht${n?` (${n} Schüler behalten ihren Stand)`:""}`,()=>{ DB.ausbildungsplaene=vorher; vorher.forEach((x,i)=>{ if(stdVorher[i])x.standard=true; else delete x.standard; }); save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+    toastUndo(`Vorlage „${p.name}“ gelöscht${n?` (${n} Schüler behalten ihren Stand)`:""}`,()=>{ DB.ausbildungsplaene=vorher; vorher.forEach((x,i)=>{ if(stdVorher[i])x.standard=true; else delete x.standard; }); save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
   }));
   $("#newPlanBtn").addEventListener("click",()=>{
     const src=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
@@ -11296,7 +11376,7 @@ function wireStufeBlock(p,planId,stKey){
     const itemId=b.dataset.delitem;
     const vorher=st.items.slice();
     st.items=st.items.filter(x=>x.id!==itemId);save();refreshStufeBlock(p,planId,stKey);
-    toastUndo("Punkt gelöscht",()=>{ st.items=vorher; save(); try{ refreshStufeBlock(p,planId,stKey); }catch(e){} toast("Wiederhergestellt ✓"); },6000);
+    toastUndo("Punkt gelöscht",()=>{ st.items=vorher; save(); try{ refreshStufeBlock(p,planId,stKey); }catch(e){} toast("Wiederhergestellt ✓"); },_undoMs());
   }));
   const rowsWrap=block.querySelector(".stufe-rows");
   if(rowsWrap)wireDragReorder(rowsWrap,st,()=>save());
@@ -13504,7 +13584,7 @@ function openBlockEventSheet(l){
   const nachher=()=>routeKalender();
   $("#blAlleWeg").addEventListener("click",()=>{ closeSheet(); const weg=new Set(tage); const vorher=(DB.lessons||[]).slice();
     DB.lessons=(DB.lessons||[]).filter(x=>!weg.has(x)); save(); nachher();
-    toastUndo(`${tage.length>1?tage.length+" Tage":"Eintrag"} gelöscht`,()=>{ tage.forEach(x=>{ delete x._syncedAt; if(!DB.lessons.includes(x))DB.lessons.push(x); }); save(); nachher(); toast("Wiederhergestellt ✓"); },6000); });
+    toastUndo(`${tage.length>1?tage.length+" Tage":"Eintrag"} gelöscht`,()=>{ tage.forEach(x=>{ delete x._syncedAt; if(!DB.lessons.includes(x))DB.lessons.push(x); }); save(); nachher(); toast("Wiederhergestellt ✓"); },_undoMs()); });
   const tw=$("#blTagWeg"); if(tw)tw.addEventListener("click",()=>{ closeSheet(); _loeschenMitRueckgaengig(()=>DB.lessons,l,`${isoDE(l.date)} gelöscht`,nachher); });
   $("#blAendern").addEventListener("click",()=>{
     let typ=l.blockTyp==="urlaub"?"urlaub":"sonstiges";
@@ -13699,7 +13779,7 @@ function openSignatureSheet(lessonId){
     $("#sigClose").addEventListener("click",closeSheet);
     $("#sigUndo").addEventListener("click",()=>{ const alt={signed:l.signed,signatureSnap:l.signatureSnap,signedAt:l.signedAt};
       l.signed=false; l.signatureSnap=null; l.signedAt=null; save(); closeSheet();
-      toastUndo("Unterschrift entfernt",()=>{ Object.assign(l,alt); delete l._syncedAt; save(); toast("Wiederhergestellt ✓"); try{ refreshCurrentView(); }catch(e){} },6000); });
+      toastUndo("Unterschrift entfernt",()=>{ Object.assign(l,alt); delete l._syncedAt; save(); toast("Wiederhergestellt ✓"); try{ refreshCurrentView(); }catch(e){} },_undoMs()); });
     return;
   }
   // Ausbildungsnachweis (21.11.2026): Hat das Büro die Stunde nach der Unterschrift geändert, ist sie ungültig (Datenbank-Trigger).
@@ -13764,7 +13844,7 @@ function openSFPickerForLesson(lessonId,sid,date,von,bis,note,newArt,fahrzeug){
       const done=sfDone(arr[i]);
       // Fable F2: Ein Kästchen, das schon zu einem anderen Termin gehört, ist nicht wählbar (sonst gehörte es zwei Terminen)
       const belegt=!!_sfTerminZu(sid,sd.key,i,(DB.lessons||[]).find(x=>x.id===lessonId));
-      opts+=`<button class="sf-opt${done?' done':''}" data-grp="${sd.key}" data-idx="${i}"${belegt?' disabled aria-disabled="true" title="Gehört schon zu einem anderen Termin"':''}>${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}${belegt?' · belegt':''}</button>`;
+      opts+=`<button class="sf-opt${done?' done':''}${belegt?' belegt':''}" data-grp="${sd.key}" data-idx="${i}"${belegt?' disabled aria-disabled="true" title="Gehört schon zu einem anderen Termin"':''}>${sd.label} ${i+1}${done?` · ✓ ${esc(arr[i].d)}`:''}${belegt?' · belegt':''}</button>`;
     }
   });
   openSheet(`<div class="sheet-h">Welche Sonderfahrt?</div>
@@ -14997,7 +15077,7 @@ function updateLesson(id,patch){ const l=(DB.lessons||[]).find(x=>x.id===id); if
 function _undoNeuZeichnen(seite,neuZeichnen){
   return ()=>{ try{ if(_navStack[_navStack.length-1]===seite){ if(neuZeichnen)neuZeichnen(); } else if(!sheetOffen()&&typeof refreshCurrentView==="function")refreshCurrentView(); }catch(e){} };
 }
-/* Paket 2 (A18): Löschen sofort ausführen, 6 s „Rückgängig“. Entfernt eintrag aus der Liste (holen() liefert sie,
+/* Paket 2 (A18): Löschen sofort ausführen, „Rückgängig“ (Dauer aus den Einstellungen, Vorgabe 6 s). Entfernt eintrag aus der Liste (holen() liefert sie,
    weil DB.* neu zugewiesen werden kann) und setzt ihn bei Rückgängig an derselben Stelle wieder ein.
    nachAblauf läuft nur, wenn nicht rückgängig gemacht wurde (z. B. Absage-Mail). */
 function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf, beiRueckgaengig){
@@ -15010,15 +15090,15 @@ function _loeschenMitRueckgaengig(holen, eintrag, text, neuZeichnen, nachAblauf,
     // Ohne Merker gilt der Eintrag als „nicht abgeglichen“: der nächste Abruf entfernt ihn nicht, die Brücke lädt ihn wieder hoch
     if(eintrag&&typeof eintrag==="object")delete eintrag._syncedAt;
     try{ beiRueckgaengig&&beiRueckgaengig(); }catch(e){}
-    save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+    save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
   // Fehlersucher Bedienung K7: Mehrere Löschungen fasst toastUndo zusammen und verlängert das Rückgängig –
   // dann erst nach dem Ende des Hinweises (sonst ginge z. B. eine Absage raus, obwohl Rückgängig noch angeboten wird)
   if(nachAblauf){ const pruef=()=>{ if(rueck)return; const t=$("#toast");
     if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(pruef,400); return; }
-    try{ nachAblauf(); }catch(e){} }; setTimeout(pruef,6300); }
+    try{ nachAblauf(); }catch(e){} }; setTimeout(pruef,_undoMs()+300); }
 }
 /* K7 Löschen (🗣 Serband 22.11.2026: „Ich will keinen unnötigen Ballast.“ / „keine Meldungen, wo ich etwas bestätigen soll“)
-   Fehleintrag → sofort weg, 6 s „Rückgängig“ (Cloud: Papierkorb, nach 30 Tagen endgültig leer).
+   Fehleintrag → sofort weg, „Rückgängig“ (Dauer einstellbar, Vorgabe 6 s; Cloud: Papierkorb, nach den eingestellten Tagen, Vorgabe 30, endgültig leer).
    Gelaufene oder (je) unterschriebene Nachweis-Stunde → nicht löschen, nur „stornieren“ mit kurzem Grund: sie bleibt
    im Ausbildungsnachweis als storniert aufbewahrt (gleiche Regel wie termin_ist_nachweis in der Datenbank). */
 function istNachweisStunde(l){
@@ -15057,7 +15137,7 @@ async function _stornoSchreiben(id, nowIso){
 function _stornoAufraeumen(){ const o=_stornoLaden(), grenze=Date.now()-14*86400000; let n=0;
   Object.keys(o).forEach(id=>{ const t=Date.parse(o[id]&&o[id].am||""); if(!isNaN(t)&&t<grenze){ delete o[id]; n++; } }); if(n)_stornoSpeichern(o); }
 /* Offene Absagen an online Buchende: bis zum Ablauf des Rückgängig gemerkt, damit sie auch rausgehen,
-   wenn die App in den 6 s geschlossen wird (beim nächsten Abgleich nachgeholt). */
+   wenn die App in der Rückgängig-Zeit geschlossen wird (beim nächsten Abgleich nachgeholt). */
 const _ABSAGE_KEY="kompass-absage-offen";
 function _absagenLesen(){ try{ const a=JSON.parse(localStorage.getItem(_ABSAGE_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function _absagenSchreiben(a){ try{ if(a.length)localStorage.setItem(_ABSAGE_KEY,JSON.stringify(a)); else localStorage.removeItem(_ABSAGE_KEY); }catch(e){} }
@@ -15067,7 +15147,7 @@ function _absageSenden(id){ _absageVergessen(id); _notifyOnlineBookingChange(id,
 function _absagenNachholen(){ if(!_authUser)return; const uid=_authUser.id, jetzt=Date.now();
   // Fable K7: läuft noch ein (zusammengefasstes) Rückgängig, wartet die Absage (sonst Mail trotz „Rückgängig“)
   try{ const t=$("#toast"); if(t&&t.classList.contains("show")&&t.classList.contains("undo")&&t._undos&&t._undos.length){ setTimeout(_absagenNachholen,1500); return; } }catch(e){}
-  _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>7000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
+  _absagenLesen().forEach(x=>{ if(x.uid&&x.uid!==uid)return; if(jetzt-x.t>_undoMs()+1000&&!(DB.lessons||[]).some(l=>l.id===x.id))_absageSenden(x.id); }); }
 function _lessonEntfernen(l, text, neuZeichnen, nachAblauf, beiRueckgaengig, ohneAbsage){
   // W13: alle Kästchen des Termins leeren (90 Minuten = 2), Rückgängig stellt alle wieder her
   let sonderAlt=null;
@@ -15298,7 +15378,7 @@ function schuelerAusblenden(id){
     ohne.forEach(l=>{ delete l._syncedAt; if(!DB.lessons.some(x=>x.id===l.id))DB.lessons.push(l); });
     plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=id; }); // nur den eigenen Platz zurück
     save(); if(_navStack[_navStack.length-1]&&_navStack[_navStack.length-1].name==="routeHome")routeDetail(id); else if(!sheetOffen())refreshCurrentView(); toast("Wiederhergestellt ✓"+(online.length?` – ${online.length} online gebuchte Termin${online.length===1?"":"e"} bleiben abgesagt`:""));
-  },6000);
+  },_undoMs());
 }
 function schuelerEinblenden(id){ const s=DB.students.find(x=>x.id===id); if(!s)return; delete s.ausgeblendetAm; logHist(s,"note","Wieder eingeblendet"); save(); toast(`${s.name} ist wieder da ✓`); routeDetail(id); }
 function activeStudents(){return DB.students.filter(s=>!s.passed&&!istArchiviert(s));}
@@ -15611,7 +15691,7 @@ function bindExamReady(s,rerender){
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
     const hatTermin=!!terminFor(s.id);
     // Termin lösen: nur den Termin, der Platz auf der Warteliste bleibt. Ohne Termin: von der Warteliste nehmen.
-    // K7: ohne Rückfrage, 6 s Rückgängig
+    // K7: ohne Rückfrage, Rückgängig (Dauer aus den Einstellungen)
     const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===s.id)plaetze.push({t,i}); }));
     const alt={ready:s.ready,waitOrder:s.waitOrder,raus:s.wartelisteRaus};
     if(hatTermin){ clearSlot(s.id); } else { delete s.ready; delete s.waitOrder; s.wartelisteRaus=true; } save();
@@ -15620,7 +15700,7 @@ function bindExamReady(s,rerender){
     toastUndo(hatTermin?"Prüfungstermin gelöst":"Von der Warteliste genommen",()=>{
       if(hatTermin)plaetze.forEach(({t,i})=>{ if(t.slots&&!t.slots[i]&&(DB.termine||[]).includes(t))t.slots[i]=s.id; });
       else { ["ready","waitOrder"].forEach(k=>{ if(alt[k]!==undefined)s[k]=alt[k]; }); if(alt.raus)s.wartelisteRaus=alt.raus; else delete s.wartelisteRaus; }
-      save(); zeichne(); toast("Wiederhergestellt ✓"); },6000);
+      save(); zeichne(); toast("Wiederhergestellt ✓"); },_undoMs());
   });
   const force=$("#readyForce"); if(force)force.addEventListener("click",()=>{ if(confirm("Diesen Schüler trotz offener Punkte manuell auf die Warteliste setzen?")){ setReady(s); save(); toast("Manuell auf die Warteliste gesetzt"); rerender(); } });
   const ex=$("#examBtn"); if(ex)ex.addEventListener("click",()=>routeExam(s.id));
@@ -16045,7 +16125,7 @@ function routePruefungen(){
       // Schüler frisch holen (die Liste kann inzwischen neu geladen sein); nur neu zeichnen, wenn die Prüfungen noch offen sind
       const s2=DB.students.find(x=>x.id===sid); if(!s2)return;
       theorieStandZurueck(s2,alt); save(); if(document.querySelector(".pt-tab"))routePruefungen();
-    },6000);
+    },_undoMs());
   }));
   document.querySelectorAll(".wait-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
   document.querySelectorAll(".tb-del").forEach(b=>b.addEventListener("click",()=>{ { const t=DB.termine.find(x=>x.id===b.dataset.del); if(t)_loeschenMitRueckgaengig(()=>DB.termine,t,"Prüfungstermin gelöscht",()=>routePruefungen()); } }));
@@ -16278,7 +16358,7 @@ function openFCMenu(id){
     <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
-  // K7: der Knopf nennt den Grund schon – gelaufene Stunde direkt stornieren (kein zweites Fenster), sonst löschen; je 6 s Rückgängig
+  // K7: der Knopf nennt den Grund schon – gelaufene Stunde direkt stornieren (kein zweites Fenster), sonst löschen; je mit Rückgängig (Dauer aus den Einstellungen)
   document.querySelectorAll("[data-fcdel]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); const l=(DB.lessons||[]).find(x=>x.id===b.dataset.fcdel);
     if(l&&istNachweisStunde(l))stornoLesson(l.id,"Hat nicht stattgefunden",()=>refreshCurrentView()); else deleteLessonMitRueckgaengig(b.dataset.fcdel,()=>refreshCurrentView()); }));
 }
@@ -17901,7 +17981,7 @@ function routePrueferAkte(nm){
       const daten=DB.prueferData[nm], liste=DB.pruefer.slice(); delete DB.prueferData[nm]; DB.pruefer=DB.pruefer.filter(x=>x!==nm); save(); routePrueferListe();
       toastUndo(`Prüfer „${nm}“ gelöscht · Prüfungen bleiben`,async()=>{
         if(window.PW&&PW.aktiv()&&typeof PW.wiederherstellen==="function"&&!(await PW.wiederherstellen(nm))){ toast("Nicht wiederhergestellt – bitte mit Internet nochmal"); return; }
-        if(daten)DB.prueferData[nm]=daten; DB.pruefer=liste; save(); toast("Wiederhergestellt ✓"); if(_navStack.length&&_navStack[_navStack.length-1].name==="routePrueferListe")routePrueferListe(); },6000); } });
+        if(daten)DB.prueferData[nm]=daten; DB.pruefer=liste; save(); toast("Wiederhergestellt ✓"); if(_navStack.length&&_navStack[_navStack.length-1].name==="routePrueferListe")routePrueferListe(); },_undoMs()); } });
   const rp=$("#renamePruefer"); if(rp)rp.addEventListener("click",async()=>{ const neu=(prompt("Neuer Name für „"+nm+"\"\n\nWenn der Name bereits existiert, werden beide Prüfer (samt Prüfungen) zusammengeführt.",nm)||"").trim(); if(!neu||neu===nm)return; if(window.PW&&PW.aktiv()){ const r=await PW.umbenennen(nm,neu); if(r!==true){ toast(r==="keine_berechtigung"?"Umbenennen darf nur, wer ihn angelegt hat, oder das Büro.":"Nicht umbenannt – bitte mit Internet nochmal"); return; } } mergePruefer(nm,neu); });
 }
 /* Tag-Auswahl-Sheet */

@@ -21,7 +21,41 @@ function gleich(name, erwartet, ist) {
 // ---------- 1. Eine Datei für Büro und Server ----------
 const quelle = readFileSync(join(ROOT, "kompass-vorlagen.js"), "utf8");
 for (const f of ["zahlungs-mail", "erinnerungs-mail"]) gleich("Kopie in der Edge-Funktion " + f + " ist Byte für Byte gleich", quelle, readFileSync(join(ROOT, "supabase/functions", f, "vorlagen.js"), "utf8"));
-gleich("keine unsichtbaren Zeichen im Quelltext (nur als \\u-Schreibweise)", [], [...quelle].filter((c) => { const o = c.codePointAt(0); return (o < 32 && c !== "\n") || (o >= 0x7f && o <= 0x9f) || (o >= 0x200b && o <= 0x200f) || (o >= 0x2028 && o <= 0x202e) || (o >= 0x2066 && o <= 0x2069) || o === 0xfeff; }).map((c) => c.codePointAt(0).toString(16)));
+gleich("keine unsichtbaren Zeichen im Quelltext", [], [...quelle].filter((c) => { const o = c.codePointAt(0); return (o < 32 && c !== "\n") || (o >= 0x7f && o <= 0x9f) || (o >= 0x200b && o <= 0x200f) || (o >= 0x2028 && o <= 0x202e) || (o >= 0x2066 && o <= 0x2069) || o === 0xfeff; }).map((c) => c.codePointAt(0).toString(16)));
+// HS7 25.11.2026: Der Deploy-Weg machte aus der Backslash-u-Schreibweise im Quelltext echte Zeilentrenner
+// („Unterminated regexp literal“). Darum in den Dateien der Edge-Funktionen und in kompass-vorlagen.js: keine Backslash-u-
+// oder Backslash-x-Schreibweise, keine rohen Trenner. Die alte Fassung von saeubere() wird hier zur Laufzeit nachgebaut.
+{
+  const { readdirSync } = await import("node:fs");
+  const BS = String.fromCharCode(92), ch = (n) => String.fromCharCode(n);
+  // alle Edge-Funktionen (auch künftige), jeweils alle Dateien
+  const fn = readdirSync(join(ROOT, "supabase/functions"), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  const dateien = ["kompass-vorlagen.js", ...fn.flatMap((f) => readdirSync(join(ROOT, "supabase/functions", f), { withFileTypes: true }).filter((e) => e.isFile()).map((e) => "supabase/functions/" + f + "/" + e.name))];
+  const funde = [], uMuster = new RegExp(BS + BS + "u[0-9a-fA-F{]"), xMuster = new RegExp(BS + BS + "x[0-9a-fA-F]");
+  for (const d of dateien) {
+    const t = readFileSync(join(ROOT, d), "utf8");
+    if (uMuster.test(t)) funde.push(d + ": Backslash-u");
+    if (xMuster.test(t)) funde.push(d + ": Backslash-x");
+    for (const c of [0x85, 0xa0, 0x2028, 0x2029, 0xfeff]) if (t.includes(ch(c))) funde.push(d + ": Zeichen " + c.toString(16));
+  }
+  gleich("Edge-Dateien und kompass-vorlagen.js: keine Backslash-u/-x-Schreibweise, keine rohen Trenner (" + dateien.length + " Dateien)", [], funde);
+  const u = (h) => BS + "u" + h; // nur hier im Test: alte Zeichenklassen als Text
+  const ALT_TRENNER = new RegExp("[" + ["0085", "2028", "2029"].map(u).join("") + "]", "g");
+  const ALT_UNSICHTBAR = new RegExp("[" + u("0000") + "-" + u("0008") + u("000B") + "-" + u("001F") + u("007F") + "-" + u("009F") + u("200B") + "-" + u("200F") + u("202A") + "-" + u("202E") + u("2066") + "-" + u("2069") + u("FEFF") + "]", "g");
+  const alt = (text) => {
+    let t = String(text == null ? "" : text).replace(/\r\n?/g, "\n").replace(ALT_TRENNER, "\n").replace(/\t/g, " ");
+    t = t.replace(ALT_UNSICHTBAR, "");
+    t = t.split("\n").map((z) => z.replace(/ {2,}/g, " ").trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+    const a = Array.from(t);
+    return a.length > KV.MAX_ZEICHEN ? a.slice(0, KV.MAX_ZEICHEN).join("").trim() : t;
+  };
+  gleich("Nachbau der alten Fassung greift (Zeilentrenner, Richtungszeichen)", ["a\nb", "ab"], [alt("a" + ch(0x2028) + "b"), alt("a" + ch(0x202e) + "b")]);
+  const abw = [];
+  for (let cp = 0; cp <= 0xffff; cp++) { const x = "a" + ch(cp) + "b" + ch(cp) + ch(cp) + "c"; if (alt(x) !== KV.saeubere(x)) abw.push(cp.toString(16)); }
+  const sonder = [String.fromCodePoint(0x1f600) + ch(0x2028) + "x", "  a " + ch(0x2029).repeat(3) + " b  ", ch(0xfeff) + ch(0x202e) + "abc" + ch(0x2066), "x".repeat(1200) + ch(0x2028), "z\r\n\r\n\r\n\r\nz\t\tq"];
+  for (const x of sonder) if (alt(x) !== KV.saeubere(x)) abw.push(JSON.stringify(x).slice(0, 20));
+  gleich("Säubern wie vorher: alle 65536 Zeichen und Sonderfälle gleich", [], abw.slice(0, 10));
+}
 gleich("mail.js lädt die Kopie", true, /import "\.\/vorlagen\.js";/.test(readFileSync(join(ROOT, "supabase/functions/zahlungs-mail/mail.js"), "utf8")));
 gleich("global KV (Büro/Deno) hat dieselben Teile wie das Modul (Node)", Object.keys(KV), Object.keys(globalThis.KV || {}));
 

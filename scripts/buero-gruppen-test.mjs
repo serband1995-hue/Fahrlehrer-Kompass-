@@ -72,8 +72,8 @@ const log = (page, tab, art) => page.evaluate(([t, a]) => window.__FAKE.log.filt
 
 // ---- Werkstatt 11 Schritt 1: flache Leiste ----
 const HAUPT = [["#heute", "Heute"], ["#kalender", "Kalender"], ["#schueler", "Schüler"], ["#pruefungen", "Prüfungen"], ["#fristen", "Fristen"], ["#zahlungen", "Zahlungen"], ["#fahrchecks", "Fahrcheck"], ["#zahlen", "Statistik"]];
-// W16 Teil 2: Urlaub, Schichtplan, Backups (buero-verwaltung.js) zwischen Fahrzeuge und Neuigkeiten
-const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#urlaub", "Urlaub"], ["#schichtplan", "Schichtplan"], ["#backups", "Backups"], ["#neuigkeiten", "Neuigkeiten"], ["#einstellungen", "Einstellungen"]];
+// W16 Teil 2 + W11 (Leiste kürzer): Urlaub und Schichtplan liegen im Kalender, Backups unter Einstellungen – kein eigener Leistenpunkt
+const NEBEN = [["#team", "Fahrlehrer & Büro"], ["#flotte", "Fahrzeuge"], ["#neuigkeiten", "Neuigkeiten"], ["#einstellungen", "Einstellungen"]];
 const punkte = (page) => page.$$eval("#nav .nav-punkt", (l) => l.map((a) => [a.getAttribute("href"), a.querySelector(".nav-text").textContent.trim(), !!a.querySelector("svg"), Math.round(a.getBoundingClientRect().height), a.getAttribute("aria-current") === "page"]));
 const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (l) => l.map((a) => a.getAttribute("href")).join(","));
 {
@@ -153,17 +153,17 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   // Kalender
   await page.click('#nav .nav-punkt[href="#kalender"]'); await warte(page, 350);
   const kn = await page.$$eval("#kopfAktionen > *", (l) => l.map((a) => [a.textContent.trim(), a.className, Math.round(a.getBoundingClientRect().top), Math.round(a.getBoundingClientRect().height)]));
-  pruefe("K1", "Kalender: rechts im Seitenkopf „Wer hat Platz?“ und „+ Termin“ (Akzent) in einer Reihe", kn.length === 2 && kn[0][0] === "Wer hat Platz?" && kn[1][0] === "+ Termin" && /haupt/.test(kn[1][1]) && !/haupt/.test(kn[0][1]) && kn[0][2] === kn[1][2] ? null : JSON.stringify(kn));
+  pruefe("K1", "Kalender: rechts im Seitenkopf „Wer hat Platz?“, „Urlaub“, „+ Termin“ (Akzent) in einer Reihe", kn.length === 3 && kn[0][0] === "Wer hat Platz?" && kn[1][0] === "Urlaub" && kn[2][0] === "+ Termin" && /haupt/.test(kn[2][1]) && !/haupt/.test(kn[0][1] + kn[1][1]) && kn.every((x) => x[2] === kn[0][2]) ? null : JSON.stringify(kn));
   for (const w of [1024, 1280, 1440]) {
     await page.setViewportSize({ width: w, height: 800 }); await warte(page, 250);
     const k = await page.evaluate(() => {
       const r = (sel) => { const e = document.querySelector(sel); const b = e.getBoundingClientRect(); return { x: b.left, mitte: Math.round(b.top + b.height / 2), h: Math.round(b.height), w: Math.round(b.width), r: b.right }; };
-      const teile = { titel: r("#titel"), status: r("#status"), drucken: r("#drucken"), laden: r("#neuLaden"), platz: r("#kPlatz"), termin: r("#kNeuTermin") };
+      const teile = { titel: r("#titel"), status: r("#status"), drucken: r("#drucken"), laden: r("#neuLaden"), platz: r("#kPlatz"), urlaub: r("#kUrlaub"), termin: r("#kNeuTermin") };
       return { teile, sw: document.documentElement.scrollWidth, iw: innerWidth, la: document.querySelector("#neuLaden").getAttribute("aria-label"), ld: document.querySelector("#drucken").getAttribute("aria-label"), lt: document.querySelector("#drucken").title, kante: document.querySelector(".inhalt").getBoundingClientRect().right };
     });
     const T = k.teile, mitten = Object.values(T).map((x) => x.mitte);
-    const reihenfolge = T.status.x < T.drucken.x && T.drucken.x < T.laden.x && T.laden.x < T.platz.x && T.platz.x < T.termin.x && T.titel.x < T.status.x;
-    pruefe("H" + w, `Seitenkopf ${w} px: Titel, Status, Drucken, Aktualisieren, Wer hat Platz?, + Termin in EINER Zeile, in dieser Reihenfolge, Akzentknopf ganz rechts`, Math.max(...mitten) - Math.min(...mitten) <= 4 && reihenfolge && k.sw <= k.iw + 1 && T.termin.r <= k.kante + 1 ? null : JSON.stringify(k));
+    const reihenfolge = T.status.x < T.drucken.x && T.drucken.x < T.laden.x && T.laden.x < T.platz.x && T.platz.x < T.urlaub.x && T.urlaub.x < T.termin.x && T.titel.x < T.status.x;
+    pruefe("H" + w, `Seitenkopf ${w} px: Titel, Status, Drucken, Aktualisieren, Wer hat Platz?, Urlaub, + Termin in EINER Zeile, in dieser Reihenfolge, Akzentknopf ganz rechts`, Math.max(...mitten) - Math.min(...mitten) <= 4 && reihenfolge && k.sw <= k.iw + 1 && T.termin.r <= k.kante + 1 ? null : JSON.stringify(k));
     if (w <= 1280) pruefe("H" + w + "b", w + " px: Drucken und Aktualisieren als Symbol (≥ 44 px) mit aria-label und title", T.drucken.h >= 44 && T.drucken.w >= 44 && T.laden.h >= 44 && k.la === "Aktualisieren" && k.ld === "Drucken" && k.lt ? null : JSON.stringify(k));
     if (w === 1440) pruefe("H1440b", "1440 px: Drucken und Aktualisieren mit Text", T.drucken.w > 60 && T.laden.w > 100 ? null : JSON.stringify(k));
   }
@@ -224,13 +224,22 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const att = `window.renderUrlaub = () => '<div class="karte" id="attUrlaub">Urlaub-Attrappe</div>'; window.renderSchichtplan = () => '<div class="karte" id="attSchicht">Schichtplan-Attrappe</div>'; window.renderBackups = () => '<div class="karte" id="attBackups">Backups-Attrappe</div>'; window.bindeBackups = () => { window.__backupsGebunden = true; };`;
   const m = await oeffne({ hash: "#schichtplan", verwaltung: att });
   const p = await punkte(m.page);
-  const sollNeben = ["Fahrlehrer & Büro", "Fahrzeuge", "Urlaub", "Schichtplan", "Backups", "Neuigkeiten", "Einstellungen"].join(" / ");
-  pruefe("V2", "mit den Funktionen: Urlaub, Schichtplan, Backups unten nach „Fahrzeuge“ und vor „Neuigkeiten“ und „Einstellungen“, mit Symbol", p.slice(8).map((x) => x[1]).join(" / ") === sollNeben && p.length === 15 && p.slice(8).every((x) => x[2]) ? null : p.map((x) => x[1]).join(", "));
-  pruefe("V3", "#schichtplan rendert die Seite, Punkt markiert, Titel „Schichtplan“", (await m.page.locator("#attSchicht").count()) === 1 && (await markiert(m.page)) === "#schichtplan" && (await m.page.textContent("#titel")) === "Schichtplan" ? null : await markiert(m.page));
-  await m.page.click('#nav .nav-punkt[href="#backups"]'); await warte(m.page, 350);
-  pruefe("V4", "Klick auf „Backups“ rendert die Seite und ruft bindeBackups", (await m.page.locator("#attBackups").count()) === 1 && (await m.page.evaluate(() => window.__backupsGebunden === true)) ? null : "nicht gerendert");
-  await m.page.click('#nav .nav-punkt[href="#urlaub"]'); await warte(m.page, 350);
-  pruefe("V5", "#urlaub rendert die Seite", (await m.page.locator("#attUrlaub").count()) === 1 ? null : "nicht gerendert");
+  pruefe("V2", "mit den Funktionen: trotzdem 12 Punkte, Urlaub/Schichtplan/Backups ohne eigenen Leistenpunkt", p.length === 12 && !p.some((x) => ["#urlaub", "#schichtplan", "#backups"].includes(x[0])) ? null : p.map((x) => x[1]).join(", "));
+  pruefe("V3", "#schichtplan rendert die Seite, „Kalender“ markiert, Titel „Schichtplan“", (await m.page.locator("#attSchicht").count()) === 1 && (await markiert(m.page)) === "#kalender" && (await m.page.textContent("#titel")) === "Schichtplan" ? null : await markiert(m.page));
+  await m.page.evaluate(() => { location.hash = "#kalender"; }); await warte(m.page, 350);
+  const kk = await m.page.$$eval("#kopfAktionen a, #kopfAktionen button", (l) => l.map((a) => a.textContent.trim()));
+  pruefe("V3b", "Kalender-Kopf: Wer hat Platz? · Urlaub · + Termin", kk.join(" · ") === "Wer hat Platz? · Urlaub · + Termin" ? null : kk.join(" · "));
+  await m.page.click("#kUrlaub"); await warte(m.page, 350);
+  pruefe("V5", "Kalender-Kopf „Urlaub“ öffnet die Urlaub-Seite, „Kalender“ bleibt markiert", (await m.page.locator("#attUrlaub").count()) === 1 && (await markiert(m.page)) === "#kalender" ? null : "nicht gerendert");
+  const rt2 = await m.page.$$eval(".plan-reiter a", (l) => l.map((a) => [a.textContent.trim(), a.getAttribute("aria-current")]));
+  pruefe("V5b", "Urlaub-Seite: Reiter Wer hat Platz? · Urlaub (aktiv) · Schichtplan in einer Reihe", rt2.map((x) => x[0]).join(" · ") === "Wer hat Platz? · Urlaub · Schichtplan" && rt2[1][1] === "page" ? null : JSON.stringify(rt2));
+  await m.page.click('.plan-reiter a[href="#schichtplan"]'); await warte(m.page, 350);
+  pruefe("V5c", "Reiter „Schichtplan“ öffnet die Schichtplan-Seite", (await m.page.locator("#attSchicht").count()) === 1 && (await markiert(m.page)) === "#kalender" ? null : "nicht gerendert");
+  await m.page.evaluate(() => { location.hash = "#einstellungen?thema=backups"; }); await warte(m.page, 350);
+  const bl = m.page.locator('#esBox a.es-link[href="#backups"]');
+  pruefe("V4a", "Einstellungen › Backups: Link-Zeile zur Backups-Seite", (await bl.count()) === 1 ? null : "keine Link-Zeile");
+  if (await bl.count()) { await bl.click(); await warte(m.page, 350); }
+  pruefe("V4", "Link öffnet die Backups-Seite, ruft bindeBackups, „Einstellungen“ markiert", (await m.page.locator("#attBackups").count()) === 1 && (await m.page.evaluate(() => window.__backupsGebunden === true)) && (await markiert(m.page)) === "#einstellungen" ? null : "nicht gerendert / " + (await markiert(m.page)));
   pruefe("V6", "keine Konsolenfehler", m.konsole);
   await m.ctx.close();
 }
@@ -292,7 +301,16 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
 }
 {
   const att = `window.renderUrlaub = () => '<div class="karte">U</div>'; window.renderSchichtplan = () => '<div class="karte">S</div>'; window.renderBackups = () => '<div class="karte">B</div>';`;
-  const sicht = async (nutzer) => { const m = await oeffne({ nutzer, vorher: att }); const r = await m.page.evaluate(() => ({ admin: istAdmin(), punkte: [...document.querySelectorAll("#nav .nav-punkt")].map((a) => a.getAttribute("href")) })); await m.ctx.close(); return r; };
+  // erreichbar = Knopf im Kalender-Kopf (Urlaub, Schichtplan) bzw. Thema unter Einstellungen (Backups), und die Seite selbst öffnet
+  const sicht = async (nutzer) => {
+    const m = await oeffne({ nutzer, vorher: att, hash: "#kalender" });
+    const r = { admin: await m.page.evaluate(() => istAdmin()), punkte: [] };
+    if (await m.page.locator('#kopfAktionen a[href="#urlaub"]').count()) r.punkte.push("#urlaub");
+    if (await m.page.locator('#kopfAktionen a[href="#urlaub"]').count()) { await m.page.evaluate(() => { location.hash = "#urlaub"; }); await warte(m.page, 300); if (await m.page.locator('.plan-reiter a[href="#schichtplan"]').count()) r.punkte.push("#schichtplan"); }
+    await m.page.evaluate(() => { location.hash = "#einstellungen?thema=backups"; }); await warte(m.page, 300);
+    if (await m.page.locator('#esBox a[href="#backups"]').count()) { await m.page.evaluate(() => { location.hash = "#backups"; }); await warte(m.page, 300); if ((await m.page.textContent("#titel")) === "Backups") r.punkte.push("#backups"); }
+    await m.ctx.close(); return r;
+  };
   const leitung = await sicht("ad-1"), buero = await sicht("bu-1");
   const drei = (r) => ["#urlaub", "#schichtplan", "#backups"].every((h) => r.punkte.includes(h));
   pruefe("B1", "Leitung (Administrator) sieht Urlaub, Schichtplan und Backups", leitung.admin && drei(leitung) ? null : JSON.stringify(leitung));
@@ -326,12 +344,42 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   pruefe("R4", "keine Konsolenfehler", konsole);
   await ctx.close();
 }
+// ---- PC mit kleinem Bildschirm (1366×768, 1280×720): Fuß mit Abmelden immer sichtbar, Punkte scrollen ----
+// Büro (mit „Bedient gerade“ und Link zur App) bei 1280×720: Punkte dürfen scrollen, Abmelden steht trotzdem unten
+for (const [b, h, nutzer, ganz] of [[1366, 768, "bu-1", true], [1280, 720, "ad-1", true], [1280, 720, "bu-1", false]]) {
+  const { page, ctx, konsole } = await oeffne({ hash: "#heute", breite: b, hoehe: h, nutzer });
+  const r = await page.evaluate(() => {
+    const ab = document.getElementById("abmelden").getBoundingClientRect(), nav = document.getElementById("nav");
+    const ein = document.querySelector('#nav .nav-punkt[href="#einstellungen"]');
+    nav.scrollTop = nav.scrollHeight; const e = ein.getBoundingClientRect(), n = nav.getBoundingClientRect();
+    const navScroll = nav.scrollHeight - nav.clientHeight;
+    return { abUnten: Math.round(ab.bottom), hoehe: innerHeight, einDrin: e.bottom <= n.bottom + 1 && e.top >= n.top - 1, seiteScroll: document.querySelector(".seite").scrollHeight - document.querySelector(".seite").clientHeight, navScroll };
+  });
+  pruefe(`F1-${b}-${nutzer}`, `${b}×${h} (${nutzer}): „Abmelden“ sichtbar ohne Scrollen, ${ganz ? "alle 12 Punkte ohne Scrollen" : "„Einstellungen“ per Scrollen in der Leiste erreichbar"}`, r.abUnten <= r.hoehe && r.einDrin && r.seiteScroll <= 1 && (!ganz || r.navScroll <= 1) ? null : JSON.stringify(r));
+  pruefe(`F2-${b}-${nutzer}`, "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+// ---- Handy 360: Kalender-Knöpfe ganz zu sehen (umbrechen statt abschneiden) ----
+{
+  const { page, ctx, konsole } = await oeffne({ hash: "#kalender", breite: 360, hoehe: 780 });
+  const r = await page.$$eval("#kopfAktionen > *", (l) => l.map((a) => { const b = a.getBoundingClientRect(); return [a.textContent.trim(), Math.round(b.left), Math.round(b.right), Math.round(b.height)]; }));
+  pruefe("G5", "Handy 360: Wer hat Platz? · Urlaub · + Termin ganz im Bild, ≥ 44 px", r.length === 3 && r.every((x) => x[1] >= 0 && x[2] <= 360 && x[3] >= 44) ? null : JSON.stringify(r));
+  pruefe("G5k", "keine Konsolenfehler", konsole);
+  await ctx.close();
+}
+// ---- „Darstellung & Start“: das Büro wählt keine Startseite ----
+{
+  const titel = async (nutzer) => { const m = await oeffne({ nutzer, hash: "#einstellungen?thema=darstellung" }); const t = [await m.page.textContent('.es-thema[data-es-thema="darstellung"]'), await m.page.textContent("#esBox")]; await m.ctx.close(); return t; };
+  const bu = await titel("bu-1"), ad = await titel("ad-1");
+  pruefe("D1", "Büro: Thema heißt „Darstellung“ mit Satz „Das Büro startet, wo es sich anmeldet.“", bu[0].trim() === "Darstellung" && /Das Büro startet, wo es sich anmeldet\./.test(bu[1]) ? null : JSON.stringify(bu));
+  pruefe("D2", "Leitung: Thema heißt „Darstellung & Start“", ad[0].trim() === "Darstellung & Start" && !/Das Büro startet/.test(ad[1]) ? null : JSON.stringify(ad));
+}
 // ---- Handy ----
 {
   const { page, ctx, konsole } = await oeffne({ hash: "#flotte", breite: 375, hoehe: 740 });
   await page.click("#menueKnopf"); await warte(page, 200);
   const m = await page.$$eval("#nav .nav-punkt", (l) => l.filter((a) => a.offsetParent).map((a) => Math.round(a.getBoundingClientRect().height)));
-  pruefe("G4a", "Handy: Menü auf, 15 Punkte (mit Urlaub, Schichtplan, Backups), alle ≥ 44 px", m.length === 15 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
+  pruefe("G4a", "Handy: Menü auf, 12 Punkte, alle ≥ 44 px", m.length === 12 && m.every((h) => h >= 44) ? null : JSON.stringify(m));
   await page.click('.nav-punkt[href="#pruefungen"]'); await warte(page, 400);
   pruefe("G4b", "Handy: Seite wechseln schließt das Menü", !(await page.evaluate(() => document.body.classList.contains("menue-offen"))) && /Prüfungen/.test(await page.textContent("#menueKnopf")) ? null : "Menü offen");
   pruefe("G4c", "Handy: nichts wischt seitlich", (await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)) ? null : "seitlich wischbar");

@@ -14,14 +14,24 @@
   "use strict";
   var TABELLE = "fahrschule_einstellungen";
   var SCHLUESSEL = /^(fristen|vorlagen|fahrstunden|papierkorb|rueckgaengig)(\.[a-z][a-z0-9_]*)+$/;
-  var MAX_BYTES = 15000; // die Datenbank erlaubt 16000 (octet_length von wert::text); Postgres fügt beim Ausgeben Leerzeichen hinzu, darum Luft
+  var MAX_BYTES = 16000; // wie die Datenbank: octet_length(wert::text) <= 16000 (jsonb-Text, siehe jsonbText)
 
   var _fs = null;      // Fahrschule im Speicher
   var _werte = {};     // schluessel → Objekt (nur die gespeicherten, ohne Standard)
   var _lauf = 0;       // jüngste lade()-Anfrage gewinnt; setze/zuruecksetzen/leeren entwerten ältere Anfragen
+  var _nachlauf = 0;   // jüngstes nachladen() gewinnt (ohne _lauf anzufassen)
   var _fertig = false; // Antwort der Datenbank (oder Fehler) für _fs ist da
 
   function bytes(t) { try { return new TextEncoder().encode(t).length; } catch (e) { return unescape(encodeURIComponent(t)).length; } }
+  // So schreibt Postgres einen jsonb-Wert als Text: Leerzeichen nach ':' und ','. Nie zu optimistisch zählen.
+  function jsonbText(v) {
+    if (v === null) return "null";
+    if (typeof v === "boolean") return v ? "true" : "false";
+    if (typeof v === "number") { var n = String(v); return /e/i.test(n) ? n + new Array(331).join("0") : n; } // jsonb schreibt 1e21 / 1e-7 ausgeschrieben
+    if (typeof v === "string") return JSON.stringify(v);
+    if (Array.isArray(v)) return "[" + v.map(jsonbText).join(", ") + "]";
+    return "{" + Object.keys(v).map(function (k) { return JSON.stringify(k) + ": " + jsonbText(v[k]); }).join(", ") + "}";
+  }
   function kopie(x) { return JSON.parse(JSON.stringify(x)); }
   function einfachesObjekt(o) { return Object.prototype.toString.call(o) === "[object Object]"; }
   function speicher() {
@@ -72,14 +82,17 @@
   // Nach dem Speichern still frisch holen (ändert sich nur etwas, wenn jemand anderes zwischendurch geändert hat)
   function nachladen(sb, fsId) {
     if (_fs !== fsId) return;
-    var nr = ++_lauf;
+    var nr = _lauf, nn = ++_nachlauf;
+    var aktuell = function () { return nr === _lauf && nn === _nachlauf && _fs === fsId; };
     Promise.resolve().then(function () { return sb.from(TABELLE).select("schluessel,wert").eq("fahrschule_id", fsId); }).then(function (r) {
-      if (nr !== _lauf || _fs !== fsId || !r || r.error) return;
+      if (!aktuell()) return;
+      _fertig = true; // ein durch setze() entwertetes erstes lade() meldet sich nie mehr; ab jetzt gilt dieser Stand
+      if (!r || r.error) return;
       var neu = {};
       (r.data || []).forEach(function (z) { if (z && SCHLUESSEL.test(z.schluessel) && einfachesObjekt(z.wert)) neu[z.schluessel] = kopie(z.wert); });
       if (JSON.stringify(neu) === JSON.stringify(_werte)) return;
       _werte = neu; inSpeicherSchreiben(); ereignis({ fsId: fsId });
-    }).catch(function () { /* still */ });
+    }).catch(function () { if (aktuell()) _fertig = true; /* sonst still */ });
   }
 
   var KE = {
@@ -88,7 +101,15 @@
     // Beim Abmelden: nichts von dieser Fahrschule im Speicher oder auf dem Gerät lassen
     leeren: function () {
       var alt = _fs; _lauf++; _fs = null; _werte = {}; _fertig = false;
-      try { var sp = speicher(); if (sp && alt) sp.removeItem("ke:" + alt); } catch (e) { /* egal */ }
+      try { // alle Fahrschulen dieses Geräts (ein Super-Admin sieht mehrere)
+        var sp = speicher();
+        if (sp) {
+          var weg = [];
+          if (typeof sp.length === "number" && typeof sp.key === "function") for (var i = 0; i < sp.length; i++) { var k = sp.key(i); if (typeof k === "string" && k.indexOf("ke:") === 0) weg.push(k); }
+          if (alt && weg.indexOf("ke:" + alt) < 0) weg.push("ke:" + alt);
+          weg.forEach(function (k2) { sp.removeItem(k2); });
+        }
+      } catch (e) { /* egal */ }
       ereignis({ fsId: null });
     },
 
@@ -129,7 +150,7 @@
     zahl: function (schluessel, feld, standard, min, max) {
       var o = _fs && _werte[schluessel];
       var v = o && Object.prototype.hasOwnProperty.call(o, feld) ? o[feld] : undefined;
-      if (typeof v === "number") v = Number.isFinite(v) ? String(v) : ""; // eine Zahl im JSON zählt wie ihr Text (1.5 und 1e21 fallen dabei durch)
+      if (typeof v === "number") v = Number.isInteger(v) ? String(v) : ""; // eine Zahl im JSON zählt wie ihr Text (1.5 und 1e21 fallen dabei durch)
       if (typeof v !== "string" || !/^[0-9]{1,6}$/.test(v)) return standard;
       var n = parseInt(v, 10);
       return n >= min && n <= max ? n : standard;
@@ -141,7 +162,7 @@
       if (!einfachesObjekt(objekt)) throw new Error("Ungültiger Wert");
       var wert;
       try { wert = kopie(objekt); } catch (e) { throw new Error("Ungültiger Wert"); }
-      if (bytes(JSON.stringify(wert)) > MAX_BYTES) throw new Error("Text zu lang – bitte kürzen");
+      if (bytes(jsonbText(wert)) > MAX_BYTES) throw new Error("Text zu lang – bitte kürzen");
       var r;
       try {
         r = await sb.from(TABELLE).upsert({ fahrschule_id: fsId, schluessel: schluessel, wert: wert }, { onConflict: "fahrschule_id,schluessel" });
@@ -161,8 +182,12 @@
         r = await sb.from(TABELLE).delete().eq("fahrschule_id", fsId).eq("schluessel", schluessel).select("schluessel");
       } catch (e) { throw new Error("Keine Verbindung – nicht zurückgesetzt"); }
       if (r && r.error) throw new Error(fehlerText(r.error, "loeschen"));
-      // Die Sicherheitsregel löscht bei fehlendem Recht still nichts: gab es die Zeile, muss sie jetzt auch zurückkommen
-      if (_fs === fsId && _werte[schluessel] && r && Array.isArray(r.data) && r.data.length === 0) throw new Error("Keine Berechtigung zum Ändern");
+      // Die Sicherheitsregel löscht bei fehlendem Recht still nichts: ist die Zeile nach dem Löschen noch da, fehlt das Recht
+      if (r && Array.isArray(r.data) && r.data.length === 0) {
+        var noch = null;
+        try { noch = await sb.from(TABELLE).select("schluessel").eq("fahrschule_id", fsId).eq("schluessel", schluessel); } catch (e) { noch = null; }
+        if (noch && !noch.error && Array.isArray(noch.data) && noch.data.length > 0) throw new Error("Keine Berechtigung zum Ändern");
+      }
       _lauf++;
       if (_fs === fsId) { delete _werte[schluessel]; inSpeicherSchreiben(); }
       ereignis({ fsId: fsId, geaendert: schluessel });

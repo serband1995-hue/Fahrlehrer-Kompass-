@@ -28,6 +28,7 @@ if (!KR.sonderSoll) KR.sonderSoll = () => [0, 0, 0];
 window.addEventListener("ke:geladen", () => { if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(window.KE && KE.zahl ? KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90) : null); });
 // W13 PR 2: alte kompass-rechnen.js ohne Sonderfahrt-Einheit → fest 45 Minuten wie bisher
 if (!KR.sonderMinuten) { KR.sonderMinuten = () => 45; KR.setzeSonderMinuten = () => 45; KR.sonderEinheitenAusMinuten = (m) => (m > 0 ? Math.floor(m / 45) : 0); }
+if (!KR.terminEndeMin) KR.terminEndeMin = (v, b) => KR.hm2min(b || "0:00");
 if (!KR.terminMinuten) KR.terminMinuten = (v, b) => (v && b ? Math.max(0, KR.hm2min(b) - KR.hm2min(v)) : 0);
 // W13: alte kompass-rechnen.js zählt das Paket noch ohne Fahrcheck-Haken → in der Akte keine Zahlen, nur „neu laden“ (Richter)
 const KR_OHNE_HAKEN = !KR.fcFuersBuero || !KR.fcVomBuero;
@@ -92,9 +93,11 @@ function toast(text, fehler = false) {
 /* ---------- Rückgängig-Hinweis (einheitlich für alles, was man versehentlich antippen kann) ----------
    toastUndo(text, rueckgaengig, { ms, nachAblauf }): zeigt den Hinweis mit dem Knopf „Rückgängig“.
    - Knopf: rueckgaengig() läuft, nachAblauf() läuft NICHT.
-   - Zeit um (Standard 6 s), neuer Rückgängig-Hinweis oder Seite wird verlassen: nachAblauf() läuft (z. B. die Absage-Mail).
+   - Zeit um (Standard 6 s, einstellbar), neuer Rückgängig-Hinweis oder Seite wird verlassen: nachAblauf() läuft (z. B. die Absage-Mail).
    Der Hinweis hängt im obersten offenen Fenster (sonst läge er unter dem Fenster) und zieht beim Schließen um. */
 const UNDO = { offen: null };
+// W11 S3: wie lange der Hinweis steht (Einstellung rueckgaengig.sekunden, 4–30, Vorgabe 6); ohne KE 6 s
+function undoMs() { try { return (window.KE && KE.zahl ? KE.zahl("rueckgaengig.sekunden", "sekunden", 6, 4, 30) : 6) * 1000; } catch (e) { return 6000; } }
 function undoPlatzieren() {
   const u = UNDO.offen;
   if (!u) return;
@@ -118,7 +121,7 @@ function toastUndo(text, rueckgaengig, optionen) {
   el.setAttribute("role", "status");
   el.innerHTML = `<span class="toast-text"></span><button type="button" class="toast-knopf" data-undo>Rückgängig</button>`;
   el.querySelector(".toast-text").textContent = text;
-  const u = UNDO.offen = { el, ids: o.ids || null, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || 6000) };
+  const u = UNDO.offen = { el, ids: o.ids || null, nachAblauf: o.nachAblauf || null, timer: setTimeout(undoAblaufen, o.ms || undoMs()) };
   el.querySelector("[data-undo]").addEventListener("click", async (e) => {
     if (UNDO.offen !== u) return;
     e.target.disabled = true;
@@ -186,15 +189,15 @@ const BEREICHE = [
   { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", neben: true, render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
-  { id: "urlaub", titel: "Urlaub", neben: true, wenn: () => typeof renderUrlaub === "function", render: (...a) => renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
-  { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
+  { id: "urlaub", titel: "Urlaub", leiste: false, eltern: "kalender", wenn: () => typeof renderUrlaub === "function", render: (...a) => planReiter("urlaub") + renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
+  { id: "schichtplan", titel: "Schichtplan", leiste: false, eltern: "kalender", wenn: () => typeof renderSchichtplan === "function", render: (...a) => planReiter("schichtplan") + renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
   // W16 Teil 2 (mit W11 abgestimmt): Backups auch für das Büro, wie in der App und laut Datenbank (is_buero darf sichern und lesen)
-  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
+  { id: "backups", titel: "Backups", leiste: false, eltern: "einstellungen", wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
   // Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js), ganz unten in der Leiste; für Büro, Leitung und Super-Admin
   { id: "einstellungen", titel: "Einstellungen", neben: true, wenn: () => typeof renderEinstellungenSeite === "function" && !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)), render: (...a) => renderEinstellungenSeite(...a), nachher: (...a) => typeof bindeEinstellungenSeite === "function" && bindeEinstellungenSeite(...a) },
   // Unterseiten: per Adresse erreichbar, in der Leiste ist der Elternpunkt markiert
-  { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: renderAuslastung },
+  { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: (...a) => planReiter("auslastung") + renderAuslastung(...a) },
   // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist); Werkstatt 13: Reiter „Preise | Pakete“ in buero-pakete.js
   { id: "preise", titel: "Preise & Pakete", leiste: false, eltern: "zahlungen", render: (...a) => zahlungsReiter(preisReiter()) + renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
   { id: "verkaeufe", titel: "Verkäufe & Provision", leiste: false, eltern: "zahlungen", render: () => zahlungsReiter("verkaeufe") + renderVerkaeufe(), nachher: bindeVerkaeufe },
@@ -245,10 +248,19 @@ function zeichneNav() {
     });
   } else nav.innerHTML = html;
 }
+// Planung zum Kalender in einer Reihe: Wer hat Platz? · Urlaub · Schichtplan (wie die Reiter bei Zahlungen)
+function planReiter(aktiv) {
+  const da = (id) => { const x = BEREICHE.find((y) => y.id === id); return !!x && (!x.wenn || x.wenn()); };
+  const tab = (id, t) => da(id) ? `<a class="tab" href="#${id}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>` : "";
+  const t = tab("auslastung", "Wer hat Platz?") + tab("urlaub", "Urlaub") + tab("schichtplan", "Schichtplan");
+  return (da("urlaub") || da("schichtplan")) ? `<div class="tabs zahl-reiter plan-reiter" role="tablist" aria-label="Planung">${t}</div>` : "";
+}
 // Kalender-Knöpfe im Seitenkopf: „Wer hat Platz?“ und „+ Termin“ (Fahrlehrer, Tag und nächste volle Stunde vorbelegt)
 function kopfAktionenZeichnen(b) {
   const k = $("kopfAktionen"); if (!k) return;
-  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a><button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>` : "";
+  // Urlaub und Schichtplan gehören zum Kalender (eigene Unterseiten, kein eigener Leistenpunkt: die Leiste passt so auf jeden PC-Bildschirm)
+  const da = (id) => { const x = BEREICHE.find((y) => y.id === id); return !!x && (!x.wenn || x.wenn()); };
+  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a>${da("urlaub") ? `<a class="knopf" id="kUrlaub" href="#urlaub">Urlaub</a>` : ""}<button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>` : "";
   if (k.innerHTML !== html) k.innerHTML = html;
   k.hidden = !html;
 }
@@ -313,7 +325,8 @@ function klappWieder(ziel, m) {
    des Browsers/Handys führen genau dorthin zurück. Der Knopf erscheint, sobald es eine vorige Seite gibt. */
 // Jede Seite im Browser-Verlauf trägt eine laufende Nummer (history.state.buNr). So erkennt der Verlauf ein echtes Zurück
 // sicher – auch wenn Filter/Suche die Adresse ändern (replaceState) oder man über das Menü auf eine frühere Seite tippt.
-const buVerlauf = []; let buNrZaehler = 0; let buKalenderZuletzt = "";
+const buVerlauf = []; let buUnbekannt = false; /* Sprung (Zurück/Vor) auf eine Seite, die diese Sitzung nicht kennt, z. B. nach F5 */ let buNrZaehler = Date.now(); // Startwert = Uhrzeit: nach F5 sind neue Nummern größer als alte (Richtung eines Sprungs bleibt erkennbar)
+let buKalenderZuletzt = "";
 const _buReplace = history.replaceState.bind(history), _buPush = history.pushState.bind(history);
 function buNr() { return history.state && typeof history.state.buNr === "number" ? history.state.buNr : null; }
 function buNeuerEintrag(ausLeiste) {
@@ -351,6 +364,7 @@ window.addEventListener("hashchange", () => {
   if (alt) { alt.y = window.scrollY; try { alt.klapp = klappZustand($("ansicht")); } catch (e) {} }
   let ziel = null;
   const nr = buNr(); const i = nr != null ? buVerlauf.findIndex((x) => x.nr === nr) : -1;
+  buUnbekannt = nr != null && i < 0; // trägt der Eintrag eine Nummer, die nur eine frühere Sitzung kennt (F5), kennt niemand die Richtung des Sprungs
   if (i >= 0) { ziel = buVerlauf[i]; buVerlauf.length = i + 1; } // echtes Zurück (oder Vor) auf eine bekannte Seite
   else {
     // Startseite ohne Adresse („“) und „#heute“ sind dieselbe Seite: dann keine neue Seite, sonst führte Zurück auf dieselbe
@@ -450,7 +464,7 @@ function zeigeNeuNachUpdate() {
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
-    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin funktioniert alles wie gewohnt in der Kompass-App unter „Admin-Gesamtübersicht“.</p></div>`;
+    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin funktioniert alles wie gewohnt in der Kompass-App (Menü › Einstellungen › Startseite › Fahrschule).</p></div>`;
 }
 
 /* ---------- Heute ---------- */
@@ -1964,7 +1978,7 @@ function bindeNotizBlock(dlg, sid, fahrlehrerId) {
     }));
     block.querySelectorAll("[data-notizweg]").forEach((b) => b.addEventListener("click", async () => {
       const n = S.notizen.find((x) => x.id === b.dataset.notizweg);
-      if (!n) return; // K7: ohne Rückfrage, 6 s Rückgängig
+      if (!n) return; // K7: ohne Rückfrage, mit Rückgängig
       const res = await supa.from("schueler_notizen").delete().eq("id", n.id).select("id");
       if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return; }
       S.notizen = S.notizen.filter((x) => x.id !== n.id);
@@ -2116,7 +2130,7 @@ async function erledigeAufgabe(id, nachher) {
 }
 async function loescheAufgabe(id, nachher) {
   const a = S.aufgaben.find((x) => x.id === id);
-  if (!a) return false; // K7: ohne Rückfrage, 6 s Rückgängig
+  if (!a) return false; // K7: ohne Rückfrage, mit Rückgängig
   const res = await supa.from("schueler_aufgaben").delete().eq("id", id).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht gelöscht: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   S.aufgaben = S.aufgaben.filter((x) => x.id !== id);
@@ -2369,7 +2383,7 @@ function sonderZaehlerHTML(x) {
   let ohneArt = 0;
   for (const t of S.termine) {
     if (t.schueler_id !== x.id || !t.datum || t.datum > heute || !t.von || !t.bis) continue;
-    if (t.datum === heute && KR.hm2min(t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist
+    if (t.datum === heute && KR.terminEndeMin(t.von, t.bis) > jetztMin) continue; // heutige Stunde zählt erst, wenn sie vorbei ist (über Mitternacht: morgen)
     const st = (t.payload || {}).status || t.status; if (st === "abgebrochen" || st === "nicht erschienen") continue;
     const a = t.art === "nacht" ? "nacht" : t.art === "sonder" ? ((t.payload || {}).sonderArt || "") : "";
     if (ist[a] != null) ist[a] += KR.sonderEinheitenAusMinuten(KR.terminMinuten(t.von, t.bis)); // W13: Einheit je Fahrschule, über Mitternacht zählt mit
@@ -2907,7 +2921,7 @@ function terminDialog(id, vorgabe) {
     if (KR.hm2min(d.bis) <= KR.hm2min(d.von)) { toast("„Bis“ muss nach „Von“ liegen.", true); return false; }
     const jetzt = new Date().toISOString();
     if (d.absagen) {
-      // K7: ohne Rückfrage (Rückgängig 6 s). Gelaufene/unterschriebene Nachweis-Stunde: stornieren mit Grund (buero-nachweis.js)
+      // K7: ohne Rückfrage (mit Rückgängig). Gelaufene/unterschriebene Nachweis-Stunde: stornieren mit Grund (buero-nachweis.js)
       if (typeof nwIstNachweis === "function" && NW_FAHRT_ARTEN.includes(t.art || "fahrstunde") && nwIstNachweis(t)) { setTimeout(() => nwLoeschen(t, () => {}), 0); return true; }
       return sageTermineAb([t], "Termin abgesagt");
     }
@@ -4792,7 +4806,7 @@ function zeigeWerAnzeige() {
   $("werAnzeige").textContent = S.werAnzeige || "";
   $("werZeile").hidden = !S.sitzung;
   if (werNoetig()) {
-    $("nutzerName").textContent = S.sitzung ? S.werAnzeige : "Bitte anmelden";
+    $("nutzerName").textContent = S.sitzung ? S.werAnzeige : "Bitte anmelden"; $("nutzerName").title = $("nutzerName").textContent;
     $("nutzerRolle").textContent = "Büro";
   }
   $("kopfWer").hidden = !S.sitzung;
@@ -5150,7 +5164,7 @@ async function starte(user) {
     }
   }
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
-  $("nutzerName").textContent = profil.name || user.email;
+  $("nutzerName").textContent = profil.name || user.email; $("nutzerName").title = $("nutzerName").textContent;
   $("nutzerRolle").textContent = ROLLEN[profil.rolle];
   zeigeAppLink(profil);
   zeigeWerAnzeige();

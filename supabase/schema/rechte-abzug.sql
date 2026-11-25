@@ -27,7 +27,7 @@ CREATE TRIGGER trg_termin_verschiebung_schutz BEFORE UPDATE ON public.kalender_t
 CREATE TRIGGER trg_termin_zx_zahlung BEFORE INSERT OR UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_zahlung_sperre();
 -- K7 (Migration 20261123_k7_01): Papierkorb. geloescht_am setzt nur der Server; gelaufene/unterschriebene Nachweis-Stunden
 -- bekommen beim Löschen payload.storno (nie endgültig weg). papierkorb_leeren() (security definer, Büro/Leitung/Super-Admin
--- nur eigene Fahrschule, pg_cron alle) löscht endgültig nur > 30 Tage im Papierkorb, ohne Storno, nie unterschrieben.
+-- nur eigene Fahrschule, pg_cron alle) löscht endgültig nur nach der Frist der Fahrschule (W11 20261128: papierkorb.tage 7–90, Vorgabe 30) im Papierkorb, ohne Storno, nie unterschrieben.
 CREATE TRIGGER trg_termin_zy_papierkorb BEFORE INSERT OR UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION termin_papierkorb();
 -- K9 (Migration 20261123_k9_01, nach der Datei nachgetragen, nicht live gezogen): Verfasser/Zeit/PIN-Person setzt der Server,
 -- Rückdatieren nur Super-Admin, Paket muss zur eigenen Fahrschule gehören.
