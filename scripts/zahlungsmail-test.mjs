@@ -592,7 +592,9 @@ try {
     pruefe("Z14a s3 (Reaktivierung in 15 Tagen): Prüfung und Reaktivierung", JSON.stringify(await arten(page, "s3")) === '["pruefung","reaktivierung"]');
     const zeile = page.locator('[data-baldliste] tr[data-bald="reaktivierung"]', { has: page.locator('[data-balderinnern="s3"]') });
     pruefe("Z14b „Läuft bald ab“: Knopf „Erinnerung schicken“ bei der Reaktivierung", (await zeile.count()) === 1 && (await zeile.locator("[data-balderinnern]").innerText()) === "Erinnerung schicken");
-    pruefe("Z14c nur bei der Reaktivierung (andere Fristen ohne Knopf)", (await page.locator('[data-baldliste] tr:not([data-bald="reaktivierung"]) [data-balderinnern]').count()) === 0);
+    // W15 S5: andere Fristen haben ihren eigenen Knopf (Erinnerung ohne Zahlung); der Zahlungs-Knopf hängt nur an der Reaktivierung
+    pruefe("Z14c Zahlungs-Erinnerung nur bei der Reaktivierung, jeder Knopf passt zu seiner Zeile", (await page.locator('[data-baldliste] tr:not([data-bald="reaktivierung"]) [data-baldart="reaktivierung"]').count()) === 0
+      && (await page.$$eval("[data-baldliste] tr [data-balderinnern]", (l) => l.every((k) => k.dataset.baldart === k.closest("tr").dataset.bald))));
     pruefe("Z14d PC: Knopf mindestens 44 px und so hoch wie „Akte öffnen“ daneben", (await zeile.locator("[data-balderinnern]").evaluate((e) => e.getBoundingClientRect().height)) >= 44 && (await zeile.locator("[data-balderinnern]").evaluate((e) => e.getBoundingClientRect().height)) === (await zeile.locator("[data-baldakte]").evaluate((e) => e.getBoundingClientRect().height)),
       await zeile.locator("[data-balderinnern], [data-baldakte]").evaluateAll((l) => l.map((e) => e.textContent + " " + Math.round(e.getBoundingClientRect().height) + "x" + Math.round(e.getBoundingClientRect().width)).join(" | ")));
     await zeile.locator("[data-balderinnern]").click();
@@ -626,7 +628,7 @@ try {
     const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", vorbereiten: vor({ s3reakt: false, extra: `
       F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = ${JSON.stringify(KRtag(15))};
       F.tabellen.fahrschule_preise.push({ id: "rx", fahrschule_id: "fs-test-1", art: "reaktivierung", klasse: null, bezeichnung: "Reaktivierung", einheit: "pauschal", betrag_cent: null, gueltig_ab: "2020-01-01", angelegt_von: "ad-1", angelegt_am: "2020-01-01T10:00:00Z" });` }) });
-    pruefe("Z14l Reaktivierung entfällt: kein Angebot, kein Knopf", !(await arten(page, "s3")).includes("reaktivierung") && (await page.locator("[data-balderinnern]").count()) === 0);
+    pruefe("Z14l Reaktivierung entfällt: kein Angebot, kein Knopf", !(await arten(page, "s3")).includes("reaktivierung") && (await page.locator('[data-balderinnern="s3"][data-baldart="reaktivierung"]').count()) === 0);
     await ctx.close();
   }
 } finally {

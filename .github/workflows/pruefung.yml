@@ -112,6 +112,8 @@ jobs:
           ZM_QR_DIR=/tmp/zm-qr node scripts/zahlungsmail-mail-test.mjs
       - name: "Zahlungsaufforderung per Mail im Büro (Knopf, Haken, Rückgängig)"
         run: NODE_PATH=$(npm root -g) node scripts/zahlungsmail-test.mjs
+      - name: "W15 S5: Erinnerung schicken ohne Zahlung (Theorie, Antrag, Behörde, Umschreiber) im Büro"
+        run: NODE_PATH=$(npm root -g) node scripts/erinnerung-test.mjs
       - name: "W14 Akte überschreibt keine neueren Änderungen (Büro-Akte, Fristen)"
         run: NODE_PATH=$(npm root -g) node scripts/akte-konflikt-test.mjs
       - name: "Abgleich App ↔ Büro (Datenverlust-Fälle, W14 Name/Telefon, Gesamtansicht)"
