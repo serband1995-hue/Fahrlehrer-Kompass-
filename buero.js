@@ -186,15 +186,15 @@ const BEREICHE = [
   { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", neben: true, render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
-  { id: "urlaub", titel: "Urlaub", neben: true, wenn: () => typeof renderUrlaub === "function", render: (...a) => renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
-  { id: "schichtplan", titel: "Schichtplan", neben: true, wenn: () => typeof renderSchichtplan === "function", render: (...a) => renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
+  { id: "urlaub", titel: "Urlaub", leiste: false, eltern: "kalender", wenn: () => typeof renderUrlaub === "function", render: (...a) => planReiter("urlaub") + renderUrlaub(...a), nachher: (...a) => typeof bindeUrlaub === "function" && bindeUrlaub(...a) },
+  { id: "schichtplan", titel: "Schichtplan", leiste: false, eltern: "kalender", wenn: () => typeof renderSchichtplan === "function", render: (...a) => planReiter("schichtplan") + renderSchichtplan(...a), nachher: (...a) => typeof bindeSchichtplan === "function" && bindeSchichtplan(...a) },
   // W16 Teil 2 (mit W11 abgestimmt): Backups auch für das Büro, wie in der App und laut Datenbank (is_buero darf sichern und lesen)
-  { id: "backups", titel: "Backups", neben: true, wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
+  { id: "backups", titel: "Backups", leiste: false, eltern: "einstellungen", wenn: () => typeof renderBackups === "function", render: (...a) => renderBackups(...a), nachher: (...a) => typeof bindeBackups === "function" && bindeBackups(...a) },
   { id: "neuigkeiten", titel: "Neuigkeiten", neben: true, render: renderNeuigkeiten },
   // Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js), ganz unten in der Leiste; für Büro, Leitung und Super-Admin
   { id: "einstellungen", titel: "Einstellungen", neben: true, wenn: () => typeof renderEinstellungenSeite === "function" && !!(S.profil && ["buero", "fahrschule_admin", "super_admin"].includes(S.profil.rolle)), render: (...a) => renderEinstellungenSeite(...a), nachher: (...a) => typeof bindeEinstellungenSeite === "function" && bindeEinstellungenSeite(...a) },
   // Unterseiten: per Adresse erreichbar, in der Leiste ist der Elternpunkt markiert
-  { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: renderAuslastung },
+  { id: "auslastung", titel: "Wer hat Platz?", leiste: false, eltern: "kalender", render: (...a) => planReiter("auslastung") + renderAuslastung(...a) },
   // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist); Werkstatt 13: Reiter „Preise | Pakete“ in buero-pakete.js
   { id: "preise", titel: "Preise & Pakete", leiste: false, eltern: "zahlungen", render: (...a) => zahlungsReiter(preisReiter()) + renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
   { id: "verkaeufe", titel: "Verkäufe & Provision", leiste: false, eltern: "zahlungen", render: () => zahlungsReiter("verkaeufe") + renderVerkaeufe(), nachher: bindeVerkaeufe },
@@ -245,10 +245,19 @@ function zeichneNav() {
     });
   } else nav.innerHTML = html;
 }
+// Planung zum Kalender in einer Reihe: Wer hat Platz? · Urlaub · Schichtplan (wie die Reiter bei Zahlungen)
+function planReiter(aktiv) {
+  const da = (id) => { const x = BEREICHE.find((y) => y.id === id); return !!x && (!x.wenn || x.wenn()); };
+  const tab = (id, t) => da(id) ? `<a class="tab" href="#${id}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>` : "";
+  const t = tab("auslastung", "Wer hat Platz?") + tab("urlaub", "Urlaub") + tab("schichtplan", "Schichtplan");
+  return (da("urlaub") || da("schichtplan")) ? `<div class="tabs zahl-reiter plan-reiter" role="tablist" aria-label="Planung">${t}</div>` : "";
+}
 // Kalender-Knöpfe im Seitenkopf: „Wer hat Platz?“ und „+ Termin“ (Fahrlehrer, Tag und nächste volle Stunde vorbelegt)
 function kopfAktionenZeichnen(b) {
   const k = $("kopfAktionen"); if (!k) return;
-  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a><button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>` : "";
+  // Urlaub und Schichtplan gehören zum Kalender (eigene Unterseiten, kein eigener Leistenpunkt: die Leiste passt so auf jeden PC-Bildschirm)
+  const da = (id) => { const x = BEREICHE.find((y) => y.id === id); return !!x && (!x.wenn || x.wenn()); };
+  const html = b.id === "kalender" && S.geladenAm ? `<a class="knopf" id="kPlatz" href="#auslastung">Wer hat Platz?</a>${da("urlaub") ? `<a class="knopf" id="kUrlaub" href="#urlaub">Urlaub</a>` : ""}<button type="button" class="knopf haupt" id="kNeuTermin">+ Termin</button>` : "";
   if (k.innerHTML !== html) k.innerHTML = html;
   k.hidden = !html;
 }
@@ -450,7 +459,7 @@ function zeigeNeuNachUpdate() {
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
-    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin funktioniert alles wie gewohnt in der Kompass-App unter „Admin-Gesamtübersicht“.</p></div>`;
+    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin funktioniert alles wie gewohnt in der Kompass-App (Menü › Einstellungen › Startseite › Fahrschule).</p></div>`;
 }
 
 /* ---------- Heute ---------- */
