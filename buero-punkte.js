@@ -156,7 +156,7 @@ async function punkteDialog(sid) {
       ${liste("regeln", "Wofür gibt es Punkte?", "Noch nichts angelegt. Lege selbst fest, wofür ein Schüler Punkte bekommt und wie viele.", "+ Eintrag hinzufügen")}
       ${liste("praemien", "Was kann man einlösen?", "Noch nichts angelegt. Lege selbst fest, was ein Schüler für Punkte bekommt und wie viele Punkte das kostet.", "+ Eintrag hinzufügen")}
       <h3 class="es-abschnitt voll">Verschenken</h3>
-      <label class="wahl voll"><input type="checkbox" name="verschenken"${E.verschenken ? " checked" : ""}> Schüler dürfen Punkte verschenken (Büro oder Fahrlehrer bucht es)</label>
+      <label class="wahl voll"><input type="checkbox" name="verschenken"${E.verschenken ? " checked" : ""}> Schüler dürfen Punkte verschenken (das Büro bucht es)</label>
       <h3 class="es-abschnitt voll">Bedingungen</h3>
       <label class="voll">Hinweis an die Schüler (z. B. Gültigkeit, Ausschlüsse) – wird im Punkte-Fenster angezeigt<textarea name="bedingungen" rows="4" maxlength="1500">${esc(E.bedingungen)}</textarea></label>
       <div class="voll knopfreihe"><button class="knopf haupt" type="submit">Speichern</button></div>
