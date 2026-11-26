@@ -124,6 +124,16 @@ const karte = (page) => page.locator("#zmKarte");
   pruefe("P3a Absagen zeigt keine Karte", (await karte(page).count()) === 0);
   await plane(page, sid, { tage: 12 });
   pruefe("P3 Haken statt Knopf: „✓ Zahlungsaufforderung gesendet am …“", (await karte(page).locator("[data-zmkhaken]").count()) === 1 && (await karte(page).locator("[data-zmksenden]").count()) === 0, await karte(page).innerText().catch(() => ""));
+  // P3d W20: von Hand geändertes „Wofür“ („Prüfungsgebühr“) behält den Haken; steht dort „Theorie…“, zählt die Mail nicht für die Praxisprüfung
+  const unklar = await page.evaluate((s) => {
+    const p = S.pruefungstermine.find((x) => x.schueler_id === s && x.status === "geplant" && x.art !== "theorie");
+    const m = S.zahlungsMails.filter((x) => x.schueler_id === s && x.art === "pruefung"), alt = m.map((x) => x.wofuer);
+    m.forEach((x) => { x.wofuer = "Prüfungsgebühr"; }); const frei = !!zmFuerPruefungGesendet(p);
+    m.forEach((x) => { x.wofuer = "Theorieprüfung Klasse B"; }); const theorie = !!zmFuerPruefungGesendet(p);
+    m.forEach((x, i) => { x.wofuer = alt[i]; });
+    return { n: m.length, frei, theorie };
+  }, sid);
+  pruefe("P3d freier Text behält den Haken, „Theorie…“ zählt nicht für Praxis", unklar.n >= 1 && unklar.frei === true && unklar.theorie === false, JSON.stringify(unklar));
   // P4 Bearbeiten einer bestehenden Prüfung: keine Karte
   await page.evaluate(() => zmKarteZu());
   const pid2 = await page.evaluate((s) => S.pruefungstermine.filter((p) => p.schueler_id === s && p.status === "geplant")[0].id, sid);
@@ -177,9 +187,9 @@ const karte = (page) => page.locator("#zmKarte");
   const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#pruefungen", vorbereiten: vor() });
   const sid = await waehle(page);
   await plane(page, sid, { art: "theorie" });
-  pruefe("P7 „Kein Preis für diese Prüfung in der Preisliste“ + Link „Preis eintragen“", /Kein Preis/.test(await karte(page).innerText()) && (await karte(page).locator('[data-zmklink][href="#einstellungen?thema=preise"]').count()) === 1 && (await karte(page).locator("[data-zmksenden]").count()) === 0);
+  pruefe("P7 „Kein Preis für diese Prüfung in der Preisliste“ + Link „Preis eintragen“", /Kein Preis/.test(await karte(page).innerText()) && (await karte(page).locator('[data-zmklink][href="#zahlungen?reiter=preise"]').count()) === 1 && (await karte(page).locator("[data-zmksenden]").count()) === 0);
   await karte(page).locator("[data-zmklink]").click(); await page.waitForTimeout(400);
-  pruefe("P7b Link führt zu Einstellungen › Preise, Karte zu", /thema=preise/.test(page.url()) && (await karte(page).count()) === 0, page.url());
+  pruefe("P7b Link führt zu Zahlungen › Preise, Karte zu", /zahlungen\?reiter=preise/.test(page.url()) && (await karte(page).count()) === 0, page.url());
   pruefe("P7c keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
   await ctx.close();
 }

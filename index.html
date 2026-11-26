@@ -2418,9 +2418,9 @@ body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after
 .sl-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .schueler2 .sl-titel{margin:0;font-size:30px;font-weight:700;color:var(--h-tinte);}
 .sl-zahl{font-size:13px;font-weight:700;color:var(--h-text2);white-space:nowrap;}
-.sl-sorten{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:0 0 2px;scrollbar-width:none;} /* W17: alle vier Sortierungen sichtbar (vorher rechts abgeschnitten) */
+.sl-sorten{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px;padding:0 0 2px;} /* W20: 2×2-Raster, alle vier Sortierungen gleich breit sichtbar */
 .sl-sorten::-webkit-scrollbar{display:none;}
-.sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
+.sl-sort{width:100%;min-width:0;min-height:44px;padding:0 10px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
 .sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
 .sl-gruppe{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:18px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--h-text2,var(--muted));}
 .sl-gruppe:first-child{padding-top:4px;}
@@ -2851,7 +2851,7 @@ body:not(.light){--clay-text:#e8a283;}
     <button type="button" id="loForgotBtn" style="background:none;border:none;color:var(--muted);font-size:12.5px;margin-top:10px;text-decoration:underline;cursor:pointer;width:100%;min-height:44px;">Passwort vergessen?</button>
     <div class="lo-err" id="loErr"></div>
     <!-- W16: kein eigener Link zur Büro-Anmeldung mehr. Nach der Anmeldung gilt die Startseite (Leitung und Super-Admin wählen sie
-         in den Einstellungen); das Büro startet vorerst wie bisher in der App, bis die Büro-Seite Urlaub, Schichtplan und Backups hat. -->
+         in den Einstellungen); das Büro startet gleich auf der Büro-Seite (W16, Startseite je Rolle in startseite.js). -->
   </div>
 </div>
 
@@ -9333,7 +9333,7 @@ function routeHome(){
   wartende.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de")); // W17: auch der Abschnitt „Wartet“ hat eine feste Ordnung (A–Z)
   if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
   if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML2(s,i,hinweise)).join("")}</details>`;
-  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
+  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Fortschritt"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
   view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;">
     <div class="sl-kopf"><h1 class="sl-titel">Schüler</h1><span class="sl-zahl">${alle.length-wartende.length} aktiv${wartende.length?` · ${wartende.length} warten`:''}</span></div>
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
@@ -14690,6 +14690,8 @@ function wireCalendarDrag(){
           const[date,von]=ziel.dataset.freeslot.split("|");
           const lid=chip.dataset.dragid;
           const l=DB.lessons.find(x=>x.id===lid);
+          if(l&&!_calZiehbar({kind:"lesson",status:l.status||"geplant",art:l.art||"fahrstunde"},l.date)){ toast("Dieser Termin lässt sich nicht verschieben."); routeKalender(); return; } // W20: auch beim Ablegen prüfen (Stand kann sich inzwischen geändert haben)
+          if(l&&_fsAgg&&date<todayISO()){ toast("Nicht auf einen vergangenen Tag verschieben."); routeKalender(); return; }
           if(l){
             const prevDate=l.date,prevVon=l.von,prevBis=l.bis;
             // Nichts tun, wenn der Termin dort schon liegt - sonst entsteht ein
@@ -14795,6 +14797,24 @@ function weekDayRowsHTML(iso){
 }
 function sfKuerzel(e){ if(e.srcSonder){ const grp=e.srcSonder.split(":")[1]; return SF_KUERZEL[grp]||"SF"; } return "SF"; }
 function firstName(n){ return (n||"").split(" ")[0]; }
+// W20: Darf dieser Termin per Finger gezogen werden? Eine Stelle für Anzeige (Chip) und Ablegen.
+// Immer: nur geplante Fahrstunden, keine Blocker/Urlaub, keine doppelte Prüfung. In der Gesamtansicht zusätzlich:
+// keine Prüfung (fester Termin beim Prüfer) und nichts, was schon vorbei ist (dort sind es Termine anderer Fahrlehrer).
+// W20: In der schmalen Wochen-Kachel wird der Name mit „…“ gekürzt. Haben zwei Schüler denselben Vornamen, steht vorn
+// „Vorname N.“ (Initial des Nachnamens), damit man sie unterscheiden kann. Sonst bleibt der Name wie er war.
+function _kachelName(e){
+  const n=String((e&&e.name)||"").trim();
+  if(!n||!e.sid||!/ /.test(n)||!DB.students)return n;
+  const vn=firstName(n).toLowerCase(), teile=n.split(/\s+/), nach=teile[teile.length-1];
+  if(!nach||teile.length<2)return n;
+  const gleich=DB.students.some(x=>x.id!==e.sid&&String(x.name||"").trim()&&firstName(String(x.name).trim()).toLowerCase()===vn&&!(typeof istArchiviert==="function"&&istArchiviert(x)));
+  return gleich?firstName(n)+" "+nach.charAt(0).toUpperCase()+".":n;
+}
+function _calZiehbar(e,iso){
+  if(!e||e.kind!=="lesson"||e.status!=="geplant"||e.art==="block"||e.doppelt)return false;
+  if(_fsAgg&&(e.art==="pruefung"||(iso||e.date||"")<todayISO()))return false;
+  return true;
+}
 function calEventChip(e,iso){
   const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
   const flName=_fsFlVorname(e), flTag=flName?`<span class="cw-fl">${esc(flName)}</span>`:'';
@@ -14814,8 +14834,8 @@ function calEventChip(e,iso){
   const zahlTag=e.sid&&iso>=todayISO()&&["fahrstunde","sonder","nacht","schalt","pruefung"].indexOf(e.art)>=0&&_zahlungGesperrt(e.sid)?`<span class="cw-zahl" data-zahlung-hinweis title="Zahlung ausstehend" aria-label="Zahlung ausstehend" role="img">€!</span>`:'';
   const pruefLabel=e.pruefTime?`<span class="cw-fz" style="color:${c.col}">Prüfung ${esc(e.pruefTime)}</span>`:'';
   // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
-  const draggable=e.kind==="lesson"&&e.status==="geplant"&&e.art!=="block"&&!e.doppelt;
-  const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name||"");
+  const draggable=_calZiehbar(e,iso);
+  const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(_kachelName(e));
   return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}${zahlTag?' zahl-offen':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${zahlTag}${pruefLabel}</span>${flTag}</div>`;
 }
 // TAGESANSICHT

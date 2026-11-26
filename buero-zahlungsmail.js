@@ -355,19 +355,26 @@ const ZM_KARTE_MS = 20000;
 // sonst lieber den Knopf: Mail derselben Art („Praktische Prüfung …“ / „Theorieprüfung …“), höchstens 60 Tage alt, seitdem keine
 // Prüfung dieser Art abgelegt (nicht abgesagt) und keine andere geplante Prüfung dieser Art, für die sie gedacht sein kann.
 function zmFuerPruefungGesendet(p) {
-  const modus = zmModus(), heute = KR.todayISO(), anfang = p.art === "theorie" ? "Theorieprüfung" : "Praktische Prüfung";
+  const modus = zmModus(), heute = KR.todayISO();
   const art = (q) => (q.art === "theorie" ? "theorie" : "praxis");
-  const grenze = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  const grenze = KR.addDaysISO(heute, -60); // lokales Datum (nicht UTC: sonst springt die Grenze um einen Tag)
+  // Welche Prüfungsart meint die Mail? Nicht am genauen Text festmachen: ein von Hand geändertes „Wofür“ soll den Haken nicht verlieren.
+  // „Theorie …“ = Theorie, „Prakt…/Praxis/Fahr…“ = Praxis, alles andere = unklar (zählt nur, wenn keine Prüfung der anderen Art offen ist)
+  const mailArt = (w) => { const t = String(w || "").toLowerCase(); return /theor/.test(t) ? "theorie" : /prakt|praxis|fahrprüf/.test(t) ? "praxis" : ""; };
+  const andereArtOffen = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status === "geplant" && art(q) !== art(p) && q.datum >= heute);
   const andereGeplant = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status === "geplant" && art(q) === art(p) && q.datum >= heute);
   if (andereGeplant) return null;
   let best = null;
   for (const m of S.zahlungsMails || []) {
-    if (m.schueler_id !== p.schueler_id || m.art !== "pruefung" || m.status !== "gesendet" || m.modus !== modus || !String(m.wofuer || "").startsWith(anfang)) continue;
-    const am = String(m.gesendet_am || m.angelegt_am || "").slice(0, 10);
+    if (m.schueler_id !== p.schueler_id || m.art !== "pruefung" || m.status !== "gesendet" || m.modus !== modus) continue;
+    const ma = mailArt(m.wofuer);
+    if (ma ? ma !== art(p) : andereArtOffen) continue;
+    const ts = Date.parse(m.gesendet_am || m.angelegt_am || "");
+    const am = isNaN(ts) ? "" : KR.dateISO(new Date(ts)); // lokaler Tag der Mail
     if (!am || am < grenze) continue;
     const verbraucht = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && art(q) === art(p) && q.datum >= am && q.datum < heute)
       || (art(p) === "praxis" && (S.pruefungen || []).some((e) => e.schueler_id === p.schueler_id && e.datum >= am && e.datum < heute)); // auch Prüfungen aus der App (Prüfer Büro)
-    if (!verbraucht && (!best || am > String(best.gesendet_am || best.angelegt_am || "").slice(0, 10))) best = m;
+    if (!verbraucht && (!best || ts > Date.parse(best.gesendet_am || best.angelegt_am || ""))) best = m;
   }
   return best;
 }
@@ -387,13 +394,15 @@ function zmKarteDaten(p) {
   else if (!S.zmGeladen) grund = "Zahlungsdaten werden noch geladen, bitte in der Akte senden";
   else if (S.zmVerlaufFehler && !gesendet) grund = "Verlauf nicht geladen, bitte in der Akte prüfen";
   else if (!zmDatenDa()) { grund = "Zahlungsdaten fehlen"; link = ["#einstellungen?thema=zahlungen", "Zahlungsdaten eintragen"]; }
-  else if (cent == null) { grund = "Kein Preis für diese Prüfung in der Preisliste"; link = ["#einstellungen?thema=preise", "Preis eintragen"]; }
+  else if (cent == null) { grund = "Kein Preis für diese Prüfung in der Preisliste"; link = ["#zahlungen?reiter=preise", "Preis eintragen"]; }
   else if (echt && S.elternFehler) grund = "Eltern-Angaben konnten nicht geladen werden";
   else if (echt && !zmEmpfaenger(x).length) grund = "Keine E-Mail-Adresse in der Akte";
   return { x, cent, wofuer, grund, link, gesendet, echt };
 }
 function zmKarteZu() { const k = document.getElementById("zmKarte"); if (k) { clearTimeout(k._timer); k.remove(); } }
-function zmNachPruefung(p) {
+// Ein altes rotes Fehler-Feld (Toast) soll nicht neben der Karte stehen bleiben
+function zmAltenFehlerWeg() { const t = document.getElementById("toast"); if (t && t.classList.contains("fehler")) t.classList.remove("zeigen"); }
+function zmNachPruefung(p, fehlerText) {
   zmKarteZu();
   const d = zmKarteDaten(p);
   if (!d) return false;
@@ -407,7 +416,9 @@ function zmNachPruefung(p) {
   if (d.gesendet) rest = `<span class="zm-karte-haken" data-zmkhaken>✓ Zahlungsaufforderung gesendet am ${esc(zmZeit(d.gesendet.gesendet_am || d.gesendet.angelegt_am))}${d.gesendet.modus === "test" ? " (Test)" : ""}</span>`;
   else if (d.grund) rest = `<span class="zm-karte-grund" data-zmkgrund>Zahlung anfordern: ${esc(d.grund)}</span>${d.link ? `<a class="toast-knopf" href="${esc(d.link[0])}" data-zmklink>${esc(d.link[1])}</a>` : ""}`;
   else rest = `<button type="button" class="toast-knopf" data-zmksenden>${d.echt ? "Zahlungsaufforderung senden" : "Zahlungsaufforderung senden (Test)"} · ${esc(zmEuroText(d.cent))}</button>`;
-  el.innerHTML = kopf + `<button type="button" class="toast-knopf zm-karte-zu" data-zmkzu aria-label="Schließen">×</button>` + rest;
+  const fehler = fehlerText ? `<span class="zm-karte-fehler" data-zmkfehler role="alert">${esc(fehlerText)}</span>` : "";
+  el.innerHTML = kopf + `<button type="button" class="toast-knopf zm-karte-zu" data-zmkzu aria-label="Schließen">×</button>` + fehler + rest;
+  zmAltenFehlerWeg(); // der Fehler steht (falls vorhanden) jetzt in der Karte, nicht doppelt darunter
   el.querySelector("[data-zmkzu]").addEventListener("click", zmKarteZu);
   const l = el.querySelector("[data-zmklink]");
   if (l) l.addEventListener("click", () => zmKarteZu());
@@ -436,6 +447,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document
 async function zmVersand(sid, art, cent, wofuer, modus, opt) {
   const schluessel = sid + "|" + art;
   const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
+  zmAltenFehlerWeg(); // neuer Versuch: die alte rote Meldung ist erledigt
   ZM.laeuft.add(schluessel); mailBloeckeAktualisieren();
   const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
   const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
