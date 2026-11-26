@@ -137,7 +137,7 @@ async function geraetOeffnen(name, breite) {
   page.on("pageerror", (e) => konsole.push(name + ": " + String(e)));
   page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::ERR/.test(m.text())) konsole.push(name + ": " + m.text()); });
   page.on("dialog", (d) => d.accept().catch(() => {}));
-  await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+  await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
   await page.exposeFunction("__srv", (q) => bedienen(name, q));
   await page.clock.install(); // die 4-s-Sync-Zeitgeber laufen nie von allein
   await page.goto(basis + "index.html");

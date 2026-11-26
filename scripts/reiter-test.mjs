@@ -440,9 +440,14 @@ await pruefe("E1", "Farb- und Schrift-Variablen --k-* auf :root", async () => {
   return f;
 });
 
-await pruefe("E2", "Manrope wird über Google Fonts geladen", async () => {
-  const da = await page.evaluate(() => [...document.head.querySelectorAll("link[href]")].some((l) => /fonts\.googleapis\.com/.test(l.href) && /family=Manrope/.test(l.href)));
-  if (!da) return "kein <link> mit family=Manrope im <head>";
+await pruefe("E2", "Manrope kommt aus den lokalen Schriften (fonts/fonts.css)", async () => {
+  const da = await page.evaluate(async () => {
+    const l = [...document.head.querySelectorAll("link[href]")].find((x) => /fonts\/fonts\.css$/.test(x.href));
+    if (!l) return false;
+    const t = await (await fetch(l.href)).text();
+    return /font-family:'Manrope'/.test(t);
+  });
+  if (!da) return "kein <link> auf fonts/fonts.css mit Manrope im <head>";
 });
 
 // F. Nichts kaputt

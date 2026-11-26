@@ -332,7 +332,7 @@ await A.ctx.close();
   const b = await ctx.newPage(); const js = [];
   b.on("pageerror", (e) => js.push(e.message)); b.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::ERR/.test(m.text())) js.push("konsole: " + m.text().slice(0, 120)); });
   b.on("dialog", (d) => { js.push("Dialog: " + d.message().slice(0, 60)); d.dismiss().catch(() => {}); });
-  await b.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fakeBuero }));
+  await b.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fakeBuero }));
   await b.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await b.addInitScript(([d]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "bu-1", email: "bu-1@example.org" } } }; }, [daten]);
   await b.goto(basis + "buero.html#kalender"); await warte(b, 500);

@@ -1,5 +1,5 @@
 /* Fahrlehrer-Kompass – Service Worker
-   Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek.
+   Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek (alles lokal im Repo, W20).
    Antworten von Supabase (Schülerdaten) und anderen Diensten werden NIE gespeichert. */
 
 const CACHE_VERSION = "kompass-v141";
@@ -8,6 +8,28 @@ const CORE_FILES = [
   "./kompass-rechnen.js",
   "./kompass-einstellungen.js",
   "./neuigkeiten.js",
+  "./fonts/fonts.css",
+  "./vendor/supabase-js-2.119.2.js",
+  "./fonts/barlow-latin-400-normal.woff2",
+  "./fonts/barlow-latin-500-normal.woff2",
+  "./fonts/barlow-latin-600-normal.woff2",
+  "./fonts/barlow-latin-700-normal.woff2",
+  "./fonts/barlow-latin-800-normal.woff2",
+  "./fonts/anton-latin-400-normal.woff2",
+  "./fonts/kaushan-script-latin-400-normal.woff2",
+  "./fonts/playfair-display-latin-400-normal.woff2",
+  "./fonts/playfair-display-latin-500-normal.woff2",
+  "./fonts/playfair-display-latin-600-normal.woff2",
+  "./fonts/playfair-display-latin-700-normal.woff2",
+  "./fonts/playfair-display-latin-500-italic.woff2",
+  "./fonts/playfair-display-latin-600-italic.woff2",
+  "./fonts/manrope-latin-400-normal.woff2",
+  "./fonts/manrope-latin-500-normal.woff2",
+  "./fonts/manrope-latin-600-normal.woff2",
+  "./fonts/manrope-latin-700-normal.woff2",
+  "./fonts/manrope-latin-800-normal.woff2",
+  "./fonts/source-serif-4-latin-opsz-normal.woff2",
+  "./fonts/source-serif-4-latin-opsz-italic.woff2",
   "./startseite.js",
   "./pruefer-wissen.js",
   "./schueler-ueberblick.js",
@@ -56,12 +78,9 @@ const CORE_FILES = [
   "./apple-touch-icon.png"
 ];
 
-/* Fremde Adressen, die gecacht werden dürfen (keine personenbezogenen Daten). */
-const ERLAUBTE_FREMDE = [
-  "https://fonts.googleapis.com",
-  "https://fonts.gstatic.com",
-  "https://cdn.jsdelivr.net"
-];
+/* Fremde Adressen, die gecacht werden dürfen: keine mehr. Schriften und Bibliotheken liegen
+   lokal (fonts/, vendor/), alles Fremde (auch Supabase) geht am Service Worker vorbei. */
+const ERLAUBTE_FREMDE = [];
 
 function darfCachen(url) {
   // Die Landingpage im Unterordner serband/ gehört nicht zur App: nicht zwischenspeichern

@@ -337,8 +337,8 @@ async function neuerKontext(breite = 360, hoehe = 780) {
   await ctx.addInitScript(attrappeEinbauen);
   await ctx.route("**/*", (r) => {
     const u = r.request().url();
+    if (/vendor\/supabase-js/.test(u)) return r.fulfill({ contentType: "text/javascript", body: "" });
     if (u.startsWith(basis)) return r.continue();
-    if (/cdn\.jsdelivr\.net\/npm\/@supabase/.test(u)) return r.fulfill({ contentType: "text/javascript", body: "" });
     return r.abort();
   });
   const page = await ctx.newPage();
@@ -886,7 +886,7 @@ async function bueroOeffnen(nutzer, breite, hash, wer) {
   page.on("pageerror", (e) => fehlerSammler.push({ wo: "buero-" + nutzer.k, text: e.message }));
   page.on("dialog", (dl) => dl.accept().catch(() => {}));
   await page.route(/^http:\/\/127\.0\.0\.1:\d+\//, (r) => r.continue());
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: buero_fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: buero_fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.addInitScript(([dd, sess]) => { window.__FAKE = { tabellen: dd.tabellen, konten: dd.konten, session: sess }; }, [d, { user: { id: nutzer.id, email: nutzer.email } }]);
   await page.goto(basis + "buero.html" + (hash || "#team")); await warte(page, 700);

@@ -33,7 +33,7 @@ const js = [];
 let dialogAntwort = true;
 page.on("pageerror", (e) => js.push(String(e)));
 page.on("dialog", (d) => (dialogAntwort ? d.accept() : d.dismiss()).catch(() => {}));
-await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
 await page.goto(basis + "index.html"); await page.waitForTimeout(1200);
 
 const vorbereiten = () => page.evaluate(() => {

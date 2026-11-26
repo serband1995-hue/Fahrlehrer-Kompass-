@@ -26,7 +26,7 @@ const ctx = await browser.newContext({ viewport: { width: 390, height: 780 } });
 const page = await ctx.newPage();
 const konsole = [];
 page.on("pageerror", (e) => konsole.push(String(e)));
-await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
 await page.goto(basis + "index.html");
 await page.waitForTimeout(1200);
 await page.evaluate(() => {
