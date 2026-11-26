@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.1", datum: "2026-11-26", kurz: "Büro: Fristen und Mail-Texte selbst einstellen.",
+    punkte: ["Neues Thema „Fristen“ unter Büro › Einstellungen: wie lange eine Frist läuft und wann gelb und blau gewarnt wird. Das gilt auch in der App.",
+             "Fristen aus dem Gesetz (zum Beispiel 12 Monate für die Theorie) bleiben fest und zeigen, woher sie kommen.",
+             "Neues Thema „Nachrichten-Vorlagen“: die Texte der Mails an Schüler und Eltern selbst schreiben, mit Vorschau.",
+             "„Standard“ holt den ursprünglichen Wert oder Text zurück."] },
   { version: "2026.11.25.16", datum: "2026-11-26", kurz: "Büro: Hinweise passen jetzt zur Büro-Seite.",
     punkte: ["Das Büro bekommt keine Hinweise mehr auf Einstellungen, die es gar nicht hat.",
              "Im Anmeldefenster des Büros steht jetzt „an diesem Gerät ganz abmelden“."] },
