@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.13", datum: "2026-11-26", kurz: "Büro: Quittungen für Zahlungen drucken.",
+    punkte: ["Büro: Für eine Zahlung eines Schülers gibt es jetzt eine Quittung zum Drucken oder als PDF.",
+             "Jede Quittung bekommt die nächste Nummer und lässt sich danach nicht mehr ändern. Ist etwas falsch, wird sie storniert.",
+             "Name, Anschrift und Steuernummer der Fahrschule trägt das Büro in den Einstellungen ein.",
+             "Bargeld-Quittungen sind zuerst ausgeschaltet. Vor dem Einschalten mit dem Steuerberater sprechen."] },
   { version: "2026.11.26.12", datum: "2026-11-26", kurz: "Kleine Verbesserungen in Liste, Kalender und Büro.",
     punkte: ["Schülerliste: Die vier Sortier-Knöpfe stehen jetzt in zwei Reihen. „Nach Stand“ heißt jetzt „Nach Fortschritt“.",
              "Wochenansicht: Haben zwei Schüler denselben Vornamen, steht in der kleinen Kachel der Nachname vorn, z. B. „Müller L.“.",

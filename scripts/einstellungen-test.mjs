@@ -63,7 +63,7 @@ const themenListe = (page) => page.$$eval(".es-thema", (l) => l.map((a) => a.tex
 const aktivesThema = (page) => page.$$eval('.es-thema[aria-current="page"]', (l) => l.map((a) => a.dataset.esThema).join(","));
 const setzeHash = async (page, h) => { await page.evaluate((x) => { location.hash = x; }, h); await warte(page, 400); };
 const konfig = (page) => page.evaluate(() => window.__FAKE.tabellen.fahrschulen.find((f) => f.id === "fs-test-1").konfiguration);
-const SOLL = ["Fahrschule", "Preise & Pakete", "Zahlungen & Mails", "Fristen", "Nachrichten-Vorlagen", "Fahrstunden & Kalender", "Löschen & Rückgängig", "Team & Zugänge", "Sicherheit (PIN)", "Backups", "Darstellung & Start"];
+const SOLL = ["Fahrschule", "Preise & Pakete", "Zahlungen & Mails", "Belege & Quittungen", "Fristen", "Nachrichten-Vorlagen", "Fahrstunden & Kalender", "Löschen & Rückgängig", "Team & Zugänge", "Sicherheit (PIN)", "Backups", "Darstellung & Start"];
 
 try {
   // E1 Leiste
