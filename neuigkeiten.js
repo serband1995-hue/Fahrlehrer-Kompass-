@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.13", datum: "2026-11-26", kurz: "Büro: Durchfallgründe und Verschiebungen jetzt auch hier.",
+    punkte: ["Büro: Unter „Statistik“ gibt es jetzt „Durchfallgründe“. Dort siehst du, woran Schüler in der Praxisprüfung am häufigsten scheitern, auch je Fahrlehrer.",
+             "Büro: Unter „Verschiebungen“ siehst du, welcher Schüler wann zu welchem Fahrlehrer gewechselt ist.",
+             "Büro: Du kannst dich an mehreren PCs gleichzeitig mit deiner PIN anmelden.",
+             "Büro: Änderst du deine PIN, wirst du an den anderen PCs abgemeldet. Dort erscheint ein kurzer Hinweis."] },
   { version: "2026.11.26.11", datum: "2026-11-26", kurz: "Ab 1. Dezember: Lohn zählt, sobald das Büro die Fahrchecks hat.",
     punkte: ["Ab dem 1. Dezember zählt der Lohn einer Fahrstunde, sobald das Büro ihre Fahrchecks als abgegeben bestätigt hat.",
              "Bei „Verdienst“ siehst du, wie viel noch auf den Haken vom Büro wartet und wie viel schon zählt.",
