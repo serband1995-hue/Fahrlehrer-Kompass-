@@ -5081,7 +5081,9 @@ async function starteWer() {
       return;
     }
   }
-  vergissSitzung();
+  // W20: einen verworfenen Schlüssel (Leerlauf abgelaufen) auch in der Datenbank beenden – sonst belegt er bis zu 12 Stunden
+  // einen der 5 Plätze der Person. beendeSitzung vergisst ihn hier sofort und meldet ihn mit seinem Schlüssel ab.
+  if (alt && alt.token) { S.sitzung = alt; beendeSitzung(); } else vergissSitzung();
   zeigeWer();
 }
 $("werListe").addEventListener("click", (e) => {
