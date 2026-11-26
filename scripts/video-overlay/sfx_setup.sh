@@ -20,9 +20,9 @@ if ! "$SFX_VENV/bin/python" -c "import earshot" 2>/dev/null; then
   "$SFX_VENV/bin/pip" install -q "earshot @ git+https://github.com/Leonxlnx/earshot@$EARSHOT_COMMIT" || ok=0
 fi
 export SFX_PY="$SFX_VENV/bin/python"
-# den Befehl `earshot` dauerhaft auffindbar machen (gilt auch in späteren Shell-Aufrufen dieser Sitzung)
+# den Befehl `earshot` dauerhaft auffindbar machen (Symlink nach /usr/local/bin oder ~/.local/bin, außerhalb des Repos) (gilt auch in späteren Shell-Aufrufen dieser Sitzung)
 for d in /usr/local/bin "$HOME/.local/bin"; do
-  if [ -w "$d" ] || mkdir -p "$d" 2>/dev/null && [ -w "$d" ]; then ln -sf "$SFX_VENV/bin/earshot" "$d/earshot"; break; fi
+  if [ -w "$d" ] || mkdir -p "$d" 2>/dev/null && [ -w "$d" ]; then [ -x "$SFX_VENV/bin/earshot" ] && ln -sf "$SFX_VENV/bin/earshot" "$d/earshot"; break; fi
 done
 mkdir -p "$SFX_BIB/openverse/earshot"
 "$SFX_PY" -c "import earshot; print('earshot ok', earshot.__version__ if hasattr(earshot,'__version__') else '')" || ok=0
@@ -39,4 +39,5 @@ if [ "$SFX_BIB/openverse" != "/root/sfx-bibliothek/openverse" ]; then
   export REAL_SFX_CONFIG="$SFX_BIB/real-sfx-config.json"
 fi
 "$SFX_PY" -c "import requests" 2>/dev/null && { echo "FEHLER: requests im sfx-venv (earshot llm möglich), bitte entfernen"; ok=0; }
-[ "$ok" = 1 ] && echo "Bereit. \$SFX_PY=$SFX_PY  \$REAL_SFX=$REAL_SFX  \$SFX_BIB=$SFX_BIB" || echo "Nicht alles bereit, siehe oben."
+[ "$ok" = 1 ] || { echo "Nicht alles bereit, siehe oben." >&2; return 1 2>/dev/null || exit 1; }
+[ "$ok" = 1 ] && echo "Bereit. \$SFX_PY=$SFX_PY  \$REAL_SFX=$REAL_SFX  \$SFX_BIB=$SFX_BIB"

@@ -170,7 +170,17 @@ def main():
     print(f"\n{neu} neue Datei(en). Bibliothek: {bib}  ({len(rows)} insgesamt, Liste: herkunft.csv)")
     if a.index and not a.nur_suchen:
         print("baue den real-sfx-Index neu ...", flush=True)
-        subprocess.check_call([sys.executable, str(REAL_SFX / "scripts" / "build_index.py")], cwd=str(REAL_SFX))
+        env = dict(os.environ)
+        env.setdefault("REAL_SFX_INDEX", str(bib.parent / "real-sfx-index.json"))  # wie sfx_setup.sh
+        if str(bib) != "/root/sfx-bibliothek/openverse" and "REAL_SFX_CONFIG" not in env:
+            cfg = json.loads((REAL_SFX / "config.json").read_text(encoding="utf-8"))
+            for lib in cfg.get("libraries", []):
+                if lib.get("name") == "openverse-cc0":
+                    lib["path"] = str(bib)
+            eigene = bib.parent / "real-sfx-config.json"
+            eigene.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+            env["REAL_SFX_CONFIG"] = str(eigene)
+        subprocess.check_call([sys.executable, str(REAL_SFX / "scripts" / "build_index.py")], cwd=str(REAL_SFX), env=env)
 
 
 if __name__ == "__main__":
