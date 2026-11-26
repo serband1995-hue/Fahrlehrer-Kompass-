@@ -16324,8 +16324,10 @@ async function routeFCAbgabe(){
 function _fcZahl(l){ try{ if(window.KR&&KR.fcGebucht)return KR.fcGebucht(l); }catch(e){} return 2; }
 // Beschriftung eines Vermerks passend zur Zahl der Fahrchecks
 function _fcVermerkText(fc,n){
+  // Unter 45 Minuten gibt es keinen Fahrcheck; ein alter Vermerk wird trotzdem genannt (er wirkt noch auf den Verdienst)
+  if(n<=0){ const alt={v1:"1 FC vergessen",v2:"FC vergessen",eins_ok:"als abgeschlossen",halb_bewusst:"bewusst",geschenkt:"geschenkt",nachgereicht:"nachgereicht"}[fc]; return "Kein Fahrcheck (unter 45 Min)"+(alt?" · Vermerk: "+alt:""); }
   if(fc==="v1")return "1 FC vergessen";
-  if(fc==="v2")return n===2?"2 FC vergessen":n===1?"1 FC vergessen":`Alle ${n} FC vergessen`;
+  if(fc==="v2")return n===2?"2 FC vergessen":n===1?"1 FC vergessen (ohne Verdienst)":`Alle ${n} FC vergessen`;
   if(fc==="eins_ok")return n<=1?"Kein FC (abgeschlossen)":`${n-1} FC (abgeschlossen)`;
   if(fc==="halb_bewusst")return n<=1?"Kein FC (bewusst)":`${n-1} FC (bewusst)`;
   if(fc==="geschenkt")return "geschenkt";
@@ -16373,10 +16375,16 @@ function openFCMenu(id){
     } else {
       acts+=tag("v1","1 FC vergessen",`nur ${eurHalb} €`);
       acts+=tag("eins_ok","Kein FC – als abgeschlossen","voller Verdienst (Einigung)","good");
+      // Vermerke aus der Zeit vor der 45-Minuten-Regel bleiben wählbar und markiert (sonst widerspricht das Menü dem Termin)
+      if(cur==="v2")acts+=tag("v2","1 FC vergessen (ohne Verdienst)","0 € · Vermerk aus früherer Zeit");
+      if(cur==="halb_bewusst")acts+=tag("halb_bewusst","Kein FC · bewusst","halber Verdienst · Vermerk aus früherer Zeit");
     }
-    if(n!==1)acts+=tag("v2",_fcVermerkText("v2",n),"0 €");
+    if(n>=2)acts+=tag("v2",_fcVermerkText("v2",n),"0 €");
     acts+=tag("geschenkt","Stunde geschenkt","0 €");
     if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
+  } else if(cur){
+    // Unter 45 Minuten mit altem Vermerk: zurücksetzen muss gehen (der Vermerk wirkt sonst still auf den Verdienst)
+    acts+=tag("normal","Vermerk entfernen","voller Verdienst · für diese Stunde gibt es keinen Fahrcheck","primary");
   }
   acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden</button>`;
   openSheet(`<div class="sheet-h">Fahrcheck · ${esc(st?st.name:"")}</div>

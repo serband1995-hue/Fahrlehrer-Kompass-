@@ -5,6 +5,7 @@
 //   M3 135 Min: „3 FC erhalten“, „Alle 3 FC vergessen“, „Nur 2 FC · bewusst“
 //   M4 40 Min: keine Fahrcheck-Wahl, Hinweis „kürzer als 45 Minuten“
 //   M5 Vermerk „vergessen“ bei 135 Min: Termin-Fenster „Alle 3 FC vergessen“, Liste „3 FC fehlen“
+//   M7 alte Vermerke: unter 45 Min zurücksetzbar, nie „0 FC“; 45 Min mit altem „2 vergessen“ markiert
 //   M6 keine JS-Fehler, Knöpfe ≥ 44 px
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/fc-menue-test.mjs
 import { createRequire } from "node:module";
@@ -68,10 +69,19 @@ await pruefe("M3", "135 Min: „3 FC erhalten“, „Alle 3 FC vergessen“, „
 await pruefe("M6", "Knöpfe im Menü ≥ 44 px", () => (m.minH >= 43.5 ? null : "nur " + m.minH));
 m = await menue("L40");
 await pruefe("M4", "40 Min: keine Fahrcheck-Wahl, Hinweis „kürzer als 45 Minuten“", () => [m.knoepfe.length && "Knöpfe: " + m.knoepfe.join(","), !/kürzer als 45 Minuten/.test(m.text) && "kein Hinweis"].filter(Boolean));
+// M7 (Prüfer Bedienung): alte Vermerke – 40 Min mit „vergessen“ lässt sich zurücksetzen, nie „0 FC“; 45 Min mit altem v2 ist markiert
+await page.evaluate(() => { const l = DB.lessons.find((x) => x.id === "L40"); l.fc = "v1"; const k = DB.lessons.find((x) => x.id === "L45"); k.fc = "v2"; });
+m = await menue("L40");
+const t40 = await termin("L40");
+await pruefe("M7", "40 Min mit altem Vermerk: „Vermerk entfernen“ da, Termin-Fenster „Kein Fahrcheck“, nie „0 FC“", () => [!m.knoepfe.includes("normal") && "kein Zurücksetzen", !/Kein Fahrcheck/.test(t40) && "Termin: " + t40, /0 FC/.test(t40 + m.text) && "„0 FC“ sichtbar"].filter(Boolean));
+const m45 = await page.evaluate(() => { try { closeSheet(); } catch (e) {} openFCMenu("L45"); const on = document.querySelector("#sheet [data-fcset].on"); return on ? on.dataset.fcset : ""; });
+await pruefe("M7", "45 Min mit altem „2 vergessen“: im Menü markiert", () => (m45 === "v2" ? null : "markiert: " + m45));
+await page.evaluate(() => { try { closeSheet(); } catch (e) {} setFC("L40", "normal"); }); await page.waitForTimeout(300);
+await pruefe("M7", "Vermerk entfernen wirkt", () => page.evaluate(() => DB.lessons.find((x) => x.id === "L40").fc || null).then((v) => (v ? "noch " + v : null)));
 await page.evaluate(() => { try { closeSheet(); } catch (e) {} setFC("L135", "v2"); }); await page.waitForTimeout(300);
 const t135 = await termin("L135");
 const liste = await page.evaluate(() => { try { closeSheet(); } catch (e) {} return typeof fcForgottenLessons === "function" ? fcForgottenLessons().map((l) => l.id).join(",") : ""; });
-await pruefe("M5", "135 Min „vergessen“: Termin-Fenster „Alle 3 FC vergessen“, in der Vergessen-Liste", () => [!/Alle 3 FC vergessen/.test(t135) && "Termin: " + t135, liste !== "L135" && "Liste: " + liste].filter(Boolean));
+await pruefe("M5", "135 Min „vergessen“: Termin-Fenster „Alle 3 FC vergessen“, in der Vergessen-Liste", () => [!/Alle 3 FC vergessen/.test(t135) && "Termin: " + t135, !liste.split(",").includes("L135") && "Liste: " + liste].filter(Boolean));
 await pruefe("M6", "keine JS-Fehler", () => jsFehler);
 await browser.close(); server.close();
 console.log(`\nFahrcheck-Menü-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);
