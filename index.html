@@ -4191,7 +4191,7 @@ function _zeigeBueroHinweis() {
   el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "bhTitel");
   el.style.cssText = "position:fixed;inset:0;z-index:58;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;";
   el.innerHTML = `<div style="max-width:420px;width:100%;text-align:center;">
-      <h2 id="bhTitel" style="margin:0 0 10px;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:22px;letter-spacing:.02em;">Büro-Seite</h2>
+      <h2 id="bhTitel" style="margin:0 0 10px;font-family:var(--k-font-titel);font-size:28px;font-weight:700;">Büro-Seite</h2>
       <p style="font-size:15px;line-height:1.55;color:var(--txt);margin:0 0 6px;">Das Büro arbeitet auf der Büro-Seite.</p>
       <p style="font-size:14px;line-height:1.5;color:var(--muted);margin:0 0 22px;">Die App hier ist nur für Fahrlehrer. Am besten am PC öffnen.</p>
       <a class="btn btn-primary" id="bhOeffnen" href="buero.html" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;box-sizing:border-box;text-decoration:none;">Büro-Seite öffnen</a>
@@ -6040,6 +6040,9 @@ async function _tryOfflineSession() {
   _zeigeAbmelden(); // K13: Abmelden unter „Mehr“ auch beim Start ohne Netz
   updateBell();
   toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
+  // W17: Büro (aus dem Zwischenspeicher bekannt) bekommt auch ohne Netz keine Fahrlehrer-Ansicht, nur den Hinweis.
+  // Die Rolle wird dabei NICHT gesetzt (Offline-Start: nie weiterleiten), der Hinweis hat nur einen Link.
+  const _pc = _profilAusSpeicher(u.id); if (_pc && _pc.rolle === "buero") _zeigeBueroHinweis();
   return true;
 }
 
@@ -9239,7 +9242,7 @@ function _letzteAktivitaet(s){
   const l=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date).map(x=>x.date).sort();
   return l.length?l[l.length-1]:"";
 }
-let _homeSortMode=null; // null = Standard: „Als Nächstes dran“ (Gesamtansicht: A–Z)
+let _homeSortMode={}; // je Ansicht (eigen/gesamt); leer = Standard: „Als Nächstes dran“ (Gesamtansicht: A–Z)
 // W17 (🗣 Serband 26.11.2026 „bitte ordnen, das ist alles etwas random“): gewählte Sortierung je Gerät merken,
 // getrennt für die eigene Ansicht und die Gesamtansicht. Gespeichert wird nur ein Wort, keine Schülerdaten.
 const _SL_SORT_KEY="kompass-sl-sort-v1", _SL_SORTEN=["naechste","lange","stand","az"];
@@ -9271,7 +9274,7 @@ function routeHome(){
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
   if(_homeOhneTelefon) list=list.filter(telefonFehlt);
   const alle=activeStudents();
-  const modus=_slSortLesen()||_homeSortMode||(_fsAgg?"az":"naechste");
+  const modus=_slSortLesen()||_homeSortMode[_fsAgg?"gesamt":"eigen"]||(_fsAgg?"az":"naechste");
   const alpha=(a,b)=>(a.name||"").localeCompare(b.name||"","de");
   if(modus==="stand") list.sort((a,b)=>stand(b)-stand(a)||alpha(a,b));
   else if(modus==="naechste"){ const k=x=>{ const t=_slNaechster(x); return t?t.date+" "+t.von:"9999"; }; list.sort((a,b)=>k(a).localeCompare(k(b))||alpha(a,b)); }
@@ -9319,21 +9322,21 @@ function routeHome(){
   if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
   if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML2(s,i,hinweise)).join("")}</details>`;
   const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
-  view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;${sortiertAlpha&&!gruppiertNachFahrlehrer?'padding-right:32px;':''}">
+  view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;">
     <div class="sl-kopf"><h1 class="sl-titel">Schüler</h1><span class="sl-zahl">${alle.length-wartende.length} aktiv${wartende.length?` · ${wartende.length} warten`:''}</span></div>
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
       <div class="search-wrap" style="flex:1;margin:0;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
       <button class="cal-search-btn" id="homeFilterBtn" aria-label="Filter" style="position:relative;flex:0 0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${filterAktiv?'<span class="cal-filter-badge"></span>':''}</button>
     </div>
     ${sortBar}
-    <div id="studentGrid">${gridHTML}</div>
+    <div id="studentGrid"${sortiertAlpha&&!gruppiertNachFahrlehrer?' style="padding-right:24px;"':''}>${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
     ${window.SU?SU.knopfHTML():""}
     </div>
     <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
   document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
-  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; _slSortMerken(_homeSortMode); routeHome(); }));
+  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode[_fsAgg?"gesamt":"eigen"]=b.dataset.sort; _slSortMerken(b.dataset.sort); routeHome(); }));
   const _hfb=$("#homeFilterBtn"); if(_hfb)_hfb.addEventListener("click",openHomeFilterSheet);
   document.querySelectorAll(".alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
     const el=document.getElementById("alpha-"+b.dataset.letter);

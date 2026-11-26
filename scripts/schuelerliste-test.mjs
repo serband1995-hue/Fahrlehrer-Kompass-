@@ -2,7 +2,7 @@
 // Prüft mit erfundenen Schülern („Muster“), am Handy 360 px:
 //   S1 „Als Nächstes dran“: feste Gruppen Heute · Nächste 7 Tage · Später · Ohne Termin, je mit Anzahl, innen nach Uhrzeit bzw. A–Z
 //   S2 „Lange nicht gefahren“ und „Nach Stand“: feste Gruppen in fester Reihenfolge
-//   S3 die gewählte Sortierung bleibt nach dem Neuladen (je Gerät), getrennt von der Gesamtansicht; kaputter Speicher → Vorgabe
+//   S3 die gewählte Sortierung bleibt nach dem Neuladen (je Gerät), getrennt von der Gesamtansicht (auch ohne Neuladen); kaputter Speicher → Vorgabe
 //   S4 Abschnitt „Wartet“ ist A–Z sortiert
 //   S5 alle vier Sortier-Knöpfe sichtbar (nichts rechts abgeschnitten), kein seitliches Wischen, keine JS-Fehler
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/schuelerliste-test.mjs
@@ -87,6 +87,11 @@ await tippe("lange");
 await lade();
 await pruefe("S3", "gewählte Sortierung „Lange nicht gefahren“ bleibt nach dem Neuladen", () => page.evaluate(() => [...document.querySelectorAll("#view .sl-sort.on")].map((b) => b.dataset.sort).join()).then((v) => (v === "lange" ? null : "aktiv: " + v)));
 await pruefe("S3", "gespeichert nur ein Wort je Ansicht (keine Schülerdaten)", () => page.evaluate(() => localStorage.getItem("kompass-sl-sort-v1")).then((v) => (v === '{"eigen":"lange"}' ? null : v)));
+await tippe("stand");
+await pruefe("S3", "Wahl der eigenen Ansicht gilt nicht in der Gesamtansicht (dort Vorgabe A–Z), auch ohne Neuladen", () => page.evaluate(() => {
+  const echt = _fsAgg; _fsAgg = { pakete: [], lehrer: [], fahrschuleId: "fs-muster" };
+  try { routeHome(); return [...document.querySelectorAll("#view .sl-sort.on")].map((b) => b.dataset.sort).join(); } finally { _fsAgg = echt; routeHome(); }
+}).then((v) => (v === "az" ? null : "aktiv: " + v)));
 await lade({ speicher: "{kaputt" });
 await pruefe("S3", "kaputter Speicher → Vorgabe „Als Nächstes dran“, kein Fehler", () => page.evaluate(() => [...document.querySelectorAll("#view .sl-sort.on")].map((b) => b.dataset.sort).join()).then((v) => (v === "naechste" ? null : "aktiv: " + v)));
 await pruefe("S5", "alle vier Sortier-Knöpfe ganz sichtbar (≥ 44 px), kein seitliches Wischen", () => page.evaluate(() => {
@@ -95,6 +100,8 @@ await pruefe("S5", "alle vier Sortier-Knöpfe ganz sichtbar (≥ 44 px), kein se
   if (document.documentElement.scrollWidth > W + 1) f.push("seitlich wischbar");
   return f;
 }));
+await tippe("az");
+await pruefe("S5", "bei A–Z höchstens 2 Zeilen Sortier-Knöpfe (360 px)", () => page.evaluate(() => new Set([...document.querySelectorAll("#view .sl-sort")].map((b) => Math.round(b.getBoundingClientRect().top))).size).then((n) => (n <= 2 ? null : n + " Zeilen")));
 await pruefe("S5", "keine JS-Fehler", () => jsFehler);
 await browser.close(); server.close();
 console.log(`\nSchülerliste-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);
