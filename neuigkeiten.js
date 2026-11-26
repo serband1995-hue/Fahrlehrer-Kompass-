@@ -4,12 +4,21 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.26.4", datum: "2026-11-26", kurz: "Schülerliste jetzt in klaren Gruppen.",
+  { version: "2026.11.26.7", datum: "2026-11-26", kurz: "Schülerliste jetzt in klaren Gruppen.",
     punkte: ["Die Schülerliste ist geordnet: Heute, Nächste 7 Tage, Später, Ohne Termin. Über jeder Gruppe steht, wie viele es sind.",
              "Auch „Lange nicht gefahren“ und „Nach Stand“ zeigen feste Gruppen.",
              "Die gewählte Sortierung bleibt gemerkt, auch nach dem Neustart.",
              "Alle vier Sortier-Knöpfe sind jetzt ganz zu sehen. Die Wartenden stehen nach dem Alphabet.",
              "Die Gesamtübersicht der Fahrschule gibt es nur noch für die Leitung. Das Büro arbeitet auf der Büro-Seite."] },
+  { version: "2026.11.26.6", datum: "2026-11-26", kurz: "Termine verschieben: erst 0,8 Sekunden halten, dann ziehen.",
+    punkte: ["Im Kalender verschiebt sich ein Termin nur noch, wenn du ihn kurz festhältst (0,8 Sekunden). Dann hebt sich die Karte leicht an. Bei vielen Handys vibriert es dazu kurz.",
+             "So passiert beim Scrollen der Woche nichts mehr aus Versehen.",
+             "Kurz tippen öffnet den Termin wie bisher."] },
+  { version: "2026.11.26.5", datum: "2026-11-26", kurz: "Fahrchecks: nur volle 45 Minuten zählen.",
+    punkte: ["Jede volle 45 Minuten Fahrzeit ist 1 Fahrcheck: 45 Minuten = 1, 90 Minuten = 2, 135 Minuten = 3.",
+             "Angefangene 45 Minuten zählen nicht mit: 80 Minuten sind 1 Fahrcheck, nicht 2.",
+             "Das gilt gleich für Fahrstunden, Sonder- und Nachtfahrten, in der App und im Büro.",
+             "Auch ältere Stunden werden so gezählt. Eine Stunde mit 80 Minuten zählt jetzt als 1 Fahrcheck."] },
   { version: "2026.11.26.2", datum: "2026-11-26", kurz: "Mails an Schüler sagen jetzt „du“.",
     punkte: ["Die fertigen Mail-Texte an Schüler (Zahlung, Reaktivierung, Fristen) sagen jetzt „du“, auch im Betreff.",
              "Mails an Eltern bleiben bei „Sie“.",

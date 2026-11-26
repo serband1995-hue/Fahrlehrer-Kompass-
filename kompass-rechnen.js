@@ -188,18 +188,20 @@
   }
 
   /* ----- Fahrchecks (FC) -----
-     Papier-Wertmarke: 1 FC je 45 Minuten Fahrstunde/Sonderfahrt/Nachtfahrt (90 Min = 2 FC).
+     Papier-Wertmarke: 1 FC je VOLLE 45 Minuten Fahrstunde/Sonderfahrt/Nachtfahrt (90 Min = 2 FC, 80 Min = 1 FC).
      Vermerke des Fahrlehrers (wie index.html, setFC): v1/halb_bewusst/eins_ok = 1 FC weniger,
      v2 = 2 vergessen, geschenkt = keiner, offen = FC fehlt noch, nachgereicht = zählt im
      Zeitraum von nachAm. Ohne Vermerk = alle FC erhalten.
      Gezählt wird die gebuchte Zeit (von–bis), nicht eine verschenkte Restzeit.
      Nicht erschienen / abgebrochen = keine FC. */
   const FC_ARTEN = ["fahrstunde", "sonder", "nacht"];
-  /* W13 PR 3: EINE Stelle für die Rundung in 45-Minuten-Stücken (Entscheidung Serband: siehe RUNDUNG).
+  /* W13 PR 3: EINE Stelle für die Rundung in 45-Minuten-Stücken.
      geld     = Fahrchecks und Paket (was bezahlt und abgegeben wird)
      nachweis = Ausbildungsplan und Ausbildungsnachweis (Pflicht-Sonderfahrten, volle Einheiten)
-     Bei 45, 90, 135 und 180 Minuten sind beide gleich; anders nur bei krummen Längen (68–89, 113–134 Minuten). */
-  const RUNDUNG = { geld: Math.round, nachweis: Math.floor };
+     W17 (🗣 Serband 26.11.2026: „Es gibt nur 45, 90, 135 min, immer nur volle 45 min. Alle vollen 45 min sind 1 Fahrcheck.“):
+     beide zählen nur volle 45 Minuten (44 → 0, 80 → 1, 89 → 1, 90 → 2, 134 → 2, 135 → 3), für Fahrstunde, Sonder- und Nachtfahrt gleich.
+     UE und Lohn (ueOf) rechnen weiter anteilig nach Minuten (HS7 26.11.: in diesem Schritt nicht ändern). */
+  const RUNDUNG = { geld: Math.floor, nachweis: Math.floor };
   function einheitenGeld(min) { return min > 0 ? RUNDUNG.geld(min / 45) : 0; }
   function einheitenNachweis(min, einheit) { return min > 0 ? RUNDUNG.nachweis(min / (einheit || 45)) : 0; }
   function fcGebucht(t) {

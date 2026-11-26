@@ -62,7 +62,7 @@ await pruefe("K1", "KR: Vorgabe 45 Minuten; volle Einheiten (90 = 2, 45 = 1, 60 
   // W13 PR 3: eine Stelle für die Rundung; Fahrchecks zählen über Mitternacht
   if (KR.fcGebucht({ art: "nacht", von: "22:30", bis: "00:00" }) !== 2) f.push("Fahrchecks über Mitternacht nicht 2");
   if (KR.fcGebucht({ art: "fahrstunde", von: "10:00", bis: "09:00" }) !== 0) f.push("Tippfehler 10–09 Uhr ergibt Fahrchecks");
-  if (KR.einheitenGeld(80) !== 2 || KR.einheitenNachweis(80, 45) !== 1 || KR.einheitenGeld(135) !== 3 || KR.einheitenNachweis(135, 45) !== 3) f.push("Rundung Geld/Nachweis falsch");
+  if (KR.einheitenGeld(80) !== 1 || KR.einheitenNachweis(80, 45) !== 1 || KR.einheitenGeld(135) !== 3 || KR.einheitenNachweis(135, 45) !== 3) f.push("Rundung Geld/Nachweis falsch");
   if (KR.fcGebucht({ art: "sonder", von: "10:00", bis: "11:20" }) !== KR.einheitenGeld(80) || KR.sonderEinheiten("10:00", "11:20") !== Math.max(1, KR.einheitenNachweis(80, 45))) f.push("fcGebucht/sonderEinheiten nutzen nicht die gemeinsame Rundung");
   return f;
 });
