@@ -180,5 +180,18 @@ const agbApp = (html.match(/const AGB_VERSION="([^"]+)"/) || [])[1];
 const agbBuero = (readFileSync(join(ROOT, "buero.js"), "utf8").match(/const AGB_VERSION = "([^"]+)"/) || [])[1];
 gleich("AGB_VERSION index.html = buero.js", agbApp, agbBuero);
 
+// W17 (🗣 Serband 26.11.2026): nur volle 45 Minuten zählen als Fahrcheck (Fahrstunde, Sonder- und Nachtfahrt gleich)
+const zeit = (min) => { const b = 10 * 60 + min; return { von: "10:00", bis: String(Math.floor(b / 60)).padStart(2, "0") + ":" + String(b % 60).padStart(2, "0") }; };
+for (const [min, soll] of [[0, 0], [44, 0], [45, 1], [68, 1], [80, 1], [89, 1], [90, 2], [134, 2], [135, 3], [180, 4]]) {
+  gleich(`einheitenGeld(${min})`, soll, KR.einheitenGeld(min));
+  for (const art of ["fahrstunde", "sonder", "nacht"]) gleich(`fcGebucht ${art} ${min} Min`, soll, KR.fcGebucht({ art, ...zeit(min) }));
+}
+gleich("fcGebucht Nachtfahrt über Mitternacht 22:30–00:00", 2, KR.fcGebucht({ art: "nacht", von: "22:30", bis: "00:00" }));
+gleich("fcGebucht über Mitternacht 23:30–00:50 (80 Min)", 1, KR.fcGebucht({ art: "nacht", von: "23:30", bis: "00:50" }));
+gleich("fcErhalten 80 Min ohne Vermerk", 1, KR.fcErhalten({ art: "fahrstunde", von: "10:00", bis: "11:20", status: "geplant" }));
+gleich("fcErhalten 80 Min v1", 0, KR.fcErhalten({ art: "fahrstunde", von: "10:00", bis: "11:20", status: "geplant", fc: "v1" }));
+gleich("fcVomBuero 80 Min, Büro wählt 2", 1, KR.fcVomBuero({ art: "fahrstunde", von: "10:00", bis: "11:20", status: "geplant", bueroFcAnzahl: 2 }));
+gleich("Geld und Nachweis gleiche Regel (80)", KR.einheitenNachweis(80, 45), KR.einheitenGeld(80));
+
 console.log(fehler ? `Rechen-Test: ${fehler} von ${faelle} Fällen weichen ab.` : `Rechen-Test: alle ${faelle} Fälle gleich.`);
 process.exit(fehler ? 1 : 0);
