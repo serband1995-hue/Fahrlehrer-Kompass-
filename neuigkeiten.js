@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.2", datum: "2026-11-26", kurz: "Schülerliste jetzt in klaren Gruppen.",
+    punkte: ["Die Schülerliste ist geordnet: Heute, Nächste 7 Tage, Später, Ohne Termin. Über jeder Gruppe steht, wie viele es sind.",
+             "Auch „Lange nicht gefahren“ und „Nach Stand“ zeigen feste Gruppen.",
+             "Die gewählte Sortierung bleibt gemerkt, auch nach dem Neustart.",
+             "Alle vier Sortier-Knöpfe sind jetzt ganz zu sehen. Die Wartenden stehen nach dem Alphabet.",
+             "Die Gesamtübersicht der Fahrschule gibt es nur noch für die Leitung. Das Büro arbeitet auf der Büro-Seite."] },
   { version: "2026.11.26.1", datum: "2026-11-26", kurz: "Büro: Fristen und Mail-Texte selbst einstellen.",
     punkte: ["Neues Thema „Fristen“ unter Büro › Einstellungen: wie lange eine Frist läuft und wann gelb und blau gewarnt wird. Das gilt auch in der App.",
              "Fristen aus dem Gesetz (zum Beispiel 12 Monate für die Theorie) bleiben fest und zeigen, woher sie kommen.",
