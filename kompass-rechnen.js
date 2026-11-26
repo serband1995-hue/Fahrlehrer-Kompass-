@@ -232,6 +232,54 @@
     return voll;
   }
 
+  /* ----- Lohn folgt Fahrcheck-Abgabe (W19, Entscheidung 08.11., 🗣 Serband 26.11.2026: „Erst Lohn bei Abgabe“) -----
+     Ab LOHN_FC_AB zählt der Lohn einer Fahrstunde/Sonder-/Nachtfahrt erst, wenn das Büro ihre Fahrchecks als abgegeben
+     bestätigt hat (kalender_termine.buero_fc_status = „abgegeben“, Zahl buero_fc_anzahl bzw. Vermerk). Fehlt ein Fahrcheck:
+     kein Lohn für diese Stunde, bis er nachgereicht ist; dann voller Lohn im Monat des Nachreichens. Den halben Lohn bei
+     „1 FC vergessen“ gibt es ab dann nicht mehr. Die Höhe bleibt anteilig nach Minuten (ueOf), nur der Zeitpunkt ändert sich.
+     Stunden unter 45 Minuten haben keinen Fahrcheck: voller Lohn sofort, ein alter Vermerk wirkt nicht.
+     Vor LOHN_FC_AB gilt die alte Regel unverändert (v1/bewusst halb, v2/geschenkt 0, nachgereicht voll im Monat des Nachreichens),
+     damit schon abgerechnete Monate gleich bleiben. Ohne Fahrschule (kein Büro) gilt immer die alte Regel (regelAktiv = false).
+     t: {art, datum|date, von, bis, status, fc, nachAm, bueroFc, bueroFcAnzahl, bueroFcNachAm}
+     Liefert null (keine Fahrstunde / ausgefallen) oder {stand, anteil, datum}:
+       stand  = "zaehlt" | "wartet" (Büro hat noch nicht bestätigt) | "fehlt" (Fahrcheck fehlt) | "keiner" (geschenkt)
+       anteil = Teil der UE, der zählt (1, 0,5 oder 0)
+       datum  = Tag, an dem der Lohn zählt (Tag der Stunde; nachgereicht: Tag des Nachreichens) */
+  const LOHN_FC_AB = "2026-12-01";
+  function lohnNachDatum(t, datum) {
+    let d = null;
+    for (const x of [t.bueroFcNachAm, t.fc === "nachgereicht" ? t.nachAm : null]) {
+      const v = x ? String(x).slice(0, 10) : "";
+      if (/^\d{4}-\d\d-\d\d$/.test(v) && v > datum && (!d || v > d)) d = v;
+    }
+    return d;
+  }
+  function lohnStand(t, opt) {
+    if (!t || !FC_ARTEN.includes(t.art)) return null;
+    if (t.status === "abgebrochen" || t.status === "nicht erschienen") return null;
+    const datum = String(t.datum || t.date || "").slice(0, 10);
+    const regel = !!(opt && opt.regelAktiv) && datum >= LOHN_FC_AB;
+    if (!regel) {
+      // Alte Regel (bis zum Stichtag, wie bisher in index.html ueRange)
+      if (t.fc === "v1" || t.fc === "halb_bewusst") return { stand: "zaehlt", anteil: 0.5, datum };
+      if (t.fc === "v2" || t.fc === "geschenkt") return { stand: "keiner", anteil: 0, datum };
+      if (t.fc === "nachgereicht") return t.nachAm ? { stand: "zaehlt", anteil: 1, datum: String(t.nachAm).slice(0, 10) } : { stand: "keiner", anteil: 0, datum };
+      return { stand: "zaehlt", anteil: 1, datum };
+    }
+    const voll = fcGebucht(t);
+    if (!voll) return { stand: "zaehlt", anteil: 1, datum }; // unter 45 Minuten: kein Fahrcheck, nichts abzuwarten
+    if (t.fc === "geschenkt") return { stand: "keiner", anteil: 0, datum };
+    const erwartet = t.fc === "eins_ok" || t.fc === "halb_bewusst" ? voll - 1 : voll;
+    const anteil = t.fc === "halb_bewusst" ? 0.5 : 1; // bewusst weniger: bleibt halb (kein Fehler, war so geplant)
+    if (!erwartet) return { stand: "zaehlt", anteil, datum }; // nichts abzugeben
+    const hat = t.bueroFc === "abgegeben" ? fcVomBuero(t) : 0;
+    if (hat >= erwartet) return { stand: "zaehlt", anteil, datum: lohnNachDatum(t, datum) || datum };
+    // Als nachgereicht vermerkt: der Fahrcheck ist da, das Büro muss ihn nur noch bestätigen (nächste Abgabe) → wartet
+    if (t.fc === "nachgereicht") return { stand: "wartet", anteil: 0, datum };
+    if (t.bueroFc === "abgegeben" || t.bueroFc === "fehlt" || t.fc === "v1" || t.fc === "v2" || t.fc === "offen") return { stand: "fehlt", anteil: 0, datum };
+    return { stand: "wartet", anteil: 0, datum };
+  }
+
   /* ----- Sonderfahrt-Einheit (W13 PR 2) -----
      Ein Kästchen im Ausbildungsplan (Überland, Autobahn, Nacht) ist eine Sonderfahrt-Einheit, Vorgabe 45 Minuten.
      Ein Termin von 90 Minuten füllt also 2 Kästchen. Der Wert kann je Fahrschule eingestellt werden.
@@ -586,7 +634,7 @@
   }
   const api = { paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
-    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };
+    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, lohnStand, LOHN_FC_AB, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
