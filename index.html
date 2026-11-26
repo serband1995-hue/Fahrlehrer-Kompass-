@@ -4270,13 +4270,14 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", "kompass-profil-cache", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
   try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) {} // W16: Schleifen-Merker gehört zur Sitzung
   try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
   try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
+  try { localStorage.removeItem("kompass-su-sort-v1"); } catch (e) {} // W18: Sortierung/Filter (Fahrlehrer-Name) des Schüler-Überblicks
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
 function _lokaleDatenVorhanden() {
@@ -7174,7 +7175,15 @@ function _fsKeineAuswahlKarteHTML(){
 // K2 GK3: Vorname des Fahrlehrers für die Termin-Kacheln, nur in der Gesamtansicht
 function _fsFlVorname(e){
   if(!_fsAgg||!e||!e._fahrlehrerName)return "";
-  return firstName(String(e._fahrlehrerName).split("@")[0].trim());
+  const voll=String(e._fahrlehrerName).split("@")[0].trim(), vn=firstName(voll);
+  // W18: Zwei Fahrlehrer mit gleichem Vornamen (z. B. zwei „Anna“) bekommen den Nachnamen dazu, so kurz wie möglich
+  // und trotzdem eindeutig („Anna Muster“ / „Anna Musterm.“)
+  const nach=(n)=>n.slice(firstName(n).length).trim();
+  const andere=(_fsAgg.lehrer||[]).map(l=>String(l.name||l.email||"").split("@")[0].trim()).filter(n=>n&&n!==voll&&firstName(n)===vn).map(nach);
+  if(!andere.length)return vn;
+  const nn=nach(voll); if(!nn)return voll;
+  for(let k=1;k<nn.length;k++){ const p=nn.slice(0,k); if(andere.every(o=>o.slice(0,k)!==p))return vn+" "+p+"."; }
+  return voll;
 }
 function _fsInjectFilterTiles(){
   if(!_fsAgg)return;
@@ -7946,7 +7955,8 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
 /* ============================================================
    FAHRSCHULE-KALENDER (Wochenansicht, alle Fahrlehrer, filterbar)
    ============================================================ */
-const FS_KAL_FARBEN=["#9a8f7e","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
+// W18: 14 Farben, damit auch 10 Fahrlehrer plus Leitung im Kalender verschieden sind (vorher 8: Nr. 9 = Nr. 1)
+const FS_KAL_FARBEN=["#9a8f7e","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a","#2f6f8f","#a0522d","#6b8e23","#d16ba5","#46607a","#b8860b"];
 function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
   const idx=lehrerListe.findIndex(l=>l.id===fahrlehrerId);
   return FS_KAL_FARBEN[(idx<0?0:idx)%FS_KAL_FARBEN.length];

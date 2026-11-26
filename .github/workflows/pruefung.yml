@@ -134,6 +134,29 @@ jobs:
       - name: "Abgleich App ↔ Büro (Datenverlust-Fälle, W14 Name/Telefon, Gesamtansicht)"
         run: NODE_PATH=$(npm root -g) node scripts/abgleich-test.mjs
 
+  fahrlehrer-team:
+    # W18 (🗣 Serband 26.11.2026: „Mach den Test mit allen Funktionen für fünf bis zehn Fahrlehrer, damit es wirklich bei jedem klappt“).
+    # 10 Fahrlehrer, Leitung fährt selbst, Büro, Super-Admin: Anmeldung, Nutzungsbedingungen, Alltag, Trennung, Wechsel auf demselben Handy.
+    # Eigener Job, weil er allein knapp 3 Minuten braucht und der Rollen-Job schon an seiner Grenze ist.
+    name: Zehn Fahrlehrer (Browser + Datenbank-Probe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright mit Chromium
+        run: |
+          npm install -g playwright@1.63.0
+          npx -y playwright@1.63.0 install --with-deps chromium
+      - name: "Zehn Fahrlehrer: Anlegen bis Alltag, Trennung, gleiches Handy, Büro/Leitung sehen alle (W18)"
+        run: NODE_PATH=$(npm root -g) node scripts/fahrlehrer-team-test.mjs
+      - name: "W18 Live-Probe als Trockenlauf in PGlite (Rücknahme, Trennung, Migration Rolle im WITH CHECK)"
+        run: |
+          npm i --silent --no-save --prefix /tmp/w18-pg @electric-sql/pglite@0.2.17
+          NODE_PATH=/tmp/w18-pg/node_modules node scripts/w18-probe-sql-test.mjs
+
   buero:
     # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.
     # Seit 24.11.2026: lief vorher nicht auf GitHub – ein Fehler, der nur abends auftrat (Termin schon vorbei), blieb unbemerkt.

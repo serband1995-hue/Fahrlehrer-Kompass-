@@ -849,7 +849,9 @@ async function gesamtPhase(u, rolleText, kurz) {
       await page.evaluate(() => { try { _fsCloseFilterPanel(); closeSheet(); } catch (e) {} });
     }
     await pruefe("L1", `${P} ${g.n}: mit 10 Namen (auch dem langen) nichts seitlich wischbar, nichts über dem Rand, kein Name abgeschnitten (${kurz ? 3 : ANS.length} Ansichten)`, () => probl);
-    await pruefe("L2", `${P} ${g.n}: Fahrlehrer-Name in den Kalender-Kacheln (Wochenansicht) wird nicht abgeschnitten`, () => kachelProbl);
+    // L2 nur als Hinweis (Lead-Entscheidung W18): In der Wochenansicht ist die Kachel am Handy sehr schmal, der Name steht dort
+    // bewusst klein mit „…“ (.cw-fl). Voll lesbar ist er in der Tagesansicht und im Termin; die Unterscheidbarkeit prüft G6.
+    if (kachelProbl.length) console.log(`info L2 ${P} ${g.n}: Name in der Wochen-Kachel gekürzt (gewollt): ${kachelProbl.slice(0, 3).join(" · ")}`);
   }
   await ctx.close();
 }
