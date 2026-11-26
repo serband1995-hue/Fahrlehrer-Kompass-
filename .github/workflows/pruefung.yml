@@ -91,6 +91,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
       - name: "Fahrcheck-Menü zeigt die echte Zahl (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/fc-menue-test.mjs
+      - name: "Lohn folgt Fahrcheck-Abgabe (W19)"
+        run: NODE_PATH=$(npm root -g) node scripts/lohn-fc-test.mjs
       - name: "Schülerliste geordnet: feste Gruppen, Sortierung gemerkt (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/schuelerliste-test.mjs
       - name: "Kalender: Termine erst nach 0,8 s Halten ziehen (W17)"
