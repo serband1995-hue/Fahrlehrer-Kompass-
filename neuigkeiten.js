@@ -4,6 +4,13 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.12", datum: "2026-11-26", kurz: "Kleine Verbesserungen in Liste, Kalender und Büro.",
+    punkte: ["Schülerliste: Die vier Sortier-Knöpfe stehen jetzt in zwei Reihen. „Nach Stand“ heißt jetzt „Nach Fortschritt“.",
+             "Wochenansicht: Haben zwei Schüler denselben Vornamen, steht in der kleinen Kachel z. B. „L. Müller“.",
+             "Gesamtansicht: Prüfungen und Termine von vergangenen Tagen lassen sich nicht mehr aus Versehen verschieben.",
+             "Büro: Nach einer neuen Prüfung steht ein Kalender-Fehler direkt in der Karte. „Preis eintragen“ führt gleich zu den Preisen.",
+             "Büro: Eine Zahlungsaufforderung wird auch dann als verschickt erkannt, wenn das „Wofür“ von Hand geändert wurde.",
+             "Mails an Eltern ohne eingetragenen Vornamen sprechen die Eltern jetzt mit „Sie“ an."] },
   { version: "2026.11.26.11", datum: "2026-11-26", kurz: "Ab 1. Dezember: Lohn zählt, sobald das Büro die Fahrchecks hat.",
     punkte: ["Ab dem 1. Dezember zählt der Lohn einer Fahrstunde, sobald das Büro ihre Fahrchecks als abgegeben bestätigt hat.",
              "Bei „Verdienst“ siehst du, wie viel noch auf den Haken vom Büro wartet und wie viel schon zählt.",
