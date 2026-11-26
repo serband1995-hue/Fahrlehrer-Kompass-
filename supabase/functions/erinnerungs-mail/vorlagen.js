@@ -148,11 +148,13 @@
     return { text: nimm("text"), text_eltern: nimm("text_eltern") };
   }
   // Text für einen Empfänger: an = "schueler" | "eltern" | "beide" (Eltern lesen mit). Eltern-Text braucht den Vornamen:
-  // fehlt er, gilt der Text an den Schüler (wie vorher).
+  // fehlt er, bleibt es beim Eltern-Text (Sie-Form), „von {Vorname}“ wird zu „Ihres Kindes“, sonst {Vorname} zu „Ihr Kind“
+  // (W20: vorher bekamen Eltern ohne Vornamen den „du“-Text des Schülers).
   function textFuer(vorlage, an, vorname) {
     if (!vorlage) return "";
     if ((an === "eltern" || an === "beide") && vorlage.text_eltern) {
       if (!/\{\s*vorname\s*\}/i.test(vorlage.text_eltern) || einzeilig(vorname || "", 40)) return vorlage.text_eltern;
+      return vorlage.text_eltern.replace(/\bvon\s*\{\s*vorname\s*\}/gi, "Ihres Kindes").replace(/\{\s*vorname\s*\}/gi, "Ihr Kind");
     }
     return vorlage.text;
   }

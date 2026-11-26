@@ -68,11 +68,17 @@ const ALT = {
 };
 const basis = { modus: "test", betrag_cent: 24000, wofuer: "Reaktivierung", verwendungszweck: "Lena Muster, Reaktivierung", schueler_name: "Lena Muster",
   fahrschule: "Fahrschule Muster", kontoinhaber: "Fahrschule Muster", iban: "DE89370400440532013000" };
+// W20: Eltern ohne Vornamen bekommen nicht den „du“-Text, sondern die Sie-Form ohne Namen („Ihres Kindes“)
+const OHNE_NAME = {
+  pruefung: "für die Prüfung Ihres Kindes bitten wir um folgende Zahlung:",
+  reaktivierung: "die Reaktivierung Ihres Kindes ist fällig. Bitte zahlen Sie:",
+  zahlung_offen: "für die Ausbildung Ihres Kindes ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
+};
 for (const [art, [schueler, eltern]] of Object.entries(ALT)) {
   gleich("Standard " + art + " an Schüler", schueler, MAIL.satz(Object.assign({}, basis, { art, an: "schueler" })));
   gleich("Standard " + art + " an Eltern", eltern, MAIL.satz(Object.assign({}, basis, { art, an: "eltern" })));
   gleich("Standard " + art + " an beide", eltern, MAIL.satz(Object.assign({}, basis, { art, an: "beide" })));
-  gleich("Standard " + art + " Eltern ohne Vorname = Schüler-Text", schueler, MAIL.satz(Object.assign({}, basis, { art, an: "eltern", schueler_name: "" })));
+  gleich("Standard " + art + " Eltern ohne Vorname = Sie-Form ohne Namen (nicht der du-Text)", OHNE_NAME[art], MAIL.satz(Object.assign({}, basis, { art, an: "eltern", schueler_name: "" })));
   gleich("Standard " + art + " mit leerer Vorlage", schueler, MAIL.satz(Object.assign({}, basis, { art, an: "schueler", vorlage: { text: " \n ", text_eltern: "" } })));
 }
 gleich("Bald-Standard mit Datum", "deine Reaktivierung wird am 15.12.2026 fällig. Damit es danach ohne Pause weitergeht, zahle bitte rechtzeitig:",
