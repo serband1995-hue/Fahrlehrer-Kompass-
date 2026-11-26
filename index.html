@@ -2415,10 +2415,13 @@ body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after
 .sl-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .schueler2 .sl-titel{margin:0;font-size:30px;font-weight:700;color:var(--h-tinte);}
 .sl-zahl{font-size:13px;font-weight:700;color:var(--h-text2);white-space:nowrap;}
-.sl-sorten{display:flex;flex-wrap:nowrap;gap:8px;margin:0 calc(-1 * var(--pad,16px)) 12px;padding:0 var(--pad,16px) 2px;scrollbar-width:none;}
+.sl-sorten{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:0 0 2px;scrollbar-width:none;} /* W17: alle vier Sortierungen sichtbar (vorher rechts abgeschnitten) */
 .sl-sorten::-webkit-scrollbar{display:none;}
 .sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
 .sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
+.sl-gruppe{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:18px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--h-text2,var(--muted));}
+.sl-gruppe:first-child{padding-top:4px;}
+.sl-gruppe-n{font-size:12px;font-weight:700;letter-spacing:0;color:var(--h-text2,var(--muted));font-variant-numeric:tabular-nums;}
 body:not(.light) .sl-sort.on{background:#2f3846;border-color:var(--k-mint);}
 .schueler2 #studentGrid{display:flex;flex-direction:column;gap:8px;}
 .s-row{min-height:68px;width:100%;background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:10px 14px;display:flex;align-items:center;gap:12px;text-align:left;color:var(--h-tinte);}
@@ -9237,6 +9240,24 @@ function _letzteAktivitaet(s){
   return l.length?l[l.length-1]:"";
 }
 let _homeSortMode=null; // null = Standard: „Als Nächstes dran“ (Gesamtansicht: A–Z)
+// W17 (🗣 Serband 26.11.2026 „bitte ordnen, das ist alles etwas random“): gewählte Sortierung je Gerät merken,
+// getrennt für die eigene Ansicht und die Gesamtansicht. Gespeichert wird nur ein Wort, keine Schülerdaten.
+const _SL_SORT_KEY="kompass-sl-sort-v1", _SL_SORTEN=["naechste","lange","stand","az"];
+function _slSortLesen(){ try{ const o=JSON.parse(localStorage.getItem(_SL_SORT_KEY)||"{}"), w=o&&o[_fsAgg?"gesamt":"eigen"]; return _SL_SORTEN.includes(w)?w:null; }catch(e){ return null; } }
+function _slSortMerken(w){ try{ let o={}; try{ o=JSON.parse(localStorage.getItem(_SL_SORT_KEY)||"{}")||{}; }catch(e){} if(typeof o!=="object"||Array.isArray(o))o={}; o[_fsAgg?"gesamt":"eigen"]=w; localStorage.setItem(_SL_SORT_KEY,JSON.stringify(o)); }catch(e){} }
+// Feste Gruppen je Sortierung, immer in derselben Reihenfolge; leere Gruppen fallen weg. Die Liste ist schon sortiert.
+function _slGruppen(modus,list){
+  const heute=todayISO(), in7=addDays(heute,7);
+  let defs;
+  if(modus==="naechste") defs=[["Heute",s=>{const t=_slNaechster(s);return !!t&&t.date===heute;}],["Nächste 7 Tage",s=>{const t=_slNaechster(s);return !!t&&t.date>heute&&t.date<=in7;}],["Später",s=>{const t=_slNaechster(s);return !!t&&t.date>in7;}],["Ohne Termin",()=>true]];
+  else if(modus==="lange") defs=[["Noch nie gefahren",s=>!_slLetzteFahrt(s)],["Über 4 Wochen her",s=>_slLetzteFahrt(s)<addDays(heute,-28)],["2 bis 4 Wochen her",s=>_slLetzteFahrt(s)<addDays(heute,-14)],["In den letzten 2 Wochen",()=>true]];
+  else if(modus==="stand") defs=[["Fast fertig (ab 80 %)",s=>stand(s)>=80],["Mittendrin (40 bis 79 %)",s=>stand(s)>=40],["Am Anfang (unter 40 %)",()=>true]];
+  else return null;
+  const g=defs.map(([titel])=>({titel,liste:[]}));
+  list.forEach(s=>{ const i=defs.findIndex(([,f])=>f(s)); g[i<0?g.length-1:i].liste.push(s); });
+  return g.filter(x=>x.liste.length);
+}
+function _slGruppeKopf(titel,n,id){ return `<div class="alpha-anchor sl-gruppe"${id?` id="${id}"`:""}><span>${esc(titel)}</span><span class="sl-gruppe-n">${n}</span></div>`; }
 let _homeFormFilter=[], _homeColorFilter=[], _homeOhneTelefon=false;
 // Telefonnummer ist in der Fahr-Akademie der Login. Fehlt sie, kann dort kein Zugang
 // angelegt werden - deshalb gilt auch eine leere Zeichenkette als "fehlt".
@@ -9250,7 +9271,7 @@ function routeHome(){
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
   if(_homeOhneTelefon) list=list.filter(telefonFehlt);
   const alle=activeStudents();
-  const modus=_homeSortMode||(_fsAgg?"az":"naechste");
+  const modus=_slSortLesen()||_homeSortMode||(_fsAgg?"az":"naechste");
   const alpha=(a,b)=>(a.name||"").localeCompare(b.name||"","de");
   if(modus==="stand") list.sort((a,b)=>stand(b)-stand(a)||alpha(a,b));
   else if(modus==="naechste"){ const k=x=>{ const t=_slNaechster(x); return t?t.date+" "+t.von:"9999"; }; list.sort((a,b)=>k(a).localeCompare(k(b))||alpha(a,b)); }
@@ -9277,7 +9298,7 @@ function routeHome(){
     list.forEach(s=>{ const key=s._fahrlehrerName||"Ohne Zuordnung"; if(!byLehrer[key])byLehrer[key]=[]; byLehrer[key].push(s); });
     Object.keys(byLehrer).sort((a,b)=>a.localeCompare(b,"de")).forEach(name=>{
       const gruppe=byLehrer[name].sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
-      gridHTML+=`<div class="alpha-anchor" style="font-size:12px;font-weight:800;color:var(--txt);padding:16px 0 6px;">${esc(name)} <span style="color:var(--muted);font-weight:600;">(${gruppe.length})</span></div>`;
+      gridHTML+=_slGruppeKopf(name,gruppe.length);
       gridHTML+=gruppe.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
     });
   } else if(sortiertAlpha){
@@ -9289,11 +9310,15 @@ function routeHome(){
     });
     letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
   } else {
-    gridHTML=list.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
+    // W17: feste Gruppen mit Überschrift und Anzahl (vorher eine lange Liste ohne erkennbare Ordnung)
+    const gruppen=_slGruppen(modus,list);
+    if(gruppen) gruppen.forEach(gr=>{ gridHTML+=_slGruppeKopf(gr.titel,gr.liste.length); gridHTML+=gr.liste.map((s,i)=>cardHTML2(s,i,hinweise)).join(""); });
+    else gridHTML=list.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
   }
+  wartende.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de")); // W17: auch der Abschnitt „Wartet“ hat eine feste Ordnung (A–Z)
   if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
   if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML2(s,i,hinweise)).join("")}</details>`;
-  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung" style="overflow-x:auto">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
+  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
   view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;${sortiertAlpha&&!gruppiertNachFahrlehrer?'padding-right:32px;':''}">
     <div class="sl-kopf"><h1 class="sl-titel">Schüler</h1><span class="sl-zahl">${alle.length-wartende.length} aktiv${wartende.length?` · ${wartende.length} warten`:''}</span></div>
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
@@ -9308,7 +9333,7 @@ function routeHome(){
     <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
   document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
-  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; routeHome(); }));
+  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; _slSortMerken(_homeSortMode); routeHome(); }));
   const _hfb=$("#homeFilterBtn"); if(_hfb)_hfb.addEventListener("click",openHomeFilterSheet);
   document.querySelectorAll(".alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
     const el=document.getElementById("alpha-"+b.dataset.letter);
