@@ -4,10 +4,20 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.26.8", datum: "2026-11-26", kurz: "Fahrcheck-Fenster zeigt die richtige Zahl.",
+  { version: "2026.11.26.9", datum: "2026-11-26", kurz: "Fahrcheck-Fenster zeigt die richtige Zahl.",
     punkte: ["Beim Fahrcheck einer Stunde steht jetzt die echte Zahl: 45 Minuten = 1, 90 Minuten = 2, 135 Minuten = 3.",
              "Für Stunden unter 45 Minuten gibt es keinen Fahrcheck. Das steht dann auch so da.",
              "Büro: Bei einer nicht bestandenen Prüfung steht jetzt, ab wann sie in der Regel wiederholt werden darf (nach 2 Wochen)."] },
+  { version: "2026.11.26.8", datum: "2026-11-26", kurz: "Schülerliste jetzt in klaren Gruppen.",
+    punkte: ["Die Schülerliste ist geordnet: Heute, Nächste 7 Tage, Später, Ohne Termin. Über jeder Gruppe steht, wie viele es sind.",
+             "Auch „Lange nicht gefahren“ und „Nach Stand“ zeigen feste Gruppen.",
+             "Die gewählte Sortierung bleibt gemerkt, auch nach dem Neustart.",
+             "Alle vier Sortier-Knöpfe sind jetzt ganz zu sehen. Die Wartenden stehen nach dem Alphabet.",
+             "Die Gesamtübersicht der Fahrschule gibt es nur noch für die Leitung. Das Büro arbeitet auf der Büro-Seite."] },
+  { version: "2026.11.26.7", datum: "2026-11-26", kurz: "Büro: Prüfung eintragen, Zahlung gleich anfordern.",
+    punkte: ["Trägt das Büro eine neue Prüfung ein, steht danach unten der Knopf „Zahlungsaufforderung senden“ mit dem Betrag aus der Preisliste. Ein Tipp genügt, 5 Sekunden lang geht noch „Rückgängig“.",
+             "Fehlt etwas (Preis, Zahlungsdaten oder E-Mail), steht dort, was fehlt, mit einem Link dorthin.",
+             "Wurde für diese Prüfung schon eine Zahlungsaufforderung geschickt, steht dort ein Haken statt des Knopfs."] },
   { version: "2026.11.26.6", datum: "2026-11-26", kurz: "Termine verschieben: erst 0,8 Sekunden halten, dann ziehen.",
     punkte: ["Im Kalender verschiebt sich ein Termin nur noch, wenn du ihn kurz festhältst (0,8 Sekunden). Dann hebt sich die Karte leicht an. Bei vielen Handys vibriert es dazu kurz.",
              "So passiert beim Scrollen der Woche nichts mehr aus Versehen.",

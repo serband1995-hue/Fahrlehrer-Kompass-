@@ -116,6 +116,7 @@ function undoAblaufen(ev) {
 function toastUndo(text, rueckgaengig, optionen) {
   const o = optionen || {};
   undoAblaufen(); // ein früherer Hinweis ist damit endgültig
+  if (typeof zmKarteZu === "function") zmKarteZu(); // W15c: die Karte „Zahlungsaufforderung senden“ steht am selben Ort, nie übereinander
   const el = document.createElement("div");
   el.className = "toast toast-undo zeigen";
   el.setAttribute("role", "status");
@@ -1549,8 +1550,10 @@ function pruefungDialog(id) {
       }
     }
     const kalenderOk = await abgleichKalender(gespeichert);
-    if (kalenderOk) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     zeichne();
+    // W15c: neue Prüfung → Karte mit „Zahlungsaufforderung senden“ (ein Tipp, nie automatisch); sonst wie bisher
+    const karte = !id && !d.absagen && typeof zmNachPruefung === "function" && zmNachPruefung(gespeichert);
+    if (kalenderOk && !karte) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     return true;
   });
   // Theorieprüfung: Hinweis, wenn der Theorieunterricht laut Anwesenheit noch nicht vollständig ist
@@ -5244,6 +5247,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
   KR.setzeSonderMinuten(null); // W13 PR 2: Sonderfahrt-Einheit der vorigen Fahrschule nicht mitnehmen
+  if (typeof zmKarteZu === "function") zmKarteZu(); // W15c: Karte der vorigen Fahrschule weg
   if (KR.setzeFristen) KR.setzeFristen(null); // W15 PR 3: Fristen der vorigen Fahrschule nicht mitnehmen (die neuen kommen mit KE, Ereignis ke:geladen)
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg

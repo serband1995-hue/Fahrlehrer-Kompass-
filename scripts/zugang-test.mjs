@@ -80,6 +80,7 @@ for (const g of GROESSEN) {
                { id: "u1", name: "Leitung Muster", email: "leitung@muster.invalid", aktiv: true, slug: null, rolle: "fahrlehrer" },
                { id: "SA", name: "Betreiber Muster", email: "sa@muster.invalid", aktiv: true, slug: null, rolle: "super_admin" }] };
     DB.students = []; DB.exams = [];
+    view.innerHTML = ""; // W17: Büro und Fahrlehrer bekommen diese Seite gar nicht mehr (kein alter Stand im Bild)
     routeFahrschuleLehrer();
   }, rolle);
 
@@ -208,7 +209,9 @@ for (const g of GROESSEN) {
     if (/Admin-Gesamtübersicht|Zu meiner Fahrlehrer-Ansicht/.test(document.querySelector(".drawer-nav").textContent)) f.push("reine Leitung hat Umschalter");
     if (KS_START.erlaubt(_authProfile).join() !== "gesamt,buero") f.push("Startseite reine Leitung: " + KS_START.erlaubt(_authProfile).join());
     _authProfile = { id: "u2", rolle: "buero", fahrschule_id: "f1" };
-    if (!_nurGesamtansicht()) f.push("Büro nicht nur Gesamtansicht");
+    // W17 (🗣 Serband 26.11.2026): Büro nie in die Gesamtansicht, hat aber auch keinen eigenen Stand
+    if (_nurGesamtansicht() || _fsDarfGesamt()) f.push("Büro darf in die Gesamtansicht");
+    if (!_ohneEigenenStand()) f.push("Büro hätte einen eigenen Stand");
     const r = _fsNurUnterrichtende({ data: [{ rolle: "fahrlehrer" }, { rolle: "fahrschule_admin", faehrt_selbst: true }, { rolle: "fahrschule_admin" }, { rolle: "super_admin" }] });
     if (r.data.length !== 3) f.push("Fahrlehrer-Liste: " + r.data.length);
     return f;

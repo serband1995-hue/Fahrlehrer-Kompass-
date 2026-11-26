@@ -16,6 +16,8 @@
 //       Leitung und Super-Admin wählen die Startseite nur in den Einstellungen (R6–R8, R21), kein Streifen und kein Umschalter mehr (R2),
 //       keine Weiterleitungs-Schleife, Passwort-Link und Offline-Start ohne Weiterleitung (R22),
 //       Startseite Büro mit eigenem Stand: erst alles oben, nie während einer Eingabe, auch nach dem neuen Passwort (R26)
+//   (9) W17 (🗣 Serband 26.11.2026): Gesamtübersicht nur Leitung und Super-Admin; kommt das Büro nicht zur Büro-Seite,
+//       sieht es nur einen Hinweis mit Knopf „Büro-Seite öffnen“, nie die Gesamtansicht (R27)
 //       Teil 2 (25.11.2026): Büro nur noch auf der Büro-Seite (R20), dort kein Weg in die App; Leitung und Super-Admin
 //       wählen die Startseite auf der Büro-Seite unter Einstellungen › Darstellung & Start (R23)
 // Die App läuft lokal mit einer Attrappe statt Datenbank (kein Netz, erfundene Namen „Muster“).
@@ -203,7 +205,7 @@ for (const R of ROLLEN) {
     await page.evaluate(() => { try { _navStack.length = 0; if (_fsAgg) routeFahrschuleDashboard(); else routeDashboard(); } catch (e) {} });
 
     // K12/K17/K13 (Werkstatt 12): Gesamtübersicht und Büro-Seite nur für Büro, Leitung, Super-Admin; Abmelden unter „Mehr“
-    const darfGesamt = ["fahrschule_admin", "buero", "super_admin"].includes(R.prof.rolle);
+    const darfGesamt = ["fahrschule_admin", "super_admin"].includes(R.prof.rolle); // W17: Büro nie (nur Büro-Seite)
     const gesamtWeg = !R.eigen || R.wahl.includes("gesamt"); // W16: Weg in die Gesamtübersicht = Startseite in den Einstellungen
     const sichtbar = (sel) => page.evaluate((q) => [...document.querySelectorAll(q)].filter((e) => !e.closest("#loginOverlay") && getComputedStyle(e).display !== "none" && !e.closest("[hidden]")).length, sel);
     const GESAMT_SEL = '#drawer [data-nav="__fstoggle"], #drawer [data-nav="fs_dash"], #drawer [data-nav="fs_exit"], #saStreifen:not([hidden])';
@@ -509,6 +511,44 @@ for (const R of ROLLEN) {
     await warte(page, 600);
     await pruefe("R22", "[Leitung, Startseite Büro] Zurück von der Büro-Seite → bleibt in der App (keine Schleife)", () => (!aufBuero(u2) && !aufBuero(page.url()) ? null : "wieder zur Büro-Seite (" + art + ")"));
   } else await pruefe("R22", "[Leitung, Startseite Büro] Weiterleitung für den Zurück-Test", () => "nicht weitergeleitet: " + u);
+  // e) W17 (🗣 Serband 26.11.2026: Gesamtübersicht nur Leitung und Super-Admin): Das Büro kommt nicht weiter
+  //    (eben von der Büro-Seite gekommen oder Passwort-Link offen) → keine Gesamtansicht, nur Hinweis mit Knopf
+  const BUERO = { rolle: "buero" };
+  for (const [fall, vorher] of [["eben von der Büro-Seite gekommen", ""], ["Passwort-Link offen", "_startWeiterWartet = true;"]]) {
+    await neu();
+    await page.evaluate((f) => { sessionStorage.clear(); if (f) sessionStorage.setItem("kompass-weiterleitung", JSON.stringify({ nach: "app", t: Date.now() })); }, !vorher);
+    u = await starteApp(page, BUERO, { behalte: true, vorher });
+    await pruefe("R27", `[Büro, ${fall}] keine Gesamtansicht, Hinweis mit Knopf „Büro-Seite öffnen“`, async () => {
+      if (aufBuero(u)) return "weitergeleitet (Fall nicht nachgestellt)";
+      const r = await page.evaluate(async () => {
+        const h = document.getElementById("bueroHinweis"), a = document.getElementById("bhOeffnen");
+        const ra = a && a.getBoundingClientRect(), rb = (document.getElementById("bhAbmelden") || { getBoundingClientRect: () => ({ height: 0 }) }).getBoundingClientRect();
+        const versuch = await _fsEnterAggMode("fs-muster");
+        return { agg: !!_fsAgg, versuch, sichtbar: !!h && getComputedStyle(h).display !== "none", href: a && a.getAttribute("href"), hA: ra ? ra.height : 0, hB: rb.height,
+          breit: document.documentElement.scrollWidth <= innerWidth + 1, text: (h || {}).textContent || "" };
+      });
+      const f = [];
+      if (r.agg || r.versuch !== false) f.push("Gesamtansicht offen");
+      if (!r.sichtbar) f.push("kein Hinweis");
+      if (r.href !== "buero.html") f.push("Knopf führt zu " + r.href);
+      if (r.hA < 43.5 || r.hB < 43.5) f.push(`Knöpfe zu klein (${Math.round(r.hA)}/${Math.round(r.hB)} px)`);
+      if (!r.breit) f.push("seitlich verschiebbar");
+      if (!/Büro-Seite öffnen/.test(r.text)) f.push("Knopftext fehlt");
+      return f;
+    });
+    if (vorher && !aufBuero(u)) {
+      // Das Fenster fürs neue Passwort liegt über dem Hinweis; danach geht es zur Büro-Seite
+      await page.evaluate(() => { try { closeSheet(); } catch (e) {} _openNeuesPasswortSheet(); }); await warte(page, 500);
+      const oben = await page.evaluate(() => { const b = document.getElementById("npwSave"); if (!b) return "kein Fenster"; const r = b.getBoundingClientRect();
+        const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e && b.contains(e) ? null : "Knopf „Speichern“ verdeckt"; });
+      await pruefe("R27", "[Büro, Passwort-Link offen] Fenster fürs neue Passwort liegt über dem Hinweis", () => oben);
+      if (!oben) {
+        await page.fill("#npwNeu", "Muster-1234"); await page.fill("#npwWdh", "Muster-1234"); await page.click("#npwSave");
+        const weiter = await page.waitForURL(/buero\.html/, { timeout: 8000 }).then(() => true).catch(() => false);
+        await pruefe("R27", "[Büro, Passwort-Link offen] nach dem neuen Passwort → Büro-Seite", () => (weiter ? null : "bleibt auf " + page.url()));
+      }
+    }
+  }
   // c) Offline-Start der PWA: die Rolle ist unbekannt → nie weiterleiten
   await neu();
   const off = await page.evaluate(async () => {
