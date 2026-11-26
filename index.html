@@ -4169,10 +4169,36 @@ function isSuperAdmin() {
 // W16: Die Gesamtübersicht wählt sie als Startseite in den Einstellungen. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
 function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
 function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
-// K12/K17: Die Gesamtansicht (Gesamtübersicht) und der Weg zur Büro-Seite gehören nur Büro, Leitung und Super-Admin.
-// Ein Fahrlehrer sieht keinen Knopf dafür und kommt auch über Funktionsaufrufe nicht hinein.
-function _fsDarfGesamt() { const r = _authProfile && _authProfile.rolle; return r === "fahrschule_admin" || r === "buero" || r === "super_admin"; }
-function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || (p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)))); }
+// K12/K17: Die Gesamtansicht (Gesamtübersicht) gehört nur Leitung und Super-Admin (W17, 🗣 Serband 26.11.2026:
+// „nur bei Jelena und mir“). Das Büro arbeitet nur auf der Büro-Seite. Ein Fahrlehrer sieht keinen Knopf dafür
+// und kommt auch über Funktionsaufrufe nicht hinein.
+function _fsDarfGesamt() { const r = _authProfile && _authProfile.rolle; return r === "fahrschule_admin" || r === "super_admin"; }
+// Reine Leitung: startet immer in der Gesamtansicht (kein eigener Stand)
+function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)); }
+// Büro und reine Leitung haben keinen eigenen Fahrlehrer-Stand (nichts hochladen, nichts sichern)
+function _ohneEigenenStand(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || _nurGesamtansicht(p))); }
+// W17: Kommt das Büro nicht zur Büro-Seite (eben von dort gekommen, Passwort-Link offen, gerade eine Eingabe),
+// (Ebene 58: über Menü und Leiste, unter dem Fenster fürs neue Passwort)
+// zeigt die App keine Gesamtansicht mehr, sondern nur diesen Hinweis mit Knopf.
+function _zeigeBueroHinweis() {
+  document.getElementById("loginOverlay").classList.add("hidden");
+  if (document.getElementById("bueroHinweis")) return;
+  const el = document.createElement("div");
+  el.id = "bueroHinweis";
+  el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "bhTitel");
+  el.style.cssText = "position:fixed;inset:0;z-index:58;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;";
+  el.innerHTML = `<div style="max-width:420px;width:100%;text-align:center;">
+      <h2 id="bhTitel" style="margin:0 0 10px;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:22px;letter-spacing:.02em;">Büro-Seite</h2>
+      <p style="font-size:15px;line-height:1.55;color:var(--txt);margin:0 0 6px;">Das Büro arbeitet auf der Büro-Seite.</p>
+      <p style="font-size:14px;line-height:1.5;color:var(--muted);margin:0 0 22px;">Die App hier ist nur für Fahrlehrer. Am besten am PC öffnen.</p>
+      <a class="btn btn-primary" id="bhOeffnen" href="buero.html" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;box-sizing:border-box;text-decoration:none;">Büro-Seite öffnen</a>
+      <button class="btn" id="bhAbmelden" type="button" style="width:100%;min-height:48px;margin-top:10px;">Abmelden</button>
+    </div>`;
+  document.body.appendChild(el);
+  // Eigener Tipp: keine Schleifen-Sperre nötig, die Büro-Seite schickt das Büro nie zurück in die App
+  el.querySelector("#bhOeffnen").addEventListener("click", () => { try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) {} });
+  el.querySelector("#bhAbmelden").addEventListener("click", () => { if (confirm("Wirklich abmelden?")) doLogout(); });
+}
 // Fahrlehrer-Listen: Fahrlehrer, Betreiber und die Leitung, die selbst fährt (reine Leitung nicht)
 function _fsNurUnterrichtende(res) {
   if (res && Array.isArray(res.data)) res.data = res.data.filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
@@ -4212,7 +4238,7 @@ function _bleibtText() { return _authProfile && _authProfile.rolle === "buero"
 async function _startZumBuero() {
   if (_startWeiterWartet || !_authUser || !window.KS_START || _startZiel() !== "buero" || !KS_START.weiterMoeglich("buero")) return false;
   if (_eingabeOffen()) { toast(_bleibtText()); return false; }
-  if (!_nurGesamtansicht()) {
+  if (!_ohneEigenenStand()) {
     toast("Startseite Büro-Seite: sichere kurz deine Daten …");
     if (!(await _eigenesSichern(8000))) { toast("Nicht alles gesichert (Internet?). Du bleibst in der App."); return false; }
     if (_eingabeOffen()) { toast(_bleibtText()); return false; }
@@ -4522,6 +4548,12 @@ async function _continueLoginFlow(prof) {
   // buero.html. Geht das nicht (Passwort-Link offen, Weiterleitungs-Schleife), startet die App wie bisher.
   // Rollen mit eigenem Stand (Super-Admin, Leitung, die selbst fährt) sichern vorher alles (unten, nach dem Abgleich).
   let startZiel = _startZiel(prof);
+  // W17: Das Büro kommt nie in die Gesamtansicht. Weiterleitung, sonst der Hinweis mit Knopf „Büro-Seite öffnen“.
+  if (prof && prof.rolle === "buero") {
+    if (startZiel === "buero" && !_eingabeOffen() && _zurBueroWeiter()) return;
+    _zeigeBueroHinweis();
+    return;
+  }
   if (startZiel === "buero" && _nurGesamtansicht(prof)) { if (!_eingabeOffen() && _zurBueroWeiter()) return; startZiel = null; }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (_nurGesamtansicht(prof)) {
@@ -5116,7 +5148,7 @@ async function _pushToCloudJetzt(gen) {
   if (!_authUser) return false;
   // Büro und reine Leitung arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
   // Die Leitung, die selbst fährt, hat wie jeder Fahrlehrer einen eigenen Stand.
-  if (_nurGesamtansicht()) return true;
+  if (_ohneEigenenStand()) return true;
   if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return false; }
   const daten = _persoenlicheDaten();
   if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
@@ -13130,7 +13162,7 @@ function _settingsAccToggle(key){
 // hochladen und abwarten – die Büro-Seite liest die Fahrschul-Tabellen, und ein Seitenwechsel bricht laufende Anfragen ab.
 // true = alles oben (oder nichts offen), false = nicht sicher gesichert (dann nicht wechseln).
 async function _eigenesSichern(ms){
-  if(!_authUser||!_pullOk||_nurGesamtansicht())return !!_authUser&&_nurGesamtansicht();
+  if(!_authUser||!_pullOk||_ohneEigenenStand())return !!_authUser&&_ohneEigenenStand();
   clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null;
   const ende=Date.now()+ms;
   _brueckenOk=true; // ab hier zählt: kam alles an (Netzfehler, verschobene oder gescheiterte Läufe → false)
