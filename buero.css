@@ -1125,6 +1125,13 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .zm-karte .toast-knopf:not(.zm-karte-zu){min-height:44px;text-decoration:none;display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;}
 .zm-karte .zm-karte-haken,.zm-karte .zm-karte-grund{font-weight:500;font-size:14px;}
 .zm-karte .toast-text b{font-weight:700;}
+.zm-karte .zm-karte-fehler{font-weight:500;font-size:14px;overflow-wrap:anywhere;word-break:break-word;color:#ffd2ca;}
+.zm-karte .zm-karte-fehler small{display:block;margin-top:2px;font-size:12px;font-weight:400;opacity:.85;}
+.toast{overflow-wrap:anywhere;}
+
+/* W20: Hinweis „Wiederholung“ in schmaler Spalte: eigene Zeile unter dem Ergebnis, bricht um, kleiner Abstand */
+.wiederholung-hinweis{display:block;margin-top:4px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;max-width:22ch;}
+@media (min-width:900px){.wiederholung-hinweis{max-width:none;}}
 
 /* W20 Teil 4 (buero-auswertung.js): Durchfallgründe mit langen Namen (voll lesbar, am Handy Balken unter dem Namen) und Verschiebungs-Verlauf (am Handy je Eintrag ein Kästchen statt seitlich wischen) */
 .aw-reiter{margin:0 0 12px;}

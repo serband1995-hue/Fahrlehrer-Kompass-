@@ -205,6 +205,8 @@ const BEREICHE = [
   // K9: Preisliste steht in buero-preise.js (lädt vor buero.js; Aufruf über Pfeil, damit die Reihenfolge egal ist); Werkstatt 13: Reiter „Preise | Pakete“ in buero-pakete.js
   { id: "preise", titel: "Preise & Pakete", leiste: false, eltern: "zahlungen", render: (...a) => zahlungsReiter(preisReiter()) + renderPreisSeite(...a), nachher: (...a) => bindePreisSeite(...a) },
   { id: "verkaeufe", titel: "Verkäufe & Provision", leiste: false, eltern: "zahlungen", render: () => zahlungsReiter("verkaeufe") + renderVerkaeufe(), nachher: bindeVerkaeufe },
+  // W19 Teil 2: Zahlungsbelege (buero-belege.js), nur Büro, Leitung, Super-Admin
+  { id: "belege", titel: "Belege", leiste: false, eltern: "zahlungen", wenn: () => typeof renderBelege === "function" && typeof belegDarf === "function" && belegDarf(), render: () => zahlungsReiter("belege") + renderBelege(), nachher: (...a) => bindeBelege(...a) },
 ];
 // Reiterzeile der Seite „Zahlungen“ (auch auf #preise und #verkaeufe): EINE Zeile „Preise · Pakete · Verkäufe & Provision“.
 // „Pakete“ gibt es nur mit der Paket-Datenbank (bkDa in buero-pakete.js).
@@ -223,7 +225,7 @@ function zahlungenFestlegen() {
 function zahlungsReiter(aktiv) {
   const pakete = typeof bkDa === "function" && bkDa();
   const tab = (h, id, t) => `<a class="tab" href="${h}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>`;
-  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision" + (offeneVerkaeufe() ? ` <span class="zahl">${offeneVerkaeufe()}</span>` : ""))}</div>`;
+  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${typeof belegDarf === "function" && belegDarf() ? tab("#belege", "belege", "Belege") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision" + (offeneVerkaeufe() ? ` <span class="zahl">${offeneVerkaeufe()}</span>` : ""))}</div>`;
 }
 function preisReiter() { return typeof bkReiter === "function" ? bkReiter() : "preise"; }
 function aktuellerBereich() {
@@ -1462,7 +1464,9 @@ async function abgleichKalender(p) {
     }
   } catch (e) {
     console.error(e);
-    toast("Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + dbFehlerText(e), true);
+    const t = "Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + dbFehlerText(e);
+    window.buKalenderFehler = t; // die Karte „Zahlungsaufforderung“ zeigt den Hinweis selbst (sonst läge er unter der Karte)
+    toast(t, true);
     return false;
   }
   return true;
@@ -1552,10 +1556,11 @@ function pruefungDialog(id) {
         if (!res.error && res.data && res.data.length) Object.assign(sx, neuW);
       }
     }
+    window.buKalenderFehler = "";
     const kalenderOk = await abgleichKalender(gespeichert);
     zeichne();
     // W15c: neue Prüfung → Karte mit „Zahlungsaufforderung senden“ (ein Tipp, nie automatisch); sonst wie bisher
-    const karte = !id && !d.absagen && typeof zmNachPruefung === "function" && zmNachPruefung(gespeichert);
+    const karte = !id && !d.absagen && typeof zmNachPruefung === "function" && zmNachPruefung(gespeichert, kalenderOk ? "" : window.buKalenderFehler);
     if (kalenderOk && !karte) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     return true;
   });
@@ -1829,7 +1834,7 @@ function renderSchueler() {
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
-      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x, { kurz: true })}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
+      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x, { kurz: true })}${typeof belegDarf === "function" && belegDarf() ? `<button class="knopf klein" data-sbeleg="${esc(x.id)}" type="button" title="Zahlungsbeleg (Quittung) erstellen">Beleg</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
   const lehrerOpt = `<option value="">Alle Fahrlehrer</option><option value="ohne"${lehrerFilter === "ohne" ? " selected" : ""}>Ohne Fahrlehrer</option>` +
@@ -1895,6 +1900,7 @@ function bindeSchueler(ziel) {
   });
   bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-sbearb]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.sbearb)));
+  ziel.querySelectorAll("[data-sbeleg]").forEach((b) => b.addEventListener("click", () => belegDialog(b.dataset.sbeleg))); // W19 Teil 2
 }
 /* ---------- Notizen ans Team (Fahrlehrer bekommt sie als Popup, bis er „Gelesen“ tippt) ---------- */
 function offeneNotizen(sid) { return S.notizen.filter((n) => n.schueler_id === sid && !n.erledigt_am); }

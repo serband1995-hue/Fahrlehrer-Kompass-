@@ -77,7 +77,7 @@ try {
   // B1 Reiter und Liste
   {
     const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", vorbereiten: preise });
-    pruefe("B1a eine Reiterzeile „Preise · Pakete · Verkäufe“ da, „Pakete“ gewählt", await page.locator('.zahl-reiter a[aria-current="page"]').innerText() === "Pakete" && await page.locator(".zahl-reiter a").count() === 3 && await page.locator(".bk-reiter").count() === 0);
+    pruefe("B1a eine Reiterzeile „Preise · Pakete · Verkäufe“ da, „Pakete“ gewählt", await page.locator('.zahl-reiter a[aria-current="page"]').innerText() === "Pakete" && await page.locator(".zahl-reiter a").count() === 4 && await page.locator(".bk-reiter").count() === 0);
     const t = await page.locator("#ansicht").innerText();
     pruefe("B1b Vorlagen in Reihenfolge (Turboboost zuerst)", t.indexOf("Turboboost") >= 0 && t.indexOf("Turboboost") < t.indexOf("Boost-Paket 1"), t.slice(0, 300));
     pruefe("B1c Summe aus der Preisliste: 350 + 20 × 65 = 1.650,00 €", /1\.650,00\s*€/.test(t), t.slice(0, 400));

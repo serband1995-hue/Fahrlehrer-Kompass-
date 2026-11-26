@@ -1,7 +1,7 @@
 // Schülerliste ordnen (W17, 🗣 Serband 26.11.2026: „die Überblick-Seite der Schüler bitte ordnen, das ist alles etwas random“).
 // Prüft mit erfundenen Schülern („Muster“), am Handy 360 px:
 //   S1 „Als Nächstes dran“: feste Gruppen Heute · Nächste 7 Tage · Später · Ohne Termin, je mit Anzahl, innen nach Uhrzeit bzw. A–Z
-//   S2 „Lange nicht gefahren“ und „Nach Stand“: feste Gruppen in fester Reihenfolge
+//   S2 „Lange nicht gefahren“ und „Nach Fortschritt“: feste Gruppen in fester Reihenfolge
 //   S3 die gewählte Sortierung bleibt nach dem Neuladen (je Gerät), getrennt von der Gesamtansicht (auch ohne Neuladen); kaputter Speicher → Vorgabe
 //   S4 Abschnitt „Wartet“ ist A–Z sortiert
 //   S5 alle vier Sortier-Knöpfe sichtbar (nichts rechts abgeschnitten), kein seitliches Wischen, keine JS-Fehler
@@ -81,7 +81,7 @@ await tippe("lange");
 await pruefe("S2", "„Lange nicht gefahren“: Noch nie · über 4 Wochen · 2 bis 4 Wochen · letzte 2 Wochen", async () => soll((await gruppen()).map((g) => g.t + ":" + g.ids),
   ["Noch nie gefahren:adf", "Über 4 Wochen her:b", "2 bis 4 Wochen her:c", "In den letzten 2 Wochen:eg"]));
 await tippe("stand");
-await pruefe("S2", "„Nach Stand“: Gruppen mit Überschrift (alle neu → „Am Anfang“)", async () => soll((await gruppen()).map((g) => g.t + ":" + g.n), ["Am Anfang (unter 40 %):7"]));
+await pruefe("S2", "„Nach Fortschritt“: Gruppen mit Überschrift (alle neu → „Am Anfang“)", async () => soll((await gruppen()).map((g) => g.t + ":" + g.n), ["Am Anfang (unter 40 %):7"]));
 await pruefe("S4", "Abschnitt „Wartet“ A–Z", () => page.evaluate(() => [...document.querySelectorAll("#wartendBox .s-card")].map((c) => c.dataset.id).join(",")).then((v) => (v === "x1,x2" ? null : v)));
 await tippe("lange");
 await lade();

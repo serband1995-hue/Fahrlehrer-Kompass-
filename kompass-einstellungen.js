@@ -13,7 +13,7 @@
 (function () {
   "use strict";
   var TABELLE = "fahrschule_einstellungen";
-  var SCHLUESSEL = /^(fristen|vorlagen|fahrstunden|papierkorb|rueckgaengig)(\.[a-z][a-z0-9_]*)+$/;
+  var SCHLUESSEL = /^(fristen|vorlagen|fahrstunden|papierkorb|rueckgaengig|beleg|punkte)(\.[a-z][a-z0-9_]*)+$/; // W19: beleg.*, punkte.* (Migration 20261201_w19_02)
   var MAX_BYTES = 16000; // wie die Datenbank: octet_length(wert::text) <= 16000 (jsonb-Text, siehe jsonbText)
 
   var _fs = null;      // Fahrschule im Speicher

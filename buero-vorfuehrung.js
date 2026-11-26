@@ -482,6 +482,35 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person);
     zeilen.forEach((r) => { r.name = String(r.name || "").trim(); r.klasse = r.klasse ? String(r.klasse).trim() || null : null; r.aktualisiert_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; if (!Array.isArray(r.posten)) r.posten = []; if (r.aktiv == null) r.aktiv = true; });
   }
+  // W19 Teil 2: wie supabase/migrations/20261201_w19_02_zahlungsbelege.sql (Auslöser zahlungsbelege_anlegen)
+  function belegStempel(zeilen) {
+    const ein = (k) => { const z = tabelle("fahrschule_einstellungen").find((e) => e.schluessel === k); return z ? z.wert : null; };
+    const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person);
+    for (const r of zeilen) {
+      const fsZ = tabelle("belege_zaehler_fake");
+      if (r.storno_von) {
+        const o = tabelle("zahlungsbelege").find((x) => x.id === r.storno_von);
+        if (!o) return "Beleg zum Stornieren nicht gefunden";
+        if (o.storno_von) return "Ein Storno kann nicht storniert werden";
+        if (tabelle("zahlungsbelege").some((x) => x.storno_von === o.id)) return "duplicate key value violates unique constraint zahlungsbelege_ein_storno";
+        Object.assign(r, { schueler_id: o.schueler_id, schueler_name: o.schueler_name, zahlart: o.zahlart, betrag: -Number(o.betrag), fahrschule_daten: o.fahrschule_daten, steuer: o.steuer, zweck: "Storno zu Beleg Nr. " + o.nummer + (String(r.zweck || "").trim() ? ": " + String(r.zweck).trim() : "") });
+      } else {
+        if (!(Number(r.betrag) > 0)) return "Betrag muss größer als 0 sein";
+        if (r.zahlart === "bar" && !((ein("beleg.bargeld") || {}).aktiv === true)) return "Bargeld-Belege sind in den Einstellungen ausgeschaltet";
+        const s = tabelle("schueler").find((x) => x.id === r.schueler_id);
+        if (r.schueler_id && !s) return "Schüler gehört nicht zu dieser Fahrschule";
+        if (s) r.schueler_name = s.name;
+        const fs = tabelle("fahrschulen").find((x) => x.id === r.fahrschule_id);
+        const kopf = Object.assign({}, ein("beleg.fahrschule") || {}); if (!String(kopf.name || "").trim()) kopf.name = fs ? fs.name : "";
+        r.fahrschule_daten = kopf;
+        const st = ein("beleg.steuer"); r.steuer = st && st.ausweisen === true ? st : null;
+      }
+      let z = fsZ.find((x) => x.fs === r.fahrschule_id); if (!z) { z = { fs: r.fahrschule_id, letzte: 0 }; fsZ.push(z); }
+      r.nummer = ++z.letzte;
+      r.erstellt_von = (F.session && F.session.user && F.session.user.id) || null; r.bearbeiter = p ? p.name : null;
+    }
+    return null;
+  }
   class Abfrage {
     constructor(name) { this.name = name; this.filter = []; this.art = "select"; this.einzeln = null; this.sort = []; this.grenze = null; this.nachher = false; }
     select() { if (this.art !== "select") this.nachher = true; return this; }
@@ -514,6 +543,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         if (this.name === "schueler_aufgaben") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.von_person_id = si ? si.person : null; r.bearbeiter = p ? p.name : null; }); }
         // wie der Schutz-Trigger der Preisliste (K9): Verfasser und Zeit vom Server
         if (this.name === "fahrschule_preise") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.angelegt_von = (F.session && F.session.user && F.session.user.id) || null; r.angelegt_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
+        // wie der Auslöser zahlungsbelege_anlegen (W19 Teil 2): Nummer, Name, Kopf und Storno vom Server, Bargeld nur mit Schalter
+        if (this.name === "zahlungsbelege") { const f = belegStempel(daten); if (f) return { data: null, error: { message: f } }; }
         t.push(...daten);
         // wie der Schutz-Trigger von fahrzeug_konflikt_gesehen (K18): wer und wann kommen vom Server
         if (this.name === "fahrzeug_konflikt_gesehen") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.gesehen_von = (F.session && F.session.user && F.session.user.id) || null; r.gesehen_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
