@@ -365,7 +365,8 @@ function zmFuerPruefungGesendet(p) {
     if (m.schueler_id !== p.schueler_id || m.art !== "pruefung" || m.status !== "gesendet" || m.modus !== modus || !String(m.wofuer || "").startsWith(anfang)) continue;
     const am = String(m.gesendet_am || m.angelegt_am || "").slice(0, 10);
     if (!am || am < grenze) continue;
-    const verbraucht = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && art(q) === art(p) && q.datum >= am && q.datum < heute);
+    const verbraucht = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && art(q) === art(p) && q.datum >= am && q.datum < heute)
+      || (art(p) === "praxis" && (S.pruefungen || []).some((e) => e.schueler_id === p.schueler_id && e.datum >= am && e.datum < heute)); // auch Prüfungen aus der App (Prüfer Büro)
     if (!verbraucht && (!best || am > String(best.gesendet_am || best.angelegt_am || "").slice(0, 10))) best = m;
   }
   return best;
