@@ -130,7 +130,7 @@ begin
 
   v_schritt := 'A4 Quiz-RPCs';
   select coalesce(jsonb_agg(p.proname), '[]') into v_abw from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-   where n.nspname = 'public' and p.proname in ('quiz_beitreten', 'quiz_antworten_senden', 'quiz_ich', 'quiz_erstellen', 'quiz_steuern', 'quiz_entfernen', 'quiz_verlauf')
+   where n.nspname = 'public' and p.proname in ('quiz_beitreten', 'quiz_antworten_senden', 'quiz_ich', 'quiz_erstellen', 'quiz_steuern', 'quiz_entfernen', 'quiz_verlauf', 'quiz_zeit')
      and not has_function_privilege('anon', p.oid, 'EXECUTE');
   v_pr := v_pr || jsonb_build_object('name', 'A4 anon darf die Quiz-RPCs weiter aufrufen', 'kat', 'pflicht', 'ok', jsonb_array_length(v_abw) = 0, 'ist', v_abw);
   v_ok := has_table_privilege('anon', 'public.quiz_raeume', 'SELECT') and has_table_privilege('anon', 'public.quiz_spieler', 'SELECT');
