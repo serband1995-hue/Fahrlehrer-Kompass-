@@ -6,7 +6,7 @@
 window.KOMPASS_NEU = [
   { version: "2026.11.26.12", datum: "2026-11-26", kurz: "Kleine Verbesserungen in Liste, Kalender und Büro.",
     punkte: ["Schülerliste: Die vier Sortier-Knöpfe stehen jetzt in zwei Reihen. „Nach Stand“ heißt jetzt „Nach Fortschritt“.",
-             "Wochenansicht: Haben zwei Schüler denselben Vornamen, steht in der kleinen Kachel z. B. „L. Müller“.",
+             "Wochenansicht: Haben zwei Schüler denselben Vornamen, steht in der kleinen Kachel der Nachname vorn, z. B. „Müller L.“.",
              "Gesamtansicht: Prüfungen und Termine von vergangenen Tagen lassen sich nicht mehr aus Versehen verschieben.",
              "Büro: Nach einer neuen Prüfung steht ein Kalender-Fehler direkt in der Karte. „Preis eintragen“ führt gleich zu den Preisen.",
              "Büro: Eine Zahlungsaufforderung wird auch dann als verschickt erkannt, wenn das „Wofür“ von Hand geändert wurde.",

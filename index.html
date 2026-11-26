@@ -14809,11 +14809,8 @@ function weekDayRowsHTML(iso){
 }
 function sfKuerzel(e){ if(e.srcSonder){ const grp=e.srcSonder.split(":")[1]; return SF_KUERZEL[grp]||"SF"; } return "SF"; }
 function firstName(n){ return (n||"").split(" ")[0]; }
-// W20: Darf dieser Termin per Finger gezogen werden? Eine Stelle für Anzeige (Chip) und Ablegen.
-// Immer: nur geplante Fahrstunden, keine Blocker/Urlaub, keine doppelte Prüfung. In der Gesamtansicht zusätzlich:
-// keine Prüfung (fester Termin beim Prüfer) und nichts, was schon vorbei ist (dort sind es Termine anderer Fahrlehrer).
-// W20: In der schmalen Wochen-Kachel wird der Name mit „…“ gekürzt. Haben zwei Schüler denselben Vornamen, steht vorn
-// „Vorname N.“ (Initial des Nachnamens), damit man sie unterscheiden kann. Sonst bleibt der Name wie er war.
+// W20: In der schmalen Wochen-Kachel wird der Name mit „…“ gekürzt. Haben zwei Schüler denselben Vornamen, steht der
+// Nachname vorn („Müller L.“), damit man sie unterscheiden kann. Sonst bleibt der Name wie er war.
 function _kachelName(e){
   const n=String((e&&e.name)||"").trim();
   if(!n||!e.sid||!/ /.test(n)||!DB.students)return n;
@@ -14821,10 +14818,13 @@ function _kachelName(e){
   if(!nach||teile.length<2)return n;
   const andere=DB.students.filter(x=>x.id!==e.sid&&String(x.name||"").trim()&&firstName(String(x.name).trim()).toLowerCase()===vn&&!(typeof istArchiviert==="function"&&istArchiviert(x)));
   if(!andere.length)return n;
-  // gleicher Vorname: der Unterschied muss vorn stehen, sonst schneidet die schmale Kachel (Handy ca. 42 px) ihn ab
-  // („Lena M.“ wurde zu „Len…“). Deshalb „L. Müller“: auch bei gleichem Anfangsbuchstaben (Müller/Meier) bleibt „L. Mü…“/„L. Me…“.
-  return firstName(n).charAt(0).toUpperCase()+". "+nach;
+  // gleicher Vorname: der Unterschied muss ganz vorn stehen. Das Namensfeld ist am 360-px-Handy nur ca. 31 px breit
+  // (Richter W20): „Lena M.“ wurde zu „Len…“, „L. Müller“ zu „L. …“. Mit „Müller L.“ bleibt „Mül…“/„Mei…“ unterscheidbar.
+  return nach+" "+firstName(n).charAt(0).toUpperCase()+".";
 }
+// W20: Darf dieser Termin per Finger gezogen werden? Eine Stelle für Anzeige (Chip) und Ablegen.
+// Immer: nur geplante Fahrstunden, keine Blocker/Urlaub, keine doppelte Prüfung. In der Gesamtansicht zusätzlich:
+// keine Prüfung (fester Termin beim Prüfer) und nichts, was schon vorbei ist (dort sind es Termine anderer Fahrlehrer).
 function _calZiehbar(e,iso){
   if(!e||e.kind!=="lesson"||e.status!=="geplant"||e.art==="block"||e.doppelt)return false;
   if(_fsAgg&&(e.art==="pruefung"||(iso||e.date||"")<todayISO()))return false;

@@ -398,7 +398,7 @@ footer{margin-top:10mm;font-size:8pt;color:#555;border-top:1px solid #ccc;paddin
 @media screen{.breit{overflow-x:auto}}
 @media (max-width:600px){.kopf{grid-template-columns:1fr}td.us{width:auto;min-width:24mm}.sig{grid-template-columns:1fr;gap:12mm}table{font-size:8.5pt}}
 </style></head><body>
-<div class="leiste"><button class="haupt" id="nwDruck">Drucken / als PDF speichern</button>${x.email ? `<a href="mailto:${encodeURIComponent(x.email)}?subject=${encodeURIComponent(titel)}&body=${encodeURIComponent("Hallo " + x.name + ",\n\nanbei dein " + titel + " als PDF.\n\nViele Grüße\n" + (fs.name || ""))}">E-Mail vorbereiten</a>` : ""}<button id="nwZu">Schließen</button></div>
+<div class="leiste"><button class="haupt" id="nwDruck">Drucken / als PDF speichern</button>${x.email ? `<a href="mailto:${encodeURIComponent(x.email)}?subject=${encodeURIComponent(titel)}&body=${encodeURIComponent("Hallo " + x.name + ",\n\nanbei " + (neuRecht ? "deine " : "dein ") + titel + " als PDF.\n\nViele Grüße\n" + (fs.name || ""))}">E-Mail vorbereiten</a>` : ""}<button id="nwZu">Schließen</button></div>
 <p class="hinweis leiste-hinweis">Für die E-Mail: erst als PDF speichern, dann die PDF an die E-Mail anhängen.</p>
 <div class="blatt">
 <header><div><div class="fs">${esc(fs.name || "")}</div><h1>${esc(titel)}</h1>${neuRecht ? "" : `<div class="klein">Muster Anlage 3 DV-FahrlG</div>`}</div><div class="klein stand">Stand ${esc(datumDE(st.heute))}</div></header>

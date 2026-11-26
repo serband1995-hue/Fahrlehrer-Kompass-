@@ -948,7 +948,7 @@ server.close();
 // ---------- H7 Nichts kaputt: die anderen Tests ----------
 const ANDERE = ["heute-test.mjs", "reiter-test.mjs", "fahrstunde-test.mjs", "handy-test.mjs", "buero-test.mjs", "app-notiz-test.mjs", "abgleich-test.mjs", "zwei-geraete-test.mjs", "zahlen-test.mjs", "rechnen-test.mjs"];
 if (!process.env.AKTE_ALLE) {
-  await pruefe("H7", "alle bisherigen Tests grün", () => ({ skip: "nur mit AKTE_ALLE=1 (läuft in der GitHub-Prüfung einzeln)" }));
+  await pruefe("H7", "alle bisherigen Tests grün", () => ({ skip: "nur mit AKTE_ALLE=1 (die anderen Tests einzeln starten; nicht alle laufen in der GitHub-Prüfung)" }));
 } else {
   const dir = join(REPO, "scripts");
   const env = { ...process.env, KOMPASS_ROOT: ROOT, APP_ROOT: ROOT, HEUTE_SCHNELL: "1", FAHR_SCHNELL: "1" };
