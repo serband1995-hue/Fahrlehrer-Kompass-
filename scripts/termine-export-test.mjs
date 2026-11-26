@@ -82,6 +82,8 @@ pruefe("T14", "Sicht ohne Filter in_ausbildung im Bestanden-Teil", !/in_ausbildu
   const r2 = bestandenBauen(tafel.concat(a), S, AB, HEUTE).sort((x, y) => x.telefon < y.telefon ? -1 : 1);
   pruefe("T22", "Tafel + App zusammen: App-only kommt mit Klasse aus der Sicht, Geschwister weg, kein Doppel", j(r2) === j([{ telefon: "0160 1000001", datum: "2026-11-05", klasse: "B" }, { telefon: "0160 1000002", datum: "2026-11-10", klasse: "A2" }]) || j(r2));
   pruefe("T23", "App: kaputte Eingaben werfen nicht", j(appBestanden([null, 5, "x", {}], [])) === "[]" && j(appBestanden(undefined, [])) === "[]" || "wirft/liefert");
+  const r3 = bestandenBauen(appBestanden([{ schueler_id: "au", datum: "2026-11-03", result: "pass", payload: {}, geloescht: false }, { schueler_id: "bb", datum: "2026-11-04", result: "pass", payload: {}, geloescht: false }], []), [{ id: "au", telefon: "0160 2000001", klasse: "Automatik" }, { id: "bb", telefon: "0160 2000002", klasse: "B197" }], AB, HEUTE).map((x) => x.klasse);
+  pruefe("T25", "App-Eintrag: Fahrform Automatik/B197 wird Klasse B", j(r3) === j(["B", "B"]) || j(r3));
   const idx3 = await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8");
   const teil3 = idx3.slice(idx3.indexOf("async function bestandenLaden"), idx3.indexOf("Deno.serve"));
   pruefe("T24", "App-Teil eigener try/catch, liest nur kalender_pruefungen", /Quelle 2[\s\S]*try \{[\s\S]*kalender_pruefungen[\s\S]*catch/.test(teil3) && !/\.(insert|update|delete|upsert|rpc)\(/.test(teil3) || "fehlt");

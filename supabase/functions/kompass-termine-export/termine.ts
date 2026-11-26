@@ -40,6 +40,12 @@ export type BestandenPruefung = { schueler_id: string | null; datum: string; kla
 export type ExportSchueler = { id: string; telefon: string | null; klasse?: string | null };
 // +49 / 0049 am Anfang gilt wie 0 (gleiche Nummer in zwei Schreibweisen = Geschwister erkannt). Nur fuer "bestanden".
 export function telefonNorm(t: string): string { return String(t || "").replace(/\(0\)/g, "").replace(/[\s\-\/().]/g, "").replace(/^(\+|00)490?/, "0"); }
+// Die Klasse aus der Sicht ist die Fahrform der App (B, BE, B197, Automatik, C1, C1E, C, CE). Fuehrerscheinklasse dazu:
+// B197 und Automatik sind Klasse B. Nur fuer die Ersatz-Klasse (Pruefung ohne eigene Klasse, z. B. aus der App).
+export function formZuKlasse(f: string | null | undefined): string {
+  const t = String(f || "").trim();
+  return /^(b197|automatik)$/i.test(t) ? "B" : t;
+}
 export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchueler[], ab: string, heute: string): { telefon: string; datum: string; klasse: string | null }[] {
   const nachId = new Map<string, ExportSchueler>();
   const zaehl = new Map<string, number>();
@@ -58,7 +64,7 @@ export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchu
     const tel = String(s.telefon || "").trim();
     const n = telefonNorm(tel);
     if (!n || (zaehl.get(n) || 0) > 1) continue;        // keine oder mehrdeutige Nummer
-    const k = String(p.klasse || s.klasse || "").trim();
+    const k = String(p.klasse || formZuKlasse(s.klasse) || "").trim();
     const schluessel = n + "|" + k.toUpperCase();      // je Nummer UND Klasse (B und CE = zwei Eintraege)
     const alt = best.get(schluessel);
     if (alt && alt.datum >= String(p.datum)) continue;  // juengste je Kombination gewinnt
