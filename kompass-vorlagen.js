@@ -21,13 +21,13 @@
     reaktivierung_bald: {
       titel: "Reaktivierung wird bald fällig", wann: "Erinnerung, bevor die Reaktivierung fällig wird (Knopf „Erinnerung schicken“).",
       platzhalter: ["Vorname", "Datum", "Tage", "Betrag", "Fahrschule"],
-      text: "deine Reaktivierung wird am {Datum} fällig. Damit es danach ohne Pause weitergeht, zahl bitte rechtzeitig:",
+      text: "deine Reaktivierung wird am {Datum} fällig. Damit es danach ohne Pause weitergeht, zahle bitte rechtzeitig:",
       text_eltern: "die Reaktivierung von {Vorname} wird am {Datum} fällig. Damit es danach ohne Pause weitergeht, zahlen Sie bitte rechtzeitig:",
     },
     reaktivierung: {
       titel: "Reaktivierung ist fällig", wann: "Die Reaktivierung ist fällig oder überfällig.",
       platzhalter: ["Vorname", "Datum", "Betrag", "Fahrschule"],
-      text: "deine Reaktivierung ist fällig. Bitte zahl:",
+      text: "deine Reaktivierung ist fällig. Bitte zahle:",
       text_eltern: "die Reaktivierung von {Vorname} ist fällig. Bitte zahlen Sie:",
     },
     pruefung: {

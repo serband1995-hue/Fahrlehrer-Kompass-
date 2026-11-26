@@ -81,7 +81,7 @@ pruefe("HTML: keine externen Bilder/Schriften/Style-Block", !/<style|<link|src="
 pruefe("HTML: Breite höchstens 600 px", M.mailHtml(d).includes("max-width:600px"));
 pruefe("HTML: IBAN in 4er-Gruppen", M.mailHtml(d).includes("DE89 3704 0044 0532 0130 00"));
 pruefe("HTML: Betrag groß", M.mailHtml(d).includes("font-size:38px") && M.mailHtml(d).includes("120,00 €"));
-pruefe("HTML: Satz je Art", M.mailHtml({ ...d, art: "reaktivierung" }).includes("deine Reaktivierung ist fällig. Bitte zahl:") && M.mailHtml({ ...d, art: "zahlung_offen" }).includes("keine neuen Fahrstunden gebucht werden"));
+pruefe("HTML: Satz je Art", M.mailHtml({ ...d, art: "reaktivierung" }).includes("deine Reaktivierung ist fällig. Bitte zahle:") && M.mailHtml({ ...d, art: "zahlung_offen" }).includes("keine neuen Fahrstunden gebucht werden"));
 pruefe("Testkasten nur im Testmodus (HTML)", M.mailHtml({ ...d, modus: "test" }).includes("Test-Mail – nicht bezahlen") && !M.mailHtml(d).includes("Test-Mail"));
 pruefe("Testkasten nur im Testmodus (Text)", M.mailText({ ...d, modus: "test" }).startsWith("TEST-MAIL") && !M.mailText(d).includes("TEST-MAIL"));
 pruefe("PayPal-Knopf nur mit PayPal", M.mailHtml(d).includes("https://www.paypal.me/boost/120.00EUR") && !M.mailHtml({ ...d, paypal: null }).includes("paypal"));
