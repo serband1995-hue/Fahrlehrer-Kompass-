@@ -27,7 +27,8 @@ import { berlinHeute, termineBauen, mehrdeutigeNummern, bestandenBauen, appBesta
   --- v4.1, 26.11.2026 ---
   Zweite Quelle: Ergebnisse aus der Fahrlehrer-App stehen nur in kalender_pruefungen (nicht in pruefungstermine). Sie
   zaehlen mit (Klasse dann aus der Sicht), ausser B197 und Eintraegen am selben Tag wie ein Tafel-Eintrag desselben
-  Schuelers. Faellt eine der beiden Abfragen aus, bleibt nur diese Quelle leer.
+  Schuelers (bestanden oder nicht). Faellt die App-Abfrage aus, fehlt nur die App; faellt die Tafel aus, fehlen beide
+  (ohne Tafel ist ein Widerspruch nicht erkennbar). Die Termine kommen in jedem Fall.
 */
 function secretsMatch(a: string, b: string): boolean {
   const ea = new TextEncoder().encode(a), eb = new TextEncoder().encode(b);
@@ -55,7 +56,7 @@ async function geheimnisErmitteln(client: ReturnType<typeof createClient> | null
 async function bestandenLaden(client: ReturnType<typeof createClient>, heute: string): Promise<{ telefon: string; datum: string; klasse: string | null }[]> {
   try {
     const ab = berlinHeute(new Date(Date.now() - 120 * 86400000));
-    // Quelle 1: Tafel des Bueros (pruefungstermine). Fehler -> nur dieser Teil leer.
+    // Quelle 1: Tafel des Bueros (pruefungstermine). Fehler -> Tafel UND App leer (siehe tafelOk).
     // Geladen werden bestanden UND nicht_bestanden: jedes Tafel-Ergebnis sperrt einen App-Eintrag am selben Tag (wie im Buero:
     // die Tafel gewinnt). Ausgeliefert werden nur die bestandenen.
     let tafel: BestandenPruefung[] = [];
