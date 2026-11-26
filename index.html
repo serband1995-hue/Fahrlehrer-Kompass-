@@ -8086,7 +8086,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.2";
+const APP_VERSION="2026.11.26.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -16264,7 +16264,8 @@ function openSlotSheet(tid,slot){
 function fcLesson(id){ return (DB.lessons||[]).find(x=>x.id===id); }
 // Lessons mit offenem Verlust (v1/v2) – für Übersicht "FC vergessen"
 function fcForgottenLessons(){
-  return (DB.lessons||[]).filter(l=>l.fc==="v1"||l.fc==="v2").sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  // W17: nur Termine, für die es überhaupt einen Fahrcheck gibt (unter 45 Minuten: keiner, also auch keiner vergessen)
+  return (DB.lessons||[]).filter(l=>(l.fc==="v1"||l.fc==="v2")&&(!window.KR||!KR.fcGebucht||KR.fcGebucht(l)>0)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
 // entgangenes Geld gesamt (offene v1/v2, noch nicht nachgereicht)
 function fcForgottenEuro(){ let ue=0; fcForgottenLessons().forEach(l=>{ ue += (l.fc==="v1")? ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer)/2 : ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); }); return Math.round(ue*DB.verdienst.proUE); }
