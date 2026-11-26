@@ -7,6 +7,7 @@ const CORE_FILES = [
   "./index.html",
   "./kompass-rechnen.js",
   "./kompass-einstellungen.js",
+  "./kompass-fehler.js",
   "./neuigkeiten.js",
   "./fonts/fonts.css",
   "./vendor/supabase-js-2.119.2.js",
