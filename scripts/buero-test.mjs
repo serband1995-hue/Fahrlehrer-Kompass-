@@ -1169,6 +1169,12 @@ for (const breite of [1301, 1366, 1420]) {
   if (pt6 !== "geplant" || ((await schueler("s11")).theorie_bestanden_am || null) !== vorher) fehler("Ergebnisse: Rückgängig stellt nicht wieder her");
   await page.click('[data-enein="pt-7"]'); await page.waitForTimeout(300);
   if (!(await page.evaluate(() => (window.__FAKE.tabellen.schueler_aufgaben || []).some((a) => a.schueler_id === "s12" && /Praxisprüfung planen/.test(a.text))))) fehler("Ergebnisse: keine Aufgabe „Neuen Termin planen“");
+  // W17: § 18 Abs. 1 Satz 2 FeV – Hinweis „Wiederholung in der Regel frühestens ab …“ (Prüfungstag + 14 Tage), nur Anzeige
+  {
+    const ab = (() => { const d = new Date(gestern + "T12:00:00"); d.setDate(d.getDate() + 14); return d.toISOString().slice(0, 10); })();
+    const w = await page.evaluate(() => { const e = document.querySelector("[data-wiederholung]"); return e ? { ab: e.dataset.wiederholung, t: e.textContent } : null; });
+    if (!w || w.ab !== ab || !/Wiederholung in der Regel frühestens ab/.test(w.t)) fehler("Ergebnisse: Hinweis Wiederholung fehlt/falsch: " + JSON.stringify(w) + " erwartet " + ab);
+  }
   await page.click('[data-eja="pt-4"]'); await page.waitForTimeout(300);
   const s8 = await schueler("s8");
   if (s8.praxis_bestanden_am !== gestern || s8.reakt_status !== "befreit") fehler("Ergebnisse: Praxis bestanden nicht in der Akte " + JSON.stringify([s8.praxis_bestanden_am, s8.reakt_status]));

@@ -1233,6 +1233,17 @@ async function ladeProtokoll(tabelle, id) {
 
 /* ---------- Prüfungstafel ---------- */
 const P_STATUS = { geplant: ["", "geplant"], bestanden: ["gruen", "bestanden"], nicht_bestanden: ["rot", "nicht bestanden"], abgesagt: ["", "abgesagt"] };
+/* W17 (HS7/Serband 26.11.2026): nach „nicht bestanden“ den frühesten Wiederholungstag zeigen (nur Anzeige, nichts gespeichert).
+   § 18 Abs. 1 Satz 2 FeV (gemeinsame Vorschrift für theoretische und praktische Prüfung): „Eine nicht bestandene Prüfung darf
+   nicht vor Ablauf eines angemessenen Zeitraums, in der Regel mindestens zwei Wochen, wiederholt werden.“
+   Bei Täuschung kann die Behörde bis zu neun Monate festlegen (Satz 3) – das steht im Bescheid, nicht hier. */
+const WIEDERHOLUNG_TAGE = 14;
+function wiederholungHinweis(p) {
+  if (!p || p.status !== "nicht_bestanden" || !p.datum) return "";
+  const ab = KR.addDaysISO(p.datum, WIEDERHOLUNG_TAGE);
+  if (ab <= KR.todayISO()) return ""; // Frist vorbei: kein Hinweis mehr nötig
+  return `<span class="leise klein wiederholung-hinweis" data-wiederholung="${esc(ab)}">Wiederholung in der Regel frühestens ab ${esc(datumDE(ab))}</span>`;
+}
 const HAKEN = [
   ["entgelt_bezahlt", "blau", "Vorstellungsentgelt bezahlt"],
   ["tuev_gutschein", "rot", "TÜV-Gutschein gekauft"],
@@ -1281,7 +1292,7 @@ function renderErgebnisListe(art, suche) {
     const ausApp = p.status === "geplant" && p.art === "praxis" ? appErgebnis(p.schueler_id, p.datum) : "";
     const ergebnis = p.status === "geplant"
       ? `${ausApp ? `<span class="leise klein">In der App: ${ausApp === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span> ` : ""}<button class="knopf ergebnis-ja" data-eja="${esc(p.id)}" type="button">✓ Bestanden</button><button class="knopf ergebnis-nein" data-enein="${esc(p.id)}" type="button">✗ Nicht bestanden</button>`
-      : `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span>${r ? `<button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button>` : ""}${p.status === "bestanden" && p.art === "praxis" && istAktiv(s) ? `<button class="knopf klein" data-earchiv="${esc(s.id)}" type="button">Ins Archiv</button>` : ""}`;
+      : `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span>${wiederholungHinweis(p)}${r ? `<button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button>` : ""}${p.status === "bestanden" && p.art === "praxis" && istAktiv(s) ? `<button class="knopf klein" data-earchiv="${esc(s.id)}" type="button">Ins Archiv</button>` : ""}`;
     return `<tr><td class="zeitspalte">${esc(p.von || "–")}</td>
       <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
       <td><b>${esc(s.name || "(Schüler gelöscht)")}</b></td><td>${esc(p.fahrlehrer_id ? lehrerName(p.fahrlehrer_id) : "–")}</td>
@@ -1335,7 +1346,7 @@ function renderPruefungen() {
     const [sf, st] = P_STATUS[p.status] || P_STATUS.geplant;
     const aktion = p.status === "geplant"
       ? (p.datum <= heute ? `<button class="knopf klein haupt" data-ergebnis="${esc(p.id)}" type="button">Ergebnis</button>` : "")
-      : `<span class="marke-pill ${sf}">${st}</span>`;
+      : `<span class="marke-pill ${sf}">${st}</span>${wiederholungHinweis(p) ? " " + wiederholungHinweis(p) : ""}`;
     return `<tr class="${p.status === "geplant" && p.datum < heute ? "warnzeile" : ""}">
       <td class="zeitspalte">${esc(p.von || "–")}</td>
       <td><span class="marke-pill ${p.art === "praxis" ? "gruen" : "blau"}">${p.art === "praxis" ? "Praxis" : "Theorie"}</span>${p.klasse ? ` <span class="leise klein">${esc(p.klasse)}</span>` : ""}</td>
