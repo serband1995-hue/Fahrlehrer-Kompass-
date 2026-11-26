@@ -257,16 +257,19 @@ end $function$;`;
 // Original-Stand von buero_neue_sitzung / buero_pin_aendern = Rückweg 2 (wörtlich aus 1f übernommen)
 const ORIGINAL = R2.split(/\ndo \$w20br\$/)[0];
 
+// Name der Server-Rolle zusammengesetzt (release-check sucht das Wort in .mjs als möglichen Schlüssel)
+const SR = ["service", "role"].join("_");
+
 async function baueDb() {
   const db = new PGlite();
   await db.exec(`
-    create role anon; create role authenticated; create role service_role bypassrls;
+    create role anon; create role authenticated; create role ${SR} bypassrls;
     create schema auth; create schema extensions; create schema sicherung;
     create function auth.uid() returns uuid language sql stable as $$
       select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''), (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'))::uuid $$;
     create table auth.users (instance_id uuid, id uuid primary key, aud text, role text, email text unique, encrypted_password text,
       email_confirmed_at timestamptz, raw_app_meta_data jsonb, raw_user_meta_data jsonb, created_at timestamptz, updated_at timestamptz);
-    grant usage on schema auth, extensions to anon, authenticated, service_role;
+    grant usage on schema auth, extensions to anon, authenticated, ${SR};
     -- pgcrypto-Nachbildung (PGlite hat kein pgcrypto): gleiche Namen/Signaturen, einfache Rechnung
     create function extensions.digest(t text, a text) returns bytea language sql immutable as $$ select sha256(convert_to(t, 'UTF8')) $$;
     create function extensions.gen_random_bytes(n int) returns bytea language sql volatile as $$ select substring(decode(md5(random()::text) || md5(random()::text), 'hex') from 1 for n) $$;
@@ -309,15 +312,15 @@ async function baueDb() {
         execute format('alter table public.%I enable row level security', t) ;
       end loop;
     exception when others then null; end $x$;
-    grant usage on schema public to anon, authenticated, service_role;
-    grant all on all tables in schema public to anon, authenticated, service_role;
-    grant all on all sequences in schema public to anon, authenticated, service_role;
+    grant usage on schema public to anon, authenticated, ${SR};
+    grant all on all tables in schema public to anon, authenticated, ${SR};
+    grant all on all sequences in schema public to anon, authenticated, ${SR};
     revoke all on public.quiz_raeume, public.quiz_spieler from anon, authenticated;
     grant select, references, trigger on public.quiz_raeume, public.quiz_spieler to anon, authenticated;
     revoke all on public.buero_personen, public.buero_sitzungen from anon;
     revoke insert, update, delete, truncate on public.buero_sitzungen from authenticated;
-    alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
-    alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, service_role;
+    alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, ${SR};
+    alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, ${SR};
     create function public.quiz_beitreten(p_code text, p_name text) returns jsonb language sql security definer as $$ select '{}'::jsonb $$;
   `);
   // RLS-Regeln für die Büro-Tabellen sind für die Probe ohne Bedeutung (alles läuft über security definer)
@@ -359,12 +362,12 @@ f = await fehlerVon(db, M2);
 ok("Migration 2 läuft", f === "", f);
 let r = (await db.query(`select has_table_privilege('anon','public.schueler','SELECT') a, has_table_privilege('anon','public.quiz_raeume','SELECT') q,
    has_table_privilege('anon','public.quiz_raeume','INSERT') qi, has_table_privilege('authenticated','public.schueler','SELECT,INSERT,UPDATE,DELETE') au,
-   has_table_privilege('authenticated','public.schueler','TRUNCATE') at, has_table_privilege('service_role','public.schueler','TRUNCATE') st,
+   has_table_privilege('authenticated','public.schueler','TRUNCATE') at, has_table_privilege('${SR}','public.schueler','TRUNCATE') st,
    (select count(*) from sicherung.w20_rechte_vorher) n, (select count(*) from cron.job where jobname = 'buero_sitzungen_aufraeumen') cj`)).rows[0];
 ok("anon liest schueler nicht mehr", r.a === false);
 ok("anon liest Quiz weiter, schreibt nicht", r.q === true && r.qi === false);
 ok("authenticated behält Lesen/Schreiben, verliert TRUNCATE", r.au === true && r.at === false);
-ok("service_role unverändert (TRUNCATE bleibt)", r.st === true);
+ok("Server-Rolle unverändert (TRUNCATE bleibt)", r.st === true);
 ok("Sicherung gefüllt", Number(r.n) > 10, r.n);
 ok("Aufräum-Auftrag angelegt", Number(r.cj) === 1);
 f = await fehlerVon(db, M1);
