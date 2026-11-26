@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { berlinHeute, termineBauen, mehrdeutigeNummern } from "./termine.ts";
+import { berlinHeute, termineBauen, mehrdeutigeNummern, bestandenBauen, appBestanden, type ExportSchueler, type BestandenPruefung, type AppPruefung } from "./termine.ts";
 
 /*
   kompass-termine-export (10.10.2026)
@@ -17,6 +17,18 @@ import { berlinHeute, termineBauen, mehrdeutigeNummern } from "./termine.ts";
   Sie enthaelt nur Fahrschulen mit eingeschaltetem Akademie-Export. Termine gibt es nur noch fuer Schueler
   in Ausbildung (in_ausbildung = true). Fuer die Pruefung auf doppelte Nummern zaehlen weiter alle aktiv
   gefuehrten Schueler dieser Fahrschulen.
+
+  --- v4, 25.11.2026 (Akademie) ---
+  Zusaetzlich "bestanden": je Telefonnummer UND Klasse die juengste bestandene Praxispruefung der letzten 120 Tage mit Klasse
+  ({telefon, datum, klasse}, keine Namen). Schueler aus der Sicht OHNE Filter in_ausbildung. Eine Nummer, die bei mehr als
+  einem Schueler im Export steht, wird weggelassen (gezaehlt ueber ALLE Schueler der Sicht). Ein Fehler in diesem Teil
+  verhindert nie die Termine: dann bestanden = [].
+
+  --- v4.1, 26.11.2026 ---
+  Zweite Quelle: Ergebnisse aus der Fahrlehrer-App stehen nur in kalender_pruefungen (nicht in pruefungstermine). Sie
+  zaehlen mit (Klasse dann aus der Sicht), ausser B197 und Eintraegen am selben Tag wie ein Tafel-Eintrag desselben
+  Schuelers (bestanden oder nicht). Faellt die App-Abfrage aus, fehlt nur die App; faellt die Tafel aus, fehlen beide
+  (ohne Tafel ist ein Widerspruch nicht erkennbar). Die Termine kommen in jedem Fall.
 */
 function secretsMatch(a: string, b: string): boolean {
   const ea = new TextEncoder().encode(a), eb = new TextEncoder().encode(b);
@@ -38,6 +50,64 @@ async function geheimnisErmitteln(client: ReturnType<typeof createClient> | null
     if (error) { console.error("Vault-Zugriff fehlgeschlagen:", error.message); return null; }
     return typeof data === "string" && data.length >= 16 ? data : null;
   } catch (e) { console.error("Vault-Zugriff fehlgeschlagen:", e instanceof Error ? e.message : String(e)); return null; }
+}
+
+// v4/v4.1: Bestandene Praxispruefungen aus Tafel (pruefungstermine) und Fahrlehrer-App (kalender_pruefungen). Nur lesen. Jeder Fehler ergibt eine leere Liste (die Termine gehen trotzdem raus).
+async function bestandenLaden(client: ReturnType<typeof createClient>, heute: string): Promise<{ telefon: string; datum: string; klasse: string | null }[]> {
+  try {
+    const ab = berlinHeute(new Date(Date.now() - 120 * 86400000));
+    // Quelle 1: Tafel des Bueros (pruefungstermine). Fehler -> Tafel UND App leer (siehe tafelOk).
+    // Geladen werden bestanden UND nicht_bestanden: jedes Tafel-Ergebnis sperrt einen App-Eintrag am selben Tag (wie im Buero:
+    // die Tafel gewinnt). Ausgeliefert werden nur die bestandenen.
+    let tafel: BestandenPruefung[] = [];
+    let tafelAlle: BestandenPruefung[] = [];
+    let tafelOk = false;
+    try {
+      const { data: pb, error: e2 } = await client.from("pruefungstermine")
+        .select("schueler_id, datum, klasse, status").eq("art", "praxis").in("status", ["bestanden", "nicht_bestanden"])
+        .gte("datum", ab).lte("datum", heute).not("schueler_id", "is", null)
+        .order("datum", { ascending: false }).limit(5000);
+      if (e2) console.error("Datenbankfehler (Bestanden Tafel):", e2.message);
+      else if ((pb || []).length >= 1000) console.error("Zu viele bestandene Pruefungen (Tafel) fuer eine Abfrage");
+      else {
+        tafelAlle = (pb || []) as BestandenPruefung[];
+        tafelOk = true;
+        tafel = ((pb || []) as (BestandenPruefung & { status?: string })[]).filter((p) => p.status === "bestanden")
+          .map((p) => ({ schueler_id: p.schueler_id, datum: p.datum, klasse: p.klasse }));
+      }
+    } catch (e) { console.error("Fehler (Bestanden Tafel):", e instanceof Error ? e.message : String(e)); }
+    // Quelle 2 (v4.1): Fahrlehrer-App (kalender_pruefungen). Fehler -> nur dieser Teil leer. Datum kann Text oder Datum sein:
+    // Vergleich als Text "kleiner als morgen", damit auch ein Zeitstempel von heute mitzaehlt. Geloescht/B197 prueft appBestanden.
+    let app: BestandenPruefung[] = [];
+    try {
+      const morgen = berlinHeute(new Date(Date.parse(heute + "T12:00:00Z") + 86400000));
+      const { data: kp, error: e3 } = await client.from("kalender_pruefungen")
+        .select("schueler_id, datum, result, payload, geloescht").in("result", ["pass", "bestanden"])
+        .gte("datum", ab).lt("datum", morgen).not("schueler_id", "is", null)
+        .order("datum", { ascending: false }).limit(5000);
+      if (e3) console.error("Datenbankfehler (Bestanden App):", e3.message);
+      else if ((kp || []).length >= 1000) console.error("Zu viele bestandene Pruefungen (App) fuer eine Abfrage");
+      else if (!tafelOk) console.error("App-Teil leer: ohne Tafel kann ein Widerspruch (Tafel nicht bestanden) nicht erkannt werden");
+      else app = appBestanden((kp || []) as AppPruefung[], tafelAlle);
+    } catch (e) { console.error("Fehler (Bestanden App):", e instanceof Error ? e.message : String(e)); }
+    const pb = tafel.concat(app);
+    if (!pb.length) return [];
+    // ALLE Schueler im Export (seitenweise, PostgREST liefert hoechstens 1000 je Abfrage), damit Geschwister sicher erkannt werden
+    const alle: ExportSchueler[] = [];
+    for (let seite = 0; ; seite++) {
+      if (seite >= 50) { console.error("Zu viele Schueler im Export"); return []; }
+      const { data, error } = await client.from("v_akademie_export_schueler").select("id, telefon, klasse")
+        .order("id", { ascending: true }).range(alle.length, alle.length + 999);   // ab der Zahl schon geladener Zeilen: keine Luecke, auch wenn der Server weniger liefert
+      if (error) { console.error("Datenbankfehler (Bestanden-Schueler):", error.message); return []; }
+      alle.push(...((data || []) as ExportSchueler[]));
+      if ((data || []).length === 0) break;             // erst bei leerer Seite aufhoeren (falls der Server weniger als 1000 je Seite liefert)
+    }
+    console.log("Bestanden-Quellen: Tafel " + tafel.length + ", App " + app.length);
+    return bestandenBauen(pb, alle, ab, heute);
+  } catch (e) {
+    console.error("Fehler (Bestanden):", e instanceof Error ? e.message : String(e));
+    return [];
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -80,8 +150,15 @@ Deno.serve(async (req: Request) => {
       gleiche.push(...(data || []));
     }
     const termine = termineBauen(pt || [], schueler, heute, mehrdeutigeNummern(gleiche));
-    console.log("Termine ausgeliefert: " + termine.length);   // nur die Anzahl, keine Daten
-    return antwort(200, { termine });
+    // Haengt der Bestanden-Teil, gehen die Termine nach hoechstens 10 Sekunden trotzdem raus (dann bestanden = []).
+    let uhr: ReturnType<typeof setTimeout> | undefined;
+    const bestanden = await Promise.race([
+      bestandenLaden(client, heute),
+      new Promise<{ telefon: string; datum: string; klasse: string | null }[]>((r) => { uhr = setTimeout(() => { console.error("Bestanden-Teil zu langsam"); r([]); }, 10000); }),
+    ]);
+    clearTimeout(uhr);
+    console.log("Termine ausgeliefert: " + termine.length + ", bestanden: " + bestanden.length);   // nur Anzahlen, keine Daten
+    return antwort(200, { termine, bestanden });
   } catch (e) {
     console.error("Unerwarteter Fehler:", e instanceof Error ? e.message : String(e));
     return antwort(500, { fehler: "Serverfehler" });
