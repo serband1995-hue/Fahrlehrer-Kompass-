@@ -43,7 +43,7 @@ function renderFehler() {
       <select class="suche" id="awLehrer" aria-label="Fahrlehrer">${lehrerFilterOptionen(lehrerId, "Alle Fahrlehrer")}</select>
       ${zeit !== "12" || lehrerId ? `<a class="knopf klein" href="#fehler">Filter löschen</a>` : ""}</div>`;
   const kacheln = `<div class="kacheln">
-      <div class="kachel${durch.length ? " rot" : ""}"><div class="wert">${durch.length}</div><div class="name">Praxisprüfungen nicht bestanden</div></div>
+      <div class="kachel${durch.length ? " rot" : ""}"><div class="wert">${durch.length}</div><div class="name">Praxisprüfungen nicht bestanden (in der App eingetragen)</div></div>
       <div class="kachel"><div class="wert">${mitAngabe}</div><div class="name">davon mit Gründen eingetragen</div></div>
       <div class="kachel"><div class="wert">${gesamt}</div><div class="name">genannte Gründe zusammen</div></div></div>`;
   const zeilen = liste.map(([id, n]) => ({ name: FAULT_LABEL[id] || id, wert: n, text: n + "×", tip: `${FAULT_LABEL[id] || id}: ${n}× genannt (${Math.round(n / (mitAngabe || 1) * 100)} % der Prüfungen mit Gründen)` }));
@@ -75,7 +75,7 @@ function awLadeVerlauf(neu) {
 function awPerson(id) {
   if (!id) return "— Pool —";
   const l = S.lehrer.find((x) => x.id === id) || (S.team || []).find((x) => x.id === id);
-  return l ? (l.name || l.email || "Unbekannt") : "Unbekannt";
+  return l ? lehrerName(id) : "Unbekannt"; // wie überall im Büro: gelöschter Fahrlehrer = „Ehemaliger Fahrlehrer“, nie die anonyme Adresse
 }
 function renderVerlauf() {
   vwSchule();

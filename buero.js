@@ -4753,7 +4753,8 @@ async function ladeDaten() {
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
       alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("id")),
-      supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
+      // seitenweise (sonst schneidet die Datenbank bei 1000 Zeilen still ab – Durchfallgründe/Statistik würden fehlen)
+      alleSeiten(() => supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).order("id")),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
       supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("von"),
@@ -5104,9 +5105,11 @@ $("werListe").addEventListener("click", (e) => {
 });
 async function pruefeSitzungNoch() {
   if (!werNoetig() || !S.sitzung || (!$("wer").hidden && !PIN.abbrechbar)) return;
+  const tok = S.sitzung.token; // nur auf die Antwort zu DIESEM Schlüssel hören (inzwischen neu angemeldet → Antwort veraltet)
   try {
     const { data, error } = await supa.rpc("buero_sitzung_pruefen");
-    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Du bist hier abgemeldet (z. B. neue PIN an einem anderen PC). Bitte neu mit deiner PIN anmelden.", true); }
+    if (!S.sitzung || S.sitzung.token !== tok) return;
+    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Du bist hier abgemeldet (z. B. neue PIN oder Anmeldung an zu vielen PCs). Bitte neu mit deiner PIN anmelden.", true); }
   } catch (e) { /* ohne Verbindung: später erneut */ }
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pruefeSitzungNoch(); });
