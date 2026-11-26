@@ -14915,13 +14915,14 @@ let _bfc=null; // {uid, zeit, m:{terminId:{s,n,nach}}}
 function _bfcStand(){
   if(_bfc&&_authUser&&_bfc.uid===_authUser.id)return _bfc;
   try{ const o=JSON.parse(localStorage.getItem(_BFC_KEY)||"null"); if(o&&o.m&&typeof o.m==="object"&&_authUser&&o.uid===_authUser.id){ _bfc=o; return o; } }catch(e){}
-  return null;
+  if(_authUser) _bfc={uid:_authUser.id,zeit:0,m:{},leer:true}; // nicht bei jeder Stunde neu lesen (Prüfer Daten)
+  return _bfc;
 }
 function _bfcAusZeilen(rows){
   if(!_authUser||!Array.isArray(rows))return;
   const ab=(window.KR&&KR.LOHN_FC_AB)||"2026-12-01", m={};
   rows.forEach(r=>{ if(r&&r.id&&["fahrstunde","sonder","nacht"].includes(r.art)&&r.datum&&r.datum>=ab) m[r.id]={s:r.buero_fc_status||"offen",n:r.buero_fc_anzahl==null?null:r.buero_fc_anzahl,nach:r.buero_fc_nachgereicht_am||null}; });
-  const vorher=_bfc&&_bfc.uid===_authUser.id?JSON.stringify(_bfc.m):null;
+  const vorher=_bfc&&_bfc.uid===_authUser.id&&!_bfc.leer?JSON.stringify(_bfc.m):null;
   _bfc={uid:_authUser.id,zeit:Date.now(),m};
   try{ localStorage.setItem(_BFC_KEY,JSON.stringify(_bfc)); }catch(e){}
   // Prüfer Bedienung: hat das Büro inzwischen etwas bestätigt, die offene Verdienst-Karte gleich neu zeichnen
@@ -16424,7 +16425,8 @@ function fcForgottenLessons(){
   // W17: nur Termine, für die es überhaupt einen Fahrcheck gibt (unter 45 Minuten: keiner, also auch keiner vergessen).
   // W19: Ausnahme alte Stunden (vor dem Stichtag) unter 45 Minuten, deren Vermerk noch auf den Lohn wirkt: sichtbar, damit man ihn entfernen kann.
   // W19 (Prüfer Bedienung): ab dem Stichtag auch Stunden, bei denen das Büro „fehlt“ eingetragen hat (ohne eigenen Vermerk) – sonst Sackgasse
-  return (DB.lessons||[]).filter(l=>((l.fc==="v1"||l.fc==="v2")&&(!window.KR||!KR.fcGebucht||KR.fcGebucht(l)>0||_lohnEntgehtUE(l)>0))||_lohnFehltNeu(l)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  // Prüfer Daten: hat das Büro trotz Vermerk alles bestätigt (Lohn zählt), steht die Stunde nicht mehr in der Liste
+  return (DB.lessons||[]).filter(l=>((l.fc==="v1"||l.fc==="v2")&&(!window.KR||!KR.fcGebucht||KR.fcGebucht(l)>0||_lohnEntgehtUE(l)>0)&&(!_lohnNeu(l)||_lohnEntgehtUE(l)>0))||_lohnFehltNeu(l)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
 function _lohnFehltNeu(l){ if(!l||l.fc==="nachgereicht"||!_lohnNeu(l))return false; const ls=_lohnStandVon(Object.assign({},l,{art:l.art||"fahrstunde",status:l.status||"geplant"})); return !!ls&&ls.stand==="fehlt"; }
 // UE, die durch einen Vermerk (noch) nicht bezahlt werden: alte Regel v1 halb, v2 ganz; ab dem Stichtag fehlt der Lohn ganz, bis nachgereicht

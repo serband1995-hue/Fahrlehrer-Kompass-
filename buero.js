@@ -3503,17 +3503,19 @@ function fcAbgabeDialog(lehrerId) {
     const gruppen = {};
     ok.forEach((id) => { const k = fcAnzahlDa() ? String(nJe[id]) : "-"; (gruppen[k] = gruppen[k] || []).push(id); });
     let a = { error: null };
+    const geschrieben = new Set(); // Prüfer Daten: nur wirklich gespeicherte Gruppen gleich in die Anzeige
     for (const [k, gIds] of Object.entries(gruppen)) {
       const upd = k === "-" ? { buero_fc_status: "abgegeben" } : { buero_fc_status: "abgegeben", buero_fc_anzahl: Number(k) };
       const x = await supa.from("kalender_termine").update(upd).in("id", gIds);
       if (x.error) { a = x; break; }
+      gIds.forEach((id) => geschrieben.add(id));
     }
     // „fehlt“ ohne altes Nachreich-Datum, wie beim Knopf „Fehlt“ (fcSetzeStatus); die Zahl leert der Trigger
     const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", buero_fc_nachgereicht_am: null }).in("id", fehlend) : { error: null };
     if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
     else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
     // Richter W13 (Kann 1): „fehlt“ leert in der Datenbank die Zahl (Trigger) und das Nachreich-Datum (Update oben), hier gleich mit
-    S.termine.forEach((t) => { if (ok.includes(t.id)) { t.buero_fc_status = "abgegeben"; if (fcAnzahlDa() && nJe[t.id]) t.buero_fc_anzahl = nJe[t.id]; } if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
+    S.termine.forEach((t) => { if (geschrieben.has(t.id)) { t.buero_fc_status = "abgegeben"; if (fcAnzahlDa() && nJe[t.id]) t.buero_fc_anzahl = nJe[t.id]; } if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
     zeichne();
     return true;
   }, "Abgabe bestätigen");
