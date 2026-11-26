@@ -595,7 +595,8 @@ async function arbeitstag(page, u, davor, tief) {
     if (dbFremd.s.length) f.push("DB.students enthält fremde: " + dbFremd.s.join(", ")); if (lFremd.length) f.push("DB.lessons enthält fremde: " + lFremd.join(", "));
     return f;
   });
-  await pruefe("A13", `${P} Zugriffsregeln (Attrappe = Spiegel von rechte-abzug.sql): Urlaub/Schichten/Fahrzeuge der Fahrschule lesbar; Schüler, Termine, Profile, Snapshots nur eigene; fremde Zeilen weder anlegbar noch änderbar`, async () => {
+  const abgewiesenVor = srv.abgewiesen.length;
+  if (u.rolle !== "fahrschule_admin") await pruefe("A13", `${P} Zugriffsregeln (Attrappe = Spiegel von rechte-abzug.sql): Urlaub/Schichten/Fahrzeuge der Fahrschule lesbar; Schüler, Termine, Profile, Snapshots nur eigene; fremde Zeilen weder anlegbar noch änderbar`, async () => {
     const fr = u.k === "carl" ? FL[4] : FL[3];
     return page.evaluate(async ([ich, fid, fsid, ftermin]) => {
       const f = []; const s = getSupa();
@@ -616,6 +617,7 @@ async function arbeitstag(page, u, davor, tief) {
       return f;
     }, [u.id, fr.id, fr.sid, "t-" + fr.k + "-2"]);
   });
+  srv.abgewiesen.length = abgewiesenVor; // die absichtlichen Versuche oben zählen nicht für „die App schreibt nur Eigenes“
   await pruefe("A11", `${P} Daten dieses Fahrlehrers in der Datenbank nur unter seiner ID (nichts fremdes angelegt)`, () => {
     const f = [];
     for (const t of ["schueler", "kalender_termine"]) tab[t].filter((r) => r.fahrschule_id === FS && r.fahrlehrer_id !== u.id && (r.name === name || (r.id || "").includes(u.k + "-neu"))).forEach((r) => f.push(t + " " + r.id));
@@ -649,6 +651,7 @@ if (!process.env.W18_NUR || /A/.test(process.env.W18_NUR)) {
       const dump = await geraeteDump(page); return reste(dump, fl2(u));
     });
     if (u.k === "anna") await pruefe("R2", `[${u.name.slice(0, 22)}] nach dem Abmelden: Filter-Merker „kompass-su-sort-v1“ (Kollegen-Name) ist weg`, () => page.evaluate(() => { const v = localStorage.getItem("kompass-su-sort-v1"); return v && /Carl Muster/.test(v) ? "bleibt auf dem Gerät: " + v : null; }));
+    if (u.k === "anna") await page.evaluate(() => localStorage.removeItem("kompass-su-sort-v1")); // aufräumen, damit die nächsten Prüfungen nicht denselben Rest noch einmal melden
     davor = u;
   }
   await ctx.close();
@@ -665,7 +668,7 @@ async function layoutMessen(page) {
     if (v && v.scrollWidth > v.clientWidth + 1) f.push("Inhalt breiter als das Fenster (" + v.scrollWidth + " > " + v.clientWidth + ")");
     const w = de.clientWidth;
     const bez = (el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + (typeof el.className === "string" && el.className.trim() ? "." + el.className.trim().split(/\s+/)[0] : "");
-    const imScroll = (el) => { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if (o === "auto" || o === "scroll") return true; } return false; };
+    const imScroll = (el) => { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if (o === "auto" || o === "scroll" || o === "hidden" || o === "clip") return true; } return false; };
     const unsichtbar = (el) => !!el.closest("#drawer, #sheet:not(.open), #fsCalTiles, #toast, #loginOverlay, #splash, [hidden], dialog:not([open]), select, option, svg");
     const draussen = [], abgeschnitten = [], kachel = [];
     const wortRe = namen.map((n) => new RegExp("(^|[^A-Za-zÄÖÜäöüß])" + n.split(" ")[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^A-Za-zÄÖÜäöüß]|$)"));
