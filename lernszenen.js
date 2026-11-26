@@ -2251,7 +2251,7 @@
   .lz-sheet{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:5;}
   .lz-card{background:#232933;border:1px solid #46505f;border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:82%;overflow:auto;padding:16px 16px calc(16px + env(safe-area-inset-bottom));}
   #lzErkl{display:contents;}
-  @media (max-height:340px){ .lz-caption{padding-top:8px;padding-bottom:8px;} .lz-caption p{font-size:12px;line-height:1.26;} .lz-caption h3{font-size:14.5px;} }   /* W20: mit echten Schriften etwas knapper, damit der Kasten keine Fahrzeuge verdeckt */
+  @media (max-height:340px){ #lzCap.lz-caption{max-width:min(420px,calc(100% - 140px));} .lz-caption p{font-size:12px;line-height:1.3;margin-top:5px;} .lz-caption h3{font-size:14.5px;} }   /* W20: mit echten Schriften etwas knapper, damit der Kasten keine Fahrzeuge verdeckt */
   .lz-weiter{margin-top:12px;position:sticky;bottom:0;background:#232933;padding:6px 0 2px;}
   @media (max-height:480px){ .lz-card{max-height:100%;border-radius:0;padding:8px 14px 8px;} .lz-card h2{font-size:15px;margin-bottom:2px;} .lz-opt{padding:7px 11px;margin:4px 0;font-size:13px;} .lz-erkl{margin:4px 0 2px;font-size:12.5px;line-height:1.4;} .lz-weiter{margin-top:6px;padding-top:4px;} }
   .lz-card h2{margin:0 0 6px;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:20px;letter-spacing:.02em;}
