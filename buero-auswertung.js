@@ -86,7 +86,7 @@ function renderVerlauf() {
     const wann = v.erstellt_am ? new Date(v.erstellt_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : "";
     const wer = v.verschoben_von ? awPerson(v.verschoben_von) : "";
     return `<tr><td class="zeitspalte"><span class="vw-nowrap">${esc(wann)}</span></td>
-      <td>${s ? `<b>${esc(s.name)}</b>` : '<span class="leise">(Schüler nicht mehr da)</span>'}</td>
+      <td>${s ? `<b>${esc(s.name)}</b>` : '<span class="leise">(gelöschter Schüler)</span>'}</td>
       <td data-l="Fahrlehrer">${esc(awPerson(v.von_fahrlehrer_id))} → ${esc(awPerson(v.zu_fahrlehrer_id))}</td>
       <td data-l="Verschoben von">${wer ? esc(wer) : '<span class="leise">–</span>'}</td></tr>`;
   }).join("");
