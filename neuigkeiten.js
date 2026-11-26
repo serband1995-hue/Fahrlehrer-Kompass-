@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.6", datum: "2026-11-26", kurz: "Termine verschieben: erst 0,8 Sekunden halten, dann ziehen.",
+    punkte: ["Im Kalender verschiebt sich ein Termin nur noch, wenn du ihn kurz festhältst (0,8 Sekunden). Dann hebt sich die Karte leicht an. Bei vielen Handys vibriert es dazu kurz.",
+             "So passiert beim Scrollen der Woche nichts mehr aus Versehen.",
+             "Kurz tippen öffnet den Termin wie bisher."] },
   { version: "2026.11.26.5", datum: "2026-11-26", kurz: "Fahrchecks: nur volle 45 Minuten zählen.",
     punkte: ["Jede volle 45 Minuten Fahrzeit ist 1 Fahrcheck: 45 Minuten = 1, 90 Minuten = 2, 135 Minuten = 3.",
              "Angefangene 45 Minuten zählen nicht mit: 80 Minuten sind 1 Fahrcheck, nicht 2.",
