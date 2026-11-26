@@ -93,7 +93,7 @@ declare
   v_sid      text[];                       -- Schueler-IDs (je Konto)
   v_tid      text[];                       -- Termin-IDs (je Konto)
   -- ---- Spalten, die die Probe benutzt (werden vorab gegen die Live-Tabellen geprueft) ---------------------------------
-  c_fs  text[] := array['id','name'];
+  c_fs  text[] := array['id','name','slug'];  -- slug: live NOT NULL + UNIQUE ohne Vorgabe (HS7, Live-Lauf 26.11.)
   c_au  text[] := array['instance_id','id','aud','role','email','encrypted_password','email_confirmed_at','raw_app_meta_data','raw_user_meta_data','created_at','updated_at'];
   c_pr  text[] := array['id','email','name','rolle','fahrschule_id','aktiv','ohne_app','klassen','faehrt_selbst'];
   c_sp  text[] := array['id','fahrschule_id','fahrlehrer_id','name','telefon','status','paket_id','hat_simulator','hat_theorie_app','bogen_ausgefuellt','ausbildung','erstellt_von','aktualisiert_am'];
@@ -232,7 +232,7 @@ begin
   -- SCHRITT 1: Aufbau wie die Edge Function create_account (als Eigentuemer-Rolle, schreibt NUR eigene Test-Zeilen)
   -- ===================================================================================================================
   v_schritt := '1a Test-Fahrschulen';
-  insert into public.fahrschulen (id, name) values (v_fs, 'W18 Probe Muster'), (v_fs2, 'W18 Probe Fremd');
+  insert into public.fahrschulen (id, name, slug) values (v_fs, 'W18 Probe Muster', 'w18-probe-muster-' || v_lauf), (v_fs2, 'W18 Probe Fremd', 'w18-probe-fremd-' || v_lauf);
 
   for v_i in 1..13 loop
     v_schritt := '1b Konto ' || v_kz[v_i] || ' in auth.users';

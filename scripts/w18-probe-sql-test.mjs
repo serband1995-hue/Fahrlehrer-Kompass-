@@ -70,7 +70,7 @@ async function baueDb() {
     grant usage on schema auth to anon, authenticated;
     grant execute on function auth.uid(), auth.jwt() to anon, authenticated;
 
-    create table public.fahrschulen (id uuid primary key, name text not null);
+    create table public.fahrschulen (id uuid primary key, name text not null, slug text not null unique); -- slug wie live (NOT NULL, UNIQUE, ohne Vorgabe)
     create table public.profiles (id uuid primary key references auth.users(id) on delete cascade, email text, name text, rolle text not null default 'fahrlehrer',
       fahrschule_id uuid references public.fahrschulen(id), aktiv boolean not null default true, ohne_app boolean not null default false,
       klassen text[] default '{}', fahrlehrerlaubnis text[] default '{}', fuehrerschein_klassen text[] default '{}', fuehrerschein_c_bis date,
