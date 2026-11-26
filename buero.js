@@ -2702,7 +2702,7 @@ async function verschiebeSchueler(x, neuerLehrer) {
   }
   if (!(await speichereSchueler(x.id, { fahrlehrer_id: neuerLehrer }, neuerLehrer ? `${x.name} ist jetzt bei ${lehrerName(neuerLehrer)}` : `${x.name} ist jetzt ohne Fahrlehrer`))) return;
   const v = await supa.from("schueler_verschiebungen").insert({ schueler_id: x.id, von_fahrlehrer_id: alter, zu_fahrlehrer_id: neuerLehrer, verschoben_von: S.user.id, fahrschule_id: S.fsId });
-  if (v.error) console.warn("Verschiebung nicht protokolliert:", v.error.message);
+  if (v.error) { console.warn("Verschiebung nicht protokolliert:", v.error.message); toast("Der Hinweis an die Fahrlehrer zur Übergabe ging nicht raus: " + dbFehlerText(v.error), true); }
 }
 
 /* ---------- Kalender: Tag, Woche, Monat, Jahr ---------- */

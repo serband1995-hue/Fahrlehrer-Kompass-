@@ -2597,7 +2597,7 @@ body.light #view[data-seite2] span[style*="color:var(--rot)"]{color:#9E2F22 !imp
 /* Kalender: Titel wie die anderen Seiten, Filter in einer Reihe, Plus-Knopf rund (verdeckt weniger) */
 #view[data-seite2] .view-inner .cal-viewbtn,#view[data-seite2] .view-inner .cal-viewbtn *:not(svg):not(svg *){font-family:var(--k-font-titel) !important;}
 #view[data-seite2] .cal-viewbtn{font-size:26px !important;font-weight:700 !important;color:var(--s2-tinte) !important;min-height:44px;}
-#view[data-seite2] .cal-filters{flex-wrap:nowrap;gap:6px;}
+#view[data-seite2] .cal-filters{flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none;} /* W18: bei breiterer Schrift ragte „Theorie“ bei 360 px über den Rand */
 #view[data-seite2] .cal-fchip{padding:0 11px;font-size:13px;}
 #view[data-seite2] .cal-legend-bar{gap:4px 12px;margin-bottom:10px;}
 body:has(#view[data-seite2] #calBody) #fab{width:56px;height:56px !important;padding:0 !important;justify-content:center;}
@@ -4270,13 +4270,14 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", "kompass-profil-cache", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
   try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) {} // W16: Schleifen-Merker gehört zur Sitzung
   try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
   try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
+  try { localStorage.removeItem("kompass-su-sort-v1"); } catch (e) {} // W18: Sortierung/Filter (Fahrlehrer-Name) des Schüler-Überblicks
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
 function _lokaleDatenVorhanden() {
@@ -7174,7 +7175,15 @@ function _fsKeineAuswahlKarteHTML(){
 // K2 GK3: Vorname des Fahrlehrers für die Termin-Kacheln, nur in der Gesamtansicht
 function _fsFlVorname(e){
   if(!_fsAgg||!e||!e._fahrlehrerName)return "";
-  return firstName(String(e._fahrlehrerName).split("@")[0].trim());
+  const voll=String(e._fahrlehrerName).split("@")[0].trim(), vn=firstName(voll);
+  // W18: Zwei Fahrlehrer mit gleichem Vornamen (z. B. zwei „Anna“) bekommen den Nachnamen dazu, so kurz wie möglich
+  // und trotzdem eindeutig (z. B. „Eva Bauer“ / „Eva Bauerm.“ bei Bauer und Bauermann)
+  const nach=(n)=>n.slice(firstName(n).length).trim();
+  const andere=(_fsAgg.lehrer||[]).map(l=>String(l.name||l.email||"").split("@")[0].trim()).filter(n=>n&&n!==voll&&firstName(n)===vn).map(nach);
+  if(!andere.length)return vn;
+  const nn=nach(voll); if(!nn)return voll;
+  for(let k=1;k<nn.length;k++){ const p=nn.slice(0,k); if(andere.every(o=>o.slice(0,k)!==p))return vn+" "+p+"."; }
+  return voll;
 }
 function _fsInjectFilterTiles(){
   if(!_fsAgg)return;
@@ -8127,7 +8136,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.9";
+const APP_VERSION="2026.11.26.10";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

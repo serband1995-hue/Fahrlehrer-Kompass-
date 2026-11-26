@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.10", datum: "2026-11-26", kurz: "Abmelden lässt nichts mehr auf dem Handy zurück.",
+    punkte: ["Haben zwei Fahrlehrer den gleichen Vornamen, steht im Tageskalender der Leitung auch der Anfang vom Nachnamen dabei.",
+             "Wechselt das Büro bei einem Schüler den Fahrlehrer und der Hinweis an die Fahrlehrer klappt nicht, sagt die Büro-Seite das jetzt.",
+             "Nach dem Abmelden bleibt nichts mehr vom eigenen Zugang auf dem Handy. Die nächste Person sieht nichts davon."] },
   { version: "2026.11.26.9", datum: "2026-11-26", kurz: "Fahrcheck-Fenster zeigt die richtige Zahl.",
     punkte: ["Beim Fahrcheck einer Stunde steht jetzt die echte Zahl: 45 Minuten = 1, 90 Minuten = 2, 135 Minuten = 3.",
              "Für Stunden unter 45 Minuten gibt es keinen Fahrcheck. Das steht dann auch so da.",
