@@ -14502,10 +14502,15 @@ let _calDragActive=false;
 // W17 (🗣 Serband 26.11.2026: „manchmal passiert das aus Versehen“): Ziehen wird erst „scharf“ nach 0,8 s ruhigem Halten
 // (Finger/Maus bewegt sich höchstens 9 px). Bewegt er sich vorher, ist es normales Scrollen; kurzes Tippen öffnet den Termin.
 const CAL_HALTEN_MS=800;
+let _calDragAbbruch=null; // bricht den laufenden Halte-/Ziehvorgang ab (App im Hintergrund: kein pointerup mehr)
+document.addEventListener("visibilitychange",()=>{ if(document.hidden&&_calDragAbbruch)_calDragAbbruch(); });
 function wireCalendarDrag(){
   document.querySelectorAll(".cw-draggable").forEach(chip=>{
     // Langes Halten öffnet sonst am Handy das Kontextmenü bzw. markiert Text
     chip.addEventListener("contextmenu",ev=>ev.preventDefault());
+    // Von Anfang an (nicht erst beim Drücken) und nicht passiv: nur so ist schon die erste Bewegung abbrechbar,
+    // sonst beginnt der Browser zu scrollen und bricht das Ziehen ab (Prüfer Bedienung W17). Bis „scharf“ scrollt alles normal.
+    chip.addEventListener("touchmove",ev=>{ if(chip.classList.contains("cw-scharf")&&ev.cancelable)ev.preventDefault(); },{passive:false});
     chip.addEventListener("pointerdown",e=>{
       if(_calDragActive)return;
       if(e.pointerType==="mouse"&&e.button!==0)return;
@@ -14513,9 +14518,6 @@ function wireCalendarDrag(){
       const startX=e.clientX,startY=e.clientY;
       let dragging=false,clone=null,curTarget=null,scharf=false,haltTimer=null;
       const THRESH=9,SCROLL_ZONE=60,SCROLL_SPEED=10;
-      // Ist das Ziehen scharf, darf der Browser nicht mehr scrollen (sonst bricht er die Geste ab)
-      const stopScroll=(ev)=>{ if(scharf&&ev.cancelable)ev.preventDefault(); };
-      chip.addEventListener("touchmove",stopScroll,{passive:false});
       haltTimer=setTimeout(()=>{
         haltTimer=null; scharf=true;
         _calDragHappened=true; clearTimeout(_calDragHappenedT); _calDragHappenedT=setTimeout(()=>{_calDragHappened=false;},600); // kein Öffnen beim Loslassen
@@ -14563,6 +14565,7 @@ function wireCalendarDrag(){
       };
       scrollRAF=requestAnimationFrame(scrollLoop);
       const onMove=(ev)=>{
+        if(ev.pointerId!==e.pointerId)return; // ein zweiter Finger zieht nicht mit
         lastX=ev.clientX;lastY=ev.clientY;
         if(!dragging){
           const weit=Math.abs(lastX-startX)>THRESH||Math.abs(lastY-startY)>THRESH;
@@ -14578,7 +14581,7 @@ function wireCalendarDrag(){
       };
       const cleanupDrag=()=>{
         if(haltTimer){clearTimeout(haltTimer);haltTimer=null;}
-        chip.removeEventListener("touchmove",stopScroll);
+        _calDragAbbruch=null;
         chip.classList.remove("cw-scharf");
         try{chip.releasePointerCapture(e.pointerId);}catch(err){}
         if(scrollRAF)cancelAnimationFrame(scrollRAF);
@@ -14596,15 +14599,23 @@ function wireCalendarDrag(){
       };
       // Abbruch durch das System (Systemgeste vom Rand, eingehender Anruf, Browser
       // übernimmt die Geste). Hier darf NICHTS verschoben werden - nur aufräumen.
-      const onCancel=()=>{
-        const war=dragging;
+      const onCancel=(ev)=>{
+        if(ev&&ev.pointerId!==undefined&&ev.pointerId!==e.pointerId)return;
+        const war=dragging, warScharf=scharf;
         cleanupDrag();
-        if(war){ _calDragHappened=false; routeKalender(); }
+        _calDragHappened=false; // das nächste Tippen soll wieder öffnen
+        // Abbruch nach dem Halten: daraus darf kein Wisch (Woche vor/zurück) werden
+        if(warScharf){ _calDragBlockSwipe=true; setTimeout(()=>{_calDragBlockSwipe=false;},400); }
+        if(war) routeKalender();
       };
-      const onUp=()=>{
-        const war=dragging;
+      _calDragAbbruch=()=>onCancel();
+      const onUp=(ev)=>{
+        if(ev.pointerId!==e.pointerId)return;
+        const war=dragging, warScharf=scharf;
         const ziel=curTarget;
         cleanupDrag();
+        // Gehalten und ohne Ziehen losgelassen: öffnet nichts (auch nach langem Halten)
+        if(!war&&warScharf){ _calDragHappened=true; clearTimeout(_calDragHappenedT); _calDragHappenedT=setTimeout(()=>{_calDragHappened=false;},600); _calDragBlockSwipe=true; setTimeout(()=>{_calDragBlockSwipe=false;},400); }
         if(!war)return;
         if(ziel){
           const[date,von]=ziel.dataset.freeslot.split("|");
