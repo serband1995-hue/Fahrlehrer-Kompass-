@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.17", datum: "2026-11-26", kurz: "Umschreiber stellt jetzt das Büro ein.",
+    punkte: ["Das Büro trägt „Umschreibung“ ein. Die App übernimmt das von selbst, der Fahrlehrer muss nichts einstellen.",
+             "Bei Umschreibern entfallen die Sonderfahrten. Im Freigabe-Check steht „entfällt (Umschreiber)“ in Grün.",
+             "Für Umschreiber lässt sich keine neue Sonderfahrt eintragen. Früher gefahrene bleiben gespeichert.",
+             "Nimmt das Büro es zurück, ist alles wieder wie vorher.",
+             "Wer ohne Fahrschule arbeitet, stellt es wie bisher selbst in der Schülerakte ein."] },
   { version: "2026.11.26.16", datum: "2026-11-26", kurz: "Neu: Punktesystem für Schüler (zuerst aus).",
     punkte: ["Die Fahrschule kann ein Punktesystem einschalten. Zuerst ist es aus.",
              "Das Büro legt selbst fest, wofür es Punkte gibt und was man damit einlösen kann.",
