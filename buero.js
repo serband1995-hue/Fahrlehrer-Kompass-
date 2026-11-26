@@ -3126,6 +3126,30 @@ function fcTermin(t) {
   const p = t.payload || {};
   return { id: t.id, datum: t.datum, von: t.von, bis: t.bis, art: t.art, status: p.status || t.status, fc: p.fc || null, nachAm: p.nachAm || null, schueler_id: t.schueler_id };
 }
+// W19 „Lohn folgt Fahrcheck-Abgabe“: Lohn-Stand einer Stunde, dieselbe Regel wie die App (KR.lohnStand). Nur vergangene Stunden.
+function lohnVon(t) {
+  if (!KR.lohnStand) return null;
+  return KR.lohnStand(Object.assign({}, fcTermin(t), { bueroFc: t.buero_fc_status || "offen", bueroFcAnzahl: t.buero_fc_anzahl == null ? null : t.buero_fc_anzahl, bueroFcNachAm: t.buero_fc_nachgereicht_am || null }), { regelAktiv: true });
+}
+// Schon vorbei? Wie die App: heute zählt eine Stunde ab ihrem Ende (über Mitternacht: erst morgen)
+function lohnVorbei(t) {
+  const heute = KR.todayISO();
+  if (t.datum < heute) return true;
+  if (t.datum > heute || !t.von || !t.bis) return false;
+  const d = new Date();
+  return KR.terminEndeMin(t.von, t.bis) <= d.getHours() * 60 + d.getMinutes();
+}
+// Stunden eines Fahrlehrers ab dem Stichtag, deren Lohn noch wartet (Büro hat nicht bestätigt) oder fehlt (Fahrcheck fehlt)
+function lohnOffen(lehrerId) {
+  const r = { wartet: 0, fehlt: 0 };
+  if (!KR.lohnStand) return r;
+  for (const t of S.termine) {
+    if (t.fahrlehrer_id !== lehrerId || !t.datum || t.datum < KR.LOHN_FC_AB || !lohnVorbei(t)) continue;
+    const ls = lohnVon(t);
+    if (ls && ls.stand === "wartet") r.wartet++; else if (ls && ls.stand === "fehlt") r.fehlt++;
+  }
+  return r;
+}
 function fcFuerLehrer(lehrerId, von, bis) {
   return KR.fcSoll(S.termine.filter((t) => t.fahrlehrer_id === lehrerId).map(fcTermin), von, bis);
 }
@@ -3178,6 +3202,7 @@ function renderFahrchecks() {
     summeSoll += r.soll;
     if (q) summeIst += q.ist; else if (r.soll) offen++;
     const vermerkt = r.fehlend.reduce((a, p) => a + p.fehlt, 0);
+    const lo = lohnOffen(l.id);
     const istOk = q && q.ist >= q.soll;
     if (statusF === "ohne" && (q || !r.soll)) return "";
     if (statusF === "fehlend" && !(q && !istOk)) return "";
@@ -3189,7 +3214,7 @@ function renderFahrchecks() {
       <td><b>${esc(l.name || l.email)}</b></td>
       <td class="zahlspalte"><b>${r.soll}</b></td>
       <td class="zahlspalte nur-breit">${vermerkt ? `<span class="marke-pill gelb">${vermerkt}</span>` : "–"}</td>
-      <td>${status}</td>
+      <td>${status}${lo.wartet || lo.fehlt ? `<div class="unter">Lohn: ${lo.wartet ? `<span class="marke-pill gelb" title="Gefahren, Fahrchecks noch nicht bestätigt">${lo.wartet} Std. warten auf Büro</span> ` : ""}${lo.fehlt ? `<span class="marke-pill rot" title="Fahrcheck fehlt – kein Lohn, bis nachgereicht">${lo.fehlt} Std. Fahrcheck fehlt</span>` : ""}</div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">
         ${r.soll || q ? `<button class="knopf klein${q ? "" : " haupt"}" data-fcabgabe="${esc(l.id)}" type="button">${q ? "Neu erfassen" : "Abgabe erfassen"}</button>` : ""}
         <a class="knopf klein" href="#fahrchecks?ansicht=stunden&lehrer=${esc(l.id)}&von=${esc(von)}&bis=${esc(bis)}">Stunden</a></div></td>
@@ -3212,6 +3237,7 @@ function renderFahrchecks() {
       </div>
       <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte nur-breit">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen || `<tr><td colspan="5" class="leer">Nichts gefunden.</td></tr>`}</tbody></table>
       <p class="leise klein">So geht's: Umschlag des Fahrlehrers zählen, „Abgabe erfassen“, Zahl eintippen. Stimmt sie, ist alles mit einem Klick erledigt. Auch frühere Zeiträume lassen sich nachtragen (Zeitraum oben wählen). Jede Abgabe ist eine Quittung, die nicht geändert werden kann. Stimmt etwas nicht, wird sie neu erfasst; die alte bleibt als Verlauf stehen. Der Fahrlehrer sieht sie in seiner App.</p>
+      <p class="leise klein"><b>Lohn:</b> Ab ${esc(datumDE(KR.LOHN_FC_AB || "2026-12-01"))} zählt der Lohn einer Fahrstunde erst, wenn hier ihre Fahrchecks als abgegeben bestätigt sind. Unter „Abgabe“ steht je Fahrlehrer, wie viele Stunden darauf warten (alle Zeiträume ab diesem Tag).</p>
     </div>
     ${renderFcVerlauf()}`;
 }
@@ -3288,6 +3314,7 @@ function renderFcStunden() {
     // Ab 2 gebuchten Fahrchecks wählt das Büro die Zahl („2 abgegeben“ / „1 abgegeben“, 🗣 Serband 25.11.2026), auch gegen den
     // Vermerk des Fahrlehrers. Ohne Spalte buero_fc_anzahl (alte Datenbank) nur „Abgegeben“ wie bisher.
     const mitZahl = fcAnzahlDa() && gebucht > 1 && !fcAusgefallen(ft), erw = KR.fcFuersBuero(ft), jetzt = fcGezaehlt(t, ft);
+    const ls = t.datum >= (KR.LOHN_FC_AB || "9999") && lohnVorbei(t) ? lohnVon(t) : null;
     const abKnoepfe = mitZahl
       ? Array.from({ length: gebucht }, (_, i) => gebucht - i).filter((n) => !(buero === "abgegeben" && jetzt === n))
         .map((n) => `<button class="knopf klein${n === erw && buero !== "abgegeben" ? " haupt" : ""}" data-fcstatus="abgegeben" data-anzahl="${n}" data-id="${esc(t.id)}" type="button">${n} abgegeben</button>`).join("")
@@ -3295,8 +3322,8 @@ function renderFcStunden() {
     const knoepfe = erw || mitZahl ? [
       abKnoepfe,
       buero !== "fehlt" ? `<button class="knopf klein" data-fcstatus="fehlt" data-id="${esc(t.id)}" type="button">Fehlt</button>` : "",
-      buero === "fehlt" ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
-    ].join("") : "";
+      buero === "fehlt" || (ls && ls.stand === "fehlt") ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
+    ].join("") : ls && ls.stand === "fehlt" ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : ""; // W19: auch 45 Min mit „vergessen“ (sonst kein Weg zum Lohn)
     return `<tr>
       <td class="zeitspalte">${esc(datumDE(t.datum))}<div class="unter">${esc(t.von || "")}${t.bis ? "–" + esc(t.bis) : ""}</div>${erwartet ? (g.stufe === "verfallen" ? `<div><span class="marke-pill rot">verfallen ${esc(datumDE(g.bis))}</span></div>` : `<div class="unter">gültig bis ${esc(datumDE(g.bis))}</div>${g.stufe === "bald" ? `<div><span class="marke-pill gelb">läuft bald ab</span></div>` : ""}`) : ""}</td>
       <td><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b><div class="unter nur-unter">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)}</div></td>
@@ -3304,7 +3331,7 @@ function renderFcStunden() {
       <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
       <td class="zahlspalte"><b>${buero === "abgegeben" ? jetzt : erw}</b><span class="leise"> von ${gebucht}</span></td>
       <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
-      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 && !fcAusgefallen(ft) ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}</td>
+      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 && !fcAusgefallen(ft) ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}${ls ? `<div class="unter">Lohn: ${ls.stand === "zaehlt" ? "zählt" : ls.stand === "wartet" ? "wartet auf Büro" : ls.stand === "fehlt" ? "Fahrcheck fehlt" : "keiner (geschenkt)"}</div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
     </tr>`;
   }).join("");
@@ -3424,7 +3451,7 @@ function fcStundeDialog(id) {
         <select name="status">${Object.entries(FC_BUERO).map(([k, v]) => `<option value="${k}"${k === status ? " selected" : ""}>${esc(v[1])}</option>`).join("")}</select></label>
       <label>Nachgereicht am (leer = nicht nachgereicht)
         <input type="date" name="nach" value="${esc(t.buero_fc_nachgereicht_am || "")}"></label>
-      ${fcAnzahlDa() && KR.fcGebucht(ft) > 1 && !fcAusgefallen(ft) ? `<label>Abgegeben (nur bei „abgegeben“)
+      ${fcAnzahlDa() && KR.fcGebucht(ft) >= 1 && !fcAusgefallen(ft) ? `<label>Abgegeben (nur bei „abgegeben“)
         <select name="anzahl"><option value="">wie vom Fahrlehrer vermerkt (${KR.fcFuersBuero(ft)})</option>${Array.from({ length: KR.fcGebucht(ft) }, (_, i) => KR.fcGebucht(ft) - i).map((n) => `<option value="${n}"${t.buero_fc_anzahl === n ? " selected" : ""}>${n} Fahrcheck${n === 1 ? "" : "s"}</option>`).join("")}</select></label>` : ""}
     </div>
     <p class="leise klein">Den Vermerk des Fahrlehrers (z. B. „1 FC vergessen“) ändert nur er selbst in seiner App; sonst würde seine Eingabe beim nächsten Abgleich überschrieben.</p>`;
@@ -3469,13 +3496,29 @@ function fcAbgabeDialog(lehrerId) {
     const ok = ids.filter((id) => !fehlend.includes(id));
     // Bewusst ohne aktualisiert_am: sonst hält die Fahrlehrer-App die Zeile für neuer und überschreibt
     // ihre eigenen, vielleicht noch nicht hochgeladenen Fahrcheck-Vermerke.
-    const a = ok.length ? await supa.from("kalender_termine").update({ buero_fc_status: "abgegeben" }).in("id", ok) : { error: null };
+    // W19 (Lohn folgt Fahrcheck-Abgabe): die bestätigte Zahl je Stunde mitschreiben (buero_fc_anzahl). Sonst zählte eine Stunde mit
+    // „1 FC vergessen“, die später als nachgereicht vermerkt wird, schon voll, bevor der Fahrcheck im Büro ist.
+    // Dieselbe Stunde zweimal (gefahren und nachgereicht): die größere Zahl. Ohne Spalte (alte Datenbank) wie bisher.
+    const nJe = {};
+    r.posten.forEach((p) => { if (p.n && ok.includes(p.id)) nJe[p.id] = Math.max(nJe[p.id] || 0, p.n); });
+    // Prüfer Büro: eine vorher einzeln gewählte größere Zahl („2 abgegeben“) nicht wieder verkleinern
+    S.termine.forEach((t) => { if (nJe[t.id] && t.buero_fc_status === "abgegeben" && t.buero_fc_anzahl != null) nJe[t.id] = Math.max(nJe[t.id], Number(t.buero_fc_anzahl) || 0); });
+    const gruppen = {};
+    ok.forEach((id) => { const k = fcAnzahlDa() ? String(nJe[id]) : "-"; (gruppen[k] = gruppen[k] || []).push(id); });
+    let a = { error: null };
+    const geschrieben = new Set(); // Prüfer Daten: nur wirklich gespeicherte Gruppen gleich in die Anzeige
+    for (const [k, gIds] of Object.entries(gruppen)) {
+      const upd = k === "-" ? { buero_fc_status: "abgegeben" } : { buero_fc_status: "abgegeben", buero_fc_anzahl: Number(k) };
+      const x = await supa.from("kalender_termine").update(upd).in("id", gIds);
+      if (x.error) { a = x; break; }
+      gIds.forEach((id) => geschrieben.add(id));
+    }
     // „fehlt“ ohne altes Nachreich-Datum, wie beim Knopf „Fehlt“ (fcSetzeStatus); die Zahl leert der Trigger
     const b = fehlend.length ? await supa.from("kalender_termine").update({ buero_fc_status: "fehlt", buero_fc_nachgereicht_am: null }).in("id", fehlend) : { error: null };
     if (a.error || b.error) toast("Quittung gespeichert, aber der Status einzelner Stunden nicht: " + (a.error || b.error).message, true);
     else toast(ist >= r.soll ? `Abgabe bestätigt: ${ist} von ${r.soll} ✓` : `Abgabe gespeichert: ${r.soll - ist} Fahrcheck${r.soll - ist === 1 ? "" : "s"} fehlen`);
     // Richter W13 (Kann 1): „fehlt“ leert in der Datenbank die Zahl (Trigger) und das Nachreich-Datum (Update oben), hier gleich mit
-    S.termine.forEach((t) => { if (ok.includes(t.id)) t.buero_fc_status = "abgegeben"; if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
+    S.termine.forEach((t) => { if (geschrieben.has(t.id)) { t.buero_fc_status = "abgegeben"; if (fcAnzahlDa() && nJe[t.id]) t.buero_fc_anzahl = nJe[t.id]; } if (fehlend.includes(t.id)) { t.buero_fc_status = "fehlt"; if ("buero_fc_anzahl" in t) t.buero_fc_anzahl = null; t.buero_fc_nachgereicht_am = null; } });
     zeichne();
     return true;
   }, "Abgabe bestätigen");
