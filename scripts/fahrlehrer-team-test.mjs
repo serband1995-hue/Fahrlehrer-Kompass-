@@ -665,7 +665,13 @@ async function layoutMessen(page) {
     const de = document.documentElement;
     if (de.scrollWidth > de.clientWidth + 1) f.push("Seite seitlich wischbar (" + de.scrollWidth + " > " + de.clientWidth + ")");
     const v = document.getElementById("view");
-    if (v && v.scrollWidth > v.clientWidth + 1) f.push("Inhalt breiter als das Fenster (" + v.scrollWidth + " > " + v.clientWidth + ")");
+    if (v && v.scrollWidth > v.clientWidth + 1) {
+      // Welche Elemente ragen rechts aus #view heraus? (Ursache gleich mit ausgeben, auch wenn es nur auf GitHub auftritt)
+      const vr = v.getBoundingClientRect().right;
+      const raus = [...v.querySelectorAll("*")].map((e) => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width && r.right > vr + 1)
+        .map(([e, r]) => e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + (typeof e.className === "string" && e.className.trim() ? "." + e.className.trim().split(/\s+/).join(".") : "") + " (" + Math.round(r.left) + ".." + Math.round(r.right) + " „" + (e.textContent || "").trim().replace(/\s+/g, " ").slice(0, 24) + "“)");
+      f.push("Inhalt breiter als das Fenster (" + v.scrollWidth + " > " + v.clientWidth + ")" + (raus.length ? ": " + raus.slice(0, 5).join(" | ") : ""));
+    }
     const w = de.clientWidth;
     const bez = (el) => el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + (typeof el.className === "string" && el.className.trim() ? "." + el.className.trim().split(/\s+/)[0] : "");
     const imScroll = (el) => { for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if (o === "auto" || o === "scroll" || o === "hidden" || o === "clip") return true; } return false; };
