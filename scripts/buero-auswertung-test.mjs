@@ -142,7 +142,7 @@ const { FAULT_LABEL } = require("../kompass-fehler.js");
     if (!/Anton Muster → Berta Muster/.test(zeilen[0][2]) || zeilen[0][3] !== "Büro Muster") fehler("neuester Eintrag: " + JSON.stringify(zeilen[0]));
     if (!/— Pool — → Cem Muster/.test(zeilen[1][2]) || zeilen[1][3] !== "Leitung Muster") fehler("Pool als Quelle: " + JSON.stringify(zeilen[1]));
     if (!/Berta Muster → — Pool —/.test(zeilen[2][2])) fehler("Pool als Ziel: " + JSON.stringify(zeilen[2]));
-    if (!/nicht mehr da/.test(zeilen[3][1]) || zeilen[3][3] !== "–") fehler("gelöschter Schüler: " + JSON.stringify(zeilen[3]));
+    if (!/gelöschter Schüler/.test(zeilen[3][1]) || zeilen[3][3] !== "–") fehler("gelöschter Schüler: " + JSON.stringify(zeilen[3]));
   }
   await breiteOk(page, "verlauf 1366");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "verlauf-1366.png"), fullPage: true });
