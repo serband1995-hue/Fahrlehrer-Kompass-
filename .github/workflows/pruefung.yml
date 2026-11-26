@@ -91,6 +91,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
       - name: "Fahrcheck-Menü zeigt die echte Zahl (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/fc-menue-test.mjs
+      - name: "Lohn folgt Fahrcheck-Abgabe (W19)"
+        run: NODE_PATH=$(npm root -g) node scripts/lohn-fc-test.mjs
       - name: "Schülerliste geordnet: feste Gruppen, Sortierung gemerkt (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/schuelerliste-test.mjs
       - name: "Kalender: Termine erst nach 0,8 s Halten ziehen (W17)"
@@ -158,6 +160,12 @@ jobs:
         run: |
           npm i --silent --no-save --prefix /tmp/w18-pg @electric-sql/pglite@0.2.17
           NODE_PATH=/tmp/w18-pg/node_modules node scripts/w18-probe-sql-test.mjs
+      - name: "W20 anon-Rechte + Büro an mehreren PCs: Migrationen, Rückwege, Live-Probe als Trockenlauf in PGlite"
+        run: |
+          NODE_PATH=/tmp/w18-pg/node_modules node scripts/w20-sql-test.mjs
+          # live ist Postgres 17 (Recht MAINTAIN): derselbe Test zusätzlich mit PGlite auf PG 17
+          npm i --silent --no-save --prefix /tmp/w20-pg17 @electric-sql/pglite@0.3.14
+          NODE_PATH=/tmp/w20-pg17/node_modules node scripts/w20-sql-test.mjs
 
   buero:
     # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.

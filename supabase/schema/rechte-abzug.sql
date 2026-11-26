@@ -8,6 +8,13 @@
 --   my_fahrschule_id() = fahrschule_id des Angemeldeten. Rolle 'entfernt' (gelöschter Zugang) erfüllt keine davon.
 -- W18 (Migration 20261130_w18_01, aus der Datei nachgetragen, nicht live gezogen): 14 Büro-/Leitungsregeln prüfen die Rolle jetzt auch im
 --   WITH CHECK (= USING). Vorher konnte jeder Fahrlehrer Zeilen mit der fahrlehrer_id eines Kollegen anlegen (Einfügen prüft nur WITH CHECK).
+-- W20 (Migrationen 20261201_w20_01/_02, aus der Datei nachgetragen, nicht live gezogen):
+--   * Tabellenrechte: anon hat auf KEINER Tabelle/Sicht in public mehr Rechte, ausser SELECT auf quiz_raeume/quiz_spieler (Quiz ohne
+--     Konto, Realtime). anon und authenticated haben nirgends TRUNCATE/TRIGGER/REFERENCES. authenticated behaelt SELECT/INSERT/UPDATE/
+--     DELETE wie vorher; RLS-Regeln unveraendert. Kuenftige Tabellen der Rolle postgres: nichts fuer anon (ausdruecklich GRANTen).
+--     Vorher-Stand in sicherung.w20_rechte_vorher. Funktionen (EXECUTE) nicht angefasst.
+--   * Buero-Sitzungen: bis zu 5 je Person gleichzeitig (aelteste endet), PIN aendern beendet die anderen Sitzungen der Person,
+--     taeglicher pg_cron-Auftrag buero_sitzungen_aufraeumen. buero_neue_sitzung nur intern (kein EXECUTE fuer anon/authenticated).
 -- Wichtig zu wissen:
 --   * profiles: jeder darf sein EIGENES Profil ändern („Eigenes Profil ändern“). Rolle, Fahrschule, E-Mail, aktiv
 --     (und ab Migration 20261121_zugang_02 faehrt_selbst) schützt der Trigger profil_schutz (nur Super-Admin oder Server).
