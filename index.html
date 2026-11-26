@@ -2418,10 +2418,13 @@ body.light:has(#view .schueler2)::before,body.light:has(#view .schueler2)::after
 .sl-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;}
 .schueler2 .sl-titel{margin:0;font-size:30px;font-weight:700;color:var(--h-tinte);}
 .sl-zahl{font-size:13px;font-weight:700;color:var(--h-text2);white-space:nowrap;}
-.sl-sorten{display:flex;flex-wrap:nowrap;gap:8px;margin:0 calc(-1 * var(--pad,16px)) 12px;padding:0 var(--pad,16px) 2px;scrollbar-width:none;}
+.sl-sorten{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:0 0 2px;scrollbar-width:none;} /* W17: alle vier Sortierungen sichtbar (vorher rechts abgeschnitten) */
 .sl-sorten::-webkit-scrollbar{display:none;}
 .sl-sort{flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;font-size:13.5px;font-weight:700;background:var(--h-karte);color:var(--h-tinte);border:1px solid var(--h-rand);}
 .sl-sort.on{background:var(--k-tinte);color:#fff;border-color:var(--k-tinte);}
+.sl-gruppe{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:18px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--h-text2,var(--muted));}
+.sl-gruppe:first-child{padding-top:4px;}
+.sl-gruppe-n{font-size:12px;font-weight:700;letter-spacing:0;color:var(--h-text2,var(--muted));font-variant-numeric:tabular-nums;}
 body:not(.light) .sl-sort.on{background:#2f3846;border-color:var(--k-mint);}
 .schueler2 #studentGrid{display:flex;flex-direction:column;gap:8px;}
 .s-row{min-height:68px;width:100%;background:var(--h-karte);border:1px solid var(--h-rand);border-radius:18px;padding:10px 14px;display:flex;align-items:center;gap:12px;text-align:left;color:var(--h-tinte);}
@@ -4172,10 +4175,36 @@ function isSuperAdmin() {
 // W16: Die Gesamtübersicht wählt sie als Startseite in den Einstellungen. Reine Leitung (ohne Kennzeichen) und Büro sehen nur die Gesamtansicht.
 function _leitungFaehrtSelbst(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && p.faehrt_selbst === true); }
 function _hatAdminUmschalter() { return !!(isSuperAdmin() || _leitungFaehrtSelbst()); }
-// K12/K17: Die Gesamtansicht (Gesamtübersicht) und der Weg zur Büro-Seite gehören nur Büro, Leitung und Super-Admin.
-// Ein Fahrlehrer sieht keinen Knopf dafür und kommt auch über Funktionsaufrufe nicht hinein.
-function _fsDarfGesamt() { const r = _authProfile && _authProfile.rolle; return r === "fahrschule_admin" || r === "buero" || r === "super_admin"; }
-function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || (p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)))); }
+// K12/K17: Die Gesamtansicht (Gesamtübersicht) gehört nur Leitung und Super-Admin (W17, 🗣 Serband 26.11.2026:
+// „nur bei Jelena und mir“). Das Büro arbeitet nur auf der Büro-Seite. Ein Fahrlehrer sieht keinen Knopf dafür
+// und kommt auch über Funktionsaufrufe nicht hinein.
+function _fsDarfGesamt() { const r = _authProfile && _authProfile.rolle; return r === "fahrschule_admin" || r === "super_admin"; }
+// Reine Leitung: startet immer in der Gesamtansicht (kein eigener Stand)
+function _nurGesamtansicht(p) { p = p || _authProfile; return !!(p && p.rolle === "fahrschule_admin" && !_leitungFaehrtSelbst(p)); }
+// Büro und reine Leitung haben keinen eigenen Fahrlehrer-Stand (nichts hochladen, nichts sichern)
+function _ohneEigenenStand(p) { p = p || _authProfile; return !!(p && (p.rolle === "buero" || _nurGesamtansicht(p))); }
+// W17: Kommt das Büro nicht zur Büro-Seite (eben von dort gekommen, Passwort-Link offen, gerade eine Eingabe),
+// (Ebene 58: über Menü und Leiste, unter dem Fenster fürs neue Passwort)
+// zeigt die App keine Gesamtansicht mehr, sondern nur diesen Hinweis mit Knopf.
+function _zeigeBueroHinweis() {
+  document.getElementById("loginOverlay").classList.add("hidden");
+  if (document.getElementById("bueroHinweis")) return;
+  const el = document.createElement("div");
+  el.id = "bueroHinweis";
+  el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "bhTitel");
+  el.style.cssText = "position:fixed;inset:0;z-index:58;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));overflow-y:auto;";
+  el.innerHTML = `<div style="max-width:420px;width:100%;text-align:center;">
+      <h2 id="bhTitel" style="margin:0 0 10px;font-family:var(--k-font-titel);font-size:28px;font-weight:700;">Büro-Seite</h2>
+      <p style="font-size:15px;line-height:1.55;color:var(--txt);margin:0 0 6px;">Das Büro arbeitet auf der Büro-Seite.</p>
+      <p style="font-size:14px;line-height:1.5;color:var(--muted);margin:0 0 22px;">Die App hier ist nur für Fahrlehrer. Am besten am PC öffnen.</p>
+      <a class="btn btn-primary" id="bhOeffnen" href="buero.html" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;box-sizing:border-box;text-decoration:none;">Büro-Seite öffnen</a>
+      <button class="btn" id="bhAbmelden" type="button" style="width:100%;min-height:48px;margin-top:10px;">Abmelden</button>
+    </div>`;
+  document.body.appendChild(el);
+  // Eigener Tipp: keine Schleifen-Sperre nötig, die Büro-Seite schickt das Büro nie zurück in die App
+  el.querySelector("#bhOeffnen").addEventListener("click", () => { try { sessionStorage.removeItem("kompass-weiterleitung"); } catch (e) {} });
+  el.querySelector("#bhAbmelden").addEventListener("click", () => { if (confirm("Wirklich abmelden?")) doLogout(); });
+}
 // Fahrlehrer-Listen: Fahrlehrer, Betreiber und die Leitung, die selbst fährt (reine Leitung nicht)
 function _fsNurUnterrichtende(res) {
   if (res && Array.isArray(res.data)) res.data = res.data.filter((p) => p.rolle !== "fahrschule_admin" || p.faehrt_selbst === true);
@@ -4215,7 +4244,7 @@ function _bleibtText() { return _authProfile && _authProfile.rolle === "buero"
 async function _startZumBuero() {
   if (_startWeiterWartet || !_authUser || !window.KS_START || _startZiel() !== "buero" || !KS_START.weiterMoeglich("buero")) return false;
   if (_eingabeOffen()) { toast(_bleibtText()); return false; }
-  if (!_nurGesamtansicht()) {
+  if (!_ohneEigenenStand()) {
     toast("Startseite Büro-Seite: sichere kurz deine Daten …");
     if (!(await _eigenesSichern(8000))) { toast("Nicht alles gesichert (Internet?). Du bleibst in der App."); return false; }
     if (_eingabeOffen()) { toast(_bleibtText()); return false; }
@@ -4525,6 +4554,12 @@ async function _continueLoginFlow(prof) {
   // buero.html. Geht das nicht (Passwort-Link offen, Weiterleitungs-Schleife), startet die App wie bisher.
   // Rollen mit eigenem Stand (Super-Admin, Leitung, die selbst fährt) sichern vorher alles (unten, nach dem Abgleich).
   let startZiel = _startZiel(prof);
+  // W17: Das Büro kommt nie in die Gesamtansicht. Weiterleitung, sonst der Hinweis mit Knopf „Büro-Seite öffnen“.
+  if (prof && prof.rolle === "buero") {
+    if (startZiel === "buero" && !_eingabeOffen() && _zurBueroWeiter()) return;
+    _zeigeBueroHinweis();
+    return;
+  }
   if (startZiel === "buero" && _nurGesamtansicht(prof)) { if (!_eingabeOffen() && _zurBueroWeiter()) return; startZiel = null; }
   // Fahrschule-Admin: exakt dieselbe App, nur mit den zusammengeführten Daten der ganzen Fahrschule
   if (_nurGesamtansicht(prof)) {
@@ -5119,7 +5154,7 @@ async function _pushToCloudJetzt(gen) {
   if (!_authUser) return false;
   // Büro und reine Leitung arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
   // Die Leitung, die selbst fährt, hat wie jeder Fahrlehrer einen eigenen Stand.
-  if (_nurGesamtansicht()) return true;
+  if (_ohneEigenenStand()) return true;
   if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return false; }
   const daten = _persoenlicheDaten();
   if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
@@ -6008,6 +6043,9 @@ async function _tryOfflineSession() {
   _zeigeAbmelden(); // K13: Abmelden unter „Mehr“ auch beim Start ohne Netz
   updateBell();
   toast("Offline-Modus · Daten werden beim nächsten Start synchronisiert");
+  // W17: Büro (aus dem Zwischenspeicher bekannt) bekommt auch ohne Netz keine Fahrlehrer-Ansicht, nur den Hinweis.
+  // Die Rolle wird dabei NICHT gesetzt (Offline-Start: nie weiterleiten), der Hinweis hat nur einen Link.
+  const _pc = _profilAusSpeicher(u.id); if (_pc && _pc.rolle === "buero") _zeigeBueroHinweis();
   return true;
 }
 
@@ -8089,7 +8127,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.7";
+const APP_VERSION="2026.11.26.8";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9207,7 +9245,25 @@ function _letzteAktivitaet(s){
   const l=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date).map(x=>x.date).sort();
   return l.length?l[l.length-1]:"";
 }
-let _homeSortMode=null; // null = Standard: „Als Nächstes dran“ (Gesamtansicht: A–Z)
+let _homeSortMode={}; // je Ansicht (eigen/gesamt); leer = Standard: „Als Nächstes dran“ (Gesamtansicht: A–Z)
+// W17 (🗣 Serband 26.11.2026 „bitte ordnen, das ist alles etwas random“): gewählte Sortierung je Gerät merken,
+// getrennt für die eigene Ansicht und die Gesamtansicht. Gespeichert wird nur ein Wort, keine Schülerdaten.
+const _SL_SORT_KEY="kompass-sl-sort-v1", _SL_SORTEN=["naechste","lange","stand","az"];
+function _slSortLesen(){ try{ const o=JSON.parse(localStorage.getItem(_SL_SORT_KEY)||"{}"), w=o&&o[_fsAgg?"gesamt":"eigen"]; return _SL_SORTEN.includes(w)?w:null; }catch(e){ return null; } }
+function _slSortMerken(w){ try{ let o={}; try{ o=JSON.parse(localStorage.getItem(_SL_SORT_KEY)||"{}")||{}; }catch(e){} if(typeof o!=="object"||Array.isArray(o))o={}; o[_fsAgg?"gesamt":"eigen"]=w; localStorage.setItem(_SL_SORT_KEY,JSON.stringify(o)); }catch(e){} }
+// Feste Gruppen je Sortierung, immer in derselben Reihenfolge; leere Gruppen fallen weg. Die Liste ist schon sortiert.
+function _slGruppen(modus,list){
+  const heute=todayISO(), in7=addDays(heute,7);
+  let defs;
+  if(modus==="naechste") defs=[["Heute",s=>{const t=_slNaechster(s);return !!t&&t.date===heute;}],["Nächste 7 Tage",s=>{const t=_slNaechster(s);return !!t&&t.date>heute&&t.date<=in7;}],["Später",s=>{const t=_slNaechster(s);return !!t&&t.date>in7;}],["Ohne Termin",()=>true]];
+  else if(modus==="lange") defs=[["Noch nie gefahren",s=>!_slLetzteFahrt(s)],["Über 4 Wochen her",s=>_slLetzteFahrt(s)<addDays(heute,-28)],["2 bis 4 Wochen her",s=>_slLetzteFahrt(s)<addDays(heute,-14)],["In den letzten 2 Wochen",()=>true]];
+  else if(modus==="stand") defs=[["Fast fertig (ab 80 %)",s=>stand(s)>=80],["Mittendrin (40 bis 79 %)",s=>stand(s)>=40],["Am Anfang (unter 40 %)",()=>true]];
+  else return null;
+  const g=defs.map(([titel])=>({titel,liste:[]}));
+  list.forEach(s=>{ const i=defs.findIndex(([,f])=>f(s)); g[i<0?g.length-1:i].liste.push(s); });
+  return g.filter(x=>x.liste.length);
+}
+function _slGruppeKopf(titel,n,id){ return `<div class="alpha-anchor sl-gruppe"${id?` id="${id}"`:""}><span>${esc(titel)}</span><span class="sl-gruppe-n">${n}</span></div>`; }
 let _homeFormFilter=[], _homeColorFilter=[], _homeOhneTelefon=false;
 // Telefonnummer ist in der Fahr-Akademie der Login. Fehlt sie, kann dort kein Zugang
 // angelegt werden - deshalb gilt auch eine leere Zeichenkette als "fehlt".
@@ -9221,7 +9277,7 @@ function routeHome(){
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
   if(_homeOhneTelefon) list=list.filter(telefonFehlt);
   const alle=activeStudents();
-  const modus=_homeSortMode||(_fsAgg?"az":"naechste");
+  const modus=_homeSortMode[_fsAgg?"gesamt":"eigen"]||_slSortLesen()||(_fsAgg?"az":"naechste"); // erst der Tipp in dieser Sitzung, dann der Gerätespeicher
   const alpha=(a,b)=>(a.name||"").localeCompare(b.name||"","de");
   if(modus==="stand") list.sort((a,b)=>stand(b)-stand(a)||alpha(a,b));
   else if(modus==="naechste"){ const k=x=>{ const t=_slNaechster(x); return t?t.date+" "+t.von:"9999"; }; list.sort((a,b)=>k(a).localeCompare(k(b))||alpha(a,b)); }
@@ -9248,7 +9304,7 @@ function routeHome(){
     list.forEach(s=>{ const key=s._fahrlehrerName||"Ohne Zuordnung"; if(!byLehrer[key])byLehrer[key]=[]; byLehrer[key].push(s); });
     Object.keys(byLehrer).sort((a,b)=>a.localeCompare(b,"de")).forEach(name=>{
       const gruppe=byLehrer[name].sort((a,b)=>(a.name||"").localeCompare(b.name||"","de"));
-      gridHTML+=`<div class="alpha-anchor" style="font-size:12px;font-weight:800;color:var(--txt);padding:16px 0 6px;">${esc(name)} <span style="color:var(--muted);font-weight:600;">(${gruppe.length})</span></div>`;
+      gridHTML+=_slGruppeKopf(name,gruppe.length);
       gridHTML+=gruppe.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
     });
   } else if(sortiertAlpha){
@@ -9260,26 +9316,30 @@ function routeHome(){
     });
     letterNav=letters.map(l=>`<button class="alpha-nav-btn" data-letter="${l}" style="display:block;font-size:11px;font-weight:800;color:var(--muted);padding:3px 0;background:none;border:none;cursor:pointer;line-height:1.4;">${l}</button>`).join("");
   } else {
-    gridHTML=list.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
+    // W17: feste Gruppen mit Überschrift und Anzahl (vorher eine lange Liste ohne erkennbare Ordnung)
+    const gruppen=_slGruppen(modus,list);
+    if(gruppen) gruppen.forEach(gr=>{ gridHTML+=_slGruppeKopf(gr.titel,gr.liste.length); gridHTML+=gr.liste.map((s,i)=>cardHTML2(s,i,hinweise)).join(""); });
+    else gridHTML=list.map((s,i)=>cardHTML2(s,i,hinweise)).join("");
   }
+  wartende.sort((a,b)=>(a.name||"").localeCompare(b.name||"","de")); // W17: auch der Abschnitt „Wartet“ hat eine feste Ordnung (A–Z)
   if(!list.length)gridHTML=`<p class="muted-p" style="text-align:center;padding:20px;">${wartende.length&&!filterAktiv?"Alle deine Schüler warten gerade (siehe unten).":"Kein Treffer für diese Filter."}</p>`;
   if(wartende.length)gridHTML+=`<details id="wartendBox" style="margin-top:18px;"><summary style="cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:8px 0;">⏳ Wartet (${wartende.length}) – auf Theorie oder Praxisprüfung</summary><p class="muted-p" style="font-size:12px;margin:0 0 8px;">Diese Schüler zählen nicht in deiner Auslastung. Sobald neue Fahrstunden gebucht oder ein Prüfungstermin eingetragen ist, erscheinen sie wieder oben.</p>${wartende.map((s,i)=>cardHTML2(s,i,hinweise)).join("")}</details>`;
-  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung" style="overflow-x:auto">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
-  view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;${sortiertAlpha&&!gruppiertNachFahrlehrer?'padding-right:32px;':''}">
+  const sortBar=`<div class="sl-sorten" role="group" aria-label="Sortierung">${[["naechste","Als Nächstes dran"],["lange","Lange nicht gefahren"],["stand","Nach Stand"],["az","A–Z"]].map(([k,l])=>`<button class="sl-sort${modus===k?' on':''}" data-sort="${k}">${l}</button>`).join("")}</div>`;
+  view.innerHTML=`<div class="view-inner view-wide fade-up schueler2" style="position:relative;">
     <div class="sl-kopf"><h1 class="sl-titel">Schüler</h1><span class="sl-zahl">${alle.length-wartende.length} aktiv${wartende.length?` · ${wartende.length} warten`:''}</span></div>
     <div id="homeSearchRow" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
       <div class="search-wrap" style="flex:1;margin:0;"><span class="search-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><input id="studentSearch" type="search" placeholder="Schüler suchen …" autocomplete="off"><button class="search-clear" id="searchClear" aria-label="Leeren" style="display:none;">✕</button></div>
       <button class="cal-search-btn" id="homeFilterBtn" aria-label="Filter" style="position:relative;flex:0 0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>${filterAktiv?'<span class="cal-filter-badge"></span>':''}</button>
     </div>
     ${sortBar}
-    <div id="studentGrid">${gridHTML}</div>
+    <div id="studentGrid"${sortiertAlpha&&!gruppiertNachFahrlehrer?' style="padding-right:24px;"':''}>${gridHTML}</div>
     <div class="no-hit" id="noHit" style="display:none;">Kein Schüler gefunden.</div>
     ${window.SU?SU.knopfHTML():""}
     </div>
     <div style="position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;background:var(--surface);border-radius:12px;padding:4px 3px;box-shadow:var(--elev-2);${(sortiertAlpha&&!gruppiertNachFahrlehrer&&list.length)?'':'display:none;'}" id="alphaNav">${letterNav}</div>`;
   animateRings();
   document.querySelectorAll(".s-card").forEach(c=>c.addEventListener("click",()=>routeDetail(c.dataset.id)));
-  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode=b.dataset.sort; routeHome(); }));
+  document.querySelectorAll("[data-sort]").forEach(b=>b.addEventListener("click",()=>{ _homeSortMode[_fsAgg?"gesamt":"eigen"]=b.dataset.sort; _slSortMerken(b.dataset.sort); routeHome(); }));
   const _hfb=$("#homeFilterBtn"); if(_hfb)_hfb.addEventListener("click",openHomeFilterSheet);
   document.querySelectorAll(".alpha-nav-btn").forEach(b=>b.addEventListener("click",()=>{
     const el=document.getElementById("alpha-"+b.dataset.letter);
@@ -13133,7 +13193,7 @@ function _settingsAccToggle(key){
 // hochladen und abwarten – die Büro-Seite liest die Fahrschul-Tabellen, und ein Seitenwechsel bricht laufende Anfragen ab.
 // true = alles oben (oder nichts offen), false = nicht sicher gesichert (dann nicht wechseln).
 async function _eigenesSichern(ms){
-  if(!_authUser||!_pullOk||_nurGesamtansicht())return !!_authUser&&_nurGesamtansicht();
+  if(!_authUser||!_pullOk||_ohneEigenenStand())return !!_authUser&&_ohneEigenenStand();
   clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null;
   const ende=Date.now()+ms;
   _brueckenOk=true; // ab hier zählt: kam alles an (Netzfehler, verschobene oder gescheiterte Läufe → false)
