@@ -19,6 +19,12 @@
 -- ihre Zeilen erfüllen das USING ohnehin. Super-Admin hat eigene Regeln. Fahrlehrer behalten ihre eigenen Regeln
 -- („Fahrlehrer legt eigene … an“ mit fahrlehrer_id = auth.uid()). Die App nutzt die gelockerten Wege nicht
 -- (geprüft: Provisionen, Verschiebungen, Fahrzeuge, Schichten, Empfehlungen werden nur in der Leitungs-Ansicht geschrieben).
+-- Bewusst NICHT geändert: profiles „Fahrschule-Admin verwaltet eigene Fahrlehrer“ (nur UPDATE, live mit with_check
+-- fahrschule_id = my_fahrschule_id() AND rolle = 'fahrlehrer'). Ein UPDATE erreicht nur Zeilen, deren USING passt; für einen
+-- Fahrlehrer ist das allein sein eigenes Profil („Eigenes Profil ändern“, auth.uid() = id). Die neue Zeile erfüllt dann ohnehin
+-- dessen Prüfung (Standard = USING); Rolle, Fahrschule, E-Mail, Aktiv und „fährt selbst“ schützt der Auslöser profil_schutz.
+-- Die lockere Prüfung öffnet also keine fremde Zeile und kein neues Feld. Ein INSERT-Weg besteht nicht (Regel nur für UPDATE).
+-- Live-Abfrage 1d-5 (W18, 26.11.2026) bestätigt genau diese 14 Regeln plus die profiles-Regel.
 -- Rückweg: supabase/rueckweg/20261130_w18_rueckweg.sql
 -- Nur für Prüfungen ohne Live-Datenbank (PGlite): set_config('w18.nur_vorhandene','1') überspringt fehlende Tabellen.
 do $w18m$
