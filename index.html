@@ -1560,7 +1560,10 @@ body:not(.light) .cw-col.today .cw-dnum{color:var(--gold);}
 .cw-ev.exam-done{background:var(--bg-soft);opacity:.92;}
 .cw-ev.exam-pass{background:rgba(76,175,114,.1);}
 .cw-ev.exam-fail{background:rgba(217,79,79,.1);}
-.cw-draggable{touch-action:none;cursor:grab;}
+/* W17 (🗣 Serband 26.11.2026): Ziehen erst nach 0,8 s ruhigem Halten. Bis dahin darf die Woche normal scrollen. */
+.cw-draggable{touch-action:auto;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.cw-draggable.cw-scharf{transform:translateY(-2px) scale(1.04);box-shadow:0 8px 20px rgba(0,0,0,.35);transition:transform .15s ease,box-shadow .15s ease;position:relative;z-index:5;}
+@media (prefers-reduced-motion:reduce){ .cw-draggable.cw-scharf{transform:none;transition:none;outline:2px solid var(--gruen-bright,#4a8b45);outline-offset:1px;} }
 .cw-draggable.cw-dragging-src{opacity:.32;}
 .cw-free.cw-drop-target{background:rgba(74,139,69,.28)!important;box-shadow:0 0 0 2px var(--gruen-bright,#4a8b45) inset;}
 .cw-drag-clone{position:fixed;z-index:500;pointer-events:none;opacity:.94;box-shadow:0 10px 26px rgba(0,0,0,.45);border-radius:6px;transform:scale(1.04);}
@@ -8086,7 +8089,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.1";
+const APP_VERSION="2026.11.26.3";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -14496,15 +14499,30 @@ let _calDragHappened=false, _calDragHappenedT=null;
 let _calDragActive=false;
 // Fahrstunden per Finger auf einen freien Slot ziehen — auch spaltenübergreifend (anderer Tag).
 // Nur "geplant"-Fahrstunden sind ziehbar; Prüfungstermine (mehrere Schüler pro Slot-Block) bewusst ausgenommen.
+// W17 (🗣 Serband 26.11.2026: „manchmal passiert das aus Versehen“): Ziehen wird erst „scharf“ nach 0,8 s ruhigem Halten
+// (Finger/Maus bewegt sich höchstens 9 px). Bewegt er sich vorher, ist es normales Scrollen; kurzes Tippen öffnet den Termin.
+const CAL_HALTEN_MS=800;
 function wireCalendarDrag(){
   document.querySelectorAll(".cw-draggable").forEach(chip=>{
+    // Langes Halten öffnet sonst am Handy das Kontextmenü bzw. markiert Text
+    chip.addEventListener("contextmenu",ev=>ev.preventDefault());
     chip.addEventListener("pointerdown",e=>{
       if(_calDragActive)return;
       if(e.pointerType==="mouse"&&e.button!==0)return;
       _calDragActive=true;
       const startX=e.clientX,startY=e.clientY;
-      let dragging=false,clone=null,curTarget=null;
+      let dragging=false,clone=null,curTarget=null,scharf=false,haltTimer=null;
       const THRESH=9,SCROLL_ZONE=60,SCROLL_SPEED=10;
+      // Ist das Ziehen scharf, darf der Browser nicht mehr scrollen (sonst bricht er die Geste ab)
+      const stopScroll=(ev)=>{ if(scharf&&ev.cancelable)ev.preventDefault(); };
+      chip.addEventListener("touchmove",stopScroll,{passive:false});
+      haltTimer=setTimeout(()=>{
+        haltTimer=null; scharf=true;
+        _calDragHappened=true; clearTimeout(_calDragHappenedT); _calDragHappenedT=setTimeout(()=>{_calDragHappened=false;},600); // kein Öffnen beim Loslassen
+        chip.classList.add("cw-scharf");
+        try{ if(navigator.vibrate&&!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches))navigator.vibrate(15); }catch(err){}
+        try{chip.setPointerCapture(e.pointerId);}catch(err){}
+      },CAL_HALTEN_MS);
       let scrollRAF=null,lastX=startX,lastY=startY;
       const startDrag=()=>{
         dragging=true;_calDragHappened=true;_calDragBlockSwipe=true;
@@ -14544,11 +14562,12 @@ function wireCalendarDrag(){
         scrollRAF=requestAnimationFrame(scrollLoop);
       };
       scrollRAF=requestAnimationFrame(scrollLoop);
-      try{chip.setPointerCapture(e.pointerId);}catch(err){}
       const onMove=(ev)=>{
         lastX=ev.clientX;lastY=ev.clientY;
         if(!dragging){
-          if(Math.abs(lastX-startX)>THRESH||Math.abs(lastY-startY)>THRESH){
+          const weit=Math.abs(lastX-startX)>THRESH||Math.abs(lastY-startY)>THRESH;
+          if(!scharf){ if(weit)cleanupDrag(); return; } // vor 0,8 s bewegt: normales Scrollen, kein Ziehen
+          if(weit){
             startDrag();
             const r0=chip.getBoundingClientRect();
             clone._baseLeft=r0.left;clone._baseTop=r0.top;
@@ -14558,6 +14577,9 @@ function wireCalendarDrag(){
         updateTarget();
       };
       const cleanupDrag=()=>{
+        if(haltTimer){clearTimeout(haltTimer);haltTimer=null;}
+        chip.removeEventListener("touchmove",stopScroll);
+        chip.classList.remove("cw-scharf");
         try{chip.releasePointerCapture(e.pointerId);}catch(err){}
         if(scrollRAF)cancelAnimationFrame(scrollRAF);
         window.removeEventListener("pointermove",onMove);
