@@ -222,7 +222,7 @@ function zahlungenFestlegen() {
 function zahlungsReiter(aktiv) {
   const pakete = typeof bkDa === "function" && bkDa();
   const tab = (h, id, t) => `<a class="tab" href="${h}"${aktiv === id ? ' aria-current="page"' : ""}>${t}</a>`;
-  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision" + (offeneVerkaeufe() ? ` <span class="zahl">${offeneVerkaeufe()}</span>` : ""))}${typeof belegDarf === "function" && belegDarf() ? tab("#belege", "belege", "Belege") : ""}</div>`;
+  return `<div class="tabs zahl-reiter" role="tablist" aria-label="Zahlungen">${tab("#preise", "preise", "Preise")}${pakete ? tab("#preise?reiter=pakete", "pakete", "Pakete") : ""}${typeof belegDarf === "function" && belegDarf() ? tab("#belege", "belege", "Belege") : ""}${tab("#verkaeufe", "verkaeufe", "Verkäufe &amp; Provision" + (offeneVerkaeufe() ? ` <span class="zahl">${offeneVerkaeufe()}</span>` : ""))}</div>`;
 }
 function preisReiter() { return typeof bkReiter === "function" ? bkReiter() : "preise"; }
 function aktuellerBereich() {

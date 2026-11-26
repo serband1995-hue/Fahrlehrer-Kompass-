@@ -83,7 +83,7 @@ begin
     new.schueler_id := o.schueler_id; new.schueler_name := o.schueler_name; new.zahlart := o.zahlart;
     new.betrag := -o.betrag; new.fahrschule_daten := o.fahrschule_daten; new.steuer := o.steuer;
     new.zweck := 'Storno zu Beleg Nr. ' || o.nummer || coalesce(nullif(': ' || left(btrim(coalesce(new.zweck, '')), 150), ': '), '');
-    new.datum := coalesce(new.datum, current_date);
+    new.datum := current_date;   -- Gegenbeleg immer mit dem Tag des Stornos (Prüfer Daten)
   else
     if new.betrag is null or new.betrag <= 0 then raise exception 'Betrag muss größer als 0 sein' using errcode = '22023'; end if;
     if new.schueler_id is not null then

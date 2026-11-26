@@ -32,7 +32,7 @@ function belegFehlerText(err) {
 // S.belege: null = noch nicht geladen; S.belegeFehlt = Tabelle fehlt; S.belegeFs = Fahrschule des geladenen Stands
 async function belegeLaden(erzwingen) {
   if (!belegDarf() || !S.fsId) return;
-  if (!erzwingen && S.belege && S.belegeFs === S.fsId) return;
+  if (!erzwingen && S.belege && S.belegeFs === S.fsId && Date.now() - (S.belegeAm || 0) < 60000) return; // höchstens 1 Minute alt (zweiter Büro-PC)
   const fs = S.fsId;
   const res = await supa.from("zahlungsbelege").select("*").eq("fahrschule_id", fs).order("nummer", { ascending: false }).limit(1000);
   if (S.fsId !== fs) return; // inzwischen andere Fahrschule (Super-Admin)
@@ -42,7 +42,7 @@ async function belegeLaden(erzwingen) {
     // anderer Fehler (Netz, Anmeldung abgelaufen): nichts zwischenspeichern, später neu versuchen (Prüfer Bedienung)
     S.belegeFehler = belegFehlerText(res.error); S.belegeFehlerAm = Date.now(); S.belege = null; return;
   }
-  S.belegeFehlt = false; S.belegeFehler = null; S.belege = res.data || []; S.belegeFs = fs;
+  S.belegeFehlt = false; S.belegeFehler = null; S.belege = res.data || []; S.belegeFs = fs; S.belegeAm = Date.now();
 }
 function belegStorniert(b) { return (S.belege || []).find((x) => x.storno_von === b.id) || null; }
 
@@ -51,6 +51,7 @@ function renderBelege() {
   if (!belegDarf()) return `<p class="leer">Belege sehen nur Büro und Leitung.</p>`;
   if ((!S.belege || S.belegeFs !== S.fsId) && S.belegeFehler && Date.now() - (S.belegeFehlerAm || 0) < 30000)
     return `<div class="karte"><p class="fl-warnung">Belege gerade nicht abrufbar: ${esc(S.belegeFehler)}</p><button class="knopf haupt" type="button" id="belegNochmal">Erneut laden</button></div>`;
+  if (S.belege && S.belegeFs === S.fsId && Date.now() - (S.belegeAm || 0) >= 60000 && !S.belegeLaeuft) { S.belegeLaeuft = true; belegeLaden(true).finally(() => { S.belegeLaeuft = false; if (document.body.dataset.bereich === "belege") zeichne(); }); }
   if (!S.belege || S.belegeFs !== S.fsId) { belegeLaden().then(() => { if (document.body.dataset.bereich === "belege") zeichne(); }); return `<p class="leer">Belege werden geladen …</p>`; }
   if (S.belegeFehlt) return `<div class="karte"><p class="leer">Datenbank noch nicht bereit (Belege). Sobald sie eingespielt ist, erscheinen die Belege hier.</p></div>`;
   const suche = (fristenParam("suche") || "").trim().toLowerCase();
@@ -134,6 +135,10 @@ async function belegDialog(sid) {
     const datum = form.datum.value;
     if (!/^\d{4}-\d\d-\d\d$/.test(datum) || datum > heute) { toast("Bitte ein gültiges Datum wählen (nicht in der Zukunft).", true); return false; }
     const zahlart = (form.querySelector("input[name=zahlart]:checked") || {}).value || "ec";
+    // Prüfer Daten: nach einem Verbindungsabbruch nicht unbemerkt doppelt (frisch laden, gleicher Schüler/Betrag/Tag)
+    await belegeLaden(true);
+    const doppelt = (S.belege || []).find((b) => !b.storno_von && b.schueler_id === sId && Number(b.betrag) === betrag && b.datum === datum && !belegStorniert(b));
+    if (doppelt && !(await bestaetige("Gibt es schon", `Für ${st.name} gibt es schon Beleg Nr. ${doppelt.nummer} über ${belegEuro(betrag)} vom ${datumDE(datum)}. Trotzdem einen weiteren Beleg erstellen?`, "Ja, weiteren Beleg"))) return false;
     if (!(await bestaetige("Beleg erstellen?", `${belegEuro(betrag)} von ${st.name} (${BELEG_ZAHLART[zahlart]}) für „${zweck}“ am ${datumDE(datum)}. Danach lässt sich der Beleg nicht mehr ändern, nur stornieren.`, "Ja, Beleg erstellen"))) return false;
     const res = await supa.from("zahlungsbelege").insert({ fahrschule_id: S.fsId, schueler_id: sId, schueler_name: st.name || "(ohne Namen)", datum, betrag, zweck, zahlart }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? belegFehlerText(res.error) : "keine Berechtigung"), true); return false; }

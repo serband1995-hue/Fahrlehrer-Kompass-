@@ -113,6 +113,7 @@ ok("Storno: neue Nummer, Betrag negativ, Daten vom Original", { n: 6, betrag: "-
 ok("zweites Storno desselben Belegs abgelehnt", true, /duplicate key|eindeutig|ein_storno/.test(await fehler(() => als(BU, () => q(`insert into public.zahlungsbelege (fahrschule_id, storno_von, schueler_name, datum, betrag, zweck, zahlart) values ('${A}', '${b1.id}', 'x', current_date, 1, 'x', 'ec')`)))));
 ok("Storno eines Stornos abgelehnt", true, /Storno kann nicht storniert/.test(await fehler(() => als(BU, () => q(`insert into public.zahlungsbelege (fahrschule_id, storno_von, schueler_name, datum, betrag, zweck, zahlart) values ('${A}', '${s1.id}', 'x', current_date, 1, 'x', 'ec')`)))));
 ok("Storno eines fremden Belegs abgelehnt", true, /nicht gefunden|row-level/.test(await fehler(() => als(BU, () => q(`insert into public.zahlungsbelege (fahrschule_id, storno_von, schueler_name, datum, betrag, zweck, zahlart) values ('${A}', '${bB.id}', 'x', current_date, 1, 'x', 'ec')`)))));
+ok("Storno-Datum = heute (Datum vom Client wirkt nicht)", true, (await q(`select bool_and(datum = current_date) b from public.zahlungsbelege where storno_von is not null`))[0].b);
 ok("Storno-Bargeld auch nach Ausschalten möglich", true, await (async () => {
   await als(BU, () => q(`update public.fahrschule_einstellungen set wert='{"aktiv":false}' where fahrschule_id='${A}' and schluessel='beleg.bargeld'`));
   const r = (await als(BU, () => q(`insert into public.zahlungsbelege (fahrschule_id, storno_von, schueler_name, datum, betrag, zweck, zahlart) values ('${A}', '${bBar.id}', 'x', current_date, 1, '', 'ec') returning zahlart, betrag`)))[0];
@@ -122,6 +123,10 @@ ok("Spur: Einstellungen protokolliert", true, (await q(`select count(*)::int n f
 
 // Rückweg
 let e = await fehler(() => db.exec(sql("rueckweg/20261201_w19_02_rueckweg.sql")));
+ok("Rückweg bricht ab, solange es punkte.* gibt (erst Rückweg Teil 3)", true, /Rückweg zu Teil 3/.test(e));
+ok("Rückweg: punkte.* bleibt erhalten", 1, (await q(`select count(*)::int n from public.fahrschule_einstellungen where schluessel like 'punkte.%'`))[0].n);
+await db.exec(`delete from public.fahrschule_einstellungen where schluessel like 'punkte.%'`);
+e = await fehler(() => db.exec(sql("rueckweg/20261201_w19_02_rueckweg.sql")));
 ok("Rückweg bricht ab, solange Belege da sind", true, /Erst sichern/.test(e));
 ok("nach Abbruch alles noch da", 8, (await q(`select count(*)::int n from public.zahlungsbelege`))[0].n);
 res = await db.exec(sql("rueckweg/20261201_w19_02_rueckweg.sql").replace("p_trotzdem boolean := false", "p_trotzdem boolean := true"));
