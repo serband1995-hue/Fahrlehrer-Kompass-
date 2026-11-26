@@ -421,7 +421,14 @@ function zmNachPruefung(p, fehlerText) {
   if (d.gesendet) rest = `<span class="zm-karte-haken" data-zmkhaken>✓ Zahlungsaufforderung gesendet am ${esc(zmZeit(d.gesendet.gesendet_am || d.gesendet.angelegt_am))}${d.gesendet.modus === "test" ? " (Test)" : ""}</span>`;
   else if (d.grund) rest = `<span class="zm-karte-grund" data-zmkgrund>Zahlung anfordern: ${esc(d.grund)}</span>${d.link ? `<a class="toast-knopf" href="${esc(d.link[0])}" data-zmklink>${esc(d.link[1])}</a>` : ""}`;
   else rest = `<button type="button" class="toast-knopf" data-zmksenden>${d.echt ? "Zahlungsaufforderung senden" : "Zahlungsaufforderung senden (Test)"} · ${esc(zmEuroText(d.cent))}</button>`;
-  const fehler = fehlerText ? `<span class="zm-karte-fehler" data-zmkfehler role="alert">${esc(fehlerText)}</span>` : "";
+  // Kalender-Fehler: zuerst ein einfacher Satz, was zu tun ist; der Grund vom Server kurz und ohne doppeltes „Kalender:“ darunter
+  let fehler = "";
+  if (fehlerText) {
+    const [satz, ...rest] = String(fehlerText).split(": ");
+    let grund = rest.join(": ").replace(/^Kalender:\s*/i, "").trim();
+    if (grund.length > 80) grund = grund.slice(0, 79).trimEnd() + "…";
+    fehler = `<span class="zm-karte-fehler" data-zmkfehler role="alert">⚠ ${esc(satz)}. Bitte den Termin dort selbst eintragen.${grund ? `<small>${esc(grund)}</small>` : ""}</span>`;
+  }
   el.innerHTML = kopf + `<button type="button" class="toast-knopf zm-karte-zu" data-zmkzu aria-label="Schließen">×</button>` + fehler + rest;
   zmAltenFehlerWeg(); // der Fehler steht (falls vorhanden) jetzt in der Karte, nicht doppelt darunter
   el.querySelector("[data-zmkzu]").addEventListener("click", zmKarteZu);
