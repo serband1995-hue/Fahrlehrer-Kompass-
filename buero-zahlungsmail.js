@@ -351,14 +351,24 @@ function zmBinde(block, dlg, sid) {
    „Zahlungsaufforderung senden“. Derselbe Versand wie in der Akte (zmVersand: Test/Echt, Empfänger wie dort, 5 Sekunden „Rückgängig“).
    Nie automatisch. Fehlt etwas (Preis, Zahlungsdaten, E-Mail), sagt die Karte, was fehlt. Schon gesendet: Haken statt Knopf. */
 const ZM_KARTE_MS = 20000;
-// Wurde für DIESE Prüfung schon eine Zahlungsaufforderung geschickt (im aktuellen Modus)? = nach der letzten früheren Prüfung des Schülers
+// Wurde für DIESE Prüfung schon eine Zahlungsaufforderung geschickt (im aktuellen Modus)? Nur bei sicherem Treffer (Prüf-Team Daten),
+// sonst lieber den Knopf: Mail derselben Art („Praktische Prüfung …“ / „Theorieprüfung …“), höchstens 60 Tage alt, seitdem keine
+// Prüfung dieser Art abgelegt (nicht abgesagt) und keine andere geplante Prüfung dieser Art, für die sie gedacht sein kann.
 function zmFuerPruefungGesendet(p) {
-  const m = zmLetzte(p.schueler_id, "pruefung");
-  if (!m) return null;
-  let grenze = "";
-  for (const q of S.pruefungstermine || []) if (q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && q.datum < p.datum && q.datum > grenze) grenze = q.datum;
-  const am = String(m.gesendet_am || m.angelegt_am || "").slice(0, 10);
-  return !grenze || am > grenze ? m : null;
+  const modus = zmModus(), heute = KR.todayISO(), anfang = p.art === "theorie" ? "Theorieprüfung" : "Praktische Prüfung";
+  const art = (q) => (q.art === "theorie" ? "theorie" : "praxis");
+  const grenze = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  const andereGeplant = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status === "geplant" && art(q) === art(p) && q.datum >= heute);
+  if (andereGeplant) return null;
+  let best = null;
+  for (const m of S.zahlungsMails || []) {
+    if (m.schueler_id !== p.schueler_id || m.art !== "pruefung" || m.status !== "gesendet" || m.modus !== modus || !String(m.wofuer || "").startsWith(anfang)) continue;
+    const am = String(m.gesendet_am || m.angelegt_am || "").slice(0, 10);
+    if (!am || am < grenze) continue;
+    const verbraucht = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && art(q) === art(p) && q.datum >= am && q.datum < heute);
+    if (!verbraucht && (!best || am > String(best.gesendet_am || best.angelegt_am || "").slice(0, 10))) best = m;
+  }
+  return best;
 }
 // Was die Karte zeigt: { betrag, wofuer, grund, link, gesendet } oder null (keine Karte)
 function zmKarteDaten(p) {
@@ -373,6 +383,8 @@ function zmKarteDaten(p) {
   const echt = zmEcht();
   let grund = "", link = null;
   if (S.zmLadefehler) grund = "Zahlungsdaten konnten nicht geladen werden";
+  else if (!S.zmGeladen) grund = "Zahlungsdaten werden noch geladen, bitte in der Akte senden";
+  else if (S.zmVerlaufFehler && !gesendet) grund = "Verlauf nicht geladen, bitte in der Akte prüfen";
   else if (!zmDatenDa()) { grund = "Zahlungsdaten fehlen"; link = ["#einstellungen?thema=zahlungen", "Zahlungsdaten eintragen"]; }
   else if (cent == null) { grund = "Kein Preis für diese Prüfung in der Preisliste"; link = ["#einstellungen?thema=preise", "Preis eintragen"]; }
   else if (echt && S.elternFehler) grund = "Eltern-Angaben konnten nicht geladen werden";
@@ -387,6 +399,7 @@ function zmNachPruefung(p) {
   const el = document.createElement("div");
   el.id = "zmKarte"; el.className = "toast toast-undo zeigen zm-karte"; el.setAttribute("role", "status");
   el.dataset.zmmodus = zmModus();
+  const fs = S.fsId;
   const name = d.x.name || "Schüler";
   const kopf = `<span class="toast-text"><b>Prüfung gespeichert</b> · ${esc(name)}</span>`;
   let rest;
@@ -401,6 +414,9 @@ function zmNachPruefung(p) {
   if (b) b.addEventListener("click", () => {
     if (b.disabled) return;
     if (ZM.laeuft.size || (typeof EM !== "undefined" && EM.laeuft.size)) { toast("Erst die laufende Mail abwarten.", true); return; }
+    if (S.fsId !== fs) { zmKarteZu(); return; } // Fahrschule gewechselt: nichts senden (Prüf-Team Daten)
+    const schon = zmFuerPruefungGesendet(p); // inzwischen in der Akte gesendet? (Prüf-Team Daten)
+    if (schon) { zmKarteZu(); toast(`Für diese Prüfung ist die Zahlungsaufforderung schon gesendet (${zmZeit(schon.gesendet_am || schon.angelegt_am)}).`); return; }
     const modus = el.dataset.zmmodus;
     if (modus !== zmModus()) { zmKarteZu(); toast(`Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte in der Akte senden.`, true); return; }
     b.disabled = true; zmKarteZu();

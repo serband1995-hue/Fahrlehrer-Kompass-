@@ -130,6 +130,14 @@ const karte = (page) => page.locator("#zmKarte");
   await plane(page, sid, { id: pid2 });
   pruefe("P4 Bearbeiten zeigt keine Karte", (await karte(page).count()) === 0);
   pruefe("P4b nach wie vor genau ein Aufruf", (await anrufe(page)).length === 1);
+  // P3b andere geplante Praxisprüfung (B +12 Tage, Mail gesendet) → neue frühere Prüfung C (+5) bekommt den Knopf, keinen Haken (Prüf-Team Daten)
+  await page.evaluate(() => zmKarteZu());
+  await plane(page, sid, { tage: 5 });
+  pruefe("P3b weitere geplante Prüfung derselben Art: Knopf statt Haken", (await karte(page).locator("[data-zmksenden]").count()) === 1 && (await karte(page).locator("[data-zmkhaken]").count()) === 0, await karte(page).innerText().catch(() => ""));
+  // P3c Theorieprüfung: die Praxis-Mail zählt nicht (Art passt nicht) → kein Haken
+  await page.evaluate(() => zmKarteZu());
+  await plane(page, sid, { art: "theorie", tage: 7 });
+  pruefe("P3c Theorie: Praxis-Mail gilt nicht als gesendet", (await karte(page).locator("[data-zmkhaken]").count()) === 0, await karte(page).innerText().catch(() => ""));
   pruefe("P5 keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
   await ctx.close();
 }

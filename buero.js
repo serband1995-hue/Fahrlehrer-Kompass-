@@ -5236,6 +5236,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.preise = null; // K9 (Fable B1): Preise der vorigen Fahrschule nie in der neuen zeigen oder behalten
   KR.setzeReaktRegel(null); S.reaktRegelGeladen = false; // W15: Regel der vorigen Fahrschule nicht mitnehmen
   KR.setzeSonderMinuten(null); // W13 PR 2: Sonderfahrt-Einheit der vorigen Fahrschule nicht mitnehmen
+  if (typeof zmKarteZu === "function") zmKarteZu(); // W15c: Karte der vorigen Fahrschule weg
   if (KR.setzeFristen) KR.setzeFristen(null); // W15 PR 3: Fristen der vorigen Fahrschule nicht mitnehmen (die neuen kommen mit KE, Ereignis ke:geladen)
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
