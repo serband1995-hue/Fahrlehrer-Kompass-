@@ -62,10 +62,10 @@ async function bestandenLaden(client: ReturnType<typeof createClient>, heute: st
     for (let seite = 0; ; seite++) {
       if (seite >= 50) { console.error("Zu viele Schueler im Export"); return []; }
       const { data, error } = await client.from("v_akademie_export_schueler").select("id, telefon, klasse")
-        .order("id", { ascending: true }).range(seite * 1000, seite * 1000 + 999);
+        .order("id", { ascending: true }).range(alle.length, alle.length + 999);   // ab der Zahl schon geladener Zeilen: keine Luecke, auch wenn der Server weniger liefert
       if (error) { console.error("Datenbankfehler (Bestanden-Schueler):", error.message); return []; }
       alle.push(...((data || []) as ExportSchueler[]));
-      if ((data || []).length < 1000) break;
+      if ((data || []).length === 0) break;             // erst bei leerer Seite aufhoeren (falls der Server weniger als 1000 je Seite liefert)
     }
     return bestandenBauen(pb || [], alle, ab, heute);
   } catch (e) {

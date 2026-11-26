@@ -54,5 +54,11 @@ const teil = idx.slice(idx.indexOf("async function bestandenLaden"), idx.indexOf
 pruefe("T12", "Bestanden-Teil: jeder Fehler -> [] (try/catch, kein 500)", /try \{/.test(teil) && /catch/.test(teil) && !/antwort\(/.test(teil) || "nicht abgesichert");
 pruefe("T13", "Bestanden-Teil liest nur (kein insert/update/delete/upsert/rpc)", !/\.(insert|update|delete|upsert|rpc)\(/.test(teil) || "schreibt");
 pruefe("T14", "Sicht ohne Filter in_ausbildung im Bestanden-Teil", !/in_ausbildung/.test(teil) || "Filter drin");
+// v4 Nachtrag: Seiten lückenlos, Abbruch erst bei leerer Seite, +490 gleich 0
+{
+  const idx2 = await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8");
+  pruefe("T18", "Schueler-Seiten lueckenlos (Versatz = geladene Zeilen, Ende bei leerer Seite)", (/\.range\(alle\.length, alle\.length \+ 999\)/.test(idx2) && /length === 0\) break/.test(idx2)) || "fehlt");
+  pruefe("T19", "+49 0171 gilt wie 0171", telefonNorm("+49 (0)171 1") === telefonNorm("0171 1") && telefonNorm("+490171 1") === "01711" || "anders");
+}
 console.log(`\nTermin-Export-Test: ${ok} ok, ${fehler} Fehler`);
 process.exit(fehler ? 1 : 0);
