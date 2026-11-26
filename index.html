@@ -14809,10 +14809,9 @@ function _kachelName(e){
   if(!nach||teile.length<2)return n;
   const andere=DB.students.filter(x=>x.id!==e.sid&&String(x.name||"").trim()&&firstName(String(x.name).trim()).toLowerCase()===vn&&!(typeof istArchiviert==="function"&&istArchiviert(x)));
   if(!andere.length)return n;
-  // gleicher Vorname: Anfangsbuchstabe des Nachnamens; haben auch die den gleichen (Anna Müller / Anna Meier): Nachname ausschreiben
-  const ini=nach.charAt(0).toUpperCase();
-  const gleicheIni=andere.some(x=>{const t=String(x.name).trim().split(/\s+/);return t.length>1&&t[t.length-1].charAt(0).toUpperCase()===ini;});
-  return firstName(n)+" "+(gleicheIni?nach:ini+".");
+  // gleicher Vorname: der Unterschied muss vorn stehen, sonst schneidet die schmale Kachel (Handy ca. 42 px) ihn ab
+  // („Lena M.“ wurde zu „Len…“). Deshalb „L. Müller“: auch bei gleichem Anfangsbuchstaben (Müller/Meier) bleibt „L. Mü…“/„L. Me…“.
+  return firstName(n).charAt(0).toUpperCase()+". "+nach;
 }
 function _calZiehbar(e,iso){
   if(!e||e.kind!=="lesson"||e.status!=="geplant"||e.art==="block"||e.doppelt)return false;
