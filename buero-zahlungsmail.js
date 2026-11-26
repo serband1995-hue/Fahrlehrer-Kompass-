@@ -359,19 +359,24 @@ function zmFuerPruefungGesendet(p) {
   const art = (q) => (q.art === "theorie" ? "theorie" : "praxis");
   const grenze = KR.addDaysISO(heute, -60); // lokales Datum (nicht UTC: sonst springt die Grenze um einen Tag)
   // Welche Prüfungsart meint die Mail? Nicht am genauen Text festmachen: ein von Hand geändertes „Wofür“ soll den Haken nicht verlieren.
-  // „Theorie …“ = Theorie, „Prakt…/Praxis/Fahr…“ = Praxis, alles andere = unklar (zählt nur, wenn keine Prüfung der anderen Art offen ist)
-  const mailArt = (w) => { const t = String(w || "").toLowerCase(); return /theor/.test(t) ? "theorie" : /prakt|praxis|fahrprüf/.test(t) ? "praxis" : ""; };
-  const andereArtOffen = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status === "geplant" && art(q) !== art(p) && q.datum >= heute);
+  // „Theorie …“ = Theorie, „Prakt…/Praxis/Fahrprüf…“ = Praxis (auch „ue“ statt „ü“), beides oder nichts davon = unklar.
+  // Unklar zählt nur, wenn der Schüler seit dem Tag der Mail KEINE Prüfung der anderen Art hat (geplant, vorbei, nicht abgesagt).
+  const mailArt = (w) => {
+    const t = String(w || "").toLowerCase().replace(/ue/g, "ü").replace(/ae/g, "ä").replace(/oe/g, "ö");
+    const th = /theor/.test(t), pr = /prakt|praxis|fahrprüf/.test(t);
+    return th && pr ? "" : th ? "theorie" : pr ? "praxis" : "";
+  };
+  const andereArtSeit = (am) => (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && art(q) !== art(p) && q.datum >= am);
   const andereGeplant = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status === "geplant" && art(q) === art(p) && q.datum >= heute);
   if (andereGeplant) return null;
   let best = null;
   for (const m of S.zahlungsMails || []) {
     if (m.schueler_id !== p.schueler_id || m.art !== "pruefung" || m.status !== "gesendet" || m.modus !== modus) continue;
-    const ma = mailArt(m.wofuer);
-    if (ma ? ma !== art(p) : andereArtOffen) continue;
     const ts = Date.parse(m.gesendet_am || m.angelegt_am || "");
     const am = isNaN(ts) ? "" : KR.dateISO(new Date(ts)); // lokaler Tag der Mail
     if (!am || am < grenze) continue;
+    const ma = mailArt(m.wofuer);
+    if (ma ? ma !== art(p) : andereArtSeit(am)) continue;
     const verbraucht = (S.pruefungstermine || []).some((q) => q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && art(q) === art(p) && q.datum >= am && q.datum < heute)
       || (art(p) === "praxis" && (S.pruefungen || []).some((e) => e.schueler_id === p.schueler_id && e.datum >= am && e.datum < heute)); // auch Prüfungen aus der App (Prüfer Büro)
     if (!verbraucht && (!best || ts > Date.parse(best.gesendet_am || best.angelegt_am || ""))) best = m;

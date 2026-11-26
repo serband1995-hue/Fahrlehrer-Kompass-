@@ -130,10 +130,19 @@ const karte = (page) => page.locator("#zmKarte");
     const m = S.zahlungsMails.filter((x) => x.schueler_id === s && x.art === "pruefung"), alt = m.map((x) => x.wofuer);
     m.forEach((x) => { x.wofuer = "Prüfungsgebühr"; }); const frei = !!zmFuerPruefungGesendet(p);
     m.forEach((x) => { x.wofuer = "Theorieprüfung Klasse B"; }); const theorie = !!zmFuerPruefungGesendet(p);
+    m.forEach((x) => { x.wofuer = "Fahrpruefung Klasse B"; }); const ohneUmlaut = !!zmFuerPruefungGesendet(p);
+    m.forEach((x) => { x.wofuer = "Praxisprüfung nach der Theorie"; }); const beides = !!zmFuerPruefungGesendet(p);
+    // freier Text, aber seit der Mail gab es eine Theorieprüfung (schon vorbei): die Mail war wohl für die Theorie → Knopf statt Haken
+    m.forEach((x) => { x.wofuer = "Prüfungsgebühr"; });
+    const t = { id: "zm-test-theorie", schueler_id: s, art: "theorie", status: "bestanden", datum: KR.todayISO() };
+    S.pruefungstermine.push(t); const freiNachTheorie = !!zmFuerPruefungGesendet(p);
+    S.pruefungstermine.splice(S.pruefungstermine.indexOf(t), 1);
     m.forEach((x, i) => { x.wofuer = alt[i]; });
-    return { n: m.length, frei, theorie };
+    return { n: m.length, frei, theorie, ohneUmlaut, beides, freiNachTheorie };
   }, sid);
   pruefe("P3d freier Text behält den Haken, „Theorie…“ zählt nicht für Praxis", unklar.n >= 1 && unklar.frei === true && unklar.theorie === false, JSON.stringify(unklar));
+  pruefe("P3e „Fahrpruefung“ (ohne ü) zählt für Praxis; „Praxis … Theorie“ gilt als unklar (Haken nur ohne Theorieprüfung)", unklar.ohneUmlaut === true && unklar.beides === true, JSON.stringify(unklar));
+  pruefe("P3f freier Text zählt nicht, wenn seit der Mail eine Theorieprüfung war", unklar.freiNachTheorie === false, JSON.stringify(unklar));
   // P4 Bearbeiten einer bestehenden Prüfung: keine Karte
   await page.evaluate(() => zmKarteZu());
   const pid2 = await page.evaluate((s) => S.pruefungstermine.filter((p) => p.schueler_id === s && p.status === "geplant")[0].id, sid);

@@ -14807,8 +14807,12 @@ function _kachelName(e){
   if(!n||!e.sid||!/ /.test(n)||!DB.students)return n;
   const vn=firstName(n).toLowerCase(), teile=n.split(/\s+/), nach=teile[teile.length-1];
   if(!nach||teile.length<2)return n;
-  const gleich=DB.students.some(x=>x.id!==e.sid&&String(x.name||"").trim()&&firstName(String(x.name).trim()).toLowerCase()===vn&&!(typeof istArchiviert==="function"&&istArchiviert(x)));
-  return gleich?firstName(n)+" "+nach.charAt(0).toUpperCase()+".":n;
+  const andere=DB.students.filter(x=>x.id!==e.sid&&String(x.name||"").trim()&&firstName(String(x.name).trim()).toLowerCase()===vn&&!(typeof istArchiviert==="function"&&istArchiviert(x)));
+  if(!andere.length)return n;
+  // gleicher Vorname: Anfangsbuchstabe des Nachnamens; haben auch die den gleichen (Anna Müller / Anna Meier): Nachname ausschreiben
+  const ini=nach.charAt(0).toUpperCase();
+  const gleicheIni=andere.some(x=>{const t=String(x.name).trim().split(/\s+/);return t.length>1&&t[t.length-1].charAt(0).toUpperCase()===ini;});
+  return firstName(n)+" "+(gleicheIni?nach:ini+".");
 }
 function _calZiehbar(e,iso){
   if(!e||e.kind!=="lesson"||e.status!=="geplant"||e.art==="block"||e.doppelt)return false;
