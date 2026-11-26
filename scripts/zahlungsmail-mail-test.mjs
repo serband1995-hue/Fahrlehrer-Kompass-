@@ -24,11 +24,11 @@ gleich("betragText 123456789", M.betragText(123456789), "1.234.567,89 €");
 {
   const d = { art: "pruefung", betrag_cent: 12000, wofuer: "Praktische Prüfung", schueler_name: "Lena Muster", kontoinhaber: "Fahrschule Boost", iban: "DE89370400440532013000", verwendungszweck: "Lena Muster, Prüfung", modus: "echt" };
   const t = (x) => M.mailText({ ...d, ...x });
-  pruefe("W14 ohne an: wie bisher „Hallo Lena,“ und „Ihre Prüfung“", /^Hallo Lena,$/m.test(t({})) && /für Ihre Prüfung/.test(t({})));
+  pruefe("W14 ohne an: wie bisher „Hallo Lena,“ und „deine Prüfung“", /^Hallo Lena,$/m.test(t({})) && /für deine Prüfung/.test(t({})));
   pruefe("W14 an=schueler: wie bisher", t({ an: "schueler" }) === t({}));
   pruefe("W14 an=eltern: „Guten Tag,“ und „Prüfung von Lena“", /^Guten Tag,$/m.test(t({ an: "eltern" })) && /für die Prüfung von Lena/.test(t({ an: "eltern" })) && !/Hallo Lena/.test(t({ an: "eltern" })));
   pruefe("W14 an=beide: neutrale Anrede, „Prüfung von Lena“", /^Guten Tag,$/m.test(t({ an: "beide" })) && /Prüfung von Lena/.test(t({ an: "beide" })) && !/Hallo/.test(t({ an: "beide" })));
-  pruefe("W14 Betreff an Eltern ohne „Ihre“ und ohne Namen", M.betreff({ ...d, an: "eltern" }).endsWith(": Zahlungsinformation zur Prüfung") && M.betreff({ ...d, art: "zahlung_offen", an: "beide" }).endsWith(": Wichtige Information zu den Fahrstunden") && !/Lena/.test(M.betreff({ ...d, an: "beide" })));
+  pruefe("W14 Betreff an Eltern ohne „deine“ und ohne Namen", M.betreff({ ...d, an: "eltern" }).endsWith(": Zahlungsinformation zur Prüfung") && M.betreff({ ...d, art: "zahlung_offen", an: "beide" }).endsWith(": Wichtige Information zu den Fahrstunden") && !/Lena/.test(M.betreff({ ...d, an: "beide" })));
   pruefe("W14 Betreff an Schüler wie bisher", M.betreff({ ...d, an: "schueler" }) === M.betreff(d));
   pruefe("W14 Reaktivierung an Eltern", /die Reaktivierung von Lena ist fällig/.test(M.mailText({ ...d, art: "reaktivierung", an: "eltern" })));
   pruefe("W14 Zahlung offen an Eltern", /für die Ausbildung von Lena ist noch eine Zahlung offen/.test(M.mailText({ ...d, art: "zahlung_offen", an: "eltern" })));
@@ -61,7 +61,7 @@ gleich("paypalLink Name wird kodiert", M.paypalLink("a b/c", 100), "https://www.
 // ---- Mail ----
 const d = { modus: "echt", art: "pruefung", betrag_cent: 12000, wofuer: "Prüfung B", verwendungszweck: "Max Muster, Prüfung B", schueler_name: "Max Muster",
   fahrschule: "Fahrschule Boost", kontoinhaber: "Fahrschule Boost", iban: "DE89370400440532013000", bic: "COBADEFFXXX", paypal: "boost", impressum: "Fahrschule Boost\nMusterstr. 1" };
-for (const [art, betreffSoll] of [["pruefung", "Zahlungsinformation zu Ihrer Prüfung"], ["reaktivierung", "Zahlungsinformation: Reaktivierung"], ["zahlung_offen", "Wichtige Information zu Ihren Terminen"]]) {
+for (const [art, betreffSoll] of [["pruefung", "Zahlungsinformation zu deiner Prüfung"], ["reaktivierung", "Zahlungsinformation: Reaktivierung"], ["zahlung_offen", "Wichtige Information zu deinen Terminen"]]) {
   gleich("Betreff " + art, M.betreff({ ...d, art }), "Fahrschule Boost: " + betreffSoll);
   gleich("Betreff " + art + " im Test", M.betreff({ ...d, art, modus: "test" }), "[TEST] Fahrschule Boost: " + betreffSoll);
 }
@@ -81,7 +81,7 @@ pruefe("HTML: keine externen Bilder/Schriften/Style-Block", !/<style|<link|src="
 pruefe("HTML: Breite höchstens 600 px", M.mailHtml(d).includes("max-width:600px"));
 pruefe("HTML: IBAN in 4er-Gruppen", M.mailHtml(d).includes("DE89 3704 0044 0532 0130 00"));
 pruefe("HTML: Betrag groß", M.mailHtml(d).includes("font-size:38px") && M.mailHtml(d).includes("120,00 €"));
-pruefe("HTML: Satz je Art", M.mailHtml({ ...d, art: "reaktivierung" }).includes("Ihre Reaktivierung ist fällig. Bitte zahlen Sie:") && M.mailHtml({ ...d, art: "zahlung_offen" }).includes("keine neuen Fahrstunden gebucht werden"));
+pruefe("HTML: Satz je Art", M.mailHtml({ ...d, art: "reaktivierung" }).includes("deine Reaktivierung ist fällig. Bitte zahl:") && M.mailHtml({ ...d, art: "zahlung_offen" }).includes("keine neuen Fahrstunden gebucht werden"));
 pruefe("Testkasten nur im Testmodus (HTML)", M.mailHtml({ ...d, modus: "test" }).includes("Test-Mail – nicht bezahlen") && !M.mailHtml(d).includes("Test-Mail"));
 pruefe("Testkasten nur im Testmodus (Text)", M.mailText({ ...d, modus: "test" }).startsWith("TEST-MAIL") && !M.mailText(d).includes("TEST-MAIL"));
 pruefe("PayPal-Knopf nur mit PayPal", M.mailHtml(d).includes("https://www.paypal.me/boost/120.00EUR") && !M.mailHtml({ ...d, paypal: null }).includes("paypal"));

@@ -203,7 +203,7 @@ await db.exec(RUECK);
 gleich("Rückweg: Ergebnis-Abfrage", { funktion_w14: true, fuer_anon: false }, await erg(RUECK));
 const w = await vorbereiten("w1");
 gleich("Rückweg: wie W14 (keine Prüfung der Fälligkeit, keine Vorlage)", { ok: true, vorlage_art: undefined }, { ok: w.ok, vorlage_art: w.vorlage_art });
-gleich("Rückweg: Mail mit W14-Daten = alter Satz", "Ihre Reaktivierung ist fällig. Bitte zahlen Sie:", MAIL.satz(Object.assign({}, w, { an: "schueler" })));
+gleich("Rückweg: Mail mit W14-Daten = alter Satz", "deine Reaktivierung ist fällig. Bitte zahl:", MAIL.satz(Object.assign({}, w, { an: "schueler" })));
 await db.exec(S4);
 gleich("wieder eingespielt: zu früh", "reakt_nicht_faellig", (await vorbereiten("w1")).fehler);
 
