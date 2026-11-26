@@ -5,9 +5,13 @@
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
   { version: "2026.11.26.3", datum: "2026-11-26", kurz: "Termine verschieben: erst 0,8 Sekunden halten, dann ziehen.",
-    punkte: ["Im Kalender verschiebt sich ein Termin nur noch, wenn du ihn kurz festhältst (0,8 Sekunden). Dann hebt sich die Karte leicht an, und das Handy vibriert kurz.",
+    punkte: ["Im Kalender verschiebt sich ein Termin nur noch, wenn du ihn kurz festhältst (0,8 Sekunden). Dann hebt sich die Karte leicht an. Bei vielen Handys vibriert es dazu kurz.",
              "So passiert beim Scrollen der Woche nichts mehr aus Versehen.",
              "Kurz tippen öffnet den Termin wie bisher."] },
+  { version: "2026.11.26.2", datum: "2026-11-26", kurz: "Mails an Schüler sagen jetzt „du“.",
+    punkte: ["Die fertigen Mail-Texte an Schüler (Zahlung, Reaktivierung, Fristen) sagen jetzt „du“, auch im Betreff.",
+             "Mails an Eltern bleiben bei „Sie“.",
+             "Eigene Texte, die das Büro schon gespeichert hat, bleiben, wie sie sind. Ändern geht unter Büro › Einstellungen › Nachrichten-Vorlagen."] },
   { version: "2026.11.26.1", datum: "2026-11-26", kurz: "Büro: Fristen und Mail-Texte selbst einstellen.",
     punkte: ["Neues Thema „Fristen“ unter Büro › Einstellungen: wie lange eine Frist läuft und wann gelb und blau gewarnt wird. Das gilt auch in der App.",
              "Fristen aus dem Gesetz (zum Beispiel 12 Monate für die Theorie) bleiben fest und zeigen, woher sie kommen.",
