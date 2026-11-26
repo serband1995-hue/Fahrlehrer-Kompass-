@@ -341,38 +341,112 @@ function zmBinde(block, dlg, sid) {
       const modus = block.dataset.zmmodus; // genau der Modus, den dieser Bildschirm zeigt (nicht der aus S: der Block kann älter sein); der Server prüft ebenfalls
       ZM.entwurf[schluessel] = { betrag: betragFeld.value, wofuer: wofuerFeld.value }; ZM.offen.add(schluessel);
       if (modus !== zmModus()) { zmNeuZeichnen(sid, art, `Mail an ${name}: Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.`); return; }
-      senden.disabled = true; ZM.laeuft.add(schluessel); mailBloeckeAktualisieren();
-      const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
-      const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
-      zmNeuZeichnen(sid);
-      // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
-      const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
-      const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase()); // W14: der Server sendet nur, wenn er dieselben Empfänger bestimmt
-      const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
-        ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
-        zmNeuZeichnen(sid);
-        toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
-      }, {
-        ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
-        nachAblauf: async (verlassen) => {
-          if (verlassen) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); return; } // Seite wird verlassen: lieber nichts senden (Knopf frei, falls die Seite zurückkommt)
-          if (S.fsId !== fs0) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
-          let erg;
-          try { erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr, fs0); }
-          catch (e) { erg = { ok: false, code: null, text: ZM_NICHT_MOEGLICH }; } // unerwarteter Fehler: Sperre trotzdem lösen (Richter W15 PR 2)
-          finally { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); }
-          if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
-          if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
-          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert" || /^reakt_/.test(erg.code || "")) && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
-          const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
-          const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
-          if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
-          else { zmNeuZeichnen(sid); toast(text, true); }
-        },
-      });
-      if (u && u.el) u.el.classList.add("zm-toast");
+      senden.disabled = true;
+      zmVersand(sid, art, cent, wofuer, modus);
     });
   });
+}
+/* ---------- 2b. Karte direkt nach dem Eintragen einer Prüfung (W15c, 🗣 Serband 26.11.2026: „ein Tipp direkt beim Eintragen“) ----------
+   Nach dem Speichern einer NEUEN Prüfung (Tafel „Prüfung planen“) steht unten eine Karte: Betrag aus der Preisliste und der Knopf
+   „Zahlungsaufforderung senden“. Derselbe Versand wie in der Akte (zmVersand: Test/Echt, Empfänger wie dort, 5 Sekunden „Rückgängig“).
+   Nie automatisch. Fehlt etwas (Preis, Zahlungsdaten, E-Mail), sagt die Karte, was fehlt. Schon gesendet: Haken statt Knopf. */
+const ZM_KARTE_MS = 20000;
+// Wurde für DIESE Prüfung schon eine Zahlungsaufforderung geschickt (im aktuellen Modus)? = nach der letzten früheren Prüfung des Schülers
+function zmFuerPruefungGesendet(p) {
+  const m = zmLetzte(p.schueler_id, "pruefung");
+  if (!m) return null;
+  let grenze = "";
+  for (const q of S.pruefungstermine || []) if (q.id !== p.id && q.schueler_id === p.schueler_id && q.status !== "abgesagt" && q.datum < p.datum && q.datum > grenze) grenze = q.datum;
+  const am = String(m.gesendet_am || m.angelegt_am || "").slice(0, 10);
+  return !grenze || am > grenze ? m : null;
+}
+// Was die Karte zeigt: { betrag, wofuer, grund, link, gesendet } oder null (keine Karte)
+function zmKarteDaten(p) {
+  if (!zmDarf() || S.zmFehlt || !p || p.status !== "geplant" || !p.datum || p.datum < KR.todayISO()) return null;
+  const x = S.schueler.find((y) => y.id === p.schueler_id);
+  if (!x || (typeof istAktiv === "function" && !istAktiv(x))) return null;
+  const klasse = p.klasse || klasseVon(x);
+  const wofuer = ((p.art === "theorie" ? "Theorieprüfung" : "Praktische Prüfung") + (klasse ? " Klasse " + klasse : "")).slice(0, 80);
+  const preis = typeof preisAm === "function" ? preisAm(p.art === "theorie" ? "pruefung_theorie" : "pruefung_praxis", klasse || null, null, KR.todayISO()) : undefined;
+  const cent = zmBetragCent(zmBetragFeld(preis));
+  const gesendet = zmFuerPruefungGesendet(p);
+  const echt = zmEcht();
+  let grund = "", link = null;
+  if (S.zmLadefehler) grund = "Zahlungsdaten konnten nicht geladen werden";
+  else if (!zmDatenDa()) { grund = "Zahlungsdaten fehlen"; link = ["#einstellungen?thema=zahlungen", "Zahlungsdaten eintragen"]; }
+  else if (cent == null) { grund = "Kein Preis für diese Prüfung in der Preisliste"; link = ["#einstellungen?thema=preise", "Preis eintragen"]; }
+  else if (echt && S.elternFehler) grund = "Eltern-Angaben konnten nicht geladen werden";
+  else if (echt && !zmEmpfaenger(x).length) grund = "Keine E-Mail-Adresse in der Akte";
+  return { x, cent, wofuer, grund, link, gesendet, echt };
+}
+function zmKarteZu() { const k = document.getElementById("zmKarte"); if (k) { clearTimeout(k._timer); k.remove(); } }
+function zmNachPruefung(p) {
+  zmKarteZu();
+  const d = zmKarteDaten(p);
+  if (!d) return false;
+  const el = document.createElement("div");
+  el.id = "zmKarte"; el.className = "toast toast-undo zeigen zm-karte"; el.setAttribute("role", "status");
+  el.dataset.zmmodus = zmModus();
+  const name = d.x.name || "Schüler";
+  const kopf = `<span class="toast-text"><b>Prüfung gespeichert.</b> ${esc(d.wofuer)} · ${esc(name)}</span>`;
+  let rest;
+  if (d.gesendet) rest = `<span class="zm-karte-haken" data-zmkhaken>✓ Zahlungsaufforderung gesendet am ${esc(zmZeit(d.gesendet.gesendet_am || d.gesendet.angelegt_am))}${d.gesendet.modus === "test" ? " (Test)" : ""}</span>`;
+  else if (d.grund) rest = `<span class="zm-karte-grund" data-zmkgrund>Zahlungsaufforderung: ${esc(d.grund)}</span>${d.link ? `<a class="toast-knopf" href="${esc(d.link[0])}" data-zmklink>${esc(d.link[1])}</a>` : ""}`;
+  else rest = `<button type="button" class="toast-knopf" data-zmksenden>${d.echt ? "Zahlungsaufforderung senden" : "Zahlungsaufforderung senden (Test)"} · ${esc(zmEuroText(d.cent))}</button>`;
+  el.innerHTML = kopf + rest + `<button type="button" class="toast-knopf zm-karte-zu" data-zmkzu aria-label="Schließen">×</button>`;
+  el.querySelector("[data-zmkzu]").addEventListener("click", zmKarteZu);
+  const l = el.querySelector("[data-zmklink]");
+  if (l) l.addEventListener("click", () => zmKarteZu());
+  const b = el.querySelector("[data-zmksenden]");
+  if (b) b.addEventListener("click", () => {
+    if (b.disabled) return;
+    if (ZM.laeuft.size || (typeof EM !== "undefined" && EM.laeuft.size)) { toast("Erst die laufende Mail abwarten.", true); return; }
+    const modus = el.dataset.zmmodus;
+    if (modus !== zmModus()) { zmKarteZu(); toast(`Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte in der Akte senden.`, true); return; }
+    b.disabled = true; zmKarteZu();
+    zmVersand(p.schueler_id, "pruefung", d.cent, d.wofuer, modus);
+  });
+  document.body.appendChild(el);
+  el._timer = setTimeout(zmKarteZu, Number(window.ZM_KARTE_MS) > 0 ? Number(window.ZM_KARTE_MS) : ZM_KARTE_MS);
+  return true;
+}
+window.addEventListener("hashchange", zmKarteZu);
+
+// Versand mit 5 Sekunden „Rückgängig“ (Akte und Karte nach dem Eintragen einer Prüfung, W15c): erst danach geht die Mail los.
+// modus = der Modus, den der Bildschirm gezeigt hat (der Server prüft ebenfalls).
+async function zmVersand(sid, art, cent, wofuer, modus) {
+  const schluessel = sid + "|" + art;
+  const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
+  ZM.laeuft.add(schluessel); mailBloeckeAktualisieren();
+  const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
+  const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
+  zmNeuZeichnen(sid);
+  // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
+  const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
+  const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase()); // W14: der Server sendet nur, wenn er dieselben Empfänger bestimmt
+  const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
+    ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
+    zmNeuZeichnen(sid);
+    toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
+  }, {
+    ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
+    nachAblauf: async (verlassen) => {
+      if (verlassen) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); return; } // Seite wird verlassen: lieber nichts senden (Knopf frei, falls die Seite zurückkommt)
+      if (S.fsId !== fs0) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
+      let erg;
+      try { erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr, fs0); }
+      catch (e) { erg = { ok: false, code: null, text: ZM_NICHT_MOEGLICH }; } // unerwarteter Fehler: Sperre trotzdem lösen (Richter W15 PR 2)
+      finally { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); }
+      if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
+      if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
+      if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert" || /^reakt_/.test(erg.code || "")) && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
+      const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
+      const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
+      if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
+      else { zmNeuZeichnen(sid); toast(text, true); }
+    },
+  });
+  if (u && u.el) u.el.classList.add("zm-toast");
 }
 async function zmSitzung() {
   let token = null;

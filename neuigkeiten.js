@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.3", datum: "2026-11-26", kurz: "Büro: Prüfung eintragen, Zahlung gleich anfordern.",
+    punkte: ["Trägt das Büro eine neue Prüfung ein, steht danach unten der Knopf „Zahlungsaufforderung senden“ mit dem Betrag aus der Preisliste. Ein Tipp genügt, 5 Sekunden lang geht noch „Rückgängig“.",
+             "Fehlt etwas (Preis, Zahlungsdaten oder E-Mail), steht dort, was fehlt, mit einem Link dorthin.",
+             "Wurde für diese Prüfung schon eine Zahlungsaufforderung geschickt, steht dort ein Haken statt des Knopfs."] },
   { version: "2026.11.26.1", datum: "2026-11-26", kurz: "Büro: Fristen und Mail-Texte selbst einstellen.",
     punkte: ["Neues Thema „Fristen“ unter Büro › Einstellungen: wie lange eine Frist läuft und wann gelb und blau gewarnt wird. Das gilt auch in der App.",
              "Fristen aus dem Gesetz (zum Beispiel 12 Monate für die Theorie) bleiben fest und zeigen, woher sie kommen.",

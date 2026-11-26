@@ -1117,3 +1117,8 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .lu-qr-bild{width:min(200px,60vw);}
 .lu-gl-zeile .lu-gl-text{display:grid;gap:2px;min-width:0;}
 .lu-gl-zeile.gesendet{background:var(--gruen-soft, rgba(46,133,80,.1));border-radius:8px;padding-left:8px;padding-right:8px;}
+/* W15c: Karte nach dem Eintragen einer Prüfung („Zahlungsaufforderung senden“, ein Tipp) */
+.toast.toast-undo.zm-karte{text-align:left;justify-content:flex-start;gap:10px 14px;max-width:min(720px,92vw);}
+.zm-karte .toast-knopf{min-height:44px;text-decoration:none;display:inline-flex;align-items:center;}
+.zm-karte .zm-karte-zu{min-width:44px;justify-content:center;padding:6px 10px;margin-left:auto;}
+.zm-karte .zm-karte-haken,.zm-karte .zm-karte-grund{font-weight:600;}

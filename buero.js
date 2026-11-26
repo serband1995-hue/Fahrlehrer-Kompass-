@@ -1538,8 +1538,10 @@ function pruefungDialog(id) {
       }
     }
     const kalenderOk = await abgleichKalender(gespeichert);
-    if (kalenderOk) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     zeichne();
+    // W15c: neue Prüfung → Karte mit „Zahlungsaufforderung senden“ (ein Tipp, nie automatisch); sonst wie bisher
+    const karte = !id && !d.absagen && typeof zmNachPruefung === "function" && zmNachPruefung(gespeichert);
+    if (kalenderOk && !karte) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     return true;
   });
   // Theorieprüfung: Hinweis, wenn der Theorieunterricht laut Anwesenheit noch nicht vollständig ist
