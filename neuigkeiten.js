@@ -4,6 +4,11 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.16", datum: "2026-11-26", kurz: "Neu: Punktesystem für Schüler (zuerst aus).",
+    punkte: ["Die Fahrschule kann ein Punktesystem einschalten. Zuerst ist es aus.",
+             "Das Büro legt selbst fest, wofür es Punkte gibt und was man damit einlösen kann.",
+             "Der Fahrlehrer sieht in der Schülerakte den Punktestand und kann Punkte geben oder einlösen.",
+             "Jede Buchung zeigt, wer sie wann gemacht hat. Gebuchtes lässt sich nicht ändern, nur ausgleichen."] },
   { version: "2026.11.26.13", datum: "2026-11-26", kurz: "Büro: Quittungen für Zahlungen drucken.",
     punkte: ["Büro: Für eine Zahlung eines Schülers gibt es jetzt eine Quittung zum Drucken oder als PDF.",
              "Jede Quittung bekommt die nächste Nummer und lässt sich danach nicht mehr ändern. Ist etwas falsch, wird sie storniert.",

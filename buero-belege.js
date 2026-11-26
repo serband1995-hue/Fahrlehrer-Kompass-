@@ -248,10 +248,10 @@ function belegDrucken(b) {
         <label class="wahl voll"><input type="checkbox" name="ausweisen"${st.ausweisen === true ? " checked" : ""}> Umsatzsteuer auf dem Beleg ausweisen</label>
         <label>Steuersatz in % (nur mit Haken)<input type="text" name="satz" inputmode="decimal" maxlength="5" value="${esc(String(st.satz || ""))}"></label>
         <label class="voll">Hinweis-Text unten auf dem Beleg (optional)<input type="text" name="hinweis" maxlength="200" value="${esc(st.hinweis || "")}"></label>
-        <p class="fl-warnung voll">Standard ist: keine Steuer auf dem Beleg. Ob und wie Umsatzsteuer auszuweisen ist, entscheidet nicht der Kompass. Bitte mit dem Steuerberater prüfen.</p>
+        <p class="hinweis-kasten voll">Standard ist: keine Steuer auf dem Beleg. Ob und wie Umsatzsteuer auszuweisen ist, entscheidet nicht der Kompass. Bitte mit dem Steuerberater prüfen.</p>
         <h3 class="es-abschnitt voll">Bargeld</h3>
         <label class="wahl voll"><input type="checkbox" name="bargeld"${bar ? " checked" : ""}> Bargeld-Belege erlauben</label>
-        <p class="fl-warnung voll">${esc(BELEG_BARGELD_HINWEIS)}</p>
+        <p class="hinweis-kasten voll">${esc(BELEG_BARGELD_HINWEIS)}</p>
         <p class="leise klein voll">EC-Karte und Überweisung gehen immer.</p>
         <div class="voll knopfreihe"><button class="knopf haupt" type="submit">Speichern</button></div>
       </form>`;
