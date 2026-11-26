@@ -366,7 +366,9 @@ const dlgZahl = (page) => page.evaluate(() => window.__dlg);
     const f = [];
     if ((await pEin()).length !== 1) f.push("Prüfung nicht gespeichert: " + (await toastText()));
     if ((await einfuegen()).length !== kEin + 1) f.push("Kalender-Eintrag fehlt");
-    if (!/Prüfung gespeichert/.test(await toastText())) f.push("Meldung: " + (await toastText()));
+    // W15c: bei neuer Prüfung zeigt die Zahlungs-Karte „Prüfung gespeichert“ statt des kurzen Hinweises
+    const karteText = await page.evaluate(() => (document.getElementById("zmKarte") || {}).textContent || "");
+    if (!/Prüfung gespeichert/.test((await toastText()) + " " + karteText)) f.push("Meldung: " + (await toastText()) + " | Karte: " + karteText);
     return f;
   });
   await schliesseAlle();
