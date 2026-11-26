@@ -277,6 +277,20 @@ await gegenprobe("Reparatur: Migration 20261130_w18_01 angewendet (zweimal: änd
   (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS", x.text.slice(0, 300)); if (x.art === "ERGEBNIS") {
     ok("  alle_ok = true (Kollegen-Fund behoben)", x.json.alle_ok === true && x.json.pflicht_fehler.length === 0, x.json.pflicht_fehler);
     ok("  keine Zusatzfunde", x.json.zusatz_auffaellig.length === 0, x.json.zusatz_auffaellig); } });
+// Prüf-Team W18 (Büro): Das Büro schreibt beim Fahrlehrer-Wechsel in schueler_verschiebungen und hat dort keine eigene Regel.
+// Die Migration darf es dort nicht aussperren: Stub-Tabelle mit den alten Regeln aus dem Abzug, Migration, dann Büro und Fahrlehrer einfügen lassen.
+{
+  const d = await baueDb();
+  const vRegeln = (lies("supabase/schema/rechte-abzug.sql").replace(/with check \(.*\);\s*-- ab 20261130_w18_01[^\n]*/g, "with check ((fahrschule_id = my_fahrschule_id()));")
+    .match(/create policy[\s\S]*?;/gi) || []).filter((p) => /on public\.schueler_verschiebungen as/i.test(p));
+  await d.exec(`create table public.schueler_verschiebungen (id uuid primary key default gen_random_uuid(), schueler_id text, von_fahrlehrer_id uuid, zu_fahrlehrer_id uuid, verschoben_von uuid, fahrschule_id uuid, gesehen_von_alt boolean default false, gesehen_von_neu boolean default false);
+    alter table public.schueler_verschiebungen enable row level security; grant all on public.schueler_verschiebungen to authenticated;` + vRegeln.join("\n"));
+  await d.exec(`select set_config('w18.nur_vorhandene','1',false);` + MIGRATION + `select set_config('w18.nur_vorhandene','',false);`);
+  const wc = (await d.query(`select with_check w from pg_policies where tablename='schueler_verschiebungen' and policyname='Fahrschule-Admin sieht eigene Verschiebungen'`)).rows[0]?.w || "";
+  ok("Verschiebungen: WITH CHECK erlaubt Leitung UND Büro (Büro-Übergabe-Hinweis bleibt möglich)", /is_buero/.test(wc) && /is_fahrschule_admin/.test(wc) && /my_fahrschule_id/.test(wc), wc);
+  ok("Verschiebungen: Regel-Zahl aus dem Abzug übernommen (mind. 4)", vRegeln.length >= 4, vRegeln.length);
+  await d.close();
+}
 {
   const d = await baueDb();
   let meld = "";

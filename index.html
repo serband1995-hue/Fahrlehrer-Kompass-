@@ -2597,7 +2597,7 @@ body.light #view[data-seite2] span[style*="color:var(--rot)"]{color:#9E2F22 !imp
 /* Kalender: Titel wie die anderen Seiten, Filter in einer Reihe, Plus-Knopf rund (verdeckt weniger) */
 #view[data-seite2] .view-inner .cal-viewbtn,#view[data-seite2] .view-inner .cal-viewbtn *:not(svg):not(svg *){font-family:var(--k-font-titel) !important;}
 #view[data-seite2] .cal-viewbtn{font-size:26px !important;font-weight:700 !important;color:var(--s2-tinte) !important;min-height:44px;}
-#view[data-seite2] .cal-filters{flex-wrap:nowrap;gap:6px;}
+#view[data-seite2] .cal-filters{flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none;} /* W18: bei breiterer Schrift ragte „Theorie“ bei 360 px über den Rand */
 #view[data-seite2] .cal-fchip{padding:0 11px;font-size:13px;}
 #view[data-seite2] .cal-legend-bar{gap:4px 12px;margin-bottom:10px;}
 body:has(#view[data-seite2] #calBody) #fab{width:56px;height:56px !important;padding:0 !important;justify-content:center;}
@@ -7955,8 +7955,7 @@ async function neuenSchuelerAnlegenFS(fahrschuleId){
 /* ============================================================
    FAHRSCHULE-KALENDER (Wochenansicht, alle Fahrlehrer, filterbar)
    ============================================================ */
-// W18: 14 Farben, damit auch 10 Fahrlehrer plus Leitung im Kalender verschieden sind (vorher 8: Nr. 9 = Nr. 1)
-const FS_KAL_FARBEN=["#9a8f7e","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a","#2f6f8f","#a0522d","#6b8e23","#d16ba5","#46607a","#b8860b"];
+const FS_KAL_FARBEN=["#9a8f7e","#4a8bd6","#cf9a3e","#b23a6b","#3aa7b2","#8a5fd6","#c85a3a","#5f9e3a"];
 function _fsKalFarbeFuer(fahrlehrerId,lehrerListe){
   const idx=lehrerListe.findIndex(l=>l.id===fahrlehrerId);
   return FS_KAL_FARBEN[(idx<0?0:idx)%FS_KAL_FARBEN.length];

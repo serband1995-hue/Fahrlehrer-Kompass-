@@ -779,11 +779,8 @@ async function gesamtPhase(u, rolleText, kurz) {
     if (!tag[0] || !tag[1]) return "Kachel nicht gefunden " + JSON.stringify(tag);
     return tag[0] === tag[1] ? "beide Kacheln zeigen dieselbe Fahrlehrer-Beschriftung „" + tag[0] + "“ (nur Vorname, index.html _fsFlVorname)" : null;
   });
-  if (!kurz) await pruefe("G7", `${P} Kalenderfarben: bei 10+ Fahrlehrern bekommt jeder eine eigene Farbe`, async () => {
-    const farben = await page.evaluate((ids) => ids.map((id) => _fsKalFarbeFuer(id, _fsAgg.lehrer)), ZEHN.map((x) => x.id));
-    const doppelt = farben.map((c, i) => [c, i]).filter(([c, i]) => farben.indexOf(c) !== i).map(([c, i]) => ZEHN[i].name.split(" ")[0] + "=" + ZEHN[farben.indexOf(c)].name.split(" ")[0] + " (" + c + ")");
-    return doppelt.length ? "gleiche Farbe: " + doppelt.join(", ") : null;
-  });
+  // G7 (Farben je Fahrlehrer) entfällt (Prüf-Team W18): FS_KAL_FARBEN nutzt nur der alte Wochenkalender routeFahrschuleKalender, den kein
+  // Knopf mehr öffnet. Der echte Kalender färbt nach Terminart und schreibt den Fahrlehrer-Namen dazu (G6 prüft die Unterscheidbarkeit).
   if (!kurz) await pruefe("G8", `${P} Schichtplan und Urlaub nennen die Fahrlehrer mit vollem Namen`, async () => {
     const f = [];
     await oeffne(ANS[6]); let t = await textSeite(page);

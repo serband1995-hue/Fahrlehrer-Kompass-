@@ -15,6 +15,7 @@
 -- schon tun. Das USING bleibt unverändert. Der Text wird aus der LIVE-Regel genommen (pg_policies.qual), nicht geraten.
 -- Schutz: Jede Regel muss genau so vorhanden sein (Name, Tabelle), ihr USING muss die Rolle prüfen und ihr WITH CHECK
 -- darf sie noch nicht prüfen. Sonst bricht die Migration ab, BEVOR etwas geändert ist (eine Transaktion).
+-- Ausnahme schueler_verschiebungen: WITH CHECK = Leitung ODER Büro (das Büro hat dort keine eigene Regel, siehe unten).
 -- Wer ist betroffen: Büro (is_buero), Leitung (is_fahrschule_admin, auch „fährt selbst“) arbeiten wie vorher, denn
 -- ihre Zeilen erfüllen das USING ohnehin. Super-Admin hat eigene Regeln. Fahrlehrer behalten ihre eigenen Regeln
 -- („Fahrlehrer legt eigene … an“ mit fahrlehrer_id = auth.uid()). Die App nutzt die gelockerten Wege nicht
@@ -102,7 +103,14 @@ begin
          ('schueler_verschiebungen', 'Fahrschule-Admin sieht eigene Verschiebungen'))
        and p.with_check !~ '(is_buero|is_fahrschule_admin)\('
   loop
-    execute format('alter policy %I on public.%I with check (%s)', r.pol, r.tab, r.qual);
+    if r.tab = 'schueler_verschiebungen' then
+      -- Ausnahme: Für diese Tabelle hat das Büro KEINE eigene Regel. Das Büro schreibt beim Fahrlehrer-Wechsel eines Schülers
+      -- (buero.js verschiebeSchueler) den Übergabe-Hinweis hier hinein und kam bisher nur über das lockere WITH CHECK dieser
+      -- Leitungs-Regel durch (Prüf-Team W18). Deshalb: Leitung ODER Büro, eigene Fahrschule. USING bleibt unverändert.
+      execute format('alter policy %I on public.%I with check (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))', r.pol, r.tab);
+    else
+      execute format('alter policy %I on public.%I with check (%s)', r.pol, r.tab, r.qual);
+    end if;
     v_n := v_n + 1;
   end loop;
   raise notice 'W18-Migration: % Regeln angepasst (WITH CHECK = USING)', v_n;

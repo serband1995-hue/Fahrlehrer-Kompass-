@@ -319,7 +319,7 @@ create policy "Fahrlehrer sieht eigene Benachrichtigungen" on public.schueler_ve
   using (((von_fahrlehrer_id = auth.uid()) OR (zu_fahrlehrer_id = auth.uid())));
 create policy "Fahrschule-Admin sieht eigene Verschiebungen" on public.schueler_verschiebungen as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
+  with check (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id(); Büro schreibt hier den Übergabe-Hinweis)
 create policy "Super Admin alles - Verschiebungen" on public.schueler_verschiebungen as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Eigener Snapshot lesen" on public.snapshots as PERMISSIVE for SELECT to public using ((auth.uid() = user_id));
