@@ -1740,6 +1740,8 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .vd-bonus-note{font-size:13px;color:var(--muted);text-align:center;padding:11px;background:var(--bg-soft);border:1px solid var(--line);border-radius:11px;margin-bottom:14px;}
 .vd-bonus-note b{color:var(--mint);}
 .vd-bonus-note.ok{background:rgba(207,154,62,.12);border-color:rgba(207,154,62,.3);color:#e8c45a;font-weight:700;}
+.punkte-stand-app{font-size:14px;color:var(--muted);margin:2px 0 6px;}
+.punkte-stand-app b{font-family:'Playfair Display',Georgia,serif;font-size:28px;color:var(--txt);margin-right:4px;}
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
 .vd-offen.vd-lohn{text-align:left;}
@@ -10522,8 +10524,13 @@ function _punkteFehlerText(e){
 }
 async function _punkteLaden(sid){
   const supa=getSupa(), fs=window.KE&&KE.fsId&&KE.fsId();
-  if(!supa||!fs||!navigator.onLine) return;
   if(_punkte[sid]&&_punkte[sid].laeuft) return;
+  if(!supa||!fs||!navigator.onLine){ // Prüfer Bedienung: offline nicht endlos „wird geladen“
+    _punkte[sid]={zeit:Date.now(),fehler:true};
+    const el=document.querySelector(`.punkte-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
+    if(el&&st) el.outerHTML=punkteCard(st);
+    return;
+  }
   _punkte[sid]=Object.assign({},_punkte[sid],{laeuft:true});
   try{
     const [a,b]=await Promise.all([supa.rpc("punkte_kontostand",{p_fahrschule:fs,p_schueler:sid}),
@@ -10538,16 +10545,16 @@ async function _punkteLaden(sid){
 function punkteCard(s){
   if(!_punkteSystem()) return "";
   const x=_punkte[s.id];
-  if(x&&x.nicht) return ""; // nicht der eigene Schüler: nichts zeigen
-  if(!x||(!x.laeuft&&Date.now()-x.zeit>_PUNKTE_MS)) setTimeout(()=>_punkteLaden(s.id),0);
+  if(x&&x.nicht&&Date.now()-x.zeit<_PUNKTE_MS) return ""; // nicht der eigene Schüler: nichts zeigen (nach 1 Min. neu fragen, z. B. frisch angelegt)
+  if(!x||(!x.laeuft&&(Date.now()-x.zeit>_PUNKTE_MS||(x.fehler&&!x.nicht&&Date.now()-x.zeit>10000)))) setTimeout(()=>_punkteLaden(s.id),0);
   const klein=t=>`<p class="muted-p" style="font-size:12px;margin:6px 0 0;">${t}</p>`;
   let inhalt;
   if(!x||x.stand==null) inhalt=klein(x&&x.fehler?"Punkte gerade nicht abrufbar (offline?).":"Punkte werden geladen …");
   else{
-    const zeilen=(x.verlauf||[]).map(b=>`<div class="mini-dash-row"><span>${esc(b.grund)}<small class="muted-p" style="display:block;font-size:12px;">${esc(new Date(b.erstellt_am).toLocaleDateString("de-DE"))}${b.bearbeiter?" · "+esc(b.bearbeiter):""}</small></span><b>${esc(_punkteZahl(b.punkte))}</b></div>`).join("");
-    inhalt=`<div class="mini-dash-row"><span>Kontostand</span><b>${esc(x.stand.toLocaleString("de-DE"))} Punkte</b></div>${zeilen}
+    const zeilen=(x.verlauf||[]).map(b=>`<div class="mini-dash-row"><span style="min-width:0;overflow-wrap:anywhere;">${esc(b.grund)}<small class="muted-p" style="display:block;font-size:12px;">${esc(new Date(b.erstellt_am).toLocaleDateString("de-DE"))}${b.bearbeiter?" · "+esc(b.bearbeiter):""}</small></span><b>${esc(_punkteZahl(b.punkte))}</b></div>`).join("");
+    inhalt=`<div class="punkte-stand-app"><b>${esc(x.stand.toLocaleString("de-DE"))}</b> Punkte</div>${zeilen}
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-        <button type="button" class="btn btn-ghost" style="flex:1 1 130px;min-height:44px;" onclick="_punkteWahl(this.closest('.punkte-karte').dataset.sid,'vergeben')">＋ Punkte geben</button>
+        <button type="button" class="btn btn-primary" style="flex:1 1 130px;min-height:44px;white-space:nowrap;" onclick="_punkteWahl(this.closest('.punkte-karte').dataset.sid,'vergeben')">Punkte geben</button>
         <button type="button" class="btn btn-ghost" style="flex:1 1 130px;min-height:44px;" onclick="_punkteWahl(this.closest('.punkte-karte').dataset.sid,'einloesen')">Einlösen</button>
       </div>`;
   }
@@ -10560,12 +10567,19 @@ function _punkteWahl(sid,art){
   if(!sys) return;
   const titel=art==="vergeben"?"Punkte geben":"Punkte einlösen";
   openSheet(`<div class="sheet-h">${titel}</div>
-    ${liste.length?liste.map((x,i)=>`<button type="button" class="btn btn-ghost punkte-wahl" data-i="${i}" style="display:flex;justify-content:space-between;gap:10px;width:100%;min-height:48px;margin-top:8px;text-align:left;"><span>${esc(x.name)}</span><b>${x.punkte.toLocaleString("de-DE")}</b></button>`).join("")
+    ${liste.length?liste.map((x,i)=>`<button type="button" class="btn btn-ghost punkte-wahl" data-i="${i}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:48px;margin-top:8px;text-align:left;"><span style="min-width:0;overflow-wrap:anywhere;">${esc(x.name)}</span><b style="flex:0 0 auto;white-space:nowrap;">${art==="vergeben"?"+":"−"}${x.punkte.toLocaleString("de-DE")}</b></button>`).join("")
       :`<p class="muted-p">Die Fahrschule hat noch nichts angelegt. Das Büro legt es in den Einstellungen unter „Punktesystem“ an.</p>`}
     ${sys.bedingungen?`<p class="muted-p" style="font-size:12px;margin-top:10px;">${esc(sys.bedingungen).replace(/\n/g,"<br>")}</p>`:""}`);
   $("#sheet").querySelectorAll(".punkte-wahl").forEach(b=>b.addEventListener("click",()=>_punkteBuchen(sid,art,liste[Number(b.dataset.i)])));
 }
+let _punkteBusy=false; // Prüfer Bedienung: Doppeltipp bucht sonst doppelt (Buchungen sind fest)
 async function _punkteBuchen(sid,art,eintrag){
+  if(_punkteBusy) return;
+  _punkteBusy=true;
+  const knoepfe=[...document.querySelectorAll("#sheet .punkte-wahl")]; knoepfe.forEach(b=>{ b.disabled=true; });
+  try{ await _punkteBuchenKern(sid,art,eintrag); } finally { _punkteBusy=false; knoepfe.forEach(b=>{ if(b.isConnected)b.disabled=false; }); }
+}
+async function _punkteBuchenKern(sid,art,eintrag){
   const supa=getSupa(), fs=window.KE&&KE.fsId&&KE.fsId(), st=(DB.students||[]).find(x=>x.id===sid);
   if(!supa||!fs||!eintrag||!st) return;
   if(!navigator.onLine){ toast("Keine Verbindung – Punkte nur online buchen"); return; }

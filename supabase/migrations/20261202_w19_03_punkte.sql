@@ -16,6 +16,13 @@
 --   direkt nur vergeben/einloesen; Verschenken nur über die Funktion punkte_verschenken (zwei Zeilen in einer Transaktion).
 --   Rolle und Besitz stehen auch im WITH CHECK (Lehre W18). Fremde Fahrschule nie.
 
+-- ===== 0. Voraussetzung Teil 2: Schlüssel punkte.* erlaubt (sonst Abbruch, nichts geändert) =====
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'fe_schluessel' and pg_get_constraintdef(oid) like '%punkte%') then
+    raise exception 'Zuerst 20261201_w19_02_zahlungsbelege.sql einspielen (Schlüssel punkte.*).';
+  end if;
+end $$;
+
 -- ===== 1. Hilfsfunktion: bin ich der eigene Fahrlehrer dieses Schülers (in dieser Fahrschule)? =====
 create or replace function public.punkte_eigener_fl(fs uuid, sid text)
  returns boolean language sql stable security definer set search_path to 'public'
@@ -134,7 +141,8 @@ as $function$
 declare g text := btrim(coalesce(p_grund, ''));
 begin
   if auth.uid() is null then raise exception 'Nicht angemeldet' using errcode = '42501'; end if;
-  if not (public.zm_darf(p_fahrschule) or public.punkte_eigener_fl(p_fahrschule, p_von)) then
+  -- Verschenken nur Büro/Leitung/Super-Admin (Prüfer Daten: sonst schickt ein Fahrlehrer freien Text in die Akte eines Kollegen)
+  if not public.zm_darf(p_fahrschule) then
     raise exception 'Keine Berechtigung' using errcode = '42501';
   end if;
   if p_von is null or p_an is null or p_von = p_an then raise exception 'Bitte zwei verschiedene Schüler wählen' using errcode = '22023'; end if;

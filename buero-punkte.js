@@ -56,7 +56,11 @@ async function punkteDialog(sid) {
       <span class="punkte-text"><b>${esc(b.grund)}</b><span class="unter">${esc(PUNKTE_ART_TEXT[b.art] || b.art)}${b.gegen_schueler_id ? ` · ${b.art === "verschenkt_ab" ? "an" : "von"} ${esc(name(b.gegen_schueler_id))}` : ""} · ${esc(new Date(b.erstellt_am).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }))}${b.bearbeiter ? ` · ${esc(b.bearbeiter)}` : ""}</span></span></li>`).join("");
   const andere = S.schueler.filter((x) => x.id !== sid && istAktiv(x)).slice().sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "de"));
   const aktionen = [["vergeben", "Punkte geben"], ["einloesen", "Einlösen"]].concat(sys.verschenken === true ? [["verschenken", "Verschenken"]] : []).concat([["frei", "Eigene Buchung"]]);
-  const body = `<div class="punkte-kopf"><div class="punkte-stand" id="punkteStand"><b>${esc(kontostand.toLocaleString("de-DE"))}</b> Punkte</div><div class="leise">${esc(st.name || "")}</div></div>
+  // Design: Name im Titel, Verlauf gleich unter dem Kontostand, Buchen darunter
+  const body = `<div class="punkte-dialog"><div class="punkte-kopf"><div class="punkte-stand" id="punkteStand"><b>${esc(kontostand.toLocaleString("de-DE"))}</b> Punkte</div></div>
+    <h3 class="punkte-titel">Verlauf</h3>
+    ${zeilen ? `<ul class="punkte-liste">${zeilen}</ul>` : `<p class="leer">Noch keine Buchungen.</p>`}
+    <h3 class="punkte-titel">Buchen</h3>
     <div class="formular">
       <fieldset class="voll"><legend>Was soll gebucht werden?</legend>
         ${aktionen.map(([w, t], i) => `<label class="wahl"><input type="radio" name="aktion" value="${w}"${i === 0 ? " checked" : ""}> ${esc(t)}</label>`).join("")}
@@ -71,11 +75,8 @@ async function punkteDialog(sid) {
       <label class="voll" id="punkteAnZeile" hidden>An wen?<select name="an"><option value="">– bitte wählen –</option>${andere.map((x) => `<option value="${esc(x.id)}">${esc(x.name || "(ohne Namen)")}</option>`).join("")}</select></label>
     </div>
     <p class="leise klein" id="punkteLeerHinweis" hidden></p>
-    ${sys.bedingungen ? `<p class="leise klein"><b>Bedingungen:</b> ${esc(sys.bedingungen).replace(/\n/g, "<br>")}</p>` : ""}
-    <h3 class="punkte-titel">Verlauf</h3>
-    ${zeilen ? `<ul class="punkte-liste">${zeilen}</ul>` : `<p class="leer">Noch keine Buchungen.</p>`}
-    <p class="leise klein">Buchungen lassen sich nicht ändern oder löschen. Ist etwas falsch, bitte mit „Eigene Buchung“ das Gegenteil buchen.</p>`;
-  const dlg = oeffneDialog("Punkte", body, async (form) => {
+    ${sys.bedingungen ? `<p class="leise klein"><b>Bedingungen:</b> ${esc(sys.bedingungen).replace(/\n/g, "<br>")}</p>` : ""}</div>`;
+  const dlg = oeffneDialog("Punkte · " + (st.name || "Schüler"), body, async (form) => {
     const aktion = (form.querySelector("input[name=aktion]:checked") || {}).value;
     const wahl = form.eintrag.value;
     let art, punkte, grund, gegen = null;
@@ -149,7 +150,7 @@ async function punkteDialog(sid) {
       ${E[art].length ? E[art].map((x, i) => zeile(art, x, i)).join("") : `<p class="es-leer">${esc(leer)}</p>`}
       <div class="voll"><button type="button" class="knopf klein" data-neu="${art}"${E[art].length >= PUNKTE_MAX_EINTRAEGE ? " disabled" : ""}>${esc(neu)}</button></div>`;
     return `<form class="formular" id="punkteEinst" novalidate>
-      <p class="fl-warnung voll" role="note"><b>Bitte beachten:</b> ${esc(PUNKTE_HINWEIS)}</p>
+      <p class="hinweis-kasten voll" role="note"><b>Bitte beachten:</b> ${esc(PUNKTE_HINWEIS)} Ist das Punktesystem aus, lassen sich auch keine Korrekturen buchen.</p>
       <label class="wahl voll"><input type="checkbox" name="aktiv"${E.aktiv ? " checked" : ""}> Punktesystem einschalten</label>
       <p class="leise klein voll">Standard ist aus. Solange es aus ist, sieht und bucht niemand Punkte. Schon gebuchte Punkte bleiben erhalten.</p>
       ${liste("regeln", "Wofür gibt es Punkte?", "Noch nichts angelegt. Lege selbst fest, wofür ein Schüler Punkte bekommt und wie viele.", "+ Eintrag hinzufügen")}

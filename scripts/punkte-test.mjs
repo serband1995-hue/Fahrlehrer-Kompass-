@@ -75,7 +75,7 @@ try {
   const e0 = await page.evaluate(() => { const f = document.getElementById("punkteEinst"); return { aktiv: f.elements.aktiv.checked, vers: f.elements.verschenken.checked, zeilen: f.querySelectorAll(".punkte-edit").length, text: f.textContent.replace(/\s+/g, " ") }; });
   await pruefe("E1", "Standard: aus, Verschenken aus, beide Listen leer (keine festen Werte)", () => [e0.aktiv && "an", e0.vers && "verschenken an", e0.zeilen && "Zeilen: " + e0.zeilen].filter(Boolean));
   await pruefe("E2", "Hinweis zu Rabatt, Steuer und Minderjährigen steht gut sichtbar da", () => [!e0.text.includes("Punkte für Bezahltes wirken wie ein Rabatt (Preisangaben, Steuer). Viele Schüler sind minderjährig. Vor dem Einschalten prüfen.") && "Hinweis fehlt"].filter(Boolean));
-  await pruefe("E2b", "Hinweis ist ein auffälliger Kasten (fl-warnung) oben im Thema", () => page.evaluate(() => { const n = document.querySelector("#punkteEinst .fl-warnung"); return n && n.getBoundingClientRect().top < 400 && n.offsetHeight > 20 ? null : "nicht oben sichtbar"; }));
+  await pruefe("E2b", "Hinweis ist ein auffälliger Kasten (hinweis-kasten, mit Fläche) oben im Thema", () => page.evaluate(() => { const n = document.querySelector("#punkteEinst .hinweis-kasten"); return n && n.getBoundingClientRect().top < 400 && n.offsetHeight > 20 && getComputedStyle(n).backgroundColor !== "rgba(0, 0, 0, 0)" ? null : "nicht oben sichtbar"; }));
   await pruefe("E2c", "Thema „Punktesystem“ steht in der Themenliste", () => page.evaluate(() => (/Punktesystem/.test(document.getElementById("ansicht").textContent) ? null : "kein Thema")));
   // Schülerliste ohne Knopf
   await page.goto(basis + "buero.html#schueler"); await page.waitForTimeout(600);
@@ -272,6 +272,13 @@ try {
     aus.kEingeloest = karte(); aus.zeilen3 = db.punkte.length;
     aus.breit = document.documentElement.scrollWidth <= innerWidth + 1;
     aus.knopfH = Math.min(...[...document.querySelectorAll(".punkte-karte button")].map((b) => b.getBoundingClientRect().height));
+    // 5b. Doppeltipp (Prüfer Bedienung): nur EINE Buchung
+    { const vorher = db.punkte.length; document.querySelector(".punkte-karte button").click(); await warte(200);
+      const w = document.getElementById("sheet").querySelectorAll(".punkte-wahl")[0]; w.click(); w.click(); await warte(600);
+      aus.doppel = db.punkte.length - vorher; try { closeSheet(); } catch (e) {} }
+    // 5c. offline: Hinweis statt endlos „wird geladen“
+    { Object.defineProperty(navigator, "onLine", { get: () => false, configurable: true }); delete _punkte.a1; routeDetail("a1"); await warte(400); aus.kOffline = karte();
+      Object.defineProperty(navigator, "onLine", { get: () => true, configurable: true }); }
     // 6. fremder Schüler: keine Karte
     routeDetail("a2"); await warte(500); aus.kFremd = !!document.querySelector(".punkte-karte");
     // 7. Netzfehler: Hinweis statt Absturz
@@ -282,7 +289,7 @@ try {
   });
   await pruefe("P1", "App: ohne Einstellungen und bei ausgeschaltetem System keine Karte", () => [erg.k0 && "Karte ohne Einstellungen", erg.kAus && "Karte bei System aus"].filter(Boolean));
   await pruefe("P2", "App: System an → Karte „Punkte“ lädt, danach „0 Punkte“", () => [!/Punkte werden geladen/.test(erg.kLaden) && "kein Ladehinweis: " + erg.kLaden, !/0 Punkte/.test(erg.kNull) && "Stand: " + erg.kNull].filter(Boolean));
-  await pruefe("P3", "App: „Punkte geben“ zeigt die Liste der Fahrschule (Namen und Punkte), Bedingungen, Knöpfe ≥ 44 px", () => [!/Pünktlich erschienen\s*10/.test(erg.sheetGeben) && "Liste: " + erg.sheetGeben, !/Theorie bestanden\s*50/.test(erg.sheetGeben) && "Liste 2", !/Nur zum Test\./.test(erg.sheetGeben) && "Bedingungen", erg.wahlHoehe < 43.5 && "Knopf nur " + erg.wahlHoehe].filter(Boolean));
+  await pruefe("P3", "App: „Punkte geben“ zeigt die Liste der Fahrschule (Namen und Punkte), Bedingungen, Knöpfe ≥ 44 px", () => [!/Pünktlich erschienen\s*\+10/.test(erg.sheetGeben) && "Liste: " + erg.sheetGeben, !/Theorie bestanden\s*\+50/.test(erg.sheetGeben) && "Liste 2", !/Nur zum Test\./.test(erg.sheetGeben) && "Bedingungen", erg.wahlHoehe < 43.5 && "Knopf nur " + erg.wahlHoehe].filter(Boolean));
   await pruefe("P4", "App: 50 gutgeschrieben → Karte zeigt 50 Punkte und den Verlauf", () => [!/50 Punkte/.test(erg.kGegeben) && "Stand: " + erg.kGegeben, !/Theorie bestanden/.test(erg.kGegeben) && "Verlauf", erg.zeilen1 !== 1 && "Zeilen " + erg.zeilen1].filter(Boolean));
   await pruefe("P5", "App: Einlösen über den Kontostand → Hinweis „Nicht genug Punkte“, nichts gebucht", () => [!/Nicht genug Punkte: 50 vorhanden, 100 nötig/.test(erg.toastZuViel || "") && "Hinweis: " + erg.toastZuViel, erg.zeilen2 !== 1 && "Zeilen " + erg.zeilen2].filter(Boolean));
   await pruefe("P6", "App: Einlösen „Kleines Geschenk“ (20) → Stand 30, Verlauf mit −20", () => [!/30 Punkte/.test(erg.kEingeloest) && "Stand: " + erg.kEingeloest, !/−20/.test(erg.kEingeloest) && "kein −20", erg.zeilen3 !== 2 && "Zeilen " + erg.zeilen3].filter(Boolean));
@@ -290,6 +297,8 @@ try {
   await pruefe("P8", "App: Schüler, der nicht dem Fahrlehrer gehört → keine Karte", () => (erg.kFremd ? "Karte sichtbar" : null));
   await pruefe("P9", "App: Netzfehler → Hinweis „gerade nicht abrufbar“", () => (/gerade nicht abrufbar/.test(erg.kNetz) ? null : "Text: " + erg.kNetz));
   await pruefe("P10", "App: ohne Fahrschule (keine Einstellungen) keine Karte", () => (erg.kOhneFs ? "Karte sichtbar" : null));
+  await pruefe("P12", "App: Doppeltipp auf einen Eintrag bucht nur einmal", () => (erg.doppel === 1 ? null : "Buchungen: " + erg.doppel));
+  await pruefe("P13", "App: offline „gerade nicht abrufbar“ statt „wird geladen“", () => (/gerade nicht abrufbar/.test(erg.kOffline) ? null : "Text: " + erg.kOffline));
   await pruefe("P11", "keine JS-Fehler (App)", () => (jsF.length ? jsF.slice(0, 3).join(" | ") : null));
   await actx.close(); appServer.close();
 } catch (e) { fehlerZahl++; console.log("FEHLER  Test-Ausnahme: " + (e && e.stack || e)); }

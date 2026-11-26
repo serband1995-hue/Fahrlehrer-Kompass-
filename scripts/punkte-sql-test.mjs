@@ -152,7 +152,8 @@ ok("Verschenken an Schüler einer fremden Fahrschule abgelehnt (alles zurück)",
 })());
 ok("Verschenken ohne Grund abgelehnt", true, /Grund/.test(await fehler(() => gib(BU, A, "s1", "s3", 5, "  "))));
 ok("Verschenken 0 oder negativ abgelehnt", true, /größer als 0/.test(await fehler(() => gib(BU, A, "s1", "s3", -5, "x"))));
-ok("Fahrlehrer verschenkt von eigenem Schüler (s4 hat 40)", true, await (async () => { await gib(FL, A, "s4", "s1", 10, "Geschenk"); return (await stand(FL, A, "s4")) === 30; })());
+ok("Fahrlehrer verschenkt nicht, auch nicht vom eigenen Schüler (nur Büro/Leitung)", true, await (async () => { const e = await fehler(() => gib(FL, A, "s4", "s1", 10, "Geschenk")); return /Keine Berechtigung/.test(e) && (await stand(FL, A, "s4")) === 40; })());
+await gib(BU, A, "s4", "s1", 10, "Geschenk"); // wie vorher: s4 hat danach 30 (Büro verschenkt)
 ok("Fahrlehrer verschenkt NICHT vom Schüler des Kollegen", true, /Keine Berechtigung/.test(await fehler(() => gib(FL, A, "s3", "s1", 5, "Geschenk"))));
 ok("Büro B verschenkt nicht in Fahrschule A", true, /Keine Berechtigung/.test(await fehler(() => gib(BUB, A, "s1", "s3", 5, "Geschenk"))));
 // Schalter aus → alles wieder zu
