@@ -59,6 +59,8 @@ begin
   -- SCHRITT 0: Vorpruefung (nur lesen)
   -- ===================================================================================================================
   v_schritt := '0 Vorpruefung';
+  -- Der TRUNCATE-Versuch (Teil A) holt kurz eine Tabellensperre, BEVOR das Recht geprueft wird: nie laenger als 3 s warten
+  perform set_config('lock_timeout', '3s', true);
   if to_regclass('sicherung.w20_rechte_vorher') is null then
     raise exception 'W20_ABBRUCH: sicherung.w20_rechte_vorher fehlt – Migration 20261201_w20_01 ist nicht eingespielt.';
   end if;
@@ -77,15 +79,16 @@ begin
      where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm', 'f') order by c.relname
   loop
     v_schritt := 'A1 anon ' || rec.relname;
+    -- erste Spalte, die man schreiben darf (keine GENERATED-/IDENTITY-ALWAYS-Spalte, sonst Fehler 428C9 vor der Rechtepruefung)
     select a.attname into v_col from pg_attribute a where a.attrelid = ('public.' || quote_ident(rec.relname))::regclass
-       and a.attnum > 0 and not a.attisdropped order by a.attnum limit 1;
+       and a.attnum > 0 and not a.attisdropped and a.attgenerated = '' and a.attidentity <> 'a' order by a.attnum limit 1;
     foreach v_r in array array['select', 'insert', 'update', 'delete', 'truncate'] loop
       if v_r = 'truncate' and rec.relkind not in ('r', 'p') then continue; end if;
       begin
         perform set_config('role', 'anon', true);
         execute case v_r
           when 'select'   then format('select 1 from public.%I limit 0', rec.relname)
-          when 'insert'   then format('insert into public.%I select * from public.%I limit 0', rec.relname, rec.relname)
+          when 'insert'   then format('insert into public.%I (%I) select %I from public.%I limit 0', rec.relname, v_col, v_col, rec.relname)
           when 'update'   then format('update public.%I set %I = %I where false', rec.relname, v_col, v_col)
           when 'delete'   then format('delete from public.%I where false', rec.relname)
           else                 format('truncate public.%I', rec.relname) end;
@@ -117,6 +120,12 @@ begin
           or has_table_privilege('anon', c.oid, 'TRUNCATE') or has_table_privilege('anon', c.oid, 'TRIGGER')
           or has_table_privilege('anon', c.oid, 'REFERENCES'));
   v_pr := v_pr || jsonb_build_object('name', 'A2 niemand (anon/authenticated) hat TRUNCATE/TRIGGER/REFERENCES', 'kat', 'pflicht', 'ok', v_n = 0, 'ist', v_n);
+  if current_setting('server_version_num')::int >= 170000 then
+    execute $q$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
+               where n.nspname = 'public' and c.relkind in ('r', 'p', 'm')
+                 and (has_table_privilege('authenticated', c.oid, 'MAINTAIN') or has_table_privilege('anon', c.oid, 'MAINTAIN'))$q$ into v_n;
+    v_pr := v_pr || jsonb_build_object('name', 'A2 niemand (anon/authenticated) hat MAINTAIN (PG17)', 'kat', 'pflicht', 'ok', v_n = 0, 'ist', v_n);
+  end if;
 
   select coalesce(jsonb_agg(x), '[]') into v_abw from (
     select s.objekt || ':' || p as x
@@ -137,10 +146,13 @@ begin
   v_pr := v_pr || jsonb_build_object('name', 'A4 anon liest quiz_raeume/quiz_spieler (Realtime)', 'kat', 'pflicht', 'ok', v_ok);
 
   v_schritt := 'A5 service_role (Buchungsseite)';
-  v_ok := has_table_privilege('service_role', 'public.public_bookings', 'SELECT,INSERT,UPDATE')
+  -- je Recht einzeln (has_table_privilege mit Liste ist schon wahr, wenn EINES da ist)
+  v_ok := has_table_privilege('service_role', 'public.public_bookings', 'SELECT') and has_table_privilege('service_role', 'public.public_bookings', 'INSERT')
+      and has_table_privilege('service_role', 'public.public_bookings', 'UPDATE')
       and has_table_privilege('service_role', 'public.profiles', 'SELECT')
       and has_table_privilege('service_role', 'public.snapshots', 'SELECT')
-      and has_table_privilege('service_role', 'public.push_subscriptions', 'SELECT,INSERT,UPDATE,DELETE')
+      and has_table_privilege('service_role', 'public.push_subscriptions', 'SELECT') and has_table_privilege('service_role', 'public.push_subscriptions', 'INSERT')
+      and has_table_privilege('service_role', 'public.push_subscriptions', 'UPDATE') and has_table_privilege('service_role', 'public.push_subscriptions', 'DELETE')
       and exists (select 1 from pg_roles where rolname = 'service_role' and rolbypassrls);
   v_pr := v_pr || jsonb_build_object('name', 'A5 service_role (public-booking) unveraendert: Rechte + umgeht RLS', 'kat', 'pflicht', 'ok', v_ok);
 
@@ -254,6 +266,8 @@ begin
       and has_function_privilege('authenticated', 'public.buero_sitzung_beenden()', 'EXECUTE')
       and has_function_privilege('authenticated', 'public.buero_pin_aendern(text)', 'EXECUTE');
   v_pr := v_pr || jsonb_build_object('name', 'B6 Büro-Seite darf anmelden/abmelden/PIN aendern', 'kat', 'pflicht', 'ok', v_ok);
+  v_pr := v_pr || jsonb_build_object('name', 'B6 alte buero_pin_anmelden(uuid, text) ohne Freigabe-Pruefung ist entfernt', 'kat', 'pflicht',
+            'ok', to_regprocedure('public.buero_pin_anmelden(uuid, text)') is null);
   begin
     execute 'select count(*) from cron.job where jobname = ''buero_sitzungen_aufraeumen''' into v_n;
   exception when others then v_n := -1;

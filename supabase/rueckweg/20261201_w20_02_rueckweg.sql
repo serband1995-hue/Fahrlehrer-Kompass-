@@ -1,7 +1,8 @@
 -- Rückweg zu supabase/migrations/20261201_w20_02_buero_mehrere_pcs.sql
 -- Stellt buero_neue_sitzung und buero_pin_aendern wörtlich auf den Live-Stand vom 26.11.2026 (w20-1-lesen 1f) zurück:
 -- wieder nur EINE Sitzung je Person und Anmeldekonto. Entfernt den Aufräum-Auftrag und den Index.
--- Das Entziehen von EXECUTE auf buero_neue_sitzung bleibt absichtlich bestehen (Sicherheitslücke, siehe Migration).
+-- Das Entziehen von EXECUTE auf buero_neue_sitzung und das Entfernen der alten buero_pin_anmelden(uuid, text) bleiben absichtlich
+-- bestehen (Sicherheitslücken, siehe Migration).
 create or replace function public.buero_neue_sitzung(p_person uuid, p_fs uuid, p_nur_pin boolean)
  returns text
  language plpgsql

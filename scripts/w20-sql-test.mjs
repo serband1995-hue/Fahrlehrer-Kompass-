@@ -322,6 +322,10 @@ async function baueDb() {
     alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, ${SR};
     alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, ${SR};
     create function public.quiz_beitreten(p_code text, p_name text) returns jsonb language sql security definer as $$ select '{}'::jsonb $$;
+    -- alte 2-Parameter-Fassung (live vorhanden, wird von Migration 2 entfernt) und Tabelle mit berechneter + Identitäts-Spalte (Probe darf nicht falsch rot werden)
+    create function public.buero_pin_anmelden(p_person uuid, p_pin text) returns jsonb language sql security definer as $$ select '{}'::jsonb $$;
+    create table public.mit_berechnet (nr int generated always as identity, a int, b int generated always as (a * 2) stored);
+    grant all on public.mit_berechnet to anon, authenticated, ${SR};
   `);
   // RLS-Regeln für die Büro-Tabellen sind für die Probe ohne Bedeutung (alles läuft über security definer)
   const fn = LIVE_FUNKTIONEN.replace(/^(CREATE OR REPLACE FUNCTION public\.buero_sitzung_zeile)/m, () => ORIGINAL + "\nCREATE OR REPLACE FUNCTION public.buero_sitzung_zeile");
@@ -370,6 +374,7 @@ ok("authenticated behält Lesen/Schreiben, verliert TRUNCATE", r.au === true && 
 ok("Server-Rolle unverändert (TRUNCATE bleibt)", r.st === true);
 ok("Sicherung gefüllt", Number(r.n) > 10, r.n);
 ok("Aufräum-Auftrag angelegt", Number(r.cj) === 1);
+ok("alte buero_pin_anmelden(uuid, text) entfernt", (await db.query("select to_regprocedure('public.buero_pin_anmelden(uuid, text)') f")).rows[0].f === null);
 f = await fehlerVon(db, M1);
 ok("Migration 1 doppelt: W20_ABBRUCH ohne Änderung", f.startsWith("W20_ABBRUCH"), f);
 

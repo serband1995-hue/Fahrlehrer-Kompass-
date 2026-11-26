@@ -24,7 +24,7 @@
 --   0. Sicherung: Rechte von anon, authenticated und PUBLIC auf allen Tabellen/Sichten/Sequenzen in public vorher nach
 --      sicherung.w20_rechte_vorher (Schema ohne Rechte für anon/authenticated, siehe K1). Der Rückweg stellt sie daraus her.
 --   1. anon: REVOKE ALL auf jeder Tabelle/Sicht in public, AUSSER quiz_raeume und quiz_spieler (dort nur SELECT behalten).
---   2. authenticated: REVOKE TRUNCATE, TRIGGER, REFERENCES auf jeder Tabelle in public (die App braucht keins davon;
+--   2. authenticated: REVOKE TRUNCATE, TRIGGER, REFERENCES (ab PG17 auch MAINTAIN) auf jeder Tabelle in public (die App braucht keins davon;
 --      SELECT/INSERT/UPDATE/DELETE bleiben genau wie vorher, RLS-Regeln bleiben unverändert).
 --   3. anon: REVOKE ALL auf allen Sequenzen in public (anon fügt nirgends selbst ein).
 --   4. Standardrechte für KÜNFTIGE Tabellen/Sequenzen, die die Rolle postgres anlegt: anon bekommt nichts mehr,
@@ -40,6 +40,7 @@ declare
   v_quiz constant text[] := array['quiz_raeume', 'quiz_spieler'];
   v_tab int := 0;
   v_seq int := 0;
+  v_pg17 constant boolean := current_setting('server_version_num')::int >= 170000;   -- Recht MAINTAIN (VACUUM/ANALYZE/LOCK) gibt es erst ab PG17
 begin
   -- ---------- Vorprüfung (nichts geändert) ----------
   if to_regclass('public.quiz_raeume') is null or to_regclass('public.quiz_spieler') is null then
@@ -82,12 +83,12 @@ begin
     select c.relname, c.relkind from pg_class c join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm', 'f') order by c.relname
   loop
+    execute format('revoke all on public.%I from anon', r.relname);                       -- ALL umfasst ab PG17 auch MAINTAIN
     if r.relname = any (v_quiz) then
-      execute format('revoke insert, update, delete, truncate, references, trigger on public.%I from anon', r.relname);
-    else
-      execute format('revoke all on public.%I from anon', r.relname);
+      execute format('grant select on public.%I to anon', r.relname);                      -- Quiz ohne Konto: nur lesen
     end if;
     execute format('revoke truncate, references, trigger on public.%I from authenticated', r.relname);
+    if v_pg17 then execute format('revoke maintain on public.%I from authenticated', r.relname); end if;
     v_tab := v_tab + 1;
   end loop;
 
@@ -103,6 +104,9 @@ begin
   -- ---------- 4. Standardrechte für künftige Tabellen/Sequenzen ----------
   alter default privileges for role postgres in schema public revoke all on tables from anon;
   alter default privileges for role postgres in schema public revoke truncate, references, trigger on tables from authenticated;
+  if v_pg17 then
+    execute 'alter default privileges for role postgres in schema public revoke maintain on tables from authenticated';
+  end if;
   alter default privileges for role postgres in schema public revoke all on sequences from anon;
 
   raise notice 'W20_01 fertig: % Tabellen/Sichten, % Sequenzen; Sicherung: % Zeilen', v_tab, v_seq,

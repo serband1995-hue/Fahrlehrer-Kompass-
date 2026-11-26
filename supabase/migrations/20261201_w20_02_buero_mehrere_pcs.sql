@@ -17,6 +17,7 @@
 --     löscht alle des Kontos: unverändert.
 --   * Bewusst NICHT: 5 falsche PINs (gesperrt_bis 15 Min.) beenden keine laufenden Sitzungen. Sonst könnte jeder am Büro-PC
 --     durch Falsch-Tippen die Kollegin an allen anderen PCs hinauswerfen.
+--   * Alte Fassung buero_pin_anmelden(uuid, text) wird entfernt (erste PIN ohne Freigabe möglich, siehe unten).
 --   * Aufräumen (HS7, 1i: kein Auftrag vorhanden): täglicher pg_cron-Auftrag „buero_sitzungen_aufraeumen“ löscht Sitzungen,
 --     die seit mehr als 1 Tag abgelaufen sind. Index (person_id, erstellt_am) für das Zählen je Person.
 -- Keine RLS-Regel geändert. Die App-Seite (buero.js) braucht keine Änderung: Sie schickt je Browser-Tab ihren eigenen Schlüssel.
@@ -84,6 +85,11 @@ end $function$;
 -- Konto ohne PIN eine Sitzung für eine beliebige Person erzeugen. (anon hatte laut 1d schon kein Recht; ob authenticated eines
 -- hatte, zeigt 1d nicht – der Entzug ist in jedem Fall richtig, der Rückweg gibt es bewusst nicht zurück.)
 revoke all on function public.buero_neue_sitzung(uuid, uuid, boolean) from public, anon, authenticated;
+
+-- Alte Fassung buero_pin_anmelden(uuid, text) ohne p_erste entfernen (Prüf-Team W20): Sie legt eine erste PIN OHNE Freigabe
+-- (pin_frei_bis) fest und gibt eine Sitzung aus. buero.js ruft nur die Fassung mit p_erste auf (buero.js, „buero_pin_anmelden“ mit
+-- p_erste); keine Edge Function, kein Auslöser nutzt die alte. Der Rückweg legt sie bewusst NICHT wieder an.
+drop function if exists public.buero_pin_anmelden(uuid, text);
 
 -- Täglich aufräumen (03:17 UTC), nur wenn pg_cron da ist
 do $w20c$

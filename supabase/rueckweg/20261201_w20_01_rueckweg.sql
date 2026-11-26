@@ -21,6 +21,9 @@ begin
   end loop;
   alter default privileges for role postgres in schema public grant all on tables to anon;
   alter default privileges for role postgres in schema public grant truncate, references, trigger on tables to authenticated;
+  if current_setting('server_version_num')::int >= 170000 then
+    execute 'alter default privileges for role postgres in schema public grant maintain on tables to authenticated';
+  end if;
   alter default privileges for role postgres in schema public grant all on sequences to anon;
   drop table sicherung.w20_rechte_vorher;
   raise notice 'W20_01 Rückweg: % Rechte-Zeilen zurückgegeben', v_n;
