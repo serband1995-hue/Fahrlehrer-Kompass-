@@ -4203,16 +4203,19 @@ function _eingabeOffen() {
   } catch (e) {}
   return false;
 }
-const _BLEIBT_TEXT = "Du bleibst in der App, weil du gerade etwas eingibst. Büro-Seite: Menü › Einstellungen › Startseite.";
+// W16 3B: Das Büro hat keine Wahl in den Einstellungen; es kommt beim nächsten Öffnen der App zur Büro-Seite.
+function _bleibtText() { return _authProfile && _authProfile.rolle === "buero"
+  ? "Du bleibst kurz hier, weil du gerade etwas eingibst. Danach die App neu öffnen: Dann kommt die Büro-Seite."
+  : "Du bleibst in der App, weil du gerade etwas eingibst. Büro-Seite: Menü › Einstellungen › Startseite."; }
 // Startseite „Büro-Seite“ beim Start oder nach dem neuen Passwort: mit eigenem Stand erst alles hochladen
 // (sonst bliebe Neues nur auf diesem Gerät), dann weiter. true = Seite wird gewechselt.
 async function _startZumBuero() {
   if (_startWeiterWartet || !_authUser || !window.KS_START || _startZiel() !== "buero" || !KS_START.weiterMoeglich("buero")) return false;
-  if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+  if (_eingabeOffen()) { toast(_bleibtText()); return false; }
   if (!_nurGesamtansicht()) {
     toast("Startseite Büro-Seite: sichere kurz deine Daten …");
     if (!(await _eigenesSichern(8000))) { toast("Nicht alles gesichert (Internet?). Du bleibst in der App."); return false; }
-    if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+    if (_eingabeOffen()) { toast(_bleibtText()); return false; }
   }
   return _zurBueroWeiter();
 }
@@ -6213,15 +6216,15 @@ async function _fsEnterAggMode(fahrschuleId){
   if(neuGesichert){
     _fsPersonalBackup={students:DB.students,lessons:DB.lessons,exams:DB.exams};
   }
-  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); } // W11: Einstellungen der gewählten Fahrschule gleich holen, unabhängig vom Laden der Daten (offline gilt der Gerätespeicher)
+  if(window.KE){ KE.lade(getSupa(),fahrschuleId); _sonderMinAusKE(); _fristenAusKE(); } // W11: Einstellungen der gewählten Fahrschule gleich holen, unabhängig vom Laden der Daten (offline gilt der Gerätespeicher)
   if(!(await _fsLoadAggData(fahrschuleId))){
     // Nicht in die Gesamtansicht gekommen: die Sicherung der eigenen Daten wieder freigeben, sonst würde
     // ein späteres Umschalten diesen alten Stand über die inzwischen gemachten Änderungen legen.
     // Nur, wenn kein neuerer Versuch läuft (Doppeltipp): der braucht die Sicherung noch.
     if(neuGesichert&&!_fsAgg&&meinGen===_fsAggGen) _fsPersonalBackup=null;
     if(!_fsAgg&&meinGen===_fsAggGen){ _ladeReaktRegel(getSupa()); // W15: wieder die Regel der eigenen Fahrschule
-      if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); else KE.leeren(); _sonderMinAusKE(); } } // W11: und die Einstellungen der eigenen
-    else if(_fsAgg&&meinGen===_fsAggGen&&window.KE&&KE.fsId()!==_fsAgg.fahrschuleId){ KE.lade(getSupa(),_fsAgg.fahrschuleId); _sonderMinAusKE(); } // Wechsel A→B gescheitert: wieder die Einstellungen von A
+      if(window.KE){ if(_authProfile&&_authProfile.fahrschule_id) KE.lade(getSupa(),_authProfile.fahrschule_id); else KE.leeren(); _sonderMinAusKE(); _fristenAusKE(); } } // W11: und die Einstellungen der eigenen
+    else if(_fsAgg&&meinGen===_fsAggGen&&window.KE&&KE.fsId()!==_fsAgg.fahrschuleId){ KE.lade(getSupa(),_fsAgg.fahrschuleId); _sonderMinAusKE(); _fristenAusKE(); } // Wechsel A→B gescheitert: wieder die Einstellungen von A
     return false;
   }
   // W15: lief währenddessen der eigene Abruf, gehört die Regel wieder der eigenen Fahrschule – neu holen
@@ -8083,7 +8086,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.12";
+const APP_VERSION="2026.11.26.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
