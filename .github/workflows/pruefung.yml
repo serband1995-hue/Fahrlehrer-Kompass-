@@ -158,6 +158,8 @@ jobs:
         run: |
           npm i --silent --no-save --prefix /tmp/w18-pg @electric-sql/pglite@0.2.17
           NODE_PATH=/tmp/w18-pg/node_modules node scripts/w18-probe-sql-test.mjs
+      - name: "W20 anon-Rechte + Büro an mehreren PCs: Migrationen, Rückwege, Live-Probe als Trockenlauf in PGlite"
+        run: NODE_PATH=/tmp/w18-pg/node_modules node scripts/w20-sql-test.mjs
 
   buero:
     # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.
