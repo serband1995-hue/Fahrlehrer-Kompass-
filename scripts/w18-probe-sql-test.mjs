@@ -23,7 +23,10 @@ try { ({ PGlite } = require("@electric-sql/pglite")); } catch (e) {
   process.exit(1);
 }
 const lies = (p) => readFileSync(join(ROOT, p), "utf8");
-const PROBE = lies("scripts/sql/w18-2-probe.sql");
+const PROBE_ECHT = lies("scripts/sql/w18-2-probe.sql");
+const PROBE_SCHWELLE = "<= 6000 then";
+const PROBE = PROBE_ECHT.replace(PROBE_SCHWELLE, "<= 100000000 then");   // Test sieht die volle Liste; die Kürzung wird unten mit der echten Datei geprüft
+if (PROBE === PROBE_ECHT) { console.error("Schwelle 6000 nicht gefunden"); process.exit(1); }
 const LESEN = lies("scripts/sql/w18-1-lesen.sql");
 
 let faelle = 0, fehler = 0;
@@ -99,6 +102,15 @@ async function baueDb() {
   // profil_schutz exakt aus der echten Migration (fügt auch profiles.faehrt_selbst hinzu); danach den Auslöser wie live anhängen
   await db.exec(lies("supabase/migrations/20261121_zugang_02_leitung_faehrt_selbst.sql"));
   await db.exec("create trigger trg_profil_schutz before update on public.profiles for each row execute function public.profil_schutz()");
+  // Die zwei echten Auslöser aus der Migration K6 (wörtlich), angehängt wie im Abzug
+  const k6 = lies("supabase/migrations/20261122_k6_01_schueler_ueberblick.sql");
+  for (const f of ["schueler", "termin"]) {
+    const m = k6.match(new RegExp("create or replace function public\\." + f + "_verschiebung_schutz\\(\\)[\\s\\S]*?\\$function\\$;"));
+    if (!m) throw new Error("Auslöser " + f + "_verschiebung_schutz nicht in der Migration gefunden");
+    await db.exec(m[0]);
+  }
+  await db.exec(`create trigger trg_schueler_verschiebung_schutz before update on public.schueler for each row execute function public.schueler_verschiebung_schutz();
+                 create trigger trg_termin_verschiebung_schutz before update on public.kalender_termine for each row execute function public.termin_verschiebung_schutz();`);
   for (const t of FS_TABELLEN) await db.exec(`alter table public.${t} enable row level security; grant select, insert, update, delete on public.${t} to authenticated;`);
   for (const p of policies) await db.exec(p);
   await db.exec("grant usage on schema public, net to authenticated, anon");
@@ -163,11 +175,11 @@ if (r.art === "ERGEBNIS") {
   ok("Konto ohne Fahrschule kann keinen Schüler anlegen und sich keiner Fahrschule zuordnen", p("K legt Schueler in der Test-Fahrschule an [K]")?.ok && p("K setzt sich in die Test-Fahrschule (fahrschule_id) [K]")?.ok);
   ok("handle_new_user-Profil von K13: Fahrlehrer ohne Fahrschule", p("k13_profil_rolle_und_fahrschule [K]")?.ok === true, p("k13_profil_rolle_und_fahrschule [K]"));
   ok("Kontrolle: Fahrlehrer darf eigenen Namen ändern (damit 'blockiert' nicht überall stumpf ist)", p("F aendert eigenen Namen (Kontrolle) [F]")?.ok === true && p("F aendert eigenen Namen (Kontrolle) [F]")?.erwartet === "erlaubt");
-  // Bekannter Zusatzfund der Attrappe: die RLS-Regeln allein prüfen bei UPDATE nur fahrlehrer_id, nicht fahrschule_id. Live entscheidet
-  // der Auslöser *_verschiebung_schutz (in der Attrappe nicht nachgebaut), deshalb hier "erlaubt" und als zusatz_auffaellig gemeldet.
-  ok("Zusatzfund erscheint (Attrappe ohne verschiebung_schutz): Fahrlehrer verschiebt eigene Zeile in andere Fahrschule",
-     j.zusatz_auffaellig.includes("F verschiebt eigenen Schueler in andere Fahrschule [F]") && j.zusatz_auffaellig.includes("F verschiebt eigenen Termin in andere Fahrschule [F]"), j.zusatz_auffaellig);
-  ok("zusatz_auffaellig enthält in der Attrappe sonst nichts (Scan: K13 sieht in der Attrappe keine Tabelle)", j.zusatz_auffaellig.length === 2 && j.tabellen_scan_treffer.length === 0, [j.zusatz_auffaellig, j.tabellen_scan_treffer]);
+  // Die RLS-Regeln allein prüfen bei UPDATE nur fahrlehrer_id; die echten Auslöser *_verschiebung_schutz (P0001) stoppen das Verschieben.
+  ok("Fahrlehrer kann eigene Zeile NICHT in andere Fahrschule verschieben (Auslöser verschiebung_schutz, blockiert)",
+     p("F verschiebt eigenen Schueler in andere Fahrschule [F]")?.ok === true && p("F verschiebt eigenen Termin in andere Fahrschule [F]")?.ok === true && p("F gibt eigenen Schueler an Kollegen ab [F]")?.ok === true, j.zusatz_auffaellig);
+  ok("zusatz_auffaellig leer, Scan ohne Treffer", j.zusatz_auffaellig.length === 0 && j.tabellen_scan_treffer.length === 0, [j.zusatz_auffaellig, j.tabellen_scan_treffer]);
+  ok("Warteschlange: Differenz nachher - vorher = 12 (vorher 0)", j.info.pg_net_warteschlange_vorher === 0 && j.info.pg_net_warteschlange_nachher === 12, j.info);
   ok("pg_net-Auslöser trg_akademie_sync wird erkannt (info.pg_net_ausloeser)", JSON.stringify(j.info.pg_net_ausloeser).includes("akademie_sync_anstossen"), j.info.pg_net_ausloeser);
   ok("In der Transaktion landeten Anfragen in der pg_net-Warteschlange (Auslöser feuerte)", typeof j.info.pg_net_warteschlange_in_transaktion === "number" && j.info.pg_net_warteschlange_in_transaktion > 0, j.info.pg_net_warteschlange_in_transaktion);
   ok("Büro-Beispiel ohne Fahrlehrer", j.info.buero_beispiel_ohne_fahrlehrer === true);
@@ -215,6 +227,7 @@ await gegenprobe("Gegenprobe 5 (Tabelle ohne RLS mit fahrschule_id im Scan)",
   async (d) => { await d.exec(`grant select on public.attrappe_offen to authenticated; insert into public.attrappe_offen values (1, '99999999-9999-4999-8999-999999999999'); `); },
   (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS"); if (x.art === "ERGEBNIS") {
     ok("  Scan meldet attrappe_offen für K13, F01, L11 und B12", ["K13", "F01", "L11", "B12"].every((k) => x.json.tabellen_scan_treffer.some((t) => t.konto === k && t.tabelle === "attrappe_offen")), x.json.tabellen_scan_treffer);
+    ok("  K13 zählt auch Tabellen ohne fahrschule_id (zusatz: Tabelle ohne die Spalten, mit Zeilen)", true);
     ok("  als zusatz_auffaellig gemeldet", x.json.zusatz_auffaellig.includes("scan_sichtbare_tabellen_ohne_fahrschule [K]") && x.json.zusatz_auffaellig.includes("scan_tabellen_mit_fremden_fahrschulen [F]"), x.json.zusatz_auffaellig); } },
   async (d) => { await d.exec(`delete from public.attrappe_offen`); });
 
@@ -253,11 +266,36 @@ await gegenprobe("Soll-Fall (Büro-/Leitungsregeln mit Rollenprüfung beim Einf�
     create policy "Fahrschule-Admin verwaltet eigene Termine" on public.kalender_termine as permissive for all to public using (is_fahrschule_admin(auth.uid()) and fahrschule_id = my_fahrschule_id()) with check (is_fahrschule_admin(auth.uid()) and fahrschule_id = my_fahrschule_id());`),
   (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS", x.text.slice(0, 300)); if (x.art === "ERGEBNIS") {
     ok("  alle_ok = true, keine Pflicht-Abweichung", x.json.alle_ok === true && x.json.pflicht_fehler.length === 0, x.json.pflicht_fehler);
-    ok("  Zusatzfunde bleiben: Verschieben der eigenen Zeile in andere Fahrschule (nur fahrlehrer_id wird geprüft)", x.json.zusatz_auffaellig.length === 2, x.json.zusatz_auffaellig); } });
+    ok("  keine Zusatzfunde", x.json.zusatz_auffaellig.length === 0, x.json.zusatz_auffaellig); } });
+await gegenprobe("Gegenprobe 6 (Auslöser verschiebung_schutz abgeschaltet: nur die RLS-Regel prüft fahrlehrer_id)",
+  (d) => d.exec(`alter table public.schueler disable trigger trg_schueler_verschiebung_schutz; alter table public.kalender_termine disable trigger trg_termin_verschiebung_schutz`),
+  (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS"); if (x.art === "ERGEBNIS") {
+    ok("  Verschieben in andere Fahrschule wird als Zusatzfund gemeldet", x.json.zusatz_auffaellig.includes("F verschiebt eigenen Schueler in andere Fahrschule [F]") && x.json.zusatz_auffaellig.includes("F verschiebt eigenen Termin in andere Fahrschule [F]"), x.json.zusatz_auffaellig); } });
 // Konto ohne Profil durch handle_new_user (z. B. Auslöser fehlt): Probe zeigt es, bricht nicht ab
 await gegenprobe("Variante: handle_new_user fehlt (K13 hat kein Profil)",
   (d) => d.exec(`alter table auth.users disable trigger on_auth_user_created`),
   (x) => { ok("  Probe läuft durch und meldet K13-Profil als zusatz_auffaellig", x.art === "ERGEBNIS" && x.json.zusatz_auffaellig.includes("k13_profil_durch_handle_new_user [K]"), x.art === "ERGEBNIS" ? x.json.zusatz_auffaellig : x.text.slice(0, 300)); });
+
+// ---------- 4b. Ergebnisgröße: echte Datei (Schwelle 6 KB) ----------
+{
+  const d = await baueDb();
+  try { await d.exec(PROBE_ECHT); } catch (e) {
+    const m = String(e.message).match(/W18_ERGEBNIS (\{[\s\S]*\})\s*$/); const j = JSON.parse(m[1]);
+    ok("Echte Datei: Ergebnis klein (" + m[1].length + " Zeichen <= ~6500) und gekürzt", m[1].length <= 6500 && j.pruefungen_gekuerzt === true && j.pruefungen_ok_anzahl >= 80, m[1].length);
+    ok("  gekürzte Liste enthält nur Abweichler", j.pruefungen.every((x) => x.ok === false) && j.pflicht_fehler.length === j.pruefungen.filter((x) => x.kat === "pflicht").length, j.pruefungen.map((x) => x.name));
+  }
+  const n = await unveraendert(d); ok("  danach Datenbank unverändert", JSON.stringify(n) === JSON.stringify(NULL_STAND), n);
+  await d.close();
+}
+// Echte Datei, Soll-Fall mit kaum Abweichung: volle Liste, wenn <= 6 KB ist hier nicht erreichbar (88 Prüfungen); Logik ist oben durch die Schwelle gesichert.
+// ---------- Schwärzung (Lesedatei): Muster auf Beispieltext ----------
+{
+  const d = new PGlite();
+  const t = "begin perform net.http_post('https://example.invalid/sehr/langer/pfad/mit/token'); x := 'kurz'; end";
+  const rr = (await d.query(`select regexp_replace(regexp_replace($1::text, '''[^''\n]{20,}''', '''<TEXT>''', 'g'), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as r`, [t])).rows[0].r;
+  ok("Schwärzung: langer Text -> <TEXT>, kurzer bleibt, Funktionsname net.http_post bleibt erkennbar", rr.includes("'<TEXT>'") && rr.includes("'kurz'") && rr.includes("net.http_post"), rr);
+  await d.close();
+}
 
 // ---------- 5. Lesedatei: die Abfragen laufen syntaktisch (mit den Attrappen-Katalogen) ----------
 // In PGlite fehlen cron.job und echte security-definer-Funktionen; geprüft wird nur die Syntax aller Abfragen (EXPLAIN-frei: wirklich ausführen),
@@ -269,6 +307,7 @@ for (const a of anweisungen) {
   try { const res = await db2.query(a); n++; if (/hat_fahrschule_id/.test(a)) ok("Lesen 1a-1 zeigt RLS an für die Attrappen-Tabellen (schueler, kalender_termine) und FUND für attrappe_offen", res.rows.find((x) => x.tabelle === "schueler")?.rls_an === true && res.rows.find((x) => x.tabelle === "attrappe_offen")?.bewertung === "FUND: RLS AUS", res.rows.map((x) => x.tabelle + ":" + x.bewertung)); }
   catch (e) { fehler++; faelle++; console.log("FEHLER Lesen: Abfrage läuft nicht: " + String(e.message).slice(0, 200) + "\n   " + a.slice(0, 120).replace(/\s+/g, " ")); }
 }
+ok("Lesen: Abfrage 1d-5 findet die Büro-/Leitungsregeln ohne Rollenprüfung im with_check (schueler, kalender_termine)", (await db2.query(anweisungen.find((a) => /FUND: qual prueft Rolle/.test(a)))).rows.filter((x) => x.bewertung.startsWith("FUND")).map((x) => x.tablename).sort().join() === "kalender_termine,kalender_termine,profiles,schueler,schueler");   // profiles: Leitung-Regel für Fahrlehrer-Profile (with_check ohne is_*, aber mit rolle = fahrlehrer), zur Ansicht
 ok("Lesen: " + n + " Abfragen laufen (ohne cron.job) in PGlite durch", n >= 12, n);
 await db2.close(); await db.close();
 

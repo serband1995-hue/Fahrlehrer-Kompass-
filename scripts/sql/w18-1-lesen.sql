@@ -7,8 +7,8 @@
 --   kein insert/update/delete, kein DDL, keine Funktion mit Nebenwirkung (nur pg_get_*def und has_function_privilege,
 --   beide rein lesend).
 -- Datenschutz: Es werden nur Strukturen und Zahlen ausgegeben. Keine Namen, keine E-Mails, keine Telefonnummern.
---   Ausnahme: Quelltexte von Funktionen (Abfrage 1b/1c). Lange, geheimnisartige Zeichenfolgen darin werden geschwärzt
---   (<GEKUERZT>); trotzdem die Ausgabe nicht weitergeben, sondern nur für die Prüfung nutzen.
+--   Ausnahme: Quelltexte von Funktionen (Abfrage 1b/1c). Lange, geheimnisartige Zeichenfolgen (<GEKUERZT>) und Text in einfachen Anführungszeichen ab 20 Zeichen (<TEXT>) werden geschwärzt;
+--   trotzdem die Ausgabe nicht weitergeben, sondern nur für die Prüfung nutzen.
 -- Reihenfolge: ZUERST diese Datei auswerten, DANN erst w18-2-probe.sql laufen lassen
 --   (die Probe bricht selbst ab, wenn ein Auslöser synchron nach außen telefonieren würde; hier sieht man es vorher).
 --
@@ -66,7 +66,7 @@ order by p.tablename, p.cmd, p.policyname;
 --       Lange geheimnisartige Zeichenfolgen sind geschwaerzt.
 -- =====================================================================================================================
 select n.nspname as schema, p.proname as funktion, p.prosecdef as security_definer, coalesce(p.proconfig::text, '') as einstellungen,
-       regexp_replace(pg_get_functiondef(p.oid), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as quelltext
+       regexp_replace(regexp_replace(pg_get_functiondef(p.oid), '''[^''\n]{20,}''', '''<TEXT>''', 'g'), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as quelltext
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where p.proname in ('handle_new_user', 'profil_schutz')
@@ -108,7 +108,7 @@ order by t.tgrelid::regclass::text, t.tgname;
 --       "net.http", "dblink", "http_get/http_post" oder "supabase_functions" erwaehnt (nur Namen). Geheimnisse geschwaerzt.
 -- =====================================================================================================================
 select n.nspname as schema, p.proname as funktion, pg_get_function_identity_arguments(p.oid) as argumente,
-       regexp_replace(pg_get_functiondef(p.oid), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as quelltext
+       regexp_replace(regexp_replace(pg_get_functiondef(p.oid), '''[^''\n]{20,}''', '''<TEXT>''', 'g'), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as quelltext
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where p.proname = 'akademie_sync_anstossen';
@@ -142,7 +142,7 @@ order by jobname;
 -- =====================================================================================================================
 select n.nspname as schema, p.proname as funktion, pg_get_function_identity_arguments(p.oid) as argumente,
        p.prosecdef as security_definer, coalesce(p.proconfig::text, '') as einstellungen,
-       regexp_replace(pg_get_functiondef(p.oid), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as quelltext
+       regexp_replace(regexp_replace(pg_get_functiondef(p.oid), '''[^''\n]{20,}''', '''<TEXT>''', 'g'), '[A-Za-z0-9_.+/=-]{40,}', '<GEKUERZT>', 'g') as quelltext
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where p.proname in ('my_fahrschule_id', 'is_buero', 'is_fahrschule_admin', 'is_super_admin')
@@ -212,3 +212,18 @@ from public.profiles p
 where p.fahrschule_id is null
 group by p.rolle
 order by p.rolle;
+
+-- 1d-5  DER BESTAETIGTE FUND: Regeln (cmd ALL/UPDATE), deren Bedingung (qual) eine Rolle prueft (is_buero/is_fahrschule_admin/
+--       is_super_admin), deren with_check aber KEINE Rolle prueft. Beim Einfuegen (INSERT) zaehlt nur with_check: Jeder
+--       angemeldete Nutzer, der nur die Fahrschul-Bedingung im with_check erfuellt, darf dann Zeilen anlegen (z. B. ein Fahrlehrer
+--       Schueler/Termine fuer Kollegen; auch bei provisionen u. a.). Reine INSERT-Regeln stehen zum Vergleich mit dabei.
+select p.schemaname, p.tablename, p.policyname, p.permissive, p.roles, p.cmd, p.qual, p.with_check,
+       case when p.cmd = 'INSERT' then 'INSERT-Regel: with_check ohne Rollenpruefung ansehen'
+            else 'FUND: qual prueft Rolle, with_check nicht' end as bewertung
+from pg_policies p
+where p.schemaname = 'public'
+  and p.permissive = 'PERMISSIVE'
+  and ((p.cmd in ('ALL', 'UPDATE') and p.qual ~* 'is_(buero|fahrschule_admin|super_admin)\(' and p.with_check is not null
+        and p.with_check !~* 'is_(buero|fahrschule_admin|super_admin)\(')
+       or (p.cmd = 'INSERT' and (p.with_check is null or p.with_check !~* 'is_(buero|fahrschule_admin|super_admin)\(')))
+order by (p.cmd = 'INSERT'), p.tablename, p.policyname;

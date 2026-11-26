@@ -53,7 +53,7 @@
 --       sind ebenfalls pg_net. Die Probe prueft das live: Sie liest vorab den Quelltext JEDER Auslöser-Funktion auf
 --       auth.users, profiles, fahrschulen, schueler, kalender_termine und meldet die pg_net-Nutzer (Feld info.pg_net_ausloeser).
 --       Am Ende zaehlt sie die Zeilen in net.http_request_queue dieser Transaktion (info.pg_net_warteschlange_in_transaktion);
---       nach dem Rollback sind sie weg.
+--       nach dem Rollback sind sie weg (gezaehlt wird vorher und nachher, gemeldet wird die Differenz).
 --   (2) E-Mails: Verschickt werden sie nur von den Edge Functions (admin-create-account -> Resend; erinnerungs-mail und
 --       zahlungs-mail ueber pg_cron/pg_net). Keine davon wird im Block aufgerufen. Das Anlegen in auth.users geht an der
 --       Anmelde-Software (GoTrue) vorbei; sie bekommt davon nichts mit. Die Adressen @example.invalid sind ausserdem unzustellbar.
@@ -131,6 +131,7 @@ declare
   v_nbT      text;
   rec        record;
   v_q        bigint;
+  v_q0       bigint;                       -- pg_net-Warteschlange VOR dem Aufbau (Bestand anderer Vorgaenge)
   v_ergebnis jsonb;
 begin
   -- Jeder unerwartete Fehler wird ganz unten (exception-Teil) zu W18_FEHLER mit Schritt; alles bleibt zurueckgerollt.
@@ -206,6 +207,11 @@ begin
                                          'rolle_start', v_start,
                                          'erweiterungen', (select coalesce(jsonb_agg(extname order by extname), '[]') from pg_extension where extname in ('pg_net', 'http', 'dblink', 'pg_cron')));
 
+  begin
+    if to_regclass('net.http_request_queue') is not null then execute 'select count(*) from net.http_request_queue' into v_q0; end if;
+  exception when others then v_q0 := null;
+  end;
+
   -- Hilfswerte
   v_mail := array(select case when i between 5 and 6
                                then 'ohne-app-' || v_lauf || '-' || lpad(i::text, 2, '0') || '@example.invalid'
@@ -217,10 +223,10 @@ begin
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm')
      and exists (select 1 from pg_attribute pa where pa.attrelid = c.oid and pa.attname = 'fahrschule_id' and pa.attnum > 0 and not pa.attisdropped);
+  -- K13 zaehlt ALLE Tabellen/Sichten in public (auch ohne fahrschule_id/fahrlehrer_id, z. B. snapshots, schueler_privat)
   select array_agg(c.relname::text order by c.relname) into v_tab_all
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
-   where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm')
-     and exists (select 1 from pg_attribute pa where pa.attrelid = c.oid and pa.attname in ('fahrschule_id', 'fahrlehrer_id') and pa.attnum > 0 and not pa.attisdropped);
+   where n.nspname = 'public' and c.relkind in ('r', 'p', 'v', 'm');
 
   -- ===================================================================================================================
   -- SCHRITT 1: Aufbau wie die Edge Function create_account (als Eigentuemer-Rolle, schreibt NUR eigene Test-Zeilen)
@@ -381,7 +387,9 @@ begin
         if v_msg = 'W18_ZURUECK' then
           null;                              -- v_r bleibt 'erlaubt' oder 'keine Wirkung'
         elsif v_state = '42501'
-              or (v_state = 'P0001' and (v_msg like '%nur vom Super-Admin%' or v_msg like '%nur das Büro mit Verwalten-Recht%')) then
+              or (v_state = 'P0001' and (v_msg like '%nur vom Super-Admin%' or v_msg like '%nur das Büro mit Verwalten-Recht%'
+                                 -- Auslöser schueler_/termin_verschiebung_schutz (Migration 20261122_k6_01), bewusst nur diese Texte, nicht jedes P0001:
+                                 or v_msg like '%dürfen Schüler verschieben%' or v_msg like '%einem anderen Fahrlehrer zuordnen%')) then
           v_r := 'blockiert';
         else
           v_r := 'Fehler ' || v_state;       -- nicht erwartete Art (z. B. fehlende Spalte): zaehlt als Abweichung
@@ -441,7 +449,9 @@ begin
   begin
     if to_regclass('net.http_request_queue') is not null then
       execute 'select count(*) from net.http_request_queue' into v_q;
-      v_info := v_info || jsonb_build_object('pg_net_warteschlange_in_transaktion', v_q);
+      -- Differenz nachher - vorher = von dieser Probe neu eingestellte Anfragen (verschwinden mit dem Rollback)
+      v_info := v_info || jsonb_build_object('pg_net_warteschlange_vorher', v_q0, 'pg_net_warteschlange_nachher', v_q,
+                                             'pg_net_warteschlange_in_transaktion', v_q - coalesce(v_q0, 0));
     else
       v_info := v_info || jsonb_build_object('pg_net_warteschlange_in_transaktion', 'Tabelle net.http_request_queue nicht vorhanden');
     end if;
@@ -475,8 +485,14 @@ begin
     'pflicht_fehler', (select coalesce(jsonb_agg(x->>'name'), '[]') from jsonb_array_elements(v_pr) x where x->>'kat' = 'pflicht' and not (x->>'ok')::boolean),
     'zusatz_auffaellig', (select coalesce(jsonb_agg(x->>'name'), '[]') from jsonb_array_elements(v_pr) x where x->>'kat' <> 'pflicht' and not (x->>'ok')::boolean),
     'info', v_info,
-    'tabellen_scan_treffer', v_scan,
-    'pruefungen', v_pr);
+    'tabellen_scan_treffer', v_scan);
+  -- Ergebnis klein halten: volle Liste nur, wenn sie hoechstens ca. 6 KB gross ist, sonst nur die abweichenden Pruefungen
+  if length((v_ergebnis || jsonb_build_object('pruefungen', v_pr))::text) <= 6000 then
+    v_ergebnis := v_ergebnis || jsonb_build_object('pruefungen', v_pr, 'pruefungen_gekuerzt', false);
+  else
+    v_ergebnis := v_ergebnis || jsonb_build_object('pruefungen_gekuerzt', true, 'pruefungen_ok_anzahl', (select count(*) from jsonb_array_elements(v_pr) x where (x->>'ok')::boolean),
+                    'pruefungen', (select coalesce(jsonb_agg(x), '[]') from jsonb_array_elements(v_pr) x where not (x->>'ok')::boolean));
+  end if;
   raise exception 'W18_ERGEBNIS %', v_ergebnis::text;      -- IMMER: macht alles rueckgaengig, das Ergebnis steht in der Meldung
 
 exception
