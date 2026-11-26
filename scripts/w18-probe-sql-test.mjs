@@ -267,6 +267,22 @@ await gegenprobe("Soll-Fall (Büro-/Leitungsregeln mit Rollenprüfung beim Einf�
   (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS", x.text.slice(0, 300)); if (x.art === "ERGEBNIS") {
     ok("  alle_ok = true, keine Pflicht-Abweichung", x.json.alle_ok === true && x.json.pflicht_fehler.length === 0, x.json.pflicht_fehler);
     ok("  keine Zusatzfunde", x.json.zusatz_auffaellig.length === 0, x.json.zusatz_auffaellig); } });
+// W18-Reparatur: die ECHTE Migration (WITH CHECK = USING) auf die Attrappe anwenden -> Kollegen-Fund weg, alle Pflichtprüfungen ok.
+// In der Attrappe gibt es nur schueler/kalender_termine; w18.nur_vorhandene überspringt die übrigen Tabellen (live: Abbruch, wenn eine fehlt).
+const MIGRATION = readFileSync(join(ROOT, "supabase/migrations/20261130_w18_01_with_check_rolle.sql"), "utf8");
+await gegenprobe("Reparatur: Migration 20261130_w18_01 angewendet (zweimal: ändert beim zweiten Mal nichts)",
+  async (d) => { await d.exec(`select set_config('w18.nur_vorhandene','1',false);` + MIGRATION + MIGRATION + `select set_config('w18.nur_vorhandene','',false);`); },
+  (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS", x.text.slice(0, 300)); if (x.art === "ERGEBNIS") {
+    ok("  alle_ok = true (Kollegen-Fund behoben)", x.json.alle_ok === true && x.json.pflicht_fehler.length === 0, x.json.pflicht_fehler);
+    ok("  keine Zusatzfunde", x.json.zusatz_auffaellig.length === 0, x.json.zusatz_auffaellig); } });
+{
+  const d = await baueDb();
+  let meld = "";
+  try { await d.exec(MIGRATION); } catch (e) { meld = String(e.message || e); }
+  const chk = (await d.query(`select count(*)::int n from pg_policies where tablename='schueler' and with_check ~ 'is_buero'`)).rows[0].n;
+  ok("Migration ohne Schalter bricht ab, wenn Regeln fehlen, und ändert nichts", /W18-Migration abgebrochen/.test(meld) && chk === 0, [meld.slice(0, 160), chk]);
+  await d.close();
+}
 await gegenprobe("Gegenprobe 6 (Auslöser verschiebung_schutz abgeschaltet: nur die RLS-Regel prüft fahrlehrer_id)",
   (d) => d.exec(`alter table public.schueler disable trigger trg_schueler_verschiebung_schutz; alter table public.kalender_termine disable trigger trg_termin_verschiebung_schutz`),
   (x) => { ok("  Probe läuft durch", x.art === "ERGEBNIS"); if (x.art === "ERGEBNIS") {
