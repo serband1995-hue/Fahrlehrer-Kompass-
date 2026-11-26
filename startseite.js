@@ -16,7 +16,8 @@
   // Rolle Büro nur auf der Büro-Seite (Hauptsitzung 24.11.: „Kristina darf nie eine Seite ohne Urlaub oder Backups bekommen“).
   // An seit W16 Teil 3 B (25.11.2026): Urlaub, Schichtplan, Backups (Teil 2) und Buchungslinks, Erste-Hilfe „bezahlt“, Erinnerungen,
   // Monatsbericht, Provision von Hand, Serientermine, To-do, PIN-Ausweg (Teil 3 A, buero-luecken.js) sind auf der Büro-Seite.
-  // Ausschalten (false) bringt dem Büro den alten Weg zurück: App-Gesamtansicht ohne Weiterleitung.
+  // Ausschalten (false): keine Weiterleitung mehr; die App zeigt dem Büro nur den Hinweis „Büro-Seite öffnen“
+  // (W17, 🗣 Serband 26.11.2026: die Gesamtansicht gibt es nur noch für Leitung und Super-Admin).
   var BUERO_NUR_BUEROSEITE = true;
   var TEXTE = {
     eigen: { titel: "Fahrlehrer-Ansicht", text: "Deine Schüler und Termine" },

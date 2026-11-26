@@ -89,6 +89,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
       - name: "Schüler-Überblick und Weitergeben (K6: Akte gesperrt, kein Bestätigen-Fenster)"
         run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
+      - name: "Schülerliste geordnet: feste Gruppen, Sortierung gemerkt (W17)"
+        run: NODE_PATH=$(npm root -g) node scripts/schuelerliste-test.mjs
       - name: "Kalender: Termine erst nach 0,8 s Halten ziehen (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/kalender-halten-test.mjs
       - name: "Wartet auf Theorie: grüner Knopf (K14)"
