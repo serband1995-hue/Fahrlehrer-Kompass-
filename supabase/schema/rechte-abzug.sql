@@ -6,6 +6,8 @@
 --   select pg_get_triggerdef(oid) from pg_trigger where not tgisinternal;
 -- Hilfsfunktionen: is_super_admin(uid) / is_fahrschule_admin(uid) / is_buero(uid) = Rolle in profiles;
 --   my_fahrschule_id() = fahrschule_id des Angemeldeten. Rolle 'entfernt' (gelöschter Zugang) erfüllt keine davon.
+-- W18 (Migration 20261130_w18_01, aus der Datei nachgetragen, nicht live gezogen): 14 Büro-/Leitungsregeln prüfen die Rolle jetzt auch im
+--   WITH CHECK (= USING). Vorher konnte jeder Fahrlehrer Zeilen mit der fahrlehrer_id eines Kollegen anlegen (Einfügen prüft nur WITH CHECK).
 -- Wichtig zu wissen:
 --   * profiles: jeder darf sein EIGENES Profil ändern („Eigenes Profil ändern“). Rolle, Fahrschule, E-Mail, aktiv
 --     (und ab Migration 20261121_zugang_02 faehrt_selbst) schützt der Trigger profil_schutz (nur Super-Admin oder Server).
@@ -73,7 +75,7 @@ create policy "Super Admin alles - Backups" on public.fahrschule_backups as PERM
   using (is_super_admin(auth.uid()));
 create policy "Buero/Admin verwaltet Empfehlungen" on public.fahrschule_empfehlungen as PERMISSIVE for UPDATE to public
   using (((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Fahrlehrer legt eigene Empfehlung an" on public.fahrschule_empfehlungen as PERMISSIVE for INSERT to public
   with check (((fahrschule_id = my_fahrschule_id()) AND (fahrlehrer_id = auth.uid()) AND (status = 'empfohlen') AND (betrag IS NULL)));  -- ab 20261124_rechte_03
 create policy "Buero/Admin legt Empfehlungen an" on public.fahrschule_empfehlungen as PERMISSIVE for INSERT to public
@@ -92,7 +94,7 @@ create policy "Fahrlehrer sieht Fahrzeuge seiner Fahrschule" on public.fahrschul
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrschule-Admin verwaltet eigene Fahrzeuge" on public.fahrschule_fahrzeuge as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Fahrzeuge" on public.fahrschule_fahrzeuge as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Fahrlehrer sieht Pakete seiner Fahrschule" on public.fahrschule_pakete as PERMISSIVE for SELECT to public
@@ -143,7 +145,7 @@ create policy "Fahrlehrer sieht Schichten seiner Fahrschule" on public.fahrschul
   using ((fahrschule_id = my_fahrschule_id()));
 create policy "Fahrschule-Admin/Buero verwaltet Schichten" on public.fahrschule_schichten as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Schichten" on public.fahrschule_schichten as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Fahrlehrer loescht eigenes Tafelbild" on public.fahrschule_tafelbilder as PERMISSIVE for DELETE to public
@@ -154,7 +156,7 @@ create policy "Fahrlehrer teilt eigenes Tafelbild" on public.fahrschule_tafelbil
   with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid())));  -- ab 20261124_rechte_01; Trigger trg_tafelbild_eigener_eintrag setzt erstellt_von/ersteller_name
 create policy "Fahrschule-Admin/Buero verwaltet Tafelbilder" on public.fahrschule_tafelbilder as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Tafelbilder" on public.fahrschule_tafelbilder as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Fahrlehrer sieht Urlaub seiner Fahrschule" on public.fahrschule_urlaub as PERMISSIVE for SELECT to public
@@ -163,7 +165,7 @@ create policy "Fahrlehrer traegt eigenen Urlaub ein" on public.fahrschule_urlaub
   with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid())));  -- ab 20261124_rechte_01; Trigger trg_urlaub_eigener_eintrag setzt erstellt_von/mitarbeiter_name (eigener Profilname)
 create policy "Fahrschule-Admin/Buero verwaltet Urlaub" on public.fahrschule_urlaub as PERMISSIVE for ALL to public
   using (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check (((is_fahrschule_admin(auth.uid()) OR is_buero(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Urlaub" on public.fahrschule_urlaub as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Eigene Fahrschule lesen" on public.fahrschulen as PERMISSIVE for SELECT to public
@@ -184,7 +186,7 @@ create policy "Buero loescht nicht endgueltig" on public.kalender_pruefungen as 
   using ((NOT is_buero(auth.uid())));
 create policy "Buero sieht und bearbeitet Pruefungen der Fahrschule" on public.kalender_pruefungen as PERMISSIVE for ALL to public
   using ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Fahrlehrer bearbeitet eigene Pruefungen" on public.kalender_pruefungen as PERMISSIVE for UPDATE to public
   using ((fahrlehrer_id = auth.uid()))
   with check ((fahrlehrer_id = auth.uid()));
@@ -194,14 +196,14 @@ create policy "Fahrlehrer sieht eigene Pruefungen" on public.kalender_pruefungen
   using ((fahrlehrer_id = auth.uid()));
 create policy "Fahrschule-Admin verwaltet eigene Pruefungen" on public.kalender_pruefungen as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Pruefungen" on public.kalender_pruefungen as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Buero loescht nicht endgueltig" on public.kalender_termine as RESTRICTIVE for DELETE to public
   using ((NOT is_buero(auth.uid())));
 create policy "Buero sieht und bearbeitet Termine der Fahrschule" on public.kalender_termine as PERMISSIVE for ALL to public
   using ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Fahrlehrer bearbeitet eigene Termine" on public.kalender_termine as PERMISSIVE for UPDATE to public
   using ((fahrlehrer_id = auth.uid()))
   with check ((fahrlehrer_id = auth.uid()));
@@ -211,7 +213,7 @@ create policy "Fahrlehrer sieht eigene Termine" on public.kalender_termine as PE
   using ((fahrlehrer_id = auth.uid()));
 create policy "Fahrschule-Admin verwaltet eigene Termine" on public.kalender_termine as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Termine" on public.kalender_termine as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy lc_eingang_admin on public.lc_eingang as PERMISSIVE for ALL to authenticated
@@ -237,12 +239,12 @@ create policy "Buero loescht nicht endgueltig" on public.provisionen as RESTRICT
   using ((NOT is_buero(auth.uid())));
 create policy "Buero sieht und bearbeitet Provisionen der Fahrschule" on public.provisionen as PERMISSIVE for ALL to public
   using ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Fahrlehrer sieht eigene Provisionen" on public.provisionen as PERMISSIVE for SELECT to public
   using ((fahrlehrer_id = auth.uid()));
 create policy "Fahrschule-Admin verwaltet eigene Provisionen" on public.provisionen as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Provisionen" on public.provisionen as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Pruefungstermine Buero Admin" on public.pruefungstermine as PERMISSIVE for ALL to authenticated
@@ -267,7 +269,7 @@ create policy "Buero loescht nicht endgueltig" on public.schueler as RESTRICTIVE
   using ((NOT is_buero(auth.uid())));
 create policy "Buero sieht und bearbeitet Schueler der Fahrschule" on public.schueler as PERMISSIVE for ALL to public
   using ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_buero(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Fahrlehrer bearbeitet eigene Schueler" on public.schueler as PERMISSIVE for UPDATE to public
   using ((fahrlehrer_id = auth.uid())) with check ((fahrlehrer_id = auth.uid()));
 create policy "Fahrlehrer legt eigene Schueler an" on public.schueler as PERMISSIVE for INSERT to public
@@ -276,7 +278,7 @@ create policy "Fahrlehrer sieht eigene Schueler" on public.schueler as PERMISSIV
   using ((fahrlehrer_id = auth.uid()));
 create policy "Fahrschule-Admin verwaltet eigene Schueler" on public.schueler as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Schueler" on public.schueler as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Aufgaben Buero und Leitung" on public.schueler_aufgaben as PERMISSIVE for ALL to public
@@ -317,7 +319,7 @@ create policy "Fahrlehrer sieht eigene Benachrichtigungen" on public.schueler_ve
   using (((von_fahrlehrer_id = auth.uid()) OR (zu_fahrlehrer_id = auth.uid())));
 create policy "Fahrschule-Admin sieht eigene Verschiebungen" on public.schueler_verschiebungen as PERMISSIVE for ALL to public
   using ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
-  with check ((fahrschule_id = my_fahrschule_id()));
+  with check ((is_fahrschule_admin(auth.uid()) AND (fahrschule_id = my_fahrschule_id())));  -- ab 20261130_w18_01 (vorher nur fahrschule_id = my_fahrschule_id())
 create policy "Super Admin alles - Verschiebungen" on public.schueler_verschiebungen as PERMISSIVE for ALL to public
   using (is_super_admin(auth.uid()));
 create policy "Eigener Snapshot lesen" on public.snapshots as PERMISSIVE for SELECT to public using ((auth.uid() = user_id));

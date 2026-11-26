@@ -51,7 +51,9 @@ ok("Lesen: jede Anweisung beginnt mit select oder with (" + anweisungen.length +
 // ---------- 1. Attrappe aufbauen ----------
 const FS_TABELLEN = ["schueler", "kalender_termine", "profiles", "fahrschulen"];
 // Regeln (RLS) für die vier Tabellen wörtlich aus dem Abzug der echten Datenbank ziehen
-const abzug = lies("supabase/schema/rechte-abzug.sql");
+// Der Abzug enthält schon die W18-Reparatur (Migration 20261130_w18_01). Die Attrappe soll den Live-Stand VOR der Migration zeigen,
+// deshalb werden diese with-check-Zeilen auf den alten Stand zurückgedreht (die Reparatur prüft unten die echte Migrationsdatei).
+const abzug = lies("supabase/schema/rechte-abzug.sql").replace(/with check \(.*\);\s*-- ab 20261130_w18_01[^\n]*/g, "with check ((fahrschule_id = my_fahrschule_id()));");
 const policies = (abzug.match(/create policy[\s\S]*?;/gi) || []).filter((p) => new RegExp("on public\\.(" + FS_TABELLEN.join("|") + ") as", "i").test(p));
 
 async function baueDb() {
