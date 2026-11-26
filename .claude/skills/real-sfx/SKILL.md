@@ -3,6 +3,11 @@ name: real-sfx
 description: Sound design for motion videos with REAL recorded sounds from the user's own libraries (a sorted main pack of whooshes, hits, risers, pops, chimes, keystrokes, foley, ambiences plus fallback libraries) and UI cues from uisfx, never synthesized. Finds the moments from the project's own cue list or from the synthesizer script that makes its sound, from a HyperFrames composition, from a screen recording (regions: typing, toasts, scrolls, clicks) or from the picture itself, picks and processes the sounds, places them on the exact frame at the level the author's own sounds had, keeps the music and voice, takes a synthesized layer baked into the render OUT instead of doubling it, and returns a new MP4, a separate SFX WAV track, a cue report and a self-critique scoreboard. Use whenever the user asks to add sound effects or SFX, sound-design, "озвучь", "добавь звуки", "сфх", whoosh/hit/riser/click/typing sounds, UI sounds, to replace synthesized or generated sounds with real ones, or to make a motion graphic, promo, explainer, UI animation, screencast, HyperFrames render, After Effects or Premiere project sound better, or complains the sound is synthetic, generic or out of sync, even if they do not say "skill" or name a library.
 ---
 
+> **Kompass-Regel (Serband, gilt vor diesem Text):** zuerst `.claude/skills/video-overlay/SKILL.md` lesen, Schritt 7b
+> und „Harte Regeln“. Bei Widerspruch gelten die: nur eigene Aufnahmen, CC0-Aufnahmen oder als letzte Wahl earshot/uisfx;
+> keine Mixkit-, Pixabay-, Sonniss- oder CC-BY-Klänge, keine Musik; keine externen Hör-Dienste (Gemini, Claudio, Qwen),
+> nie `earshot llm`/`--yes-upload`, kein `earshot mcp`. Installation nur über `scripts/video-overlay/sfx_setup.sh`.
+
 # real-sfx: real sounds for a motion video
 
 The goal: the film sounds as if a person with a good library had cut it. So:

@@ -7,13 +7,17 @@ UISFX_VERSION=0.4.0
 SFX_VENV="${SFX_VENV:-$HOME/.venvs/sfx}"
 export REAL_SFX="$(pwd)/.claude/skills/real-sfx"
 export SFX_BIB="${SFX_BIB:-$HOME/sfx-bibliothek}"
+export REAL_SFX_INDEX="$SFX_BIB/real-sfx-index.json"   # Index liegt bei der Bibliothek, nicht im Repo
 ok=1
+# Schutz: earshot llm würde Ton zu Google hochladen. Der Proxy dieser Umgebung macht jeden Platzhalter-Schlüssel echt,
+# deshalb nie einen setzen, und nie `requests`, `earshot[llm]` oder `earshot[all]` in dieses venv installieren.
+unset GEMINI_API_KEY GOOGLE_API_KEY
 command -v ffmpeg >/dev/null || { echo "FEHLT: ffmpeg"; ok=0; }
 [ -d "$REAL_SFX" ] || { echo "FEHLT: $REAL_SFX (aus dem Kompass-Repo-Ordner aufrufen)"; ok=0; }
 if [ ! -x "$SFX_VENV/bin/python" ]; then python3 -m venv "$SFX_VENV" || ok=0; fi
 if ! "$SFX_VENV/bin/python" -c "import earshot" 2>/dev/null; then
   # nur von GitHub mit festem Commit, NIE von PyPI (dort ist "earshot" ein anderes Projekt)
-  "$SFX_VENV/bin/pip" install -q "earshot @ git+https://github.com/Leonxlnx/earshot@$EARSHOT_COMMIT" 2>&1 | tail -1 || ok=0
+  "$SFX_VENV/bin/pip" install -q "earshot @ git+https://github.com/Leonxlnx/earshot@$EARSHOT_COMMIT" || ok=0
 fi
 export SFX_PY="$SFX_VENV/bin/python"
 # den Befehl `earshot` dauerhaft auffindbar machen (gilt auch in späteren Shell-Aufrufen dieser Sitzung)
@@ -34,4 +38,5 @@ if [ "$SFX_BIB/openverse" != "/root/sfx-bibliothek/openverse" ]; then
   sed "s#/root/sfx-bibliothek/openverse#$SFX_BIB/openverse#" "$REAL_SFX/config.json" > "$SFX_BIB/real-sfx-config.json"
   export REAL_SFX_CONFIG="$SFX_BIB/real-sfx-config.json"
 fi
+"$SFX_PY" -c "import requests" 2>/dev/null && { echo "FEHLER: requests im sfx-venv (earshot llm möglich), bitte entfernen"; ok=0; }
 [ "$ok" = 1 ] && echo "Bereit. \$SFX_PY=$SFX_PY  \$REAL_SFX=$REAL_SFX  \$SFX_BIB=$SFX_BIB" || echo "Nicht alles bereit, siehe oben."

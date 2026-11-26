@@ -3,6 +3,11 @@ name: real-sound
 description: Build premium, realistic soundtracks for code-made videos and animations from real licensed recordings - launch films, product and feature videos, UI walkthroughs, logo stings, explainers, trailers and animated shorts made with Remotion, HyperFrames, three.js, GSAP or any renderer. Use this whenever a video or animation needs sound design, SFX, foley, ambience, music, a soundtrack, a score, UI click / whoosh / riser / impact / logo-sting sounds, or a music edit to picture; whenever a synthesized or "random" sounding soundtrack must be replaced with real recordings; or when the user asks to source, license, credit, mix, master, critique or mux audio for a film. It covers cue lists from the picture, sourcing from Freesound / Mixkit / composer libraries with licence checks, a music edit at bar lines, a JSON sound design rendered by a deterministic mixer, measured QA (clicks, masking, harshness, sync, loudness) plus earshot listening, a multi-agent critique, mastering, credits and the mux.
 ---
 
+> **Kompass-Regel (Serband, gilt vor diesem Text):** zuerst `.claude/skills/video-overlay/SKILL.md` lesen, Schritt 7b
+> und „Harte Regeln“. Bei Widerspruch gelten die: nur eigene Aufnahmen, CC0-Aufnahmen oder als letzte Wahl earshot/uisfx;
+> keine Mixkit-, Pixabay-, Sonniss- oder CC-BY-Klänge, keine Musik; keine externen Hör-Dienste (Gemini, Claudio, Qwen),
+> nie `earshot llm`/`--yes-upload`, kein `earshot mcp`. Installation nur über `scripts/video-overlay/sfx_setup.sh`.
+
 # real-sound
 
 You are the sound supervisor of a film you cannot hear. The soundtrack is built ONLY from real, professionally

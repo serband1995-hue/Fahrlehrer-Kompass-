@@ -68,8 +68,10 @@ def geeignet(r, max_sek):
         return "nicht CC0"
     if r.get("mature"):
         return "als heikel markiert"
-    if not r.get("url"):
-        return "keine Download-Adresse"
+    if not str(r.get("url", "")).startswith("https://"):
+        return "keine https-Download-Adresse"
+    if not re.fullmatch(r"[0-9a-f-]{36}", str(r.get("id", ""))):
+        return "ungültige ID"
     ext = str(r.get("filetype") or Path(urllib.parse.urlparse(r["url"]).path).suffix.lstrip(".")).lower()
     if ext not in ENDUNGEN:
         return f"Format {ext or '?'}"
@@ -112,7 +114,8 @@ def main():
         sys.exit(f"FEHLER: Bibliothek {bib} liegt im Repo. Die Klänge gehören auf das Gerät, nicht ins Repo.")
     except ValueError:
         pass
-    bib.mkdir(parents=True, exist_ok=True)
+    if not a.nur_suchen:
+        bib.mkdir(parents=True, exist_ok=True)
     rows = liste_laden(bib)
     bekannt = {r["openverse_id"] for r in rows}
     neu = 0
@@ -162,7 +165,8 @@ def main():
             neu += 1
             print(f"{zeile}  -> {ziel.relative_to(bib)}")
             time.sleep(0.3)
-        liste_schreiben(bib, rows)  # nach jedem Suchwort sichern
+        if not a.nur_suchen:
+            liste_schreiben(bib, rows)  # nach jedem Suchwort sichern
     print(f"\n{neu} neue Datei(en). Bibliothek: {bib}  ({len(rows)} insgesamt, Liste: herkunft.csv)")
     if a.index and not a.nur_suchen:
         print("baue den real-sfx-Index neu ...", flush=True)
