@@ -16,6 +16,11 @@ if ! "$SFX_VENV/bin/python" -c "import earshot" 2>/dev/null; then
   "$SFX_VENV/bin/pip" install -q "earshot @ git+https://github.com/Leonxlnx/earshot@$EARSHOT_COMMIT" 2>&1 | tail -1 || ok=0
 fi
 export SFX_PY="$SFX_VENV/bin/python"
+# den Befehl `earshot` dauerhaft auffindbar machen (gilt auch in späteren Shell-Aufrufen dieser Sitzung)
+for d in /usr/local/bin "$HOME/.local/bin"; do
+  if [ -w "$d" ] || mkdir -p "$d" 2>/dev/null && [ -w "$d" ]; then ln -sf "$SFX_VENV/bin/earshot" "$d/earshot"; break; fi
+done
+mkdir -p "$SFX_BIB/openverse/earshot"
 "$SFX_PY" -c "import earshot; print('earshot ok', earshot.__version__ if hasattr(earshot,'__version__') else '')" || ok=0
 if [ ! -f "$REAL_SFX/vendor/node_modules/uisfx/manifest.json" ]; then
   if command -v npm >/dev/null; then
