@@ -5005,7 +5005,7 @@ async function pinFertig(pin) {
       }
       pinBeschaeftigt(false);
       werZeigen(false); letzteAktion = Date.now();
-      toast("Deine neue PIN ist gespeichert ✓");
+      toast("Deine neue PIN ist gespeichert ✓ An anderen PCs musst du dich neu anmelden.");
       return;
     }
     // anmelden oder erste PIN festlegen (die Datenbank speichert sie beim ersten Mal)
@@ -5034,8 +5034,9 @@ async function pinFertig(pin) {
       pinWackeln("Anmelden ging nicht. Bitte die Seite neu laden.");
       return;
     }
-    // Wechsel: die alte Sitzung (andere Person) beenden, bevor die neue gilt
-    if (alt && alt.id !== data.id) { try { await supa.rpc("buero_sitzung_beenden"); } catch (e) { /* egal */ } }
+    // Die alte Sitzung dieses Tabs beenden, bevor die neue gilt – auch bei derselben Person (W20: bis zu 5 Sitzungen je Person;
+    // eine liegengebliebene würde sonst 12 Stunden einen Platz belegen). S.sitzung ist hier noch die alte → richtiger Schlüssel.
+    if (alt) { try { await supa.rpc("buero_sitzung_beenden"); } catch (e) { /* egal */ } }
     setzeSitzung(data);
     if (data.erste_pin) { PIN.person.hat_pin = true; toast("Deine PIN ist gespeichert ✓ Ab jetzt meldest du dich damit an."); }
     if (data.pin_neu_noetig) { PIN.abbrechbar = false; zeigePin("aendern1"); return; }
@@ -5099,10 +5100,13 @@ async function pruefeSitzungNoch() {
   if (!werNoetig() || !S.sitzung || (!$("wer").hidden && !PIN.abbrechbar)) return;
   try {
     const { data, error } = await supa.rpc("buero_sitzung_pruefen");
-    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Bitte neu mit deiner PIN anmelden.", true); }
+    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Du bist hier abgemeldet (z. B. neue PIN an einem anderen PC). Bitte neu mit deiner PIN anmelden.", true); }
   } catch (e) { /* ohne Verbindung: später erneut */ }
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pruefeSitzungNoch(); });
+// W20: Eine Person kann an mehreren PCs angemeldet sein. Ändert sie an einem PC die PIN, endet sie an den anderen –
+// das soll ein offen stehender PC bald merken, nicht erst beim nächsten Tab-Wechsel (nur, solange der Tab sichtbar ist).
+setInterval(() => { if (!document.hidden) pruefeSitzungNoch(); }, 60000);
 $("pinFeld").addEventListener("click", (e) => { const b = e.target.closest("[data-ziffer]"); if (b && Date.now() >= (PIN.ab || 0)) pinZiffer(b.dataset.ziffer); });
 $("pinLoeschen").addEventListener("click", () => { if (PIN.beschaeftigt) return; PIN.eingabe = PIN.eingabe.slice(0, -1); zeichnePunkte(); });
 $("pinZurueck").addEventListener("click", pinZurueck);

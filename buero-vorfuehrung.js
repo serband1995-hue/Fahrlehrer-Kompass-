@@ -395,6 +395,9 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       }
       p.fehlversuche = 0;
       const token = "tok-" + p.id + "-" + Math.random().toString(36).slice(2, 8);
+      // wie buero_neue_sitzung (W20): höchstens 5 Sitzungen je Person, die älteste endet
+      const meine = Object.keys(F.sitzungen).filter((t) => F.sitzungen[t].person === p.id);
+      while (meine.length >= 5) delete F.sitzungen[meine.shift()];
       F.sitzungen[token] = { person: p.id, nurPin: !!p.pin_neu_noetig };
       return { token, id: p.id, name: p.name, pin_neu_noetig: !!p.pin_neu_noetig, darf_verwalten: !!p.darf_verwalten, erste_pin: erst };
     },
@@ -405,7 +408,9 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       if (zuEinfach(p_neu || "")) return { fehler: "zu_einfach" };
       const p = personen().find((x) => x.id === s.person);
       if (p._pin === p_neu) return { fehler: "gleich" };
-      p._pin = p_neu; p.hat_pin = true; p.pin_neu_noetig = false; F.sitzungen[s.token].nurPin = false; return { ok: true };
+      p._pin = p_neu; p.hat_pin = true; p.pin_neu_noetig = false; F.sitzungen[s.token].nurPin = false;
+      for (const t of Object.keys(F.sitzungen)) if (F.sitzungen[t].person === p.id && t !== s.token) delete F.sitzungen[t];   // W20: andere PCs abmelden
+      return { ok: true };
     },
     buero_person_speichern: ({ p_id, p_fahrschule, p_name, p_telefon, p_darf_verwalten, p_aktiv }) => {
       if (!darfVerwalten()) return { fehler: "keine_berechtigung" };
