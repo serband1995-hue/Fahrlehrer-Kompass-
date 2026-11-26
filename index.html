@@ -8086,7 +8086,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.5";
+const APP_VERSION="2026.11.26.8";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13725,7 +13725,7 @@ function openEventSheet(kind,id,sid){
   const titelTermin=(l.art==="theorie"&&l.lektion)?esc("Lektion "+l.lektion):"Termin";
   const statusInfo=l.status&&l.status!=="geplant"?`<span class="es-badge">${esc(l.status)}</span>`:"";
   const fcRelevant=["fahrstunde","sonder","nacht"].indexOf(l.art)>=0;
-  const fcLab={v1:"1 FC vergessen",v2:"2 FC vergessen",geschenkt:"geschenkt",nachgereicht:"FC nachgereicht",eins_ok:"1 FC (abgeschlossen)",halb_bewusst:"1 FC (bewusst)"}[l.fc]||"2 FC erhalten";
+  const fcLab=_fcVermerkText(l.fc,_fcZahl(l));
   // SCHRITT 1: Optionen-Übersicht
   openSheet(`<div class="sheet-h">${st?esc(st.name):titelTermin}</div>
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${esc(l.von)}–${esc(l.bis)} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
@@ -16319,19 +16319,32 @@ async function routeFCAbgabe(){
   }catch(e){ const z=$("#fcQuittungen"); if(z)z.innerHTML=`<p class="muted-p">Quittungen gerade nicht abrufbar (Internet?).</p>`; }
 }
 
+// W17 (🗣 Serband 26.11.2026): wie viele Fahrchecks diese Stunde hat – nur volle 45 Minuten (45 = 1, 90 = 2, 135 = 3).
+// Eine Rechnung für App und Büro (KR.fcGebucht). Ohne kompass-rechnen.js (alter Zwischenspeicher) wie früher 2.
+function _fcZahl(l){ try{ if(window.KR&&KR.fcGebucht)return KR.fcGebucht(l); }catch(e){} return 2; }
+// Beschriftung eines Vermerks passend zur Zahl der Fahrchecks
+function _fcVermerkText(fc,n){
+  if(fc==="v1")return "1 FC vergessen";
+  if(fc==="v2")return n===2?"2 FC vergessen":n===1?"1 FC vergessen":`Alle ${n} FC vergessen`;
+  if(fc==="eins_ok")return n<=1?"Kein FC (abgeschlossen)":`${n-1} FC (abgeschlossen)`;
+  if(fc==="halb_bewusst")return n<=1?"Kein FC (bewusst)":`${n-1} FC (bewusst)`;
+  if(fc==="geschenkt")return "geschenkt";
+  if(fc==="nachgereicht")return "FC nachgereicht";
+  return `${n} FC erhalten`;
+}
 // Zentrale Funktion: FC-Status einer Fahrstunde setzen (mit Historie + Undo)
 function setFC(id,status){
   const l=fcLesson(id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
   const prev=l.fc||null; const prevNachAm=l.nachAm||null;
   const ueFull=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer); const eurFull=Math.round(ueFull*DB.verdienst.proUE);
-  let msg="", histTxt="", eurDelta=0;
+  let msg="", histTxt="", eurDelta=0; const fcN=_fcZahl(l);
   if(status==="v1"){ l.fc="v1"; delete l.nachAm; msg="1 FC vergessen vermerkt"; histTxt="1 Fahrcheck vergessen"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
-  else if(status==="halb_bewusst"){ l.fc="halb_bewusst"; delete l.nachAm; msg="1 FC bewusst erhalten vermerkt"; histTxt="1 Fahrcheck bewusst erhalten (kein Fehler)"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
-  else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg="2 FC vergessen vermerkt"; histTxt="2 Fahrchecks vergessen"; eurDelta=-eurFull; }
-  else if(status==="geschenkt"){ l.fc="geschenkt"; delete l.nachAm; msg="45 Min geschenkt"; histTxt="Fahrstunde geschenkt"; eurDelta=-eurFull; }
+  else if(status==="halb_bewusst"){ l.fc="halb_bewusst"; delete l.nachAm; msg=_fcVermerkText("halb_bewusst",fcN)+" vermerkt"; histTxt=_fcVermerkText("halb_bewusst",fcN)+" (kein Fehler)"; eurDelta=-Math.round(ueFull/2*DB.verdienst.proUE); }
+  else if(status==="v2"){ l.fc="v2"; delete l.nachAm; msg=_fcVermerkText("v2",fcN)+" vermerkt"; histTxt=fcN===1?"1 Fahrcheck vergessen":(fcN===2?"2":"Alle "+fcN)+" Fahrchecks vergessen"; eurDelta=-eurFull; }
+  else if(status==="geschenkt"){ l.fc="geschenkt"; delete l.nachAm; msg="Stunde geschenkt"; histTxt="Fahrstunde geschenkt"; eurDelta=-eurFull; }
   else if(status==="nachgereicht"){ l.fc="nachgereicht"; l.nachAm=todayISO(); msg="FC nachgereicht – Verdienst gutgeschrieben"; histTxt="FC nachgereicht"; const back=(prev==="v1"||prev==="halb_bewusst")?Math.round(ueFull/2*DB.verdienst.proUE):eurFull; eurDelta=back; }
-  else if(status==="eins_ok"){ l.fc="eins_ok"; delete l.nachAm; msg="1 FC – als abgeschlossen vermerkt"; histTxt="1 Fahrcheck, als abgeschlossen vereinbart (voller Verdienst)";
+  else if(status==="eins_ok"){ l.fc="eins_ok"; delete l.nachAm; msg=_fcVermerkText("eins_ok",fcN)+" vermerkt"; histTxt=_fcVermerkText("eins_ok",fcN)+", als abgeschlossen vereinbart (voller Verdienst)";
     if(prev==="v1"||prev==="halb_bewusst")eurDelta=Math.round(ueFull/2*DB.verdienst.proUE); else if(prev==="v2"||prev==="geschenkt")eurDelta=eurFull; }
   else if(status==="normal"){ delete l.fc; delete l.nachAm; msg="Auf Normal gesetzt"; histTxt="FC auf Normal gesetzt"; }
   let histEintrag=null;
@@ -16346,20 +16359,29 @@ function setFC(id,status){
 function openFCMenu(id){
   const l=fcLesson(id); if(!l)return;
   const st=DB.students.find(s=>s.id===l.sid);
-  const cur=l.fc||null;
+  const cur=l.fc||null, n=_fcZahl(l);
+  // Verdienst je Wahl aus derselben Rechnung wie setFC (Lohn bleibt anteilig nach Minuten, HS7 26.11.)
+  const ueVoll=ueOf(l.art,l.von,l.bis,l.tatsaechlicheDauer), eurHalb=Math.round(ueVoll/2*DB.verdienst.proUE);
   const tag=(v,lab,sub,cls)=>`<button class="es-act${cls?(' '+cls):''}${cur===v?' on':''}" data-fcset="${v}">${lab}${sub?`<span style="display:block;font-size:12px;opacity:.7;font-weight:600;margin-top:2px;">${sub}</span>`:""}</button>`;
   let acts="";
-  acts+=tag("normal","Normal · 2 FC erhalten","voller Verdienst","primary");
-  acts+=tag("halb_bewusst","Nur 1 FC · bewusst","halber Verdienst · kein Fehler, war geplant so");
-  acts+=tag("v1","1 FC vergessen","nur 1 × "+DB.verdienst.proUE+" €");
-  acts+=tag("eins_ok","1 FC – als abgeschlossen","voller Verdienst (Einigung)","good");
-  acts+=tag("v2","2 FC vergessen","0 €");
-  acts+=tag("geschenkt","45 Min geschenkt","0 €");
-  if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
+  if(n>0){
+    acts+=tag("normal",`Normal · ${n} FC erhalten`,"voller Verdienst","primary");
+    if(n>=2){
+      acts+=tag("halb_bewusst",`Nur ${n-1} FC · bewusst`,"halber Verdienst · kein Fehler, war geplant so");
+      acts+=tag("v1","1 FC vergessen",`nur ${eurHalb} €`);
+      acts+=tag("eins_ok",`${n-1} FC – als abgeschlossen`,"voller Verdienst (Einigung)","good");
+    } else {
+      acts+=tag("v1","1 FC vergessen",`nur ${eurHalb} €`);
+      acts+=tag("eins_ok","Kein FC – als abgeschlossen","voller Verdienst (Einigung)","good");
+    }
+    if(n!==1)acts+=tag("v2",_fcVermerkText("v2",n),"0 €");
+    acts+=tag("geschenkt","Stunde geschenkt","0 €");
+    if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht","Verdienst kommt zurück (akt. Monat)","good"); }
+  }
   acts+=`<button class="es-act danger" data-fcdel="${id}">Hat nicht stattgefunden</button>`;
   openSheet(`<div class="sheet-h">Fahrcheck · ${esc(st?st.name:"")}</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 14px;">${isoDE(l.date)} · ${esc(l.von)} · ${(CAL_ARTEN[l.art]||CAL_ARTEN.fahrstunde).lab}</p>
-    <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">Standard ist „2 FC erhalten“ – hier nur Ausnahmen vermerken.</p>
+    <p class="muted-p" style="font-size:12.5px;margin:-6px 0 14px;color:var(--faint);">${n>0?`Diese Stunde hat ${n} Fahrcheck${n===1?"":"s"} (je volle 45 Minuten). Standard ist „${n} FC erhalten“ – hier nur Ausnahmen vermerken.`:"Diese Stunde ist kürzer als 45 Minuten: Dafür gibt es keinen Fahrcheck."}</p>
     <div class="es-actions">${acts}</div>`);
   document.querySelectorAll("[data-fcset]").forEach(b=>b.addEventListener("click",()=>{ closeSheet(); setFC(id,b.dataset.fcset); }));
   // K7: der Knopf nennt den Grund schon – gelaufene Stunde direkt stornieren (kein zweites Fenster), sonst löschen; je mit Rückgängig (Dauer aus den Einstellungen)
@@ -16384,7 +16406,7 @@ function routeFCMissing(){
   else groups.forEach(g=>{ const st=DB.students.find(s=>s.id===g.sid); const cnt=g.lessons.length; const euro=Math.round(g.ue*DB.verdienst.proUE);
     h+=`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-grp-eur">−${eurFmt(euro)} · ${cnt}×</div></div>`;
     g.lessons.forEach(l=>{ h+=`<div class="fc-miss-row">
-        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${l.fc==="v1"?"1 FC fehlt":"2 FC fehlen"}</div></div>
+        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${(()=>{ const n=_fcZahl(l), f=l.fc==="v1"?1:n; return f===1?"1 FC fehlt":f+" FC fehlen"; })()}</div></div>
         <button class="fc-yes" data-fcnach="${l.id}">Nachgereicht</button>
         <button class="fc-more" data-fcmore2="${l.id}" aria-label="Optionen">⋯</button>
       </div>`; });
