@@ -592,6 +592,7 @@ const lesson = (id, sid, date, von, bis) => ({ id, date, von, bis, art: "fahrstu
     await ziel.scrollIntoViewIfNeeded();
     const zb = await ziel.boundingBox(); if (!zb) return "kein freier Platz am " + zielTag;
     await page.mouse.move(cb.x + cb.width / 2, cb.y + cb.height / 2); await page.mouse.down();
+    await warte(page, 900); // W17: Ziehen erst nach 0,8 s Halten
     await page.mouse.move(cb.x + cb.width / 2 + 15, cb.y + cb.height / 2 + 15, { steps: 3 });
     await page.mouse.move(zb.x + zb.width / 2, zb.y + zb.height / 2, { steps: 8 }); await warte(page, 150);
     await page.mouse.up(); await warte(page, 500);

@@ -32,6 +32,8 @@ jobs:
         run: bash scripts/release-check.sh
       - name: Rechen-Test
         run: node scripts/rechnen-test.mjs
+      - name: "Termin-Export v4 (bestanden je Nummer und Klasse, Geschwister weg)"
+        run: node --experimental-strip-types scripts/termine-export-test.mjs
       - name: "W15 S3: einstellbare Fristen (ohne Einstellung wie vorher, gesetzliche Fristen fest)"
         run: node scripts/fristen-test.mjs
       - name: "W15 S4: Nachrichten-Vorlagen (eine Datei für Büro und Server, Mail maskiert, Betreff fest)"
@@ -87,6 +89,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/pruefer-gemeinsam-test.mjs
       - name: "Schüler-Überblick und Weitergeben (K6: Akte gesperrt, kein Bestätigen-Fenster)"
         run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
+      - name: "Kalender: Termine erst nach 0,8 s Halten ziehen (W17)"
+        run: NODE_PATH=$(npm root -g) node scripts/kalender-halten-test.mjs
       - name: "Wartet auf Theorie: grüner Knopf (K14)"
         run: NODE_PATH=$(npm root -g) node scripts/theorie-wartet-test.mjs
       - name: "Zurück auf jeder Seite (K10, App und Büro)"

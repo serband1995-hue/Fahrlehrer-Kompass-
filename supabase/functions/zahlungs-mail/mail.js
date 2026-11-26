@@ -76,9 +76,9 @@ export function paypalLink(name, cent) {
 
 // ---------- Texte ----------
 const BETREFF = {
-  pruefung: "Zahlungsinformation zu Ihrer Prüfung",
+  pruefung: "Zahlungsinformation zu deiner Prüfung",
   reaktivierung: "Zahlungsinformation: Reaktivierung",
-  zahlung_offen: "Wichtige Information zu Ihren Terminen",
+  zahlung_offen: "Wichtige Information zu deinen Terminen",
 };
 // W15 S4: Erinnerung, bevor die Reaktivierung fällig wird (vorlage_art vom Server; die Art der Spur bleibt „reaktivierung“)
 const BETREFF_BALD = "Erinnerung zur Reaktivierung"; // ohne zweiten Doppelpunkt (Prüf-Team Design)
@@ -126,7 +126,7 @@ function faelligZeile(d) {
 }
 // Test-Mail: an wen sie im Echt-Modus ginge
 function echtAn(d) { return d.an === "eltern" ? "die Eltern" : d.an === "beide" ? "Schüler und Eltern" : "den Schüler"; }
-// Betreff, wenn Eltern mitlesen: ohne „Ihre“, weiter ohne Namen (Regel oben: nie Betrag, IBAN oder Name)
+// Betreff, wenn Eltern mitlesen: ohne „deine“, weiter ohne Namen (Regel oben: nie Betrag, IBAN oder Name)
 const BETREFF_ELTERN = {
   pruefung: "Zahlungsinformation zur Prüfung",
   reaktivierung: "Zahlungsinformation: Reaktivierung",

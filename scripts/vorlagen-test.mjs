@@ -59,11 +59,11 @@ gleich("keine unsichtbaren Zeichen im Quelltext", [], [...quelle].filter((c) => 
 gleich("mail.js lädt die Kopie", true, /import "\.\/vorlagen\.js";/.test(readFileSync(join(ROOT, "supabase/functions/zahlungs-mail/mail.js"), "utf8")));
 gleich("global KV (Büro/Deno) hat dieselben Teile wie das Modul (Node)", Object.keys(KV), Object.keys(globalThis.KV || {}));
 
-// ---------- 2. Standard = die Sätze von vorher (Mail unverändert ohne Vorlage) ----------
+// ---------- 2. Standard-Sätze (seit 26.11.2026 an Schüler mit „du“, 🗣 Serband; an Eltern weiter „Sie“) ----------
 const ALT = {
-  pruefung: ["für Ihre Prüfung bitten wir um folgende Zahlung:", "für die Prüfung von Lena bitten wir um folgende Zahlung:"],
-  reaktivierung: ["Ihre Reaktivierung ist fällig. Bitte zahlen Sie:", "die Reaktivierung von Lena ist fällig. Bitte zahlen Sie:"],
-  zahlung_offen: ["bei Ihnen ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
+  pruefung: ["für deine Prüfung bitten wir um folgende Zahlung:", "für die Prüfung von Lena bitten wir um folgende Zahlung:"],
+  reaktivierung: ["deine Reaktivierung ist fällig. Bitte zahle:", "die Reaktivierung von Lena ist fällig. Bitte zahlen Sie:"],
+  zahlung_offen: ["bei dir ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden.",
     "für die Ausbildung von Lena ist noch eine Zahlung offen. Bis zum Eingang können keine neuen Fahrstunden gebucht werden."],
 };
 const basis = { modus: "test", betrag_cent: 24000, wofuer: "Reaktivierung", verwendungszweck: "Lena Muster, Reaktivierung", schueler_name: "Lena Muster",
@@ -75,8 +75,12 @@ for (const [art, [schueler, eltern]] of Object.entries(ALT)) {
   gleich("Standard " + art + " Eltern ohne Vorname = Schüler-Text", schueler, MAIL.satz(Object.assign({}, basis, { art, an: "eltern", schueler_name: "" })));
   gleich("Standard " + art + " mit leerer Vorlage", schueler, MAIL.satz(Object.assign({}, basis, { art, an: "schueler", vorlage: { text: " \n ", text_eltern: "" } })));
 }
-gleich("Bald-Standard mit Datum", "Ihre Reaktivierung wird am 15.12.2026 fällig. Damit es danach ohne Pause weitergeht, zahlen Sie bitte rechtzeitig:",
+gleich("Bald-Standard mit Datum", "deine Reaktivierung wird am 15.12.2026 fällig. Damit es danach ohne Pause weitergeht, zahle bitte rechtzeitig:",
   MAIL.satz(Object.assign({}, basis, { art: "reaktivierung", vorlage_art: "reaktivierung_bald", faellig_am: "2026-12-15", tage: 20, an: "schueler" })));
+// 🗣 Serband 26.11.2026: Mails an Schüler sagen „du“ – kein „Sie/Ihr/Ihnen“ in den Schüler-Texten, Eltern-Texte bleiben „Sie“
+gleich("Schüler-Texte duzen (kein Sie/Ihr/Ihnen)", [], Object.entries(KV.VORLAGEN).filter(([, v]) => /\b(Sie|Ihr\w*|Ihnen)\b/.test(v.text)).map(([k]) => k));
+gleich("Schüler-Texte duzen (jeder hat du/dein/dir/dich)", [], Object.entries(KV.VORLAGEN).filter(([, v]) => !/\b(du|dein\w*|dir|dich|zahle|melde|darfst)\b/.test(v.text)).map(([k]) => k));
+gleich("Eltern-Texte siezen (kein du/dein)", [], Object.entries(KV.VORLAGEN).filter(([, v]) => v.text_eltern && /\b(du|dein\w*|dir|dich)\b/.test(v.text_eltern)).map(([k]) => k));
 
 // ---------- 3. Platzhalter ----------
 const W = { Vorname: "Lena", Datum: "2026-12-15", Betrag: 24000, Tage: 20, Fahrschule: "Fahrschule Muster" };
