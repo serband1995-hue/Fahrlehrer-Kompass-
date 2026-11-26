@@ -7538,7 +7538,8 @@ async function fsFcStatus(terminId,status,nachgereicht,zurueckZurListe){
   // Schon abgehakt und noch einmal „Abgegeben“: die Zahl vom Büro bleibt (Büro-Prüfer: sonst gälte still wieder der Vermerk)
   const l=(DB.lessons||[]).find(x=>x.id===terminId);
   if((DB.lessons||[]).some(x=>x.buero_fc_anzahl!==undefined)&&!(l&&l.buero_fc_status==="abgegeben"&&status==="abgegeben"&&!nachgereicht)){
-    updates.buero_fc_anzahl=nachgereicht&&l&&window.KR&&KR.fcGebucht?(KR.fcGebucht(l)||null):null;
+    // W19 (Richter): auch bei „Abgegeben“ die Zahl mitschreiben, sonst zählte ein später nachgereichter Fahrcheck ohne Bestätigung
+    updates.buero_fc_anzahl=!l||!window.KR||!KR.fcGebucht?null:nachgereicht?(KR.fcGebucht(l)||null):status==="abgegeben"&&KR.fcFuersBuero?(KR.fcFuersBuero(l)||null):null;
   }
   const {error}=await supa.from("kalender_termine").update(updates).eq("id",terminId);
   if(error){toast("Fehler: "+error.message);return;}
@@ -16590,7 +16591,7 @@ function routeFCMissing(){
   else groups.forEach(g=>{ const st=DB.students.find(s=>s.id===g.sid); const cnt=g.lessons.length; const euro=Math.round(g.ue*DB.verdienst.proUE);
     h+=`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-grp-eur">−${eurFmt(euro)} · ${cnt}×</div></div>`;
     g.lessons.forEach(l=>{ h+=`<div class="fc-miss-row">
-        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${(()=>{ const n=_fcZahl(l), f=l.fc==="v1"?1:n; if(!n)return "unter 45 Min · alter Vermerk"; if(l.fc!=="v1"&&l.fc!=="v2")return "Büro: Fahrcheck fehlt"; return f===1?"1 FC fehlt":f+" FC fehlen"; })()}</div></div>
+        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${(()=>{ const n=_fcZahl(l), f=l.fc==="v1"?1:n; if(!n)return "unter 45 Min · alter Vermerk"; if(l.fc!=="v1"&&l.fc!=="v2")return "Fahrcheck fehlt"; return f===1?"1 FC fehlt":f+" FC fehlen"; })()}</div></div>
         <button class="fc-yes" data-fcnach="${l.id}">Nachgereicht</button>
         <button class="fc-more" data-fcmore2="${l.id}" aria-label="Optionen">⋯</button>
       </div>`; });
@@ -17289,7 +17290,7 @@ function _h2KachelnHTML(){
   if(sichtbar('dash_wocheverdienst')){
     const zeigen=_verdienstPinCheck();
     k.push(ohneVertrag?`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Verdienst</span><span class="h2-k-w" style="color:var(--gold,#b8873a);">Vertrag fehlt</span><span class="h2-k-s">Tippen zum Eintragen</span></button>`
-      :!(+(DB.verdienst||{}).proUE>0)?(()=>{ const wk=_wocheVonBis(); return `<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche gefahren</span><span class="h2-k-w">${fmtUE(ueRange(wk.von,wk.bis).fcDone)} UE</span><span class="h2-k-s">Festgehalt</span></button>`; })() // nur Fixum: Euro je Woche gibt es nicht
+      :!(+(DB.verdienst||{}).proUE>0)?(()=>{ const wk=_wocheVonBis(); return `<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche gefahren</span><span class="h2-k-w">${(()=>{ const r=ueRange(wk.von,wk.bis); return fmtUE(r.fcDone+(r.fcWartet||0)+(r.fcFehlt||0)); })()} UE</span><span class="h2-k-s">Festgehalt</span></button>`; })() // nur Fixum: Euro je Woche gibt es nicht
       :`<button class="h2-kachel" data-k="woche"><span class="h2-k-l">Diese Woche verdient</span><span class="h2-k-w">${zeigen?wocheVerdientEuro().toLocaleString("de-DE")+" €":"••••"}</span></button>`);
   }
   const v=DB.verdienst||{}, bonusUE=v.bonusUE||250;

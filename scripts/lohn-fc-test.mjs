@@ -161,6 +161,12 @@ if (!process.env.LOHN_NUR_A) {
     await page.evaluate(() => setFC("B", "nachgereicht"));
     const nachB = await page.evaluate(() => ({ ls: _lohnStandVon(DB.lessons.find((l) => l.id === "B")).stand, liste: fcForgottenLessons().some((l) => l.id === "B") }));
     await soll("B10", "nach „nachgereicht“: Lohn wartet auf das Büro, nicht mehr in der Liste", `${nachB.ls}/${nachB.liste}`, "wartet/false");
+    // Richter: Festgehalt – Kachel „Diese Woche gefahren“ zählt gefahrene UE, nicht nur bestätigte
+    const fest = await page.evaluate(() => { const alt = DB.verdienst; DB.verdienst = { proUE: 0, fixum: 3000, fixUE: 0, bonusUE: 0, bonus: 0, startUE: 0, startMonth: "2026-06" };
+      const wk = _wocheVonBis(); DB.lessons.push({ id: "W", sid: "m1", date: wk.von, von: "08:00", bis: "09:30", art: "fahrstunde", status: "gefahren" });
+      const d = document.createElement("div"); d.innerHTML = _h2KachelnHTML(); DB.lessons = DB.lessons.filter((l) => l.id !== "W"); DB.verdienst = alt;
+      const k = [...d.querySelectorAll(".h2-kachel")].find((x) => /Diese Woche gefahren/.test(x.textContent)); return k ? k.textContent.replace(/\s+/g, " ") : "keine Kachel"; });
+    await pruefe("B11", "Festgehalt: Kachel „Diese Woche gefahren“ zeigt die gefahrene Stunde ohne Büro-Haken", () => (/[1-9][\d,]* UE/.test(fest) ? null : fest));
     // ohne Fahrschule: alte Regel
     await page.evaluate(() => { try { closeSheet(); } catch (e) {} _authProfile = { id: "u-muster", rolle: "fahrlehrer" }; });
     const solo = await r("2026-12-01", "2026-12-31");
