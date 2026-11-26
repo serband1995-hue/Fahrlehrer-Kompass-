@@ -278,17 +278,22 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
   await page.addInitScript(([d]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: null }; }, [daten]);
   await page.goto(basis + "buero.html"); await warte(page, 500);
   const r = await page.evaluate(([nach, vor]) => {
-    const x = { id: "u1", ausbildungsart: "umschreibung", ausbildung: nach };
-    const xVor = { id: "u1", ausbildungsart: "umschreibung", ausbildung: vor };
-    const xZur = { id: "u1", ausbildungsart: "ersterwerb", ausbildung: nach };
-    const xAlt = { id: "u2", ausbildungsart: "ersterwerb", ausbildung: { umschreiber: true } };
-    const xNeu = { id: "u4", ausbildungsart: "neu", ausbildung: {} };
+    // Fahrlehrer mit App (liefert den Stand nach) und einer ohne App
+    S.lehrer = (S.lehrer || []).concat([{ id: "fl-app", name: "Test App" }, { id: "fl-ohne", name: "Test ohne", ohne_app: true }]);
+    const x = { id: "u1", fahrlehrer_id: "fl-app", ausbildungsart: "umschreibung", ausbildung: nach };
+    const xVor = { id: "u1", fahrlehrer_id: "fl-app", ausbildungsart: "umschreibung", ausbildung: vor };
+    const xZur = { id: "u1", fahrlehrer_id: "fl-app", ausbildungsart: "ersterwerb", ausbildung: nach };
+    const xAlt = { id: "u2", fahrlehrer_id: "fl-app", ausbildungsart: "ersterwerb", ausbildung: { umschreiber: true } };
+    const xNeu = { id: "u4", fahrlehrer_id: "fl-app", ausbildungsart: "neu", ausbildung: {} };
+    const xOhne = { id: "u5", fahrlehrer_id: "fl-ohne", ausbildungsart: "ersterwerb", ausbildung: { standPct: 55, umschreiber: true } };
+    const xKein = { id: "u6", ausbildungsart: "ersterwerb", ausbildung: { standPct: 55, umschreiber: true } };
     return { ist: istUmschreiber(x), istZur: istUmschreiber(xZur), istAlt: istUmschreiber(xAlt), istNeu: istUmschreiber(xNeu), istVor: istUmschreiber(xVor),
-      zahl: standHTML(nach, x), zahlVor: standHTML(vor, xVor), zahlZur: standHTML(nach, xZur), zahlAlt: standHTML({ standPct: 40, umschreiber: true }, xAlt), zahlNeu: standHTML({ standPct: 40 }, xNeu) };
+      zahl: standHTML(nach, x), zahlVor: standHTML(vor, xVor), zahlZur: standHTML(nach, xZur), zahlAlt: standHTML({ standPct: 40, umschreiber: true }, xAlt), zahlNeu: standHTML({ standPct: 40 }, xNeu), zahlOhne: standHTML(xOhne.ausbildung, xOhne), zahlKein: standHTML(xKein.ausbildung, xKein) };
   }, [appZeile, appZeileVorher]);
   await pruefe("U9d", "Büro: istUmschreiber folgt nur der Spalte (an, zurück; App-Echo zählt nicht; „neu“ = nein)", () => (r.ist && !r.istZur && !r.istAlt && !r.istNeu && r.istVor ? null : JSON.stringify(r)));
   await pruefe("U9e", "Büro zeigt nach dem App-Abgleich dieselbe Zahl wie die App", () => (r.zahl.includes(`>${appZeile.standPct} %<`) ? null : r.zahl + " / App " + appZeile.standPct));
   await pruefe("U9f", "Büro zeigt vor dem App-Abgleich „wird neu berechnet“ statt der alten Zahl (beide Richtungen)", () => (/wird neu berechnet/.test(r.zahlVor) && /wird neu berechnet/.test(r.zahlZur) && /wird neu berechnet/.test(r.zahlAlt) && /40 %/.test(r.zahlNeu) ? null : JSON.stringify([r.zahlVor, r.zahlZur, r.zahlAlt, r.zahlNeu])));
+  await pruefe("U9j", "Fahrlehrer ohne App oder ohne Fahrlehrer: Zahl bleibt sichtbar (kein dauerhaftes „wird neu berechnet“)", () => (/55 %/.test(r.zahlOhne) && /55 %/.test(r.zahlKein) ? null : JSON.stringify([r.zahlOhne, r.zahlKein])));
   await pruefe("U9g", "Büro-Termin: Sonderfahrt für Umschreiber gesperrt, für andere nicht", () => page.evaluate(() => {
     const alt = S.schueler; S.schueler = [{ id: "u1", ausbildungsart: "umschreibung", ausbildung: {} }, { id: "u2", ausbildungsart: "ersterwerb", ausbildung: {} }];
     const r = [umschreiberSchueler("u1"), umschreiberSchueler("u2"), umschreiberSchueler("")]; S.schueler = alt;

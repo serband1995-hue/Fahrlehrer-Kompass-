@@ -1795,7 +1795,9 @@ function standHTML(a, x) {
   const p = a && typeof a.standPct === "number" ? Math.max(0, Math.min(100, Math.round(a.standPct))) : null;
   if (p == null) return '<span class="leise">–</span>';
   // W22: Umschreiber gerade im Büro geändert, die App des Fahrlehrers hat den Stand noch nicht neu berechnet → keine alte Zahl zeigen
-  if (x && istUmschreiber(x) !== !!a.umschreiber) return '<span class="leise klein" title="Sonderfahrten zählen jetzt anders. Die Zahl kommt mit dem nächsten Abgleich der Fahrlehrer-App.">wird neu berechnet</span>';
+  // Nur wenn eine Fahrlehrer-App den Stand nachliefern kann (Fahrlehrer mit App); sonst stünde der Text dauerhaft
+  const fl = x && x.fahrlehrer_id ? teamPerson(x.fahrlehrer_id) : null;
+  if (x && fl && !fl.ohne_app && istUmschreiber(x) !== !!a.umschreiber) return '<span class="leise klein" title="Sonderfahrten zählen jetzt anders. Die Zahl kommt mit dem nächsten Abgleich der Fahrlehrer-App.">wird neu berechnet</span>';
   return `<span class="stand"><span class="stand-spur"><span class="stand-balken" style="width:${p}%"></span></span><span class="stand-zahl">${p} %</span></span>`;
 }
 function paketName(id) { const p = S.pakete.find((x) => x.id === id); return p ? p.name : ""; }
@@ -2635,8 +2637,8 @@ function schuelerDialog(id) {
       if (bkAnm) await bkAnm.nachSpeichern(neueId);
       return true;
     }
-    // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
-    // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
+    // Umschreiber: zählt nur die Spalte ausbildungsart; die Fahrlehrer-App folgt ihr selbst (W22). Nicht ins jsonb schreiben,
+    // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert; ausbildung.umschreiber ist nur ihr Echo.
     const wirdArchiviert = istAktiv(basisX) && !!werte.inaktiv_seit;
     let absagen = [];
     if (wirdArchiviert) { absagen = await frageKuenftigeTermine(x); if (absagen === null) return false; } // Abbrechen: Fenster bleibt offen
