@@ -1,6 +1,6 @@
 // Termin-Export v4 (25.11.2026): reine Rechenlogik von kompass-termine-export (termine.ts), ohne Datenbank, erfundene Nummern.
 // Aufruf:  node --experimental-strip-types scripts/termine-export-test.mjs   (Node 22; Gegenprobe: die Fassung aus der Akademie-Anleitung fällt bei T2 durch)
-import { bestandenBauen, termineBauen, mehrdeutigeNummern, telefonNorm } from "../supabase/functions/kompass-termine-export/termine.ts";
+import { bestandenBauen, termineBauen, mehrdeutigeNummern, telefonNorm, appBestanden } from "../supabase/functions/kompass-termine-export/termine.ts";
 import { readFile } from "node:fs/promises";
 let ok = 0, fehler = 0;
 const pruefe = (id, text, r) => { if (r === true) { ok++; console.log(`ok  ${id} ${text}`); } else { fehler++; console.log(`FEHLER  ${id} ${text}: ${r}`); } };
@@ -60,6 +60,31 @@ pruefe("T14", "Sicht ohne Filter in_ausbildung im Bestanden-Teil", !/in_ausbildu
   pruefe("T20", "derselbe Schueler doppelt geladen = keine Geschwister", j(bestandenBauen([{ schueler_id: "z", datum: "2026-11-01", klasse: "B" }], [{ id: "z", telefon: "0176 7" }, { id: "z", telefon: "0176 7" }], AB, HEUTE)) === j([{ telefon: "0176 7", datum: "2026-11-01", klasse: "B" }]) || "weggelassen");
   pruefe("T18", "Schueler-Seiten lueckenlos (Versatz = geladene Zeilen, Ende bei leerer Seite)", (/\.range\(alle\.length, alle\.length \+ 999\)/.test(idx2) && /length === 0\) break/.test(idx2)) || "fehlt");
   pruefe("T19", "+49 0171 gilt wie 0171", telefonNorm("+49 (0)171 1") === telefonNorm("0171 1") && telefonNorm("+490171 1") === "01711" || "anders");
+}
+// v4.1: zweite Quelle Fahrlehrer-App (kalender_pruefungen)
+{
+  const S = [{ id: "p", telefon: "0160 1000001", klasse: "B" }, { id: "q", telefon: "0160 1000002", klasse: "A2" }, { id: "g1", telefon: "0160 1000003", klasse: "B" }, { id: "g2", telefon: "+49 160 1000003", klasse: "B" }];
+  const tafel = [{ schueler_id: "q", datum: "2026-11-10", klasse: "A2" }];
+  const roh = [
+    { schueler_id: "p", datum: "2026-11-05", result: "pass", payload: {}, geloescht: false },          // nur App -> kommt
+    { schueler_id: "q", datum: "2026-11-10", result: "pass", payload: null, geloescht: false },        // gleicher Tag wie Tafel -> weg
+    { schueler_id: "p", datum: "2026-11-06", result: "pass", payload: { b197: true }, geloescht: false },   // B197 -> weg
+    { schueler_id: "p", datum: "2026-11-07", result: "pass", payload: { b197: "ja" }, geloescht: false },   // unbekannt -> weg
+    { schueler_id: "p", datum: "2026-11-08", result: "pass", payload: {}, geloescht: true },            // geloescht -> weg
+    { schueler_id: "p", datum: "2026-11-09", result: "pass", payload: {}, geloescht: "nein" },          // unbekannt -> weg
+    { schueler_id: "p", datum: "2026-11-11", result: "fail", payload: {}, geloescht: false },           // nicht bestanden -> weg
+    { schueler_id: "p", datum: "11.11.2026", result: "pass", payload: {}, geloescht: false },           // Datum unbekannt -> weg
+    { schueler_id: "p", datum: "2026-11-12", result: "pass", payload: "x", geloescht: false },          // payload unbekannt -> weg
+    { schueler_id: "g1", datum: "2026-11-02T09:30:00+00:00", result: "bestanden", geloescht: null },    // Zeitstempel ok, aber Geschwister
+  ];
+  const a = appBestanden(roh, tafel);
+  pruefe("T21", "App: nur gueltige bestandene Eintraege, Tafel-Doppel/B197/geloescht/unbekannt weg", j(a) === j([{ schueler_id: "p", datum: "2026-11-05", klasse: null }, { schueler_id: "g1", datum: "2026-11-02", klasse: null }]) || j(a));
+  const r2 = bestandenBauen(tafel.concat(a), S, AB, HEUTE).sort((x, y) => x.telefon < y.telefon ? -1 : 1);
+  pruefe("T22", "Tafel + App zusammen: App-only kommt mit Klasse aus der Sicht, Geschwister weg, kein Doppel", j(r2) === j([{ telefon: "0160 1000001", datum: "2026-11-05", klasse: "B" }, { telefon: "0160 1000002", datum: "2026-11-10", klasse: "A2" }]) || j(r2));
+  pruefe("T23", "App: kaputte Eingaben werfen nicht", j(appBestanden([null, 5, "x", {}], [])) === "[]" && j(appBestanden(undefined, [])) === "[]" || "wirft/liefert");
+  const idx3 = await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8");
+  const teil3 = idx3.slice(idx3.indexOf("async function bestandenLaden"), idx3.indexOf("Deno.serve"));
+  pruefe("T24", "App-Teil eigener try/catch, liest nur kalender_pruefungen", /Quelle 2[\s\S]*try \{[\s\S]*kalender_pruefungen[\s\S]*catch/.test(teil3) && !/\.(insert|update|delete|upsert|rpc)\(/.test(teil3) || "fehlt");
 }
 console.log(`\nTermin-Export-Test: ${ok} ok, ${fehler} Fehler`);
 process.exit(fehler ? 1 : 0);

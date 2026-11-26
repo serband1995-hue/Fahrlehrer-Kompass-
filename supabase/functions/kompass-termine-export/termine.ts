@@ -66,3 +66,31 @@ export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchu
   }
   return Array.from(best.values());
 }
+
+// v4.1 (26.11.2026): zweite Quelle. Die Fahrlehrer-App schreibt Pruefungsergebnisse nie in pruefungstermine, sondern in
+// kalender_pruefungen (schueler_id, datum, result 'pass'/'fail', payload.b197, geloescht). Ohne Klasse: bestandenBauen nimmt
+// dann die Klasse des Schuelers aus der Sicht. Wie buero.js pruefErgebnisse: B197-Schaltkompetenz zaehlt nicht, und ein
+// App-Eintrag am selben Tag wie ein Tafel-Eintrag desselben Schuelers wird uebersprungen. Unbekannte Werte -> Eintrag weg.
+export type AppPruefung = { schueler_id?: unknown; datum?: unknown; result?: unknown; payload?: unknown; geloescht?: unknown };
+export function appBestanden(zeilen: AppPruefung[], tafel: BestandenPruefung[]): BestandenPruefung[] {
+  const schonDa = new Set<string>();
+  for (const t of tafel) if (t && t.schueler_id) schonDa.add(String(t.schueler_id) + "|" + String(t.datum).slice(0, 10));
+  const aus: BestandenPruefung[] = [];
+  for (const z of zeilen || []) {
+    if (!z || typeof z !== "object") continue;
+    if (z.result !== "pass" && z.result !== "bestanden") continue;
+    if (z.geloescht !== false && z.geloescht !== null && z.geloescht !== undefined) continue;   // nur sicher nicht geloescht
+    const pl = z.payload;
+    if (pl !== null && pl !== undefined && (typeof pl !== "object" || Array.isArray(pl))) continue;
+    const b197 = pl ? (pl as Record<string, unknown>).b197 : undefined;
+    if (b197 !== undefined && b197 !== null && b197 !== false && b197 !== "false") continue;   // B197 oder unbekannt
+    if (typeof z.schueler_id !== "string" || !z.schueler_id) continue;
+    const roh = typeof z.datum === "string" ? z.datum : "";
+    const m = /^(\d{4}-\d{2}-\d{2})(?:$|[T ])/.exec(roh);
+    if (!m) continue;
+    if (schonDa.has(z.schueler_id + "|" + m[1])) continue;   // dieselbe Pruefung steht schon auf der Tafel
+    schonDa.add(z.schueler_id + "|" + m[1]);
+    aus.push({ schueler_id: z.schueler_id, datum: m[1], klasse: null });
+  }
+  return aus;
+}
