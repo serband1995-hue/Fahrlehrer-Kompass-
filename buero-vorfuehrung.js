@@ -74,7 +74,20 @@ function bauDaten(heute) {
   }
   const pruefungen = [
     { id: "pr-1", fahrschule_id: FS, fahrlehrer_id: "fl-1", schueler_id: "s1", datum: addTage(heute, -14), result: "bestanden", attempt: 1, geloescht: false, payload: {} },
-    { id: "pr-2", fahrschule_id: FS, fahrlehrer_id: "fl-2", schueler_id: "s2", datum: addTage(heute, -9), result: "nicht_bestanden", attempt: 1, geloescht: false, payload: {} },
+    { id: "pr-2", fahrschule_id: FS, fahrlehrer_id: "fl-2", schueler_id: "s2", datum: addTage(heute, -9), result: "nicht_bestanden", attempt: 1, geloescht: false, payload: { faults: ["io_vorfahrt", "gf_park"] } },
+    // W20 Teil 4: weitere Durchfälle mit Gründen (Kennungen wie in kompass-fehler.js); pr-7 ist älter als 12 Monate, pr-6 hat keinen Grund eingetragen
+    { id: "pr-3", fahrschule_id: FS, fahrlehrer_id: "fl-1", schueler_id: "s5", datum: addTage(heute, -60), result: "fail", attempt: 1, geloescht: false, payload: { faults: ["io_beob", "io_vorfahrt"] } },
+    { id: "pr-4", fahrschule_id: FS, fahrlehrer_id: "fl-2", schueler_id: "s7", datum: addTage(heute, -45), result: "fail", attempt: 1, geloescht: false, payload: { faults: ["gf_park", "be_schalt", "io_beob"] } },
+    { id: "pr-5", fahrschule_id: FS, fahrlehrer_id: "fl-1", schueler_id: "s11", datum: addTage(heute, -120), result: "fail", attempt: 1, geloescht: false, payload: { faults: ["io_beob"] } },
+    { id: "pr-6", fahrschule_id: FS, fahrlehrer_id: "fl-3", schueler_id: "s12", datum: addTage(heute, -30), result: "fail", attempt: 1, geloescht: false, payload: { faults: [] } },
+    { id: "pr-7", fahrschule_id: FS, fahrlehrer_id: "fl-1", schueler_id: "s13", datum: addTage(heute, -420), result: "fail", attempt: 1, geloescht: false, payload: { faults: ["t_speed"] } },
+  ];
+  // W20 Teil 4: Verschiebungs-Verlauf (Pool = ohne Fahrlehrer); „s-weg“ gibt es nicht mehr
+  const schueler_verschiebungen = [
+    { id: "vs-1", fahrschule_id: FS, schueler_id: "s3", von_fahrlehrer_id: "fl-1", zu_fahrlehrer_id: "fl-2", verschoben_von: "bu-1", erstellt_am: addTage(heute, -2) + "T09:15:00Z", gesehen_von_alt: true, gesehen_von_neu: false },
+    { id: "vs-2", fahrschule_id: FS, schueler_id: "s5", von_fahrlehrer_id: null, zu_fahrlehrer_id: "fl-3", verschoben_von: "ad-1", erstellt_am: addTage(heute, -5) + "T14:40:00Z", gesehen_von_alt: true, gesehen_von_neu: true },
+    { id: "vs-3", fahrschule_id: FS, schueler_id: "s7", von_fahrlehrer_id: "fl-2", zu_fahrlehrer_id: null, verschoben_von: "bu-1", erstellt_am: addTage(heute, -9) + "T11:05:00Z", gesehen_von_alt: true, gesehen_von_neu: true },
+    { id: "vs-4", fahrschule_id: FS, schueler_id: "s-weg", von_fahrlehrer_id: "fl-3", zu_fahrlehrer_id: "fl-1", verschoben_von: null, erstellt_am: addTage(heute, -20) + "T08:00:00Z", gesehen_von_alt: true, gesehen_von_neu: true },
   ];
   const pruefungstermine = [
     { id: "pt-1", fahrschule_id: FS, schueler_id: "s3", fahrlehrer_id: "fl-1", art: "praxis", klasse: "B", datum: addTage(heute, 2), von: "08:00", status: "geplant", entgelt_bezahlt: true, tuev_gutschein: false, as_portal: false },
@@ -98,7 +111,7 @@ function bauDaten(heute) {
       fahrschule_empfehlungen, provisionen,
       fahrschulen: [{ id: FS, name: "Vorführ-Fahrschule", slug: "test", aktiv: true, konfiguration: { akademieVermittlung: { betragAkademie: 100, betragSimulator: 149, splitKollege: { fahrlehrer: 15, fahrschule: 45, plattform: 20, akademie: 20 } } } }, { id: "fs-test-2", name: "Zweite Testschule", slug: "test2", aktiv: true, konfiguration: {} }],
       profiles: [...lehrer, ...buero],
-      schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine,
+      schueler, kalender_termine: termine, kalender_pruefungen: pruefungen, pruefungstermine, schueler_verschiebungen,
       // Theorie-Besuch (14.10.2026): s1 hat 13 von 14 Lektionen (es fehlt 14), s2 hat Lektion 7 + 8 am selben Abend
       theorie_teilnahme: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map((l, i) => ({ id: "tt-" + i, fahrschule_id: FS, schueler_id: "s1", lektion: l, datum: addTage(heute, -40 + i), bearbeiter: "Anton Muster", entfernt_am: null }))
         .concat([{ id: "tt-a", fahrschule_id: FS, schueler_id: "s2", lektion: "7", datum: addTage(heute, -3), bearbeiter: "Anton Muster", entfernt_am: null }, { id: "tt-b", fahrschule_id: FS, schueler_id: "s2", lektion: "8", datum: addTage(heute, -3), bearbeiter: "Anton Muster", entfernt_am: null }]),

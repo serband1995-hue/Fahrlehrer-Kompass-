@@ -187,6 +187,9 @@ const BEREICHE = [
   { id: "zahlungen", titel: "Zahlungen", render: () => { const r = zahlungenReiter(); return r === "verkaeufe" ? zahlungsReiter("verkaeufe") + renderVerkaeufe() : zahlungsReiter(r) + renderPreisSeite(); }, nachher: (...a) => zahlungenReiter() === "verkaeufe" ? bindeVerkaeufe(...a) : bindePreisSeite(...a), zahl: () => offeneVerkaeufe() || "" },
   { id: "fahrchecks", titel: "Fahrcheck", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "zahlen", titel: "Statistik", render: renderZahlen, nachher: bindeZahlen },
+  // W20 Teil 4 (buero-auswertung.js): Durchfallgründe und Verschiebungs-Verlauf als Unterseiten der Statistik
+  { id: "fehler", titel: "Durchfallgründe", leiste: false, eltern: "zahlen", wenn: () => typeof renderFehler === "function" && typeof vwLaden === "function", render: (...a) => renderFehler(...a), nachher: (...a) => bindeFehler(...a) },
+  { id: "verlauf", titel: "Verschiebungen", leiste: false, eltern: "zahlen", wenn: () => typeof renderVerlauf === "function" && typeof vwLaden === "function", render: (...a) => renderVerlauf(...a), nachher: (...a) => bindeVerlauf(...a) },
   { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", neben: true, render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
@@ -3877,6 +3880,7 @@ function renderZahlen() {
         <tr><td><a href="#verkaeufe">Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</a></td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
       </tbody></table></div>
   ${typeof luZahlenZusatz === "function" ? luZahlenZusatz(f, monate) : ""}
+  ${typeof awStatistikKarte === "function" ? awStatistikKarte() : ""}
   <div id="tip" class="tip" hidden></div>`;
 }
 // Detailseite hinter einem Balken oder einer Kachel
