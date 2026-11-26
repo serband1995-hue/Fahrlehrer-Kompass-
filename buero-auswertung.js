@@ -9,8 +9,8 @@
 
 // Die zwei Seiten stehen unter „Statistik“: Reiterzeile oben, damit man zwischen Zahlen, Durchfallgründen und Verschiebungen wechselt
 function awReiter(aktiv) {
-  const r = [["zahlen", "Zahlen"], ["fehler", "Durchfallgründe"], ["verlauf", "Verschiebungen"]];
-  return `<div class="karte nicht-drucken"><div class="tabs">${r.map(([id, n]) => `<a class="tab" href="#${id}"${id === aktiv ? ' aria-current="page"' : ""}>${esc(n)}</a>`).join("")}</div></div>`;
+  const r = [["zahlen", "Statistik"], ["fehler", "Durchfallgründe"], ["verlauf", "Verschiebungen"]];
+  return `<div class="aw-reiter nicht-drucken"><div class="tabs">${r.map(([id, n]) => `<a class="tab" href="#${id}"${id === aktiv ? ' aria-current="page"' : ""}>${esc(n)}</a>`).join("")}</div></div>`;
 }
 // Kleine Karte am Ende der Statistik: führt zu den beiden Seiten
 function awStatistikKarte() {
@@ -39,19 +39,20 @@ function renderFehler() {
   const mitAngabe = durch.filter((e) => ((e.payload || {}).faults || []).length).length;
   const gesamt = liste.reduce((a, [, n]) => a + n, 0);
   const filter = `<div class="filterzeile nicht-drucken">
-      <select class="suche" id="awZeit" aria-label="Zeitraum"><option value="12"${zeit === "12" ? " selected" : ""}>Letzte 12 Monate</option><option value="alle"${zeit === "alle" ? " selected" : ""}>Alles, was geladen ist</option></select>
-      <select class="suche" id="awLehrer" aria-label="Fahrlehrer">${lehrerFilterOptionen(lehrerId, "Alle Fahrlehrer")}</select>
+      <label class="aw-filter"><span>Zeitraum</span><select class="suche" id="awZeit"><option value="12"${zeit === "12" ? " selected" : ""}>Letzte 12 Monate</option><option value="alle"${zeit === "alle" ? " selected" : ""}>Alles, was geladen ist</option></select></label>
+      <label class="aw-filter"><span>Fahrlehrer</span><select class="suche" id="awLehrer">${lehrerFilterOptionen(lehrerId, "Alle Fahrlehrer")}</select></label>
       ${zeit !== "12" || lehrerId ? `<a class="knopf klein" href="#fehler">Filter löschen</a>` : ""}</div>`;
-  const kacheln = `<div class="kacheln">
-      <div class="kachel${durch.length ? " rot" : ""}"><div class="wert">${durch.length}</div><div class="name">Praxisprüfungen nicht bestanden (in der App eingetragen)</div></div>
-      <div class="kachel"><div class="wert">${mitAngabe}</div><div class="name">davon mit Gründen eingetragen</div></div>
-      <div class="kachel"><div class="wert">${gesamt}</div><div class="name">genannte Gründe zusammen</div></div></div>`;
+  // Zahlen neutral (Rot heißt im Büro „dringend“); kurze Namen, damit die drei Kacheln am Handy nebeneinander passen
+  const kacheln = `<div class="kacheln aw-kacheln">
+      <div class="kachel"><div class="wert">${durch.length}</div><div class="name">nicht bestanden</div></div>
+      <div class="kachel"><div class="wert">${mitAngabe}</div><div class="name">mit Grund erfasst</div></div>
+      <div class="kachel"><div class="wert">${gesamt}</div><div class="name">Gründe genannt</div></div></div>`;
   const zeilen = liste.map(([id, n]) => ({ name: FAULT_LABEL[id] || id, wert: n, text: n + "×", tip: `${FAULT_LABEL[id] || id}: ${n}× genannt (${Math.round(n / (mitAngabe || 1) * 100)} % der Prüfungen mit Gründen)` }));
   const inhalt = zeilen.length
     ? `<div class="aw-grund">${balkenListe(zeilen)}</div>` + tabelleAus(["Grund", "Anzahl"], liste.map(([id, n]) => [FAULT_LABEL[id] || id, n])) + `<div id="tip" class="tip" hidden></div>`
     : `<p class="leer">${durch.length ? "Bei diesen Prüfungen wurde kein Grund eingetragen." : "Noch keine Durchfälle erfasst."}</p>`;
   return awReiter("fehler") + filter + kacheln + `<div class="karte"><h2>Häufigste Durchfallgründe</h2>
-    <p class="leise klein">${lehrerId ? esc(lehrerName(lehrerId)) : "Alle Fahrlehrer der Fahrschule"} · ${zeit === "alle" ? "alle geladenen Prüfungen" : "letzte 12 Monate"}. Ein Grund zählt einmal je Prüfung, in der er genannt wurde. Die Fahrlehrer tragen die Gründe in der Kompass-App ein.</p>${inhalt}</div>`;
+    <p class="leise klein">${lehrerId ? esc(lehrerName(lehrerId)) : "Alle Fahrlehrer der Fahrschule"} · ${zeit === "alle" ? "alle geladenen Prüfungen" : "letzte 12 Monate"}. Ein Grund zählt einmal je Prüfung, in der er genannt wurde. Gezählt werden Praxisprüfungen, die die Fahrlehrer in der Kompass-App eingetragen haben.</p>${inhalt}</div>`;
 }
 function bindeFehler(ziel) {
   const z = ziel.querySelector("#awZeit"), l = ziel.querySelector("#awLehrer");
@@ -87,7 +88,7 @@ function renderVerlauf() {
     const wer = v.verschoben_von ? awPerson(v.verschoben_von) : "";
     return `<tr><td class="zeitspalte"><span class="vw-nowrap">${esc(wann)}</span></td>
       <td>${s ? `<b>${esc(s.name)}</b>` : '<span class="leise">(gelöschter Schüler)</span>'}</td>
-      <td data-l="Fahrlehrer">${esc(awPerson(v.von_fahrlehrer_id))} → ${esc(awPerson(v.zu_fahrlehrer_id))}</td>
+      <td data-l="Von → zu"><span class="vw-nowrap">${esc(awPerson(v.von_fahrlehrer_id))}</span> → <span class="vw-nowrap">${esc(awPerson(v.zu_fahrlehrer_id))}</span></td>
       <td data-l="Verschoben von">${wer ? esc(wer) : '<span class="leise">–</span>'}</td></tr>`;
   }).join("");
   const inhalt = VW.verlauf.length
