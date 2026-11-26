@@ -1834,7 +1834,7 @@ function renderSchueler() {
       <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
-      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x, { kurz: true })}${typeof belegDarf === "function" && belegDarf() ? `<button class="knopf klein" data-sbeleg="${esc(x.id)}" type="button" title="Zahlungsbeleg (Quittung) erstellen">Beleg</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
+      <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x, { kurz: true })}${typeof belegDarf === "function" && belegDarf() ? `<button class="knopf klein" data-sbeleg="${esc(x.id)}" type="button" title="Zahlungsbeleg (Quittung) erstellen">Beleg</button>` : ""}${typeof punkteAn === "function" && punkteDarf() && punkteAn() ? `<button class="knopf klein" data-spunkte="${esc(x.id)}" type="button" title="Punktekonto des Schülers">Punkte</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
     </tr>`;
   }).join("");
   const lehrerOpt = `<option value="">Alle Fahrlehrer</option><option value="ohne"${lehrerFilter === "ohne" ? " selected" : ""}>Ohne Fahrlehrer</option>` +
@@ -1901,6 +1901,7 @@ function bindeSchueler(ziel) {
   bindeZahlKnoepfe(ziel);
   ziel.querySelectorAll("[data-sbearb]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.sbearb)));
   ziel.querySelectorAll("[data-sbeleg]").forEach((b) => b.addEventListener("click", () => belegDialog(b.dataset.sbeleg))); // W19 Teil 2
+  ziel.querySelectorAll("[data-spunkte]").forEach((b) => b.addEventListener("click", () => punkteDialog(b.dataset.spunkte))); // W19 Teil 3
 }
 /* ---------- Notizen ans Team (Fahrlehrer bekommt sie als Popup, bis er „Gelesen“ tippt) ---------- */
 function offeneNotizen(sid) { return S.notizen.filter((n) => n.schueler_id === sid && !n.erledigt_am); }

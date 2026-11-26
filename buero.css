@@ -1157,3 +1157,23 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
   .aw-liste td{border-bottom:none;padding:2px 4px;}
   .aw-liste td[data-l]::before{content:attr(data-l) ": ";color:var(--muted, var(--faint));font-size:14px;font-weight:600;}
 }
+
+/* W19 Teil 3: Punktesystem (buero-punkte.js) */
+.punkte-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.punkte-stand{font-size:22px;}
+.punkte-stand b{font-size:34px;}
+.punkte-titel{margin:18px 0 6px;font-size:18px;}
+.punkte-liste{list-style:none;margin:0 0 10px;padding:0;max-height:260px;overflow:auto;}
+.punkte-zeile{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line-soft);}
+.punkte-zahl{flex:0 0 72px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;}
+.punkte-zahl.plus{color:var(--gruen);}
+.punkte-zahl.minus{color:var(--txt);} /* Einlösen ist nicht „dringend“ (Design) */
+.punkte-text{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere;}
+.punkte-edit .es-name{min-width:0;}
+.punkte-edit .es-name input{width:100%;box-sizing:border-box;}
+.punkte-edit .es-wert{flex:0 0 min(190px,40%);}
+
+/* W19 (Design): auffälliger Hinweis-Kasten für rechtliche Stolpersteine (Punkte, Belege); Tippflächen 44 px in Formularen */
+.hinweis-kasten{background:#fff4d6;border:1px solid #e0b84a;border-left:5px solid #c9971f;color:#4a3800;border-radius:var(--r-klein);padding:10px 14px;font-weight:600;line-height:1.45;}
+@media (prefers-color-scheme:dark){.hinweis-kasten{background:#3a3010;border-color:#8a6d1c;color:#ffe9a8;}}
+.punkte-dialog .wahl,.es-inhalt .formular .wahl{min-height:44px;}

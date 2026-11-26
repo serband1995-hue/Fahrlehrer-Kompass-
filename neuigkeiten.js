@@ -4,11 +4,16 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.26.14", datum: "2026-11-26", kurz: "Büro: Durchfallgründe und Verschiebungen jetzt auch hier.",
+  { version: "2026.11.26.17", datum: "2026-11-26", kurz: "Büro: Durchfallgründe und Verschiebungen jetzt auch hier.",
     punkte: ["Büro: Unter „Statistik“ gibt es jetzt „Durchfallgründe“. Dort siehst du, woran Schüler in der Praxisprüfung am häufigsten scheitern, auch je Fahrlehrer.",
              "Büro: Unter „Verschiebungen“ siehst du, welcher Schüler wann zu welchem Fahrlehrer gewechselt ist.",
              "Büro: Du kannst dich an mehreren PCs gleichzeitig mit deiner PIN anmelden.",
              "Büro: Änderst du deine PIN, wirst du an den anderen PCs abgemeldet. Dort erscheint ein kurzer Hinweis."] },
+  { version: "2026.11.26.16", datum: "2026-11-26", kurz: "Neu: Punktesystem für Schüler (zuerst aus).",
+    punkte: ["Die Fahrschule kann ein Punktesystem einschalten. Zuerst ist es aus.",
+             "Das Büro legt selbst fest, wofür es Punkte gibt und was man damit einlösen kann.",
+             "Der Fahrlehrer sieht in der Schülerakte den Punktestand und kann Punkte geben oder einlösen.",
+             "Jede Buchung zeigt, wer sie wann gemacht hat. Gebuchtes lässt sich nicht ändern, nur ausgleichen."] },
   { version: "2026.11.26.13", datum: "2026-11-26", kurz: "Büro: Quittungen für Zahlungen drucken.",
     punkte: ["Büro: Für eine Zahlung eines Schülers gibt es jetzt eine Quittung zum Drucken oder als PDF.",
              "Jede Quittung bekommt die nächste Nummer und lässt sich danach nicht mehr ändern. Ist etwas falsch, wird sie storniert.",
