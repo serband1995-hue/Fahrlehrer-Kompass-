@@ -16,7 +16,8 @@ const alle = [
 ];
 const pb = [
   { schueler_id: "a", datum: "2026-11-20", klasse: "B" },
-  { schueler_id: "a", datum: "2026-10-01", klasse: "BE" },  // aelter
+  { schueler_id: "a", datum: "2026-10-01", klasse: "BE" },  // andere Klasse -> eigener Eintrag
+  { schueler_id: "a", datum: "2026-09-15", klasse: "b" },   // gleiche Klasse B, aelter -> weg
   { schueler_id: "b", datum: "2026-11-10", klasse: "B" },
   { schueler_id: "d", datum: "2026-09-01", klasse: null },  // Klasse vom Schueler
   { schueler_id: "e", datum: "2026-11-01", klasse: "B" },   // ohne Telefon
@@ -27,14 +28,16 @@ const pb = [
 ];
 const r = bestandenBauen(pb, alle, AB, HEUTE);
 const nach = Object.fromEntries(r.map((x) => [telefonNorm(x.telefon), x]));
-pruefe("T1", "juengste Pruefung je Nummer, Klasse aus der Pruefung", j(nach["01711111111"]) === j({ telefon: "0171 1111111", datum: "2026-11-20", klasse: "B" }) || j(nach["01711111111"]));
+const vonA = r.filter((x) => telefonNorm(x.telefon) === "01711111111").sort((x, y) => x.datum < y.datum ? -1 : 1);
+pruefe("T1", "je Nummer UND Klasse die juengste (B und BE = zwei Eintraege, aeltere B weg, b = B)", j(vonA) === j([{ telefon: "0171 1111111", datum: "2026-10-01", klasse: "BE" }, { telefon: "0171 1111111", datum: "2026-11-20", klasse: "B" }]) || j(vonA));
 pruefe("T2", "Geschwister (gleiche Nummer, andere Schreibweise, Geschwister ohne Pruefung) weggelassen", !nach["01712222222"] || j(nach["01712222222"]));
 pruefe("T3", "Klasse fehlt an der Pruefung -> Klasse des Schuelers", nach["01723333333"]?.klasse === "CE" || j(nach["01723333333"]));
-pruefe("T4", "ohne Telefon, ausserhalb 120 Tage, Zukunft, nicht im Export, kaputtes Datum: nichts", r.length === 2 || j(r));
+pruefe("T4", "ohne Telefon, ausserhalb 120 Tage, Zukunft, nicht im Export, kaputtes Datum: nichts", r.length === 3 || j(r));
 pruefe("T5", "keine Namen, nur telefon/datum/klasse", r.every((x) => j(Object.keys(x).sort()) === j(["datum", "klasse", "telefon"])) || j(r));
 pruefe("T6", "Reihenfolge egal (aufsteigend sortiert gleiches Ergebnis)", j(bestandenBauen([...pb].reverse(), alle, AB, HEUTE).sort((x, y) => x.telefon < y.telefon ? -1 : 1)) === j([...r].sort((x, y) => x.telefon < y.telefon ? -1 : 1)) || "anders");
 pruefe("T7", "leere Eingaben -> leere Liste", j(bestandenBauen([], [], AB, HEUTE)) === "[]" || "nicht leer");
 pruefe("T8", "Klasse leer ueberall -> null", j(bestandenBauen([{ schueler_id: "f", datum: "2026-11-01", klasse: "" }], alle, AB, HEUTE)) === j([{ telefon: "0173 4444444", datum: "2026-11-01", klasse: null }]) || "falsch");
+pruefe("T17", "Lkw und Pkw derselben Nummer: beide, jeweils juengste", j(bestandenBauen([{ schueler_id: "f", datum: "2026-10-01", klasse: "CE" }, { schueler_id: "f", datum: "2026-11-01", klasse: "CE" }, { schueler_id: "f", datum: "2026-09-01", klasse: "B" }], alle, AB, HEUTE).map((x) => x.klasse + x.datum).sort()) === j(["B2026-09-01", "CE2026-11-01"]) || "falsch");
 pruefe("T15", "+49 und 0 gelten als dieselbe Nummer (Geschwister erkannt)", j(bestandenBauen([{ schueler_id: "g", datum: "2026-11-01", klasse: "B" }], [{ id: "g", telefon: "+49 175 5555555" }, { id: "h", telefon: "0175 5555555" }, { id: "i", telefon: "0049 175 6666666" }], AB, HEUTE)) === "[]" || "nicht erkannt");
 pruefe("T16", "Bestanden-Teil hat ein Zeitlimit (Termine kommen auch, wenn er haengt)", /Promise\.race\(\[\s*bestandenLaden/.test(await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8")) || "fehlt");
 // Termine (v3) unveraendert

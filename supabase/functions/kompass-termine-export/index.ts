@@ -19,7 +19,7 @@ import { berlinHeute, termineBauen, mehrdeutigeNummern, bestandenBauen, type Exp
   gefuehrten Schueler dieser Fahrschulen.
 
   --- v4, 25.11.2026 (Akademie) ---
-  Zusaetzlich "bestanden": je Telefonnummer die juengste bestandene Praxispruefung der letzten 120 Tage mit Klasse
+  Zusaetzlich "bestanden": je Telefonnummer UND Klasse die juengste bestandene Praxispruefung der letzten 120 Tage mit Klasse
   ({telefon, datum, klasse}, keine Namen). Schueler aus der Sicht OHNE Filter in_ausbildung. Eine Nummer, die bei mehr als
   einem Schueler im Export steht, wird weggelassen (gezaehlt ueber ALLE Schueler der Sicht). Ein Fehler in diesem Teil
   verhindert nie die Termine: dann bestanden = [].

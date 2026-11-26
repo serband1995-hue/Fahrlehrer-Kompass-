@@ -32,7 +32,7 @@ export function termineBauen(pruefungen: Pruefung[], schueler: Schueler[], heute
   return Array.from(frueh.entries()).map(([telefon, datum]) => ({ telefon, datum }));
 }
 
-// v4 (Akademie, 25.11.2026): je Telefonnummer die JUENGSTE bestandene Praxispruefung im Zeitraum [ab, heute].
+// v4 (Akademie, 25.11.2026): je Telefonnummer UND Klasse die JUENGSTE bestandene Praxispruefung im Zeitraum [ab, heute].
 // alle = ALLE Schueler im Export (Sicht v_akademie_export_schueler, ohne Filter in_ausbildung): eine Nummer, die dort
 // mehr als einmal vorkommt (Geschwister, Familie), wird nie ausgeliefert -- auch wenn nur ein Geschwister bestanden hat.
 // klasse: aus der Pruefung, sonst die Klasse des Schuelers, sonst null. Keine Namen.
@@ -58,10 +58,11 @@ export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchu
     const tel = String(s.telefon || "").trim();
     const n = telefonNorm(tel);
     if (!n || (zaehl.get(n) || 0) > 1) continue;        // keine oder mehrdeutige Nummer
-    const alt = best.get(n);
-    if (alt && alt.datum >= String(p.datum)) continue;  // juengste gewinnt
     const k = String(p.klasse || s.klasse || "").trim();
-    best.set(n, { telefon: tel, datum: String(p.datum), klasse: k || null });
+    const schluessel = n + "|" + k.toUpperCase();      // je Nummer UND Klasse (B und CE = zwei Eintraege)
+    const alt = best.get(schluessel);
+    if (alt && alt.datum >= String(p.datum)) continue;  // juengste je Kombination gewinnt
+    best.set(schluessel, { telefon: tel, datum: String(p.datum), klasse: k || null });
   }
   return Array.from(best.values());
 }
