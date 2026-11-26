@@ -3448,7 +3448,7 @@ function fcStundeDialog(id) {
         <select name="status">${Object.entries(FC_BUERO).map(([k, v]) => `<option value="${k}"${k === status ? " selected" : ""}>${esc(v[1])}</option>`).join("")}</select></label>
       <label>Nachgereicht am (leer = nicht nachgereicht)
         <input type="date" name="nach" value="${esc(t.buero_fc_nachgereicht_am || "")}"></label>
-      ${fcAnzahlDa() && KR.fcGebucht(ft) > 1 && !fcAusgefallen(ft) ? `<label>Abgegeben (nur bei „abgegeben“)
+      ${fcAnzahlDa() && KR.fcGebucht(ft) >= 1 && !fcAusgefallen(ft) ? `<label>Abgegeben (nur bei „abgegeben“)
         <select name="anzahl"><option value="">wie vom Fahrlehrer vermerkt (${KR.fcFuersBuero(ft)})</option>${Array.from({ length: KR.fcGebucht(ft) }, (_, i) => KR.fcGebucht(ft) - i).map((n) => `<option value="${n}"${t.buero_fc_anzahl === n ? " selected" : ""}>${n} Fahrcheck${n === 1 ? "" : "s"}</option>`).join("")}</select></label>` : ""}
     </div>
     <p class="leise klein">Den Vermerk des Fahrlehrers (z. B. „1 FC vergessen“) ändert nur er selbst in seiner App; sonst würde seine Eingabe beim nächsten Abgleich überschrieben.</p>`;

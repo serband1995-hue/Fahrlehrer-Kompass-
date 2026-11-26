@@ -1743,6 +1743,7 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
 .vd-offen.vd-lohn{text-align:left;}
+.vd-offen.vd-knopf{display:block;width:100%;font:inherit;font-size:12.5px;cursor:pointer;min-height:44px;}
 .vd-offen.vd-lohn b{display:block;font-size:14px;}
 .vd-offen.vd-lohn span{display:block;margin-top:2px;}
 body.light .vd-offen{color:#8a3a2c;}
@@ -17807,7 +17808,7 @@ function _verdienstModulHTMLContent(){
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
     ${(moUE.fcWartet||0)>0.01?`<div class="vd-offen vd-lohn vd-wartet"><b>${_eurMasked(leistungAusUE(moUE.fcWartet))} wartet auf das Büro</b><span>${fmtUE(moUE.fcWartet)} UE gefahren, Fahrchecks noch nicht bestätigt</span></div>`:''}
-    ${(moUE.fcFehlt||0)>0.01?`<div class="vd-offen vd-lohn"><b>${_eurMasked(leistungAusUE(moUE.fcFehlt))} fehlen: Fahrcheck fehlt</b><span>${fmtUE(moUE.fcFehlt)} UE · Lohn erst, wenn er nachgereicht ist</span></div>`:''}
+    ${(moUE.fcFehlt||0)>0.01?`<button type="button" class="vd-offen vd-lohn vd-knopf" onclick="routeFCMissing()"><b>${_eurMasked(leistungAusUE(moUE.fcFehlt))} fehlen: Fahrcheck fehlt ›</b><span>${fmtUE(moUE.fcFehlt)} UE · Lohn erst, wenn er nachgereicht ist. Antippen: welche Stunden</span></button>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>

@@ -167,6 +167,31 @@ if (!process.env.LOHN_NUR_A) {
     await soll("B8", "ohne Fahrschule: alte Regel (A2+B nachgereicht 0+C0,5+D1,5+E0,335+I2 = 6,34 UE)", solo.done, 6.34);
     await soll("B8", "ohne Fahrschule: nichts wartet", solo.wartet, 0);
     await pruefe("B9", "keine JS-Fehler", () => jsFehler.length ? jsFehler.slice(0, 3).join(" | ") : null);
+    await ctx.close();
+    // ---------- Teil C: Büro (Attrappe) – 45 Min mit „vergessen“ lässt sich auflösen (HS7 26.11.: jedes „FC fehlt“ muss lösbar sein) ----------
+    const { bauDaten } = require(join(ROOT, "buero-vorfuehrung.js"));
+    const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
+    const bctx = await browser.newContext({ viewport: { width: 1366, height: 860 } });
+    const bp = await bctx.newPage();
+    const bFehler = []; bp.on("pageerror", (e) => bFehler.push(String(e)));
+    await bp.clock.setFixedTime(new Date("2026-12-10T12:00:00+01:00"));
+    await bp.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await bp.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+    const d = bauDaten("2026-12-10");
+    d.tabellen.kalender_termine.push({ id: "t-w19-45", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: "s1", art: "fahrstunde", datum: "2026-12-03", von: "10:00", bis: "10:45", status: "geplant", geloescht: false, payload: { fc: "v1" }, buero_fc_status: "offen", buero_fc_anzahl: null, buero_fc_nachgereicht_am: null });
+    await bp.addInitScript(([dd, ss]) => { window.__FAKE = { tabellen: dd.tabellen, konten: dd.konten, session: ss }; }, [d, { user: { id: "bu-1", email: "bu-1@example.org" } }]);
+    await bp.goto(basis + "buero.html#fahrchecks?ansicht=stunden&von=2026-12-01&bis=2026-12-10&lehrer=fl-1"); await bp.waitForTimeout(500);
+    if (await bp.$("#wer:not([hidden])")) { await bp.click(`#werListe button:has-text("Paula Muster")`); await bp.keyboard.type("7352", { delay: 20 }); await bp.waitForTimeout(400); }
+    const zeile = await bp.evaluate(() => { const b = document.querySelector('[data-fcnach="t-w19-45"]'); const tr = b && b.closest("tr"); return { knopf: !!b, text: tr ? tr.textContent.replace(/\s+/g, " ") : "" }; });
+    await pruefe("C1", "Büro: 45 Min mit „vergessen“ zeigt „Lohn: Fahrcheck fehlt“ und „Nachgereicht“", () => [!zeile.knopf && "kein Knopf", !/Lohn: Fahrcheck fehlt/.test(zeile.text) && "keine Lohn-Zeile"].filter(Boolean));
+    if (zeile.knopf) { await bp.click('[data-fcnach="t-w19-45"]'); await bp.waitForTimeout(400); }
+    const nach = await bp.evaluate(() => { const t = window.__FAKE.tabellen.kalender_termine.find((x) => x.id === "t-w19-45"); return { s: t.buero_fc_status, n: t.buero_fc_anzahl, nach: t.buero_fc_nachgereicht_am }; });
+    await soll("C2", "nach „Nachgereicht“: abgegeben, 1 Fahrcheck, Datum gesetzt", `${nach.s}/${nach.n}/${!!nach.nach}`, "abgegeben/1/true");
+    await soll("C2", "Lohn zählt jetzt (gleiche Regel wie die App)", st({ datum: "2026-12-03", von: "10:00", bis: "10:45", fc: "v1", bueroFc: nach.s, bueroFcAnzahl: nach.n, bueroFcNachAm: nach.nach }).split("/")[0], "zaehlt");
+    const dlg = await bp.evaluate(() => { fcStundeDialog("t-w19-45"); const sel = document.querySelector("dialog[open] select[name=anzahl]"); const r = !!sel; document.querySelector("dialog[open]").close(); return r; });
+    await pruefe("C3", "Ändern-Dialog: Zahlwahl auch bei 1 gebuchten Fahrcheck", () => (dlg ? null : "keine Zahlwahl"));
+    await pruefe("C4", "keine JS-Fehler (Büro)", () => bFehler.length ? bFehler.slice(0, 3).join(" | ") : null);
+    await bctx.close();
   } finally { await browser.close(); server.close(); }
 }
 console.log(`\n${okZahl} ok, ${fehlerZahl} Fehler`);
