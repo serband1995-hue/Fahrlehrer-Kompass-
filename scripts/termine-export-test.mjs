@@ -88,7 +88,7 @@ pruefe("T14", "Sicht ohne Filter in_ausbildung im Bestanden-Teil", !/in_ausbildu
   pruefe("T26", "Tafel nicht_bestanden + App pass am selben Tag -> kein Eintrag", j(sperr) === "[]" || j(sperr));
   // Klasse vereinheitlichen: jeder Wert, den Tafel (buero.js KLASSEN) und App (index.html FORMS) anbieten
   const tabelle = { "B": "B", "B78": "B", "B197": "B197", "BE": "BE", "B+BE": "BE", "C1": "C1", "C1E": "C1E", "C": "C", "CE": "CE", "BKF": "BKF", "Automatik": "B",
-    " b 78 ": "B", "b + be": "BE", "B96": "B96", "C+CE": "CE", "C1+C1E": "C1E", "B+C": "C", "BE+C1E": "C1E", "B+CE+C1": "CE", "A": "A", "AM": "AM", "C+BKF": "C+BKF", "": null };
+    " b 78 ": "B", "b + be": "BE", "B96": "B96", "C+CE": "CE", "C1+C1E": "C1E", "B+C": "C", "BE+C1E": "C1E", "B+CE+C1": "CE", "A": "A", "AM": "AM", "C+BKF": "C+BKF", "B/BE": "BE", "C, CE": "CE", "": null };
   const falsch = Object.entries(tabelle).filter(([k, w]) => klasseNorm(k) !== w).map(([k, w]) => k + "->" + klasseNorm(k) + " statt " + w);
   pruefe("T28", "Klasse: feste Tabelle aller angebotenen Werte + Kombinationen", !falsch.length || falsch.join(", "));
   pruefe("T29", "Klasse: null/undefined -> null", klasseNorm(null) === null && klasseNorm(undefined) === null || "falsch");

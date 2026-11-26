@@ -44,7 +44,7 @@ export function telefonNorm(t: string): string { return String(t || "").replace(
 // C, CE, C1, C1E (Lkw). Werte, die Tafel (buero.js KLASSEN) und App (index.html FORMS) wirklich anbieten:
 //   Tafel: B, B78, B197, BE, B+BE, C1, C1E, C, CE, BKF   App: B, BE, B197, Automatik, C1, C1E, C, CE
 // Regeln: Gross/klein und Leerzeichen egal. B mit Schluesselzahl -> B (ausser B96, B197). Automatik -> B (wie B78).
-// Kombination mit "+": Lkw-Klasse gewinnt (CE vor C vor C1E vor C1), sonst BE vor B96 vor B197 vor B.
+// Kombination mit "+" (auch "/" oder ","): Lkw-Klasse gewinnt (CE vor C vor C1E vor C1), sonst BE vor B96 vor B197 vor B.
 // Alles andere (BKF, A, AM ...) bleibt roh (nur ohne Leerzeichen am Rand).
 const LKW_RANG = ["CE", "C", "C1E", "C1"];
 const PKW_RANG = ["BE", "B96", "B197", "B"];
@@ -58,7 +58,7 @@ function klasseTeil(t: string): string {
 export function klasseNorm(k: string | null | undefined): string | null {
   const roh = String(k ?? "").trim();
   if (!roh) return null;
-  const teile = roh.split("+").map(klasseTeil).filter((t) => t);
+  const teile = roh.split(/[+\/,]/).map(klasseTeil).filter((t) => t);
   const bekannt = teile.filter((t) => LKW_RANG.includes(t) || PKW_RANG.includes(t));
   if (!teile.length || bekannt.length !== teile.length) return roh;   // unbekannt (BKF, A, AM ...): roh lassen
   for (const r of LKW_RANG) if (bekannt.includes(r)) return r;
