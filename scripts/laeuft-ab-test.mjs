@@ -145,8 +145,8 @@ try {
     pruefe("L5 nichts da: „In den nächsten Wochen läuft nichts ab.“", /In den nächsten Wochen läuft nichts ab\./.test(t));
     await ctx.close();
   }
-  // L6 Handy 360 und 412 px, hoch und quer: kein waagrechtes Scrollen, Reiter erreichbar
-  for (const [b, h] of [[360, 740], [412, 860], [740, 360]]) {
+  // L6 Handy 360 und 412 px, hoch und quer, Tablet: kein waagrechtes Scrollen, Reiter erreichbar
+  for (const [b, h] of [[360, 740], [412, 860], [740, 360], [820, 1180], [1024, 768]]) { // dazu Tablet hoch und quer (Prüf-Team W15 PR 2)
     const { page, ctx, konsole } = await oeffne({ breite: b, vorbereiten: zusatzCode(ZUSATZ) });
     await page.setViewportSize({ width: b, height: h });
     await page.waitForTimeout(200);
@@ -155,7 +155,7 @@ try {
     // Prüf-Team W15: jeder Knopf „Akte öffnen“ und jede „Noch“-Pill liegt ganz im Bild (nicht abgeschnitten, ohne Wischen)
     const imBild = await page.evaluate(() => {
       const w = document.documentElement.clientWidth, raus = [];
-      document.querySelectorAll("[data-baldliste] [data-baldakte], [data-baldliste] .bald-noch .marke-pill, [data-baldliste] .bald-am").forEach((el) => {
+      document.querySelectorAll("[data-baldliste] [data-baldakte], [data-baldliste] [data-balderinnern], [data-baldliste] .bald-noch .marke-pill, [data-baldliste] .bald-am").forEach((el) => {
         const r = el.getBoundingClientRect(); if (r.left < 0 || r.right > w + 0.5 || r.width === 0) raus.push(el.className + ":" + Math.round(r.right));
       });
       return raus;

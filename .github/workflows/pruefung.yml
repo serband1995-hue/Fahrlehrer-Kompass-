@@ -34,6 +34,8 @@ jobs:
         run: node scripts/rechnen-test.mjs
       - name: "W15 S3: einstellbare Fristen (ohne Einstellung wie vorher, gesetzliche Fristen fest)"
         run: node scripts/fristen-test.mjs
+      - name: "W15 S4: Nachrichten-Vorlagen (eine Datei für Büro und Server, Mail maskiert, Betreff fest)"
+        run: node scripts/vorlagen-test.mjs
       - name: Cache-Test (nur eigene Caches löschen)
         run: node scripts/cache-test.mjs
       - name: Zugang-Regeln (bearbeiten/löschen, Rechte)
@@ -44,6 +46,8 @@ jobs:
         run: |
           npm i --silent --no-save --prefix /tmp/w15-pg @electric-sql/pglite@0.2.17
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/reakt-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/vorlagen-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/erinnerung-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/papierkorb-sql-test.mjs
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
@@ -115,6 +119,8 @@ jobs:
           ZM_QR_DIR=/tmp/zm-qr node scripts/zahlungsmail-mail-test.mjs
       - name: "Zahlungsaufforderung per Mail im Büro (Knopf, Haken, Rückgängig)"
         run: NODE_PATH=$(npm root -g) node scripts/zahlungsmail-test.mjs
+      - name: "W15 S5: Erinnerung schicken ohne Zahlung (Theorie, Antrag, Behörde, Umschreiber) im Büro"
+        run: NODE_PATH=$(npm root -g) node scripts/erinnerung-test.mjs
       - name: "W14 Akte überschreibt keine neueren Änderungen (Büro-Akte, Fristen)"
         run: NODE_PATH=$(npm root -g) node scripts/akte-konflikt-test.mjs
       - name: "Abgleich App ↔ Büro (Datenverlust-Fälle, W14 Name/Telefon, Gesamtansicht)"

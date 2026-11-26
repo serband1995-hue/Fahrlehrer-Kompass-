@@ -29,6 +29,7 @@ const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePa
 let ok = 0, schlecht = 0;
 function pruefe(name, bed, info) { if (bed) { ok++; console.log("ok  " + name); } else { schlecht++; console.log("FEHLER  " + name + (info ? " · " + info : "")); } }
 const PIN = { "Paula Muster": "7352" };
+const KRtag = (n) => { const d = new Date(HEUTE + "T12:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 async function oeffne({ nutzer, hash = "#einstellungen?thema=zahlungen", vorbereiten, breite = 1366, hoehe = 860 }) {
   const daten = bauDaten(HEUTE);
@@ -65,6 +66,10 @@ const vor = (o = {}) => new Function("F", `
   ${o.daten === false ? "" : `F.tabellen.fahrschule_zahlungsdaten = [Object.assign(${JSON.stringify(ZD)}, { modus: ${JSON.stringify(o.modus || "test")} })];`}
   F.tabellen.fahrschule_preise = [{ id: "pz1", fahrschule_id: "fs-test-1", art: "pruefung_praxis", klasse: "B", bezeichnung: "Vorstellung zur praktischen Prüfung", einheit: "pauschal", betrag_cent: 12000, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }];
   const s12 = F.tabellen.schueler.find((x) => x.id === "s12"); s12.zahlung_gesperrt_seit = ${JSON.stringify(HEUTE)}; s12.zahlung_gesperrt_grund = "Rechnung offen";
+  // W15 S4: s3 (Prüfungs-Mail) und s12 (Zahlung offen) stehen hier für genau eine Mail-Art; ihre Reaktivierung (sonst bald
+  // fällig, dann gäbe es zusätzlich die Erinnerung) weit weg. Die Erinnerung prüft Z14.
+  ${o.s3reakt === false ? "" : `F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = "2099-12-31";`}
+  F.tabellen.schueler.find((x) => x.id === "s12").reakt_bezahlt_bis = "2099-12-31";
   ${o.extra || ""}
 `);
 const jsFehler = (konsole, ausser) => konsole.filter((k) => !(ausser && ausser.test(k)));
@@ -192,7 +197,8 @@ try {
     await page.evaluate(() => { window.__FAKE.fehler = { "zahlungs-mail": "netz" }; });
     await page.locator("[data-zmsenden]").click(); await page.waitForTimeout(1300);
     pruefe("Z3x Funktion nicht erreichbar: „Versand gerade nicht möglich“", /Versand gerade nicht möglich/.test(await page.locator("[data-zmmeldung]").innerText()));
-    for (const [code, text] of [["zahlungsdaten_fehlen", /Zahlungsdaten eintragen/], ["zu_viele_schule", /schon 100 Mails/], ["ungueltige_anfrage", /Versand gerade nicht möglich/], ["keine_email", /Keine E-Mail-Adresse in der Akte/], ["keine_testadresse", /Test-Adresse/], ["betrag", /Betrag/]]) {
+    for (const [code, text] of [["zahlungsdaten_fehlen", /Zahlungsdaten eintragen/], ["zu_viele_schule", /schon 100 Mails/], ["ungueltige_anfrage", /Versand gerade nicht möglich/], ["keine_email", /Keine E-Mail-Adresse in der Akte/], ["keine_testadresse", /Test-Adresse/], ["betrag", /Betrag/],
+      ["reakt_befreit", /befreit/], ["reakt_entfaellt", /entfällt laut Preisliste/], ["reakt_ohne_datum", /Vertragsdatum/], ["reakt_nicht_faellig", /noch nicht fällig/]]) {
       await page.evaluate((c) => { window.__FAKE.fehler = { "zahlungs-mail": c }; }, code);
       await page.locator("[data-zmsenden]").click(); await page.waitForTimeout(1200);
       pruefe(`Z3y Fehlercode ${code}: verständlicher Text`, text.test(await page.locator("[data-zmmeldung]").innerText()), await page.locator("[data-zmmeldung]").innerText());
@@ -578,6 +584,56 @@ try {
     await pg.evaluate(() => { window.__FAKE.fehler = {}; });
     pruefe("Z13e keine Fehler in der Konsole", !jsFehler(e.konsole).length, jsFehler(e.konsole).join(" | "));
     await e.ctx.close();
+  }
+  // Z14 W15 S4: Erinnerung an die Reaktivierung, bevor sie fällig ist – in der Akte und aus „Läuft bald ab“
+  {
+    const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", vorbereiten: vor({ s3reakt: false, extra: `
+      F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = ${JSON.stringify(KRtag(15))};` }) });
+    pruefe("Z14a s3 (Reaktivierung in 15 Tagen): Prüfung und Reaktivierung", JSON.stringify(await arten(page, "s3")) === '["pruefung","reaktivierung"]');
+    const zeile = page.locator('[data-baldliste] tr[data-bald="reaktivierung"]', { has: page.locator('[data-balderinnern="s3"]') });
+    pruefe("Z14b „Läuft bald ab“: Zweitknopf „Erinnern“ bei der Reaktivierung (kein Hauptknopf, Name sagt „per Mail“)", (await zeile.count()) === 1 && (await zeile.locator("[data-balderinnern]").innerText()) === "Erinnern"
+      && !(await zeile.locator("[data-balderinnern]").evaluate((e) => e.classList.contains("haupt"))) && (await zeile.locator("[data-balderinnern]").getAttribute("aria-label")) === "Erinnerung per Mail schicken");
+    // W15 S5: andere Fristen haben ihren eigenen Knopf (Erinnerung ohne Zahlung); der Zahlungs-Knopf hängt nur an der Reaktivierung
+    pruefe("Z14c Zahlungs-Erinnerung nur bei der Reaktivierung, jeder Knopf passt zu seiner Zeile", (await page.locator('[data-baldliste] tr:not([data-bald="reaktivierung"]) [data-baldart="reaktivierung"]').count()) === 0
+      && (await page.$$eval("[data-baldliste] tr [data-balderinnern]", (l) => l.every((k) => k.dataset.baldart === k.closest("tr").dataset.bald))));
+    pruefe("Z14d PC: Knopf mindestens 44 px und so hoch wie „Akte öffnen“ daneben", (await zeile.locator("[data-balderinnern]").evaluate((e) => e.getBoundingClientRect().height)) >= 44 && (await zeile.locator("[data-balderinnern]").evaluate((e) => e.getBoundingClientRect().height)) === (await zeile.locator("[data-baldakte]").evaluate((e) => e.getBoundingClientRect().height)),
+      await zeile.locator("[data-balderinnern], [data-baldakte]").evaluateAll((l) => l.map((e) => e.textContent + " " + Math.round(e.getBoundingClientRect().height) + "x" + Math.round(e.getBoundingClientRect().width)).join(" | ")));
+    await zeile.locator("[data-balderinnern]").click();
+    await page.waitForSelector("dialog[open]"); await page.waitForTimeout(150);
+    const dlg = page.locator("dialog[open]").last(), r = dlg.locator('[data-zmart="reaktivierung"]');
+    pruefe("Z14e Akte offen, Formular der Reaktivierung aufgeklappt, Betrag im Fokus", await r.locator("[data-zmform]").isVisible() && (await page.evaluate(() => document.activeElement && document.activeElement.hasAttribute("data-zmbetrag") && !!document.activeElement.closest('[data-zmart="reaktivierung"]'))));
+    pruefe("Z14f Akte: „Erinnerung schicken“ und „fällig am TT.MM.JJJJ“", (await r.locator("[data-zmoeffne]").innerText()) === "Erinnerung schicken" && /fällig am \d\d\.\d\d\.\d{4}/.test(await r.locator("[data-zmfaellig]").innerText()));
+    pruefe("Z14g Prüfungs-Formular bleibt zu", await dlg.locator('[data-zmart="pruefung"] [data-zmform]').isHidden());
+    pruefe("Z14h Betrag = Reaktivierungsbetrag, Wofür „Reaktivierung“", (await r.locator("[data-zmbetrag]").inputValue()) === "240,00" && (await r.locator("[data-zmwofuer]").inputValue()) === "Reaktivierung");
+    await r.locator("[data-zmsenden]").click(); await page.waitForTimeout(1300);
+    const a = await anrufe(page);
+    pruefe("Z14i genau ein Aufruf: Art „reaktivierung“ (welche Vorlage, bestimmt der Server)", a.length === 1 && a[0].body.art === "reaktivierung" && a[0].body.betrag_cent === 24000, JSON.stringify(a));
+    await schliesseAlle(page);
+    await page.evaluate(() => zeichne()); await page.waitForTimeout(150);
+    pruefe("Z14j „Läuft bald ab“ zeigt „✓ erinnert am … (Test)“", /✓ erinnert am \d\d\.\d\d\.\d{4} \(Test\)/.test(await page.locator('[data-baldliste] tr[data-bald="reaktivierung"] [data-balderinnert]').first().innerText()));
+    pruefe("Z14k keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
+    await ctx.close();
+  }
+  // Z14m Handy 360 px: Knopf mindestens 44 px, nichts ragt heraus
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", breite: 360, hoehe: 740, vorbereiten: vor({ s3reakt: false, extra: `
+      F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = ${JSON.stringify(KRtag(15))};` }) });
+    const k = page.locator('[data-balderinnern="s3"]');
+    const h = await k.evaluate((e) => e.getBoundingClientRect().height);
+    pruefe("Z14m Handy 360 px: „Erinnern“ mindestens 44 px hoch", h >= 44, String(h));
+    // Prüf-Team W15 PR 2 (Design): am Handy stehen „Erinnern“ und „Akte öffnen“ nebeneinander, beide ganz im Bild
+    const lagen = await page.locator('[data-baldliste] tr[data-bald="reaktivierung"]', { has: k }).locator("[data-balderinnern], [data-baldakte]").evaluateAll((l) => l.map((e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: Math.round(r.top) }; }));
+    pruefe("Z14o Handy 360 px: beide Knöpfe nebeneinander und ganz im Bild", lagen.length === 2 && lagen[0].t === lagen[1].t && lagen.every((x) => x.l >= 0 && x.r <= 360.5), JSON.stringify(lagen));
+    pruefe("Z14n Handy 360 px: kein seitliches Wischen", (await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 0);
+    await ctx.close();
+  }
+  // Z14l Fahrlehrer sieht keinen Erinnerungs-Knopf; „entfällt“ bietet keine Erinnerung an
+  {
+    const { page, ctx } = await oeffne({ nutzer: "ad-1", hash: "#fristen?ansicht=bald", vorbereiten: vor({ s3reakt: false, extra: `
+      F.tabellen.schueler.find((x) => x.id === "s3").reakt_bezahlt_bis = ${JSON.stringify(KRtag(15))};
+      F.tabellen.fahrschule_preise.push({ id: "rx", fahrschule_id: "fs-test-1", art: "reaktivierung", klasse: null, bezeichnung: "Reaktivierung", einheit: "pauschal", betrag_cent: null, gueltig_ab: "2020-01-01", angelegt_von: "ad-1", angelegt_am: "2020-01-01T10:00:00Z" });` }) });
+    pruefe("Z14l Reaktivierung entfällt: kein Angebot, kein Knopf", !(await arten(page, "s3")).includes("reaktivierung") && (await page.locator('[data-balderinnern="s3"][data-baldart="reaktivierung"]').count()) === 0);
+    await ctx.close();
   }
 } finally {
   await browser.close();
