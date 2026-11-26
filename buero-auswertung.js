@@ -26,9 +26,10 @@ function awDurchfaelle(zeit, lehrerId) {
   return S.pruefungen.filter((e) => (e.result === "fail" || e.result === "nicht_bestanden") && !(e.payload || {}).b197
     && (!ab || (e.datum && e.datum >= ab)) && (!lehrerId || e.fahrlehrer_id === lehrerId));
 }
+const awFaults = (e) => { const f = (e.payload || {}).faults; return Array.isArray(f) ? f : []; };   // nur Listen zählen (alte/kaputte Einträge ignorieren)
 function awFehlerListe(durchgefallen) {
   const z = {};
-  for (const e of durchgefallen) for (const f of ((e.payload || {}).faults || [])) z[f] = (z[f] || 0) + 1;
+  for (const e of durchgefallen) for (const f of awFaults(e)) z[f] = (z[f] || 0) + 1;
   return Object.entries(z).sort((a, b) => b[1] - a[1] || String(FAULT_LABEL[a[0]] || a[0]).localeCompare(String(FAULT_LABEL[b[0]] || b[0]), "de"));
 }
 function renderFehler() {
@@ -36,7 +37,7 @@ function renderFehler() {
   const lehrerId = S.lehrer.some((l) => l.id === fristenParam("lehrer")) ? fristenParam("lehrer") : "";
   const durch = awDurchfaelle(zeit, lehrerId);
   const liste = awFehlerListe(durch);
-  const mitAngabe = durch.filter((e) => ((e.payload || {}).faults || []).length).length;
+  const mitAngabe = durch.filter((e) => awFaults(e).length).length;
   const gesamt = liste.reduce((a, [, n]) => a + n, 0);
   const filter = `<div class="filterzeile nicht-drucken">
       <label class="aw-filter"><span>Zeitraum</span><select class="suche" id="awZeit"><option value="12"${zeit === "12" ? " selected" : ""}>Letzte 12 Monate</option><option value="alle"${zeit === "alle" ? " selected" : ""}>Alles, was geladen ist</option></select></label>
