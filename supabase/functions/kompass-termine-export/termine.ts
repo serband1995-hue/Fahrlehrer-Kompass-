@@ -40,11 +40,30 @@ export type BestandenPruefung = { schueler_id: string | null; datum: string; kla
 export type ExportSchueler = { id: string; telefon: string | null; klasse?: string | null };
 // +49 / 0049 am Anfang gilt wie 0 (gleiche Nummer in zwei Schreibweisen = Geschwister erkannt). Nur fuer "bestanden".
 export function telefonNorm(t: string): string { return String(t || "").replace(/\(0\)/g, "").replace(/[\s\-\/().]/g, "").replace(/^(\+|00)490?/, "0"); }
-// Die Klasse aus der Sicht ist die Fahrform der App (B, BE, B197, Automatik, C1, C1E, C, CE). Fuehrerscheinklasse dazu:
-// B197 und Automatik sind Klasse B. Nur fuer die Ersatz-Klasse (Pruefung ohne eigene Klasse, z. B. aus der App).
-export function formZuKlasse(f: string | null | undefined): string {
-  const t = String(f || "").trim();
-  return /^(b197|automatik)$/i.test(t) ? "B" : t;
+// Klasse fuer die Akademie vereinheitlichen (26.11.2026). Die Akademie kennt B, BE, B96, B197, Automatik (Pkw) und
+// C, CE, C1, C1E (Lkw). Werte, die Tafel (buero.js KLASSEN) und App (index.html FORMS) wirklich anbieten:
+//   Tafel: B, B78, B197, BE, B+BE, C1, C1E, C, CE, BKF   App: B, BE, B197, Automatik, C1, C1E, C, CE
+// Regeln: Gross/klein und Leerzeichen egal. B mit Schluesselzahl -> B (ausser B96, B197). Automatik -> B (wie B78).
+// Kombination mit "+": Lkw-Klasse gewinnt (CE vor C vor C1E vor C1), sonst BE vor B96 vor B197 vor B.
+// Alles andere (BKF, A, AM ...) bleibt roh (nur ohne Leerzeichen am Rand).
+const LKW_RANG = ["CE", "C", "C1E", "C1"];
+const PKW_RANG = ["BE", "B96", "B197", "B"];
+function klasseTeil(t: string): string {
+  const u = t.replace(/\s+/g, "").toUpperCase();
+  if (u === "AUTOMATIK") return "B";
+  const m = /^B(\d+)$/.exec(u);
+  if (m && m[1] !== "96" && m[1] !== "197") return "B";
+  return u;
+}
+export function klasseNorm(k: string | null | undefined): string | null {
+  const roh = String(k ?? "").trim();
+  if (!roh) return null;
+  const teile = roh.split("+").map(klasseTeil).filter((t) => t);
+  const bekannt = teile.filter((t) => LKW_RANG.includes(t) || PKW_RANG.includes(t));
+  if (!teile.length || bekannt.length !== teile.length) return roh;   // unbekannt (BKF, A, AM ...): roh lassen
+  for (const r of LKW_RANG) if (bekannt.includes(r)) return r;
+  for (const r of PKW_RANG) if (bekannt.includes(r)) return r;
+  return roh;
 }
 export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchueler[], ab: string, heute: string): { telefon: string; datum: string; klasse: string | null }[] {
   const nachId = new Map<string, ExportSchueler>();
@@ -64,7 +83,7 @@ export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchu
     const tel = String(s.telefon || "").trim();
     const n = telefonNorm(tel);
     if (!n || (zaehl.get(n) || 0) > 1) continue;        // keine oder mehrdeutige Nummer
-    const k = String(p.klasse || formZuKlasse(s.klasse) || "").trim();
+    const k = klasseNorm(p.klasse) || klasseNorm(s.klasse) || "";   // vereinheitlicht VOR dem Schluessel: B78 und B fallen zusammen
     const schluessel = n + "|" + k.toUpperCase();      // je Nummer UND Klasse (B und CE = zwei Eintraege)
     const alt = best.get(schluessel);
     if (alt && alt.datum >= String(p.datum)) continue;  // juengste je Kombination gewinnt

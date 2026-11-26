@@ -1,6 +1,6 @@
 // Termin-Export v4 (25.11.2026): reine Rechenlogik von kompass-termine-export (termine.ts), ohne Datenbank, erfundene Nummern.
 // Aufruf:  node --experimental-strip-types scripts/termine-export-test.mjs   (Node 22; Gegenprobe: die Fassung aus der Akademie-Anleitung fällt bei T2 durch)
-import { bestandenBauen, termineBauen, mehrdeutigeNummern, telefonNorm, appBestanden } from "../supabase/functions/kompass-termine-export/termine.ts";
+import { bestandenBauen, termineBauen, mehrdeutigeNummern, telefonNorm, appBestanden, klasseNorm } from "../supabase/functions/kompass-termine-export/termine.ts";
 import { readFile } from "node:fs/promises";
 let ok = 0, fehler = 0;
 const pruefe = (id, text, r) => { if (r === true) { ok++; console.log(`ok  ${id} ${text}`); } else { fehler++; console.log(`FEHLER  ${id} ${text}: ${r}`); } };
@@ -83,9 +83,17 @@ pruefe("T14", "Sicht ohne Filter in_ausbildung im Bestanden-Teil", !/in_ausbildu
   pruefe("T22", "Tafel + App zusammen: App-only kommt mit Klasse aus der Sicht, Geschwister weg, kein Doppel", j(r2) === j([{ telefon: "0160 1000001", datum: "2026-11-05", klasse: "B" }, { telefon: "0160 1000002", datum: "2026-11-10", klasse: "A2" }]) || j(r2));
   pruefe("T23", "App: kaputte Eingaben werfen nicht", j(appBestanden([null, 5, "x", {}], [])) === "[]" && j(appBestanden(undefined, [])) === "[]" || "wirft/liefert");
   const r3 = bestandenBauen(appBestanden([{ schueler_id: "au", datum: "2026-11-03", result: "pass", payload: {}, geloescht: false }, { schueler_id: "bb", datum: "2026-11-04", result: "pass", payload: {}, geloescht: false }], []), [{ id: "au", telefon: "0160 2000001", klasse: "Automatik" }, { id: "bb", telefon: "0160 2000002", klasse: "B197" }], AB, HEUTE).map((x) => x.klasse);
-  pruefe("T25", "App-Eintrag: Fahrform Automatik/B197 wird Klasse B", j(r3) === j(["B", "B"]) || j(r3));
+  pruefe("T25", "App-Eintrag: Fahrform Automatik wird B, B197 bleibt B197", j(r3) === j(["B", "B197"]) || j(r3));
   const sperr = appBestanden([{ schueler_id: "n", datum: "2026-11-14", result: "pass", payload: {}, geloescht: false }], [{ schueler_id: "n", datum: "2026-11-14", klasse: "B", status: "nicht_bestanden" }]);
   pruefe("T26", "Tafel nicht_bestanden + App pass am selben Tag -> kein Eintrag", j(sperr) === "[]" || j(sperr));
+  // Klasse vereinheitlichen: jeder Wert, den Tafel (buero.js KLASSEN) und App (index.html FORMS) anbieten
+  const tabelle = { "B": "B", "B78": "B", "B197": "B197", "BE": "BE", "B+BE": "BE", "C1": "C1", "C1E": "C1E", "C": "C", "CE": "CE", "BKF": "BKF", "Automatik": "B",
+    " b 78 ": "B", "b + be": "BE", "B96": "B96", "C+CE": "CE", "C1+C1E": "C1E", "B+C": "C", "BE+C1E": "C1E", "B+CE+C1": "CE", "A": "A", "AM": "AM", "C+BKF": "C+BKF", "": null };
+  const falsch = Object.entries(tabelle).filter(([k, w]) => klasseNorm(k) !== w).map(([k, w]) => k + "->" + klasseNorm(k) + " statt " + w);
+  pruefe("T28", "Klasse: feste Tabelle aller angebotenen Werte + Kombinationen", !falsch.length || falsch.join(", "));
+  pruefe("T29", "Klasse: null/undefined -> null", klasseNorm(null) === null && klasseNorm(undefined) === null || "falsch");
+  const r4 = bestandenBauen([{ schueler_id: "k", datum: "2026-11-01", klasse: "B78" }, { schueler_id: "k", datum: "2026-11-09", klasse: "B" }, { schueler_id: "k", datum: "2026-10-01", klasse: "B+BE" }], [{ id: "k", telefon: "0160 3000001", klasse: "B" }], AB, HEUTE).map((x) => x.klasse + x.datum).sort();
+  pruefe("T30", "B78 und B fallen zusammen (juengste), B+BE wird BE", j(r4) === j(["B2026-11-09", "BE2026-10-01"]) || j(r4));
   const idx3 = await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8");
   const teil3 = idx3.slice(idx3.indexOf("async function bestandenLaden"), idx3.indexOf("Deno.serve"));
   pruefe("T27", "Tafel laedt bestanden und nicht_bestanden, App nur mit funktionierender Tafel", /in\("status", \["bestanden", "nicht_bestanden"\]\)/.test(teil3) && /!tafelOk/.test(teil3) && /appBestanden\(\(kp \|\| \[\]\) as AppPruefung\[\], tafelAlle\)/.test(teil3) || "fehlt");
