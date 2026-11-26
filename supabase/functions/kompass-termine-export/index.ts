@@ -56,15 +56,24 @@ async function bestandenLaden(client: ReturnType<typeof createClient>, heute: st
   try {
     const ab = berlinHeute(new Date(Date.now() - 120 * 86400000));
     // Quelle 1: Tafel des Bueros (pruefungstermine). Fehler -> nur dieser Teil leer.
+    // Geladen werden bestanden UND nicht_bestanden: jedes Tafel-Ergebnis sperrt einen App-Eintrag am selben Tag (wie im Buero:
+    // die Tafel gewinnt). Ausgeliefert werden nur die bestandenen.
     let tafel: BestandenPruefung[] = [];
+    let tafelAlle: BestandenPruefung[] = [];
+    let tafelOk = false;
     try {
       const { data: pb, error: e2 } = await client.from("pruefungstermine")
-        .select("schueler_id, datum, klasse").eq("art", "praxis").eq("status", "bestanden")
+        .select("schueler_id, datum, klasse, status").eq("art", "praxis").in("status", ["bestanden", "nicht_bestanden"])
         .gte("datum", ab).lte("datum", heute).not("schueler_id", "is", null)
         .order("datum", { ascending: false }).limit(5000);
       if (e2) console.error("Datenbankfehler (Bestanden Tafel):", e2.message);
       else if ((pb || []).length >= 1000) console.error("Zu viele bestandene Pruefungen (Tafel) fuer eine Abfrage");
-      else tafel = (pb || []) as BestandenPruefung[];
+      else {
+        tafelAlle = (pb || []) as BestandenPruefung[];
+        tafelOk = true;
+        tafel = ((pb || []) as (BestandenPruefung & { status?: string })[]).filter((p) => p.status === "bestanden")
+          .map((p) => ({ schueler_id: p.schueler_id, datum: p.datum, klasse: p.klasse }));
+      }
     } catch (e) { console.error("Fehler (Bestanden Tafel):", e instanceof Error ? e.message : String(e)); }
     // Quelle 2 (v4.1): Fahrlehrer-App (kalender_pruefungen). Fehler -> nur dieser Teil leer. Datum kann Text oder Datum sein:
     // Vergleich als Text "kleiner als morgen", damit auch ein Zeitstempel von heute mitzaehlt. Geloescht/B197 prueft appBestanden.
@@ -77,7 +86,8 @@ async function bestandenLaden(client: ReturnType<typeof createClient>, heute: st
         .order("datum", { ascending: false }).limit(5000);
       if (e3) console.error("Datenbankfehler (Bestanden App):", e3.message);
       else if ((kp || []).length >= 1000) console.error("Zu viele bestandene Pruefungen (App) fuer eine Abfrage");
-      else app = appBestanden((kp || []) as AppPruefung[], tafel);
+      else if (!tafelOk) console.error("App-Teil leer: ohne Tafel kann ein Widerspruch (Tafel nicht bestanden) nicht erkannt werden");
+      else app = appBestanden((kp || []) as AppPruefung[], tafelAlle);
     } catch (e) { console.error("Fehler (Bestanden App):", e instanceof Error ? e.message : String(e)); }
     const pb = tafel.concat(app);
     if (!pb.length) return [];
