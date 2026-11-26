@@ -116,6 +116,7 @@ function undoAblaufen(ev) {
 function toastUndo(text, rueckgaengig, optionen) {
   const o = optionen || {};
   undoAblaufen(); // ein früherer Hinweis ist damit endgültig
+  if (typeof zmKarteZu === "function") zmKarteZu(); // W15c: die Karte „Zahlungsaufforderung senden“ steht am selben Ort, nie übereinander
   const el = document.createElement("div");
   el.className = "toast toast-undo zeigen";
   el.setAttribute("role", "status");

@@ -110,6 +110,8 @@ const karte = (page) => page.locator("#zmKarte");
   pruefe("P1b Knopf „Zahlungsaufforderung senden (Test) · 120,00 €“", /Zahlungsaufforderung senden \(Test\) · 120,00\s€/.test(await knopf.innerText()), await karte(page).innerText());
   pruefe("P1c Fenster ist zu", (await page.locator("dialog[open]").count()) === 0);
   pruefe("P1d nichts automatisch gesendet", (await anrufe(page)).length === 0);
+  const kb = await karte(page).boundingBox();
+  pruefe("P1f Karte kompakt: höchstens 150 px hoch (PC)", kb && kb.height <= 150, JSON.stringify(kb));
   const h = await knopf.boundingBox();
   pruefe("P1e Knopf mindestens 44 px hoch", h && h.height >= 44, JSON.stringify(h));
   await knopf.click(); await page.waitForTimeout(1300);
@@ -138,9 +140,28 @@ const karte = (page) => page.locator("#zmKarte");
   const sid = await waehle(page);
   await plane(page, sid);
   await karte(page).locator("[data-zmksenden]").click(); await page.waitForTimeout(300);
+  pruefe("P6a Rückgängig-Hinweis steht unten, am Ort der Karte (nicht oben wie in der Akte)", await page.evaluate(() => { const u = document.querySelector(".toast-undo:not(.zm-karte)"); return !!u && !u.classList.contains("zm-toast") && u.getBoundingClientRect().top > innerHeight / 2; }));
   await page.locator(".toast-undo [data-undo]").click(); await page.waitForTimeout(3300);
   pruefe("P6 Rückgängig: kein Aufruf", (await anrufe(page)).length === 0);
+  // P6c ein anderer Rückgängig-Hinweis schließt die Karte (nie übereinander, Prüf-Team Bedienung); P6d Escape schließt die Karte
+  await plane(page, await waehle(page));
+  pruefe("P6c Karte steht wieder", (await karte(page).count()) === 1);
+  await page.evaluate(() => toastUndo("Anderer Hinweis", () => {}));
+  pruefe("P6c anderer Rückgängig-Hinweis → Karte zu", (await karte(page).count()) === 0);
+  await page.evaluate(() => undoAblaufen());
+  await plane(page, await waehle(page));
+  await page.keyboard.press("Escape"); await page.waitForTimeout(100);
+  pruefe("P6d Escape schließt die Karte", (await karte(page).count()) === 0);
   pruefe("P6b keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
+  await ctx.close();
+}
+// P11 Handy 360 px: Karte höchstens 150 px hoch, nichts ragt heraus
+{
+  const { page, ctx, konsole } = await oeffne({ nutzer: "ad-1", hash: "#pruefungen", vorbereiten: vor({ daten: false }), breite: 360, hoehe: 780 });
+  await plane(page, await waehle(page));
+  const kb = await karte(page).boundingBox();
+  pruefe("P11 360 px: Karte (mit Grund + Link) höchstens 150 px hoch und ganz im Bild", kb && kb.height <= 150 && kb.x >= 0 && kb.x + kb.width <= 360, JSON.stringify(kb));
+  pruefe("P11b keine JS-Fehler", jsFehler(konsole).length === 0, konsole.join(" | "));
   await ctx.close();
 }
 // P7 Theorieprüfung ohne Preis: Karte sagt, was fehlt, Link zu den Preisen

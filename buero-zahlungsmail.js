@@ -388,12 +388,12 @@ function zmNachPruefung(p) {
   el.id = "zmKarte"; el.className = "toast toast-undo zeigen zm-karte"; el.setAttribute("role", "status");
   el.dataset.zmmodus = zmModus();
   const name = d.x.name || "Schüler";
-  const kopf = `<span class="toast-text"><b>Prüfung gespeichert.</b> ${esc(d.wofuer)} · ${esc(name)}</span>`;
+  const kopf = `<span class="toast-text"><b>Prüfung gespeichert</b> · ${esc(name)}</span>`;
   let rest;
   if (d.gesendet) rest = `<span class="zm-karte-haken" data-zmkhaken>✓ Zahlungsaufforderung gesendet am ${esc(zmZeit(d.gesendet.gesendet_am || d.gesendet.angelegt_am))}${d.gesendet.modus === "test" ? " (Test)" : ""}</span>`;
-  else if (d.grund) rest = `<span class="zm-karte-grund" data-zmkgrund>Zahlungsaufforderung: ${esc(d.grund)}</span>${d.link ? `<a class="toast-knopf" href="${esc(d.link[0])}" data-zmklink>${esc(d.link[1])}</a>` : ""}`;
+  else if (d.grund) rest = `<span class="zm-karte-grund" data-zmkgrund>Zahlung anfordern: ${esc(d.grund)}</span>${d.link ? `<a class="toast-knopf" href="${esc(d.link[0])}" data-zmklink>${esc(d.link[1])}</a>` : ""}`;
   else rest = `<button type="button" class="toast-knopf" data-zmksenden>${d.echt ? "Zahlungsaufforderung senden" : "Zahlungsaufforderung senden (Test)"} · ${esc(zmEuroText(d.cent))}</button>`;
-  el.innerHTML = kopf + rest + `<button type="button" class="toast-knopf zm-karte-zu" data-zmkzu aria-label="Schließen">×</button>`;
+  el.innerHTML = kopf + `<button type="button" class="toast-knopf zm-karte-zu" data-zmkzu aria-label="Schließen">×</button>` + rest;
   el.querySelector("[data-zmkzu]").addEventListener("click", zmKarteZu);
   const l = el.querySelector("[data-zmklink]");
   if (l) l.addEventListener("click", () => zmKarteZu());
@@ -404,17 +404,19 @@ function zmNachPruefung(p) {
     const modus = el.dataset.zmmodus;
     if (modus !== zmModus()) { zmKarteZu(); toast(`Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte in der Akte senden.`, true); return; }
     b.disabled = true; zmKarteZu();
-    zmVersand(p.schueler_id, "pruefung", d.cent, d.wofuer, modus);
+    zmVersand(p.schueler_id, "pruefung", d.cent, d.wofuer, modus, { unten: true }); // Rückgängig-Hinweis am selben Ort wie die Karte (Design-Kritiker)
   });
   document.body.appendChild(el);
   el._timer = setTimeout(zmKarteZu, Number(window.ZM_KARTE_MS) > 0 ? Number(window.ZM_KARTE_MS) : ZM_KARTE_MS);
   return true;
 }
 window.addEventListener("hashchange", zmKarteZu);
+// Escape schließt die Karte (nur wenn kein Fenster offen ist: dort schließt Escape das Fenster)
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.getElementById("zmKarte") && !document.querySelector("dialog[open]")) zmKarteZu(); });
 
 // Versand mit 5 Sekunden „Rückgängig“ (Akte und Karte nach dem Eintragen einer Prüfung, W15c): erst danach geht die Mail los.
 // modus = der Modus, den der Bildschirm gezeigt hat (der Server prüft ebenfalls).
-async function zmVersand(sid, art, cent, wofuer, modus) {
+async function zmVersand(sid, art, cent, wofuer, modus, opt) {
   const schluessel = sid + "|" + art;
   const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
   ZM.laeuft.add(schluessel); mailBloeckeAktualisieren();
@@ -446,7 +448,7 @@ async function zmVersand(sid, art, cent, wofuer, modus) {
       else { zmNeuZeichnen(sid); toast(text, true); }
     },
   });
-  if (u && u.el) u.el.classList.add("zm-toast");
+  if (u && u.el && !(opt && opt.unten)) u.el.classList.add("zm-toast");
 }
 async function zmSitzung() {
   let token = null;
