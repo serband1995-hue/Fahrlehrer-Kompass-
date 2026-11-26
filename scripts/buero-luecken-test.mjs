@@ -252,7 +252,21 @@ for (const [fall, personen, erwartet] of NUR && NUR !== "L7" ? [] : [
       return f;
     });
   }
+  if (erwartet && !personen.length) {
+    // W16 Teil 3 B: Ohne Link zur App ist „ganz abmelden“ der einzige Ausweg – sichtbar, groß genug, und er wirkt
+    await pruefe("L7", `[${fall}] „ganz abmelden“ sichtbar, ≥ 44 px, kein Link zur App`, async () => {
+      const f = [];
+      const h = await page.evaluate(() => { const b = document.querySelector("#wer [data-abmelden]"); return b ? b.getBoundingClientRect().height : 0; });
+      if (h < 43.5) f.push("Abmelden nur " + Math.round(h) + " px");
+      if (await page.$("#zurApp")) f.push("Link zur App noch da");
+      return f;
+    });
+  }
   await pruefe("L7", `[${fall}] App-Seite bleibt gesperrt (PIN nie umgangen)`, () => page.evaluate(() => (document.getElementById("app").inert ? null : "Seite bedienbar")));
+  if (erwartet && !personen.length) {
+    await page.click("#wer [data-abmelden]"); await warte(page, 800);
+    await pruefe("L7", `[${fall}] „ganz abmelden“ führt zur Anmeldung`, async () => ((await page.isVisible("#loginMail")) ? null : "Anmeldung nicht sichtbar"));
+  }
   await pruefe("L7", `[${fall}] keine JS-Fehler, keine Browser-Fenster`, () => konsole.concat(dialoge));
   await ctx.close();
 }

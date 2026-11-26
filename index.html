@@ -4203,16 +4203,19 @@ function _eingabeOffen() {
   } catch (e) {}
   return false;
 }
-const _BLEIBT_TEXT = "Du bleibst in der App, weil du gerade etwas eingibst. Büro-Seite: Menü › Einstellungen › Startseite.";
+// W16 3B: Das Büro hat keine Wahl in den Einstellungen; es kommt beim nächsten Öffnen der App zur Büro-Seite.
+function _bleibtText() { return _authProfile && _authProfile.rolle === "buero"
+  ? "Du bleibst kurz hier, weil du gerade etwas eingibst. Danach die App neu öffnen: Dann kommt die Büro-Seite."
+  : "Du bleibst in der App, weil du gerade etwas eingibst. Büro-Seite: Menü › Einstellungen › Startseite."; }
 // Startseite „Büro-Seite“ beim Start oder nach dem neuen Passwort: mit eigenem Stand erst alles hochladen
 // (sonst bliebe Neues nur auf diesem Gerät), dann weiter. true = Seite wird gewechselt.
 async function _startZumBuero() {
   if (_startWeiterWartet || !_authUser || !window.KS_START || _startZiel() !== "buero" || !KS_START.weiterMoeglich("buero")) return false;
-  if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+  if (_eingabeOffen()) { toast(_bleibtText()); return false; }
   if (!_nurGesamtansicht()) {
     toast("Startseite Büro-Seite: sichere kurz deine Daten …");
     if (!(await _eigenesSichern(8000))) { toast("Nicht alles gesichert (Internet?). Du bleibst in der App."); return false; }
-    if (_eingabeOffen()) { toast(_BLEIBT_TEXT); return false; }
+    if (_eingabeOffen()) { toast(_bleibtText()); return false; }
   }
   return _zurBueroWeiter();
 }
@@ -8077,7 +8080,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.25.15";
+const APP_VERSION="2026.11.25.16";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

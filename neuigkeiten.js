@@ -4,6 +4,9 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.25.16", datum: "2026-11-26", kurz: "Büro: Hinweise passen jetzt zur Büro-Seite.",
+    punkte: ["Das Büro bekommt keine Hinweise mehr auf Einstellungen, die es gar nicht hat.",
+             "Im Anmeldefenster des Büros steht jetzt „an diesem Gerät ganz abmelden“."] },
   { version: "2026.11.25.15", datum: "2026-11-25", kurz: "Büro: Erinnerung an Fristen per Mail auf Knopfdruck.",
     punkte: ["Unter „Läuft bald ab“ gibt es bei Reaktivierung, Theorie, Führerscheinantrag, Frist der Behörde und Umschreiber den Knopf „Erinnern“. Er öffnet die Akte, dort geht die Mail nach 5 Sekunden raus (vorher „Rückgängig“ möglich).",
              "An die Reaktivierung kann man jetzt schon erinnern, bevor sie fällig ist. In der Mail steht, wann sie fällig ist.",

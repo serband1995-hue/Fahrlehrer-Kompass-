@@ -466,7 +466,7 @@ function zeigeNeuNachUpdate() {
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
-    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin funktioniert alles wie gewohnt in der Kompass-App (Menü › Einstellungen › Startseite › Fahrschule).</p></div>`;
+    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin bitte die Fahrschul-Leitung fragen.</p></div>`;
 }
 
 /* ---------- Heute ---------- */
