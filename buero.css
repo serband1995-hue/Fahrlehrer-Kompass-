@@ -1125,3 +1125,18 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .zm-karte .toast-knopf:not(.zm-karte-zu){min-height:44px;text-decoration:none;display:flex;align-items:center;justify-content:center;width:100%;box-sizing:border-box;}
 .zm-karte .zm-karte-haken,.zm-karte .zm-karte-grund{font-weight:500;font-size:14px;}
 .zm-karte .toast-text b{font-weight:700;}
+
+/* W19 Teil 3: Punktesystem (buero-punkte.js) */
+.punkte-kopf{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.punkte-stand{font-size:22px;}
+.punkte-stand b{font-size:34px;}
+.punkte-titel{margin:18px 0 6px;font-size:18px;}
+.punkte-liste{list-style:none;margin:0 0 10px;padding:0;max-height:260px;overflow:auto;}
+.punkte-zeile{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line-soft);}
+.punkte-zahl{flex:0 0 72px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;}
+.punkte-zahl.plus{color:var(--gruen);}
+.punkte-zahl.minus{color:var(--rot);}
+.punkte-text{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere;}
+.punkte-edit .es-name{min-width:0;}
+.punkte-edit .es-name input{width:100%;box-sizing:border-box;}
+.punkte-edit .es-wert{flex:0 0 min(190px,40%);}
