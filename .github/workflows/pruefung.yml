@@ -51,6 +51,8 @@ jobs:
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/vorlagen-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/erinnerung-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/papierkorb-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/belege-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/w19-probe-sql-test.mjs
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
   # fand keinen Weg, Schüler anzulegen). Jede Rolle wird vom Start bis zum gespeicherten Schüler durchgespielt.
@@ -91,6 +93,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/schueler-ueberblick-test.mjs
       - name: "Fahrcheck-Menü zeigt die echte Zahl (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/fc-menue-test.mjs
+      - name: "Zahlungsbelege im Büro (W19)"
+        run: NODE_PATH=$(npm root -g) node scripts/belege-test.mjs
       - name: "Schülerliste geordnet: feste Gruppen, Sortierung gemerkt (W17)"
         run: NODE_PATH=$(npm root -g) node scripts/schuelerliste-test.mjs
       - name: "Kalender: Termine erst nach 0,8 s Halten ziehen (W17)"
