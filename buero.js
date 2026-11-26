@@ -3319,8 +3319,8 @@ function renderFcStunden() {
     const knoepfe = erw || mitZahl ? [
       abKnoepfe,
       buero !== "fehlt" ? `<button class="knopf klein" data-fcstatus="fehlt" data-id="${esc(t.id)}" type="button">Fehlt</button>` : "",
-      buero === "fehlt" || (ls && ls.stand === "fehlt" && buero === "abgegeben") ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
-    ].join("") : "";
+      buero === "fehlt" || (ls && ls.stand === "fehlt") ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : "",
+    ].join("") : ls && ls.stand === "fehlt" ? `<button class="knopf klein" data-fcnach="${esc(t.id)}" type="button">Nachgereicht</button>` : ""; // W19: auch 45 Min mit „vergessen“ (sonst kein Weg zum Lohn)
     return `<tr>
       <td class="zeitspalte">${esc(datumDE(t.datum))}<div class="unter">${esc(t.von || "")}${t.bis ? "–" + esc(t.bis) : ""}</div>${erwartet ? (g.stufe === "verfallen" ? `<div><span class="marke-pill rot">verfallen ${esc(datumDE(g.bis))}</span></div>` : `<div class="unter">gültig bis ${esc(datumDE(g.bis))}</div>${g.stufe === "bald" ? `<div><span class="marke-pill gelb">läuft bald ab</span></div>` : ""}`) : ""}</td>
       <td><b>${esc(schuelerName(t.schueler_id) || t.interessent_name || "–")}</b><div class="unter nur-unter">${esc(lehrerName(t.fahrlehrer_id))} · ${esc(ARTEN[t.art] || t.art)}</div></td>
@@ -3498,6 +3498,8 @@ function fcAbgabeDialog(lehrerId) {
     // Dieselbe Stunde zweimal (gefahren und nachgereicht): die größere Zahl. Ohne Spalte (alte Datenbank) wie bisher.
     const nJe = {};
     r.posten.forEach((p) => { if (p.n && ok.includes(p.id)) nJe[p.id] = Math.max(nJe[p.id] || 0, p.n); });
+    // Prüfer Büro: eine vorher einzeln gewählte größere Zahl („2 abgegeben“) nicht wieder verkleinern
+    S.termine.forEach((t) => { if (nJe[t.id] && t.buero_fc_status === "abgegeben" && t.buero_fc_anzahl != null) nJe[t.id] = Math.max(nJe[t.id], Number(t.buero_fc_anzahl) || 0); });
     const gruppen = {};
     ok.forEach((id) => { const k = fcAnzahlDa() ? String(nJe[id]) : "-"; (gruppen[k] = gruppen[k] || []).push(id); });
     let a = { error: null };
