@@ -72,6 +72,11 @@ declare
   bestand bigint;
   passt boolean;
 begin
+  -- Richter: Rechte zuerst, sonst verrät eine Fehlermeldung (z. B. Kontostand) etwas über fremde Schüler
+  if auth.uid() is not null and not (public.zm_darf(new.fahrschule_id)
+       or (new.art in ('vergeben','einloesen') and public.punkte_eigener_fl(new.fahrschule_id, new.schueler_id))) then
+    raise exception 'Keine Berechtigung' using errcode = '42501';
+  end if;
   sys := coalesce(public.fahrschule_einstellung(new.fahrschule_id, 'punkte.system'), '{}'::jsonb);
   if coalesce(sys ->> 'aktiv', 'false') <> 'true' then
     raise exception 'Das Punktesystem ist ausgeschaltet' using errcode = '42501';

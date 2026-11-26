@@ -68,7 +68,7 @@ ok("Standard aus: Fahrlehrer kann nichts buchen", true, /Punktesystem ist ausges
 await einst(BU, A, "punkte.system", { aktiv: true, verschenken: false, bedingungen: "" });
 await einst(BU, A, "punkte.regeln", { liste: [{ id: "r1", name: "Pünktlich erschienen", punkte: 10 }, { id: "r2", name: "Theorie bestanden", punkte: 50 }] });
 await einst(BU, A, "punkte.praemien", { liste: [{ id: "p1", name: "Gratis Fahrstunde", punkte: 100 }, { id: "p2", name: "Kleines Geschenk", punkte: 20 }] });
-ok("Fahrlehrer darf Einstellungen nicht ändern (Schalter)", true, /row-level security/.test(await fehler(() => einst(FL, A, "punkte.system", { aktiv: false }))));
+ok("Fahrlehrer darf Einstellungen nicht ändern (Schalter)", true, /Keine Berechtigung|row-level security/.test(await fehler(() => einst(FL, A, "punkte.system", { aktiv: false }))));
 
 // ---------- Büro ----------
 const b1 = (await als(BU, () => buche(A, "s1", "vergeben", 30, "  Test Büro  ")))[0];
@@ -87,7 +87,7 @@ ok("Grund Pflicht", true, /Grund|check/.test(await fehler(() => als(BU, () => bu
 ok("unbekannte Art abgelehnt", true, /check|row-level/.test(await fehler(() => als(BU, () => buche(A, "s1", "geschenkt", 5, "x")))));
 ok("Schüler einer fremden Fahrschule abgelehnt", true, /gehört nicht/.test(await fehler(() => als(BU, () => buche(A, "s2", "vergeben", 5, "x")))));
 // Hinweis: BEFORE-Auslöser laufen vor der Regel; für Fahrschule B kommt darum schon „ausgeschaltet“ – abgelehnt ist es in jedem Fall
-ok("Büro A kann nicht für Fahrschule B buchen (WITH CHECK)", true, /row-level security|ausgeschaltet/.test(await fehler(() => als(BU, () => buche(B, "s2", "vergeben", 5, "x")))));
+ok("Büro A kann nicht für Fahrschule B buchen (WITH CHECK)", true, /Keine Berechtigung|row-level security|ausgeschaltet/.test(await fehler(() => als(BU, () => buche(B, "s2", "vergeben", 5, "x")))));
 ok("gegen_schueler_id bei vergeben wird ignoriert", null, (await als(BU, () => q(`insert into public.schueler_punkte (fahrschule_id, schueler_id, art, punkte, grund, gegen_schueler_id) values ('${A}','s1','vergeben',1,'x','s3') returning gegen_schueler_id`)))[0].gegen_schueler_id);
 
 // ---------- Fahrlehrer (eigener Schüler) ----------
@@ -100,8 +100,9 @@ await als(FL, () => buche(A, "s4", "vergeben", 50, "Theorie bestanden"));
 const f2 = (await als(FL, () => buche(A, "s4", "einloesen", 20, "Kleines Geschenk")))[0];
 ok("Fahrlehrer: einlösen klappt mit Stand 60", { p: -20, s: 40 }, { p: f2.punkte, s: await stand(FL, A, "s4") });
 ok("Fahrlehrer: Regel-Name als Prämie abgelehnt (falsche Liste)", true, /nicht in der Liste/.test(await fehler(() => als(FL, () => buche(A, "s4", "einloesen", 10, "Pünktlich erschienen")))));
-ok("Fahrlehrer: Schüler des Kollegen abgelehnt (WITH CHECK, Lehre W18)", true, /row-level security/.test(await fehler(() => als(FL, () => buche(A, "s3", "vergeben", 10, "Pünktlich erschienen")))));
-ok("Fahrlehrer: Schüler ohne Fahrlehrer / fremder Fahrschule abgelehnt", true, /row-level security|gehört nicht/.test(await fehler(() => als(FL, () => buche(A, "s2", "vergeben", 10, "Pünktlich erschienen")))));
+ok("Fahrlehrer: Schüler des Kollegen abgelehnt (WITH CHECK, Lehre W18)", true, /Keine Berechtigung|row-level security/.test(await fehler(() => als(FL, () => buche(A, "s3", "vergeben", 10, "Pünktlich erschienen")))));
+ok("Fahrlehrer: Einlösen beim Schüler des Kollegen verrät keinen Kontostand (Richter)", true, await (async () => { const e = await fehler(() => als(FL, () => buche(A, "s3", "einloesen", 20, "Kleines Geschenk"))); return /Keine Berechtigung/.test(e) && !/Kontostand|genug/.test(e); })());
+ok("Fahrlehrer: Schüler ohne Fahrlehrer / fremder Fahrschule abgelehnt", true, /Keine Berechtigung|row-level security|gehört nicht/.test(await fehler(() => als(FL, () => buche(A, "s2", "vergeben", 10, "Pünktlich erschienen")))));
 ok("Fahrlehrer: sieht nur eigene Schüler (s1 + s4)", 2, (await als(FL, () => q(`select count(distinct schueler_id)::int n from public.schueler_punkte`)))[0].n);
 ok("Fahrlehrer: sieht keine Buchungen von s3", 0, (await als(FL, () => q(`select count(*)::int n from public.schueler_punkte where schueler_id='s3'`)))[0].n);
 ok("Kollege sieht nichts von s1/s4", 0, (await als(FL2, () => q(`select count(*)::int n from public.schueler_punkte`)))[0].n);
@@ -119,7 +120,7 @@ ok("Büro A sieht nur eigene Fahrschule", true, (await als(BU, () => q(`select c
 ok("Büro B sieht nichts von A", 0, (await als(BUB, () => q(`select count(*)::int n from public.schueler_punkte`)))[0].n);
 ok("Büro B: Kontostand von A gesperrt", true, /Keine Berechtigung/.test(await fehler(() => stand(BUB, A, "s1"))));
 ok("inaktives Büro sieht nichts", 0, (await als(INAKTIV, () => q(`select count(*)::int n from public.schueler_punkte`)))[0].n);
-ok("inaktives Büro kann nicht buchen", true, /row-level security|nicht in der Liste/.test(await fehler(() => als(INAKTIV, () => buche(A, "s1", "vergeben", 1, "x")))));
+ok("inaktives Büro kann nicht buchen", true, /Keine Berechtigung|row-level security|nicht in der Liste/.test(await fehler(() => als(INAKTIV, () => buche(A, "s1", "vergeben", 1, "x")))));
 const gesamt = (await q(`select count(*)::int n from public.schueler_punkte`))[0].n;
 ok("Super-Admin sieht alle", gesamt, (await als(SA, () => q(`select count(*)::int n from public.schueler_punkte`)))[0].n);
 ok("anon liest nicht", true, /permission denied/.test(await fehler(async () => { await db.exec(`set role anon`); try { await q(`select * from public.schueler_punkte`); } finally { await db.exec(`reset role`); } })));
@@ -133,9 +134,9 @@ ok("auch Eigentümer (Dienst) kann nicht löschen", true, /nicht geändert oder 
 // ---------- Verschenken ----------
 const gib = (uid, fs, von, an, p, g) => als(uid, () => q(`select public.punkte_verschenken('${fs}','${von}','${an}',${p},'${g}')`));
 ok("Verschenken aus: Funktion lehnt ab", true, /Verschenken ist ausgeschaltet/.test(await fehler(() => gib(BU, A, "s1", "s3", 10, "Geschenk"))));
-ok("Verschenken aus: direktes Einfügen von verschenkt_ab abgelehnt", true, /row-level security|ausgeschaltet/.test(await fehler(() => als(BU, () => q(`insert into public.schueler_punkte (fahrschule_id, schueler_id, art, punkte, grund, gegen_schueler_id) values ('${A}','s1','verschenkt_ab',-5,'x','s3')`)))));
+ok("Verschenken aus: direktes Einfügen von verschenkt_ab abgelehnt", true, /Keine Berechtigung|row-level security|ausgeschaltet/.test(await fehler(() => als(BU, () => q(`insert into public.schueler_punkte (fahrschule_id, schueler_id, art, punkte, grund, gegen_schueler_id) values ('${A}','s1','verschenkt_ab',-5,'x','s3')`)))));
 await einst(BU, A, "punkte.system", { aktiv: true, verschenken: true, bedingungen: "Nur zum Test" });
-ok("Verschenken an: direktes Einfügen bleibt für Clients gesperrt", true, /row-level security/.test(await fehler(() => als(BU, () => q(`insert into public.schueler_punkte (fahrschule_id, schueler_id, art, punkte, grund, gegen_schueler_id) values ('${A}','s3','verschenkt_an',5,'x','s1')`)))));
+ok("Verschenken an: direktes Einfügen bleibt für Clients gesperrt", true, /Keine Berechtigung|row-level security/.test(await fehler(() => als(BU, () => q(`insert into public.schueler_punkte (fahrschule_id, schueler_id, art, punkte, grund, gegen_schueler_id) values ('${A}','s3','verschenkt_an',5,'x','s1')`)))));
 const vorS1 = await stand(BU, A, "s1"), vorS3 = await stand(BU, A, "s3");
 await gib(BU, A, "s1", "s3", 40, "Geschenk");
 ok("Verschenken: zwei Zeilen, Summe bleibt gleich", { s1: vorS1 - 40, s3: vorS3 + 40 }, { s1: await stand(BU, A, "s1"), s3: await stand(BU, A, "s3") });

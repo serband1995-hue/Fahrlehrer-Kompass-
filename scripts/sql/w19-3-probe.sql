@@ -37,6 +37,22 @@ begin
   if to_regclass('public.schueler_punkte') is null then raise exception 'W19_FEHLER Migration fehlt: public.schueler_punkte'; end if;
   if to_regprocedure('public.punkte_verschenken(uuid,text,text,integer,text)') is null then raise exception 'W19_FEHLER Migration fehlt: punkte_verschenken'; end if;
 
+  -- wie W18 (0c) / w19-2-probe (0b): kein Auslöser auf den Tabellen der Probe darf synchron nach aussen rufen, sonst Abbruch vor dem Schreiben
+  v_schritt := '0b Ausloeser ohne synchronen Aufruf nach aussen';
+  select string_agg(distinct t.tgrelid::regclass::text || ' -> ' || pn.nspname || '.' || p.proname, ', ') into v_msg
+    from pg_trigger t
+    join pg_proc p on p.oid = t.tgfoid
+    join pg_namespace pn on pn.oid = p.pronamespace
+    join pg_language l on l.oid = p.prolang
+   where not t.tgisinternal
+     and t.tgrelid in (to_regclass('public.schueler'), to_regclass('public.profiles'), to_regclass('public.fahrschulen'), to_regclass('auth.users'),
+                       to_regclass('public.schueler_punkte'), to_regclass('public.fahrschule_einstellungen'), to_regclass('public.aenderungsprotokoll'))
+     and (regexp_replace(p.prosrc, 'net\.http_', 'NETHTTP_', 'gi') ~* '(dblink|extensions\.http|\mhttp_(get|post|put|patch|delete|head|request|header)\M|\mhttp\s*\()'
+          or l.lanname in ('plpython3u', 'plpythonu', 'plperlu', 'pltclu'));
+  if v_msg is not null then
+    raise exception 'W19_FEHLER Abbruch vor dem Schreiben: Ein Ausloeser ruft synchron nach aussen: %', v_msg;
+  end if;
+
   v_schritt := '1 Aufbau';
   insert into public.fahrschulen (id, name, slug) values (v_fs, 'W19 Probe Muster', 'w19p3-muster-' || v_lauf), (v_fs2, 'W19 Probe Fremd', 'w19p3-fremd-' || v_lauf);
   insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
