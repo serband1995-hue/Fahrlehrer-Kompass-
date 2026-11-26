@@ -57,6 +57,7 @@ pruefe("T14", "Sicht ohne Filter in_ausbildung im Bestanden-Teil", !/in_ausbildu
 // v4 Nachtrag: Seiten lückenlos, Abbruch erst bei leerer Seite, +490 gleich 0
 {
   const idx2 = await readFile(new URL("../supabase/functions/kompass-termine-export/index.ts", import.meta.url), "utf8");
+  pruefe("T20", "derselbe Schueler doppelt geladen = keine Geschwister", j(bestandenBauen([{ schueler_id: "z", datum: "2026-11-01", klasse: "B" }], [{ id: "z", telefon: "0176 7" }, { id: "z", telefon: "0176 7" }], AB, HEUTE)) === j([{ telefon: "0176 7", datum: "2026-11-01", klasse: "B" }]) || "weggelassen");
   pruefe("T18", "Schueler-Seiten lueckenlos (Versatz = geladene Zeilen, Ende bei leerer Seite)", (/\.range\(alle\.length, alle\.length \+ 999\)/.test(idx2) && /length === 0\) break/.test(idx2)) || "fehlt");
   pruefe("T19", "+49 0171 gilt wie 0171", telefonNorm("+49 (0)171 1") === telefonNorm("0171 1") && telefonNorm("+490171 1") === "01711" || "anders");
 }

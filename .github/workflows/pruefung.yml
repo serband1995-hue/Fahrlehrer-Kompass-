@@ -32,6 +32,8 @@ jobs:
         run: bash scripts/release-check.sh
       - name: Rechen-Test
         run: node scripts/rechnen-test.mjs
+      - name: "Termin-Export v4 (bestanden je Nummer und Klasse, Geschwister weg)"
+        run: node --experimental-strip-types scripts/termine-export-test.mjs
       - name: "W15 S3: einstellbare Fristen (ohne Einstellung wie vorher, gesetzliche Fristen fest)"
         run: node scripts/fristen-test.mjs
       - name: Cache-Test (nur eigene Caches löschen)

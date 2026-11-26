@@ -44,7 +44,7 @@ export function bestandenBauen(pruefungen: BestandenPruefung[], alle: ExportSchu
   const nachId = new Map<string, ExportSchueler>();
   const zaehl = new Map<string, number>();
   for (const s of alle) {
-    if (!s || !s.id) continue;
+    if (!s || !s.id || nachId.has(String(s.id))) continue;   // doppelt geladene Zeile (Seitenwechsel) nur einmal zaehlen
     nachId.set(String(s.id), s);
     const n = telefonNorm(String(s.telefon || "").trim());
     if (n) zaehl.set(n, (zaehl.get(n) || 0) + 1);
