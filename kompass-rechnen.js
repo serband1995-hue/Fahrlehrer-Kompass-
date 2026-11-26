@@ -274,6 +274,8 @@
     if (!erwartet) return { stand: "zaehlt", anteil, datum }; // nichts abzugeben
     const hat = t.bueroFc === "abgegeben" ? fcVomBuero(t) : 0;
     if (hat >= erwartet) return { stand: "zaehlt", anteil, datum: lohnNachDatum(t, datum) || datum };
+    // Als nachgereicht vermerkt: der Fahrcheck ist da, das Büro muss ihn nur noch bestätigen (nächste Abgabe) → wartet
+    if (t.fc === "nachgereicht") return { stand: "wartet", anteil: 0, datum };
     if (t.bueroFc === "abgegeben" || t.bueroFc === "fehlt" || t.fc === "v1" || t.fc === "v2" || t.fc === "offen") return { stand: "fehlt", anteil: 0, datum };
     return { stand: "wartet", anteil: 0, datum };
   }

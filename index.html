@@ -1742,8 +1742,15 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .vd-bonus-note.ok{background:rgba(207,154,62,.12);border-color:rgba(207,154,62,.3);color:#e8c45a;font-weight:700;}
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
+.vd-offen.vd-lohn{text-align:left;}
+.vd-offen.vd-lohn b{display:block;font-size:14px;}
+.vd-offen.vd-lohn span{display:block;margin-top:2px;}
+body.light .vd-offen{color:#8a3a2c;}
+body.light .vd-offen b{color:#6e2a1e;}
+body.light .fc-grp-eur{color:#8a3a2c;}
 .vd-offen.vd-wartet{color:var(--txt);background:var(--gold-soft);border-color:var(--gold-line);}
 .vd-offen.vd-wartet b{color:var(--gold);}
+body.light .vd-offen.vd-wartet,body.light .vd-offen.vd-wartet b{color:var(--txt);}
 /* ===== AKTE-NAV (Icon-Leiste Schülerakte) ===== */
 .akte-nav{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
 .akte-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--line);border-radius:13px;transition:transform .12s var(--pop);}
@@ -14913,8 +14920,11 @@ function _bfcAusZeilen(rows){
   if(!_authUser||!Array.isArray(rows))return;
   const ab=(window.KR&&KR.LOHN_FC_AB)||"2026-12-01", m={};
   rows.forEach(r=>{ if(r&&r.id&&["fahrstunde","sonder","nacht"].includes(r.art)&&r.datum&&r.datum>=ab) m[r.id]={s:r.buero_fc_status||"offen",n:r.buero_fc_anzahl==null?null:r.buero_fc_anzahl,nach:r.buero_fc_nachgereicht_am||null}; });
+  const vorher=_bfc&&_bfc.uid===_authUser.id?JSON.stringify(_bfc.m):null;
   _bfc={uid:_authUser.id,zeit:Date.now(),m};
   try{ localStorage.setItem(_BFC_KEY,JSON.stringify(_bfc)); }catch(e){}
+  // Prüfer Bedienung: hat das Büro inzwischen etwas bestätigt, die offene Verdienst-Karte gleich neu zeichnen
+  if(vorher!==null&&vorher!==JSON.stringify(m)){ try{ const w=document.getElementById("vdModWrap"); if(w&&typeof verdienstModulHTML==="function")w.innerHTML=verdienstModulHTML(); }catch(e){} }
 }
 function _lohnRegelAktiv(){ return !!(_fsAgg||(_authProfile&&_authProfile.fahrschule_id)); }
 // Lohn-Stand einer Stunde (Termin aus DB.lessons oder dayEvents): {stand, anteil, datum} oder null. Eine Rechnung für App und Büro.
@@ -16412,8 +16422,10 @@ function fcLesson(id){ return (DB.lessons||[]).find(x=>x.id===id); }
 function fcForgottenLessons(){
   // W17: nur Termine, für die es überhaupt einen Fahrcheck gibt (unter 45 Minuten: keiner, also auch keiner vergessen).
   // W19: Ausnahme alte Stunden (vor dem Stichtag) unter 45 Minuten, deren Vermerk noch auf den Lohn wirkt: sichtbar, damit man ihn entfernen kann.
-  return (DB.lessons||[]).filter(l=>(l.fc==="v1"||l.fc==="v2")&&(!window.KR||!KR.fcGebucht||KR.fcGebucht(l)>0||_lohnEntgehtUE(l)>0)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
+  // W19 (Prüfer Bedienung): ab dem Stichtag auch Stunden, bei denen das Büro „fehlt“ eingetragen hat (ohne eigenen Vermerk) – sonst Sackgasse
+  return (DB.lessons||[]).filter(l=>((l.fc==="v1"||l.fc==="v2")&&(!window.KR||!KR.fcGebucht||KR.fcGebucht(l)>0||_lohnEntgehtUE(l)>0))||_lohnFehltNeu(l)).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
 }
+function _lohnFehltNeu(l){ if(!l||l.fc==="nachgereicht"||!_lohnNeu(l))return false; const ls=_lohnStandVon(Object.assign({},l,{art:l.art||"fahrstunde",status:l.status||"geplant"})); return !!ls&&ls.stand==="fehlt"; }
 // UE, die durch einen Vermerk (noch) nicht bezahlt werden: alte Regel v1 halb, v2 ganz; ab dem Stichtag fehlt der Lohn ganz, bis nachgereicht
 function _lohnEntgehtUE(l){
   const ls=_lohnStandVon(Object.assign({},l,{art:l.art||"fahrstunde",status:l.status||"geplant"}));
@@ -16521,8 +16533,10 @@ function openFCMenu(id){
   // W19: ab dem Stichtag „Lohn folgt Fahrcheck-Abgabe“ – vergessen = kein Lohn, bis nachgereicht (nicht mehr halb)
   const neu=_lohnNeu(l)&&n>0, txV1=neu?"kein Lohn, bis nachgereicht":`nur ${eurHalb} €`, txV2=neu?"kein Lohn, bis nachgereicht":"0 €";
   const ls=neu?_lohnStandVon(l):null;
-  const lohnZeile=!ls?"":ls.stand==="zaehlt"?"Lohn: zählt ✓ (Büro hat die Fahrchecks)":ls.stand==="wartet"?"Lohn: wartet auf den Fahrcheck-Haken vom Büro":ls.stand==="fehlt"?"Lohn: Fahrcheck fehlt – kein Lohn, bis er nachgereicht ist":"Lohn: keiner (geschenkt)";
-  const tag=(v,lab,sub,cls)=>`<button class="es-act${cls?(' '+cls):''}${cur===v?' on':''}" data-fcset="${v}">${lab}${sub?`<span style="display:block;font-size:12px;opacity:.7;font-weight:600;margin-top:2px;">${sub}</span>`:""}</button>`;
+  const lohnFehlt=!!(ls&&ls.stand==="fehlt");
+  const markiert=lohnFehlt&&!cur?null:(cur||"normal"); // „Normal“ nicht als gewählt zeigen, wenn das Büro einen Fahrcheck vermisst
+  const lohnZeile=!ls?"":ls.stand==="zaehlt"?"Lohn: zählt ✓ (Büro hat die Fahrchecks)":ls.stand==="wartet"?"Lohn: wartet auf das Büro (Fahrchecks noch nicht bestätigt)":ls.stand==="fehlt"?"Lohn: Fahrcheck fehlt – kein Lohn, bis er nachgereicht ist":"Lohn: keiner (geschenkt)";
+  const tag=(v,lab,sub,cls)=>`<button class="es-act${cls?(' '+cls):''}${markiert===v?' on':''}" data-fcset="${v}">${lab}${sub?`<span style="display:block;font-size:12px;opacity:.7;font-weight:600;margin-top:2px;">${sub}</span>`:""}</button>`;
   let acts="";
   if(n>0){
     acts+=tag("normal",`Normal · ${n} FC erhalten`,neu?"voller Lohn, sobald das Büro sie hat":"voller Verdienst","primary");
@@ -16539,7 +16553,7 @@ function openFCMenu(id){
     }
     if(n>=2)acts+=tag("v2",_fcVermerkText("v2",n),txV2);
     acts+=tag("geschenkt","Stunde geschenkt","0 €");
-    if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"){ acts+=tag("nachgereicht","FC nachgereicht",neu?"voller Lohn, sobald das Büro ihn hat (Monat des Nachreichens)":"Verdienst kommt zurück (akt. Monat)","good"); }
+    if(cur==="v1"||cur==="v2"||cur==="halb_bewusst"||(lohnFehlt&&cur!=="nachgereicht")){ acts+=tag("nachgereicht","FC nachgereicht",neu?"voller Lohn, sobald das Büro ihn hat (Monat des Nachreichens)":"Verdienst kommt zurück (akt. Monat)","good"); }
   } else if(cur){
     // Unter 45 Minuten mit altem Vermerk: zurücksetzen muss gehen (der Vermerk wirkt sonst still auf den Verdienst)
     acts+=tag("normal","Vermerk entfernen","voller Verdienst · für diese Stunde gibt es keinen Fahrcheck","primary");
@@ -16573,7 +16587,7 @@ function routeFCMissing(){
   else groups.forEach(g=>{ const st=DB.students.find(s=>s.id===g.sid); const cnt=g.lessons.length; const euro=Math.round(g.ue*DB.verdienst.proUE);
     h+=`<div class="fc-grp"><div class="fc-grp-head"><div class="fc-nm">${esc(st?st.name:"—")}</div><div class="fc-grp-eur">−${eurFmt(euro)} · ${cnt}×</div></div>`;
     g.lessons.forEach(l=>{ h+=`<div class="fc-miss-row">
-        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${(()=>{ const n=_fcZahl(l), f=l.fc==="v1"?1:n; if(!n)return "unter 45 Min · alter Vermerk"; return f===1?"1 FC fehlt":f+" FC fehlen"; })()}</div></div>
+        <div class="fc-info"><div class="fc-meta">${isoDE(l.date)} · ${esc(l.von)} · ${(()=>{ const n=_fcZahl(l), f=l.fc==="v1"?1:n; if(!n)return "unter 45 Min · alter Vermerk"; if(l.fc!=="v1"&&l.fc!=="v2")return "Büro: Fahrcheck fehlt"; return f===1?"1 FC fehlt":f+" FC fehlen"; })()}</div></div>
         <button class="fc-yes" data-fcnach="${l.id}">Nachgereicht</button>
         <button class="fc-more" data-fcmore2="${l.id}" aria-label="Optionen">⋯</button>
       </div>`; });
@@ -17792,8 +17806,8 @@ function _verdienstModulHTMLContent(){
       <div class="thi-card future"><div class="thi-k"><span class="ic ic-gold" style="font-size:12px;">${ICN.cal}</span> Voraussichtlich</div><div class="thi-v">${_eurMasked(gesamtEuro)}</div><div class="thi-s">${fmtUE(prognoseUE)} UE gesamt · ${Math.round(Math.max(0,prognoseUE-verdientUE))} noch offen</div></div>
     </div>
     ${offenUE>0.3?`<div class="vd-offen">⚠ ${fmtUE(offenUE)} UE gefahren, FC noch offen · <b>${_eurMasked(leistungAusUE(offenUE))}</b> stehen aus</div>`:''}
-    ${(moUE.fcWartet||0)>0.01?`<div class="vd-offen vd-wartet">⏳ ${fmtUE(moUE.fcWartet)} UE gefahren, warten auf den Fahrcheck-Haken vom Büro · <b>${_eurMasked(leistungAusUE(moUE.fcWartet))}</b> kommen dazu, sobald das Büro die Fahrchecks bestätigt</div>`:''}
-    ${(moUE.fcFehlt||0)>0.01?`<div class="vd-offen">⚠ ${fmtUE(moUE.fcFehlt)} UE: Fahrcheck fehlt · <b>${_eurMasked(leistungAusUE(moUE.fcFehlt))}</b> kein Lohn, bis er nachgereicht ist</div>`:''}
+    ${(moUE.fcWartet||0)>0.01?`<div class="vd-offen vd-lohn vd-wartet"><b>${_eurMasked(leistungAusUE(moUE.fcWartet))} wartet auf das Büro</b><span>${fmtUE(moUE.fcWartet)} UE gefahren, Fahrchecks noch nicht bestätigt</span></div>`:''}
+    ${(moUE.fcFehlt||0)>0.01?`<div class="vd-offen vd-lohn"><b>${_eurMasked(leistungAusUE(moUE.fcFehlt))} fehlen: Fahrcheck fehlt</b><span>${fmtUE(moUE.fcFehlt)} UE · Lohn erst, wenn er nachgereicht ist</span></div>`:''}
     <div class="th-goal" style="margin-bottom:8px;">
       <div class="thg-lab"><span class="ic ic-gold" style="font-size:11px;">${ICN.chart}</span> Terminierte Fahrstunden diesen Monat</div>
       <div class="thg-val">${terminiertUE} UE</div>

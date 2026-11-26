@@ -3128,13 +3128,20 @@ function lohnVon(t) {
   if (!KR.lohnStand) return null;
   return KR.lohnStand(Object.assign({}, fcTermin(t), { bueroFc: t.buero_fc_status || "offen", bueroFcAnzahl: t.buero_fc_anzahl == null ? null : t.buero_fc_anzahl, bueroFcNachAm: t.buero_fc_nachgereicht_am || null }), { regelAktiv: true });
 }
+// Schon vorbei? Wie die App: heute zählt eine Stunde ab ihrem Ende (über Mitternacht: erst morgen)
+function lohnVorbei(t) {
+  const heute = KR.todayISO();
+  if (t.datum < heute) return true;
+  if (t.datum > heute || !t.von || !t.bis) return false;
+  const d = new Date();
+  return KR.terminEndeMin(t.von, t.bis) <= d.getHours() * 60 + d.getMinutes();
+}
 // Stunden eines Fahrlehrers ab dem Stichtag, deren Lohn noch wartet (Büro hat nicht bestätigt) oder fehlt (Fahrcheck fehlt)
 function lohnOffen(lehrerId) {
   const r = { wartet: 0, fehlt: 0 };
   if (!KR.lohnStand) return r;
-  const heute = KR.todayISO();
   for (const t of S.termine) {
-    if (t.fahrlehrer_id !== lehrerId || !t.datum || t.datum < KR.LOHN_FC_AB || t.datum >= heute) continue;
+    if (t.fahrlehrer_id !== lehrerId || !t.datum || t.datum < KR.LOHN_FC_AB || !lohnVorbei(t)) continue;
     const ls = lohnVon(t);
     if (ls && ls.stand === "wartet") r.wartet++; else if (ls && ls.stand === "fehlt") r.fehlt++;
   }
@@ -3204,8 +3211,7 @@ function renderFahrchecks() {
       <td><b>${esc(l.name || l.email)}</b></td>
       <td class="zahlspalte"><b>${r.soll}</b></td>
       <td class="zahlspalte nur-breit">${vermerkt ? `<span class="marke-pill gelb">${vermerkt}</span>` : "–"}</td>
-      <td>${status}</td>
-      <td class="nur-breit">${lo.wartet || lo.fehlt ? `${lo.wartet ? `<span class="marke-pill gelb" title="Gefahren, Fahrchecks noch nicht bestätigt">${lo.wartet} Std. wartet</span> ` : ""}${lo.fehlt ? `<span class="marke-pill rot" title="Fahrcheck fehlt – kein Lohn, bis nachgereicht">${lo.fehlt} Std. FC fehlt</span>` : ""}` : `<span class="leise">–</span>`}</td>
+      <td>${status}${lo.wartet || lo.fehlt ? `<div class="unter">Lohn: ${lo.wartet ? `<span class="marke-pill gelb" title="Gefahren, Fahrchecks noch nicht bestätigt">${lo.wartet} Std. warten auf Büro</span> ` : ""}${lo.fehlt ? `<span class="marke-pill rot" title="Fahrcheck fehlt – kein Lohn, bis nachgereicht">${lo.fehlt} Std. Fahrcheck fehlt</span>` : ""}</div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">
         ${r.soll || q ? `<button class="knopf klein${q ? "" : " haupt"}" data-fcabgabe="${esc(l.id)}" type="button">${q ? "Neu erfassen" : "Abgabe erfassen"}</button>` : ""}
         <a class="knopf klein" href="#fahrchecks?ansicht=stunden&lehrer=${esc(l.id)}&von=${esc(von)}&bis=${esc(bis)}">Stunden</a></div></td>
@@ -3226,9 +3232,9 @@ function renderFahrchecks() {
           <option value="">Alle Abgaben</option><option value="ohne"${statusF === "ohne" ? " selected" : ""}>Noch ohne Quittung</option>
           <option value="fehlend"${statusF === "fehlend" ? " selected" : ""}>Mit fehlenden Fahrchecks</option><option value="ok"${statusF === "ok" ? " selected" : ""}>Vollständig abgegeben</option></select>
       </div>
-      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte nur-breit">Als fehlend vermerkt</th><th>Abgabe</th><th class="nur-breit">Lohn wartet</th><th></th></tr></thead><tbody>${zeilen || `<tr><td colspan="6" class="leer">Nichts gefunden.</td></tr>`}</tbody></table>
+      <table class="tabelle"><thead><tr><th>Fahrlehrer</th><th class="zahlspalte">Erwartet</th><th class="zahlspalte nur-breit">Als fehlend vermerkt</th><th>Abgabe</th><th></th></tr></thead><tbody>${zeilen || `<tr><td colspan="5" class="leer">Nichts gefunden.</td></tr>`}</tbody></table>
       <p class="leise klein">So geht's: Umschlag des Fahrlehrers zählen, „Abgabe erfassen“, Zahl eintippen. Stimmt sie, ist alles mit einem Klick erledigt. Auch frühere Zeiträume lassen sich nachtragen (Zeitraum oben wählen). Jede Abgabe ist eine Quittung, die nicht geändert werden kann. Stimmt etwas nicht, wird sie neu erfasst; die alte bleibt als Verlauf stehen. Der Fahrlehrer sieht sie in seiner App.</p>
-      <p class="leise klein"><b>Lohn:</b> Ab ${esc(datumDE(KR.LOHN_FC_AB || "2026-12-01"))} zählt der Lohn einer Fahrstunde erst, wenn hier ihre Fahrchecks als abgegeben bestätigt sind. „Lohn wartet“ zählt die gefahrenen Stunden, bei denen das noch fehlt (ab diesem Tag, alle Zeiträume). Fehlt ein Fahrcheck, gibt es für die Stunde keinen Lohn, bis er nachgereicht ist; dann zählt der volle Lohn im Monat des Nachreichens.</p>
+      <p class="leise klein"><b>Lohn:</b> Ab ${esc(datumDE(KR.LOHN_FC_AB || "2026-12-01"))} zählt der Lohn einer Fahrstunde erst, wenn hier ihre Fahrchecks als abgegeben bestätigt sind. Unter „Abgabe“ steht je Fahrlehrer, wie viele Stunden darauf warten (alle Zeiträume ab diesem Tag).</p>
     </div>
     ${renderFcVerlauf()}`;
 }
@@ -3305,7 +3311,7 @@ function renderFcStunden() {
     // Ab 2 gebuchten Fahrchecks wählt das Büro die Zahl („2 abgegeben“ / „1 abgegeben“, 🗣 Serband 25.11.2026), auch gegen den
     // Vermerk des Fahrlehrers. Ohne Spalte buero_fc_anzahl (alte Datenbank) nur „Abgegeben“ wie bisher.
     const mitZahl = fcAnzahlDa() && gebucht > 1 && !fcAusgefallen(ft), erw = KR.fcFuersBuero(ft), jetzt = fcGezaehlt(t, ft);
-    const ls = t.datum >= (KR.LOHN_FC_AB || "9999") && t.datum < KR.todayISO() ? lohnVon(t) : null;
+    const ls = t.datum >= (KR.LOHN_FC_AB || "9999") && lohnVorbei(t) ? lohnVon(t) : null;
     const abKnoepfe = mitZahl
       ? Array.from({ length: gebucht }, (_, i) => gebucht - i).filter((n) => !(buero === "abgegeben" && jetzt === n))
         .map((n) => `<button class="knopf klein${n === erw && buero !== "abgegeben" ? " haupt" : ""}" data-fcstatus="abgegeben" data-anzahl="${n}" data-id="${esc(t.id)}" type="button">${n} abgegeben</button>`).join("")
@@ -3322,7 +3328,7 @@ function renderFcStunden() {
       <td class="nur-sehr-breit"><span class="marke-pill">${esc(ARTEN[t.art] || t.art)}</span></td>
       <td class="zahlspalte"><b>${buero === "abgegeben" ? jetzt : erw}</b><span class="leise"> von ${gebucht}</span></td>
       <td><span class="marke-pill ${tf}">${esc(tn)}</span></td>
-      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 && !fcAusgefallen(ft) ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}${ls ? `<div class="unter">Lohn: ${ls.stand === "zaehlt" ? "zählt" : ls.stand === "wartet" ? "wartet auf Bestätigung" : ls.stand === "fehlt" ? "FC fehlt" : "keiner (geschenkt)"}</div>` : ""}</td>
+      <td>${erw || buero === "abgegeben" ? `<span class="marke-pill ${bf}">${esc(bn)}</span>${buero === "abgegeben" && t.buero_fc_anzahl != null && gebucht > 1 && !fcAusgefallen(ft) ? `<div class="unter">${jetzt} von ${gebucht} vom Büro gezählt</div>` : ""}${t.buero_fc_nachgereicht_am ? `<div class="unter">nachgereicht ${esc(datumDE(t.buero_fc_nachgereicht_am))}</div>` : ""}` : `<span class="leise">–</span>`}${ls ? `<div class="unter">Lohn: ${ls.stand === "zaehlt" ? "zählt" : ls.stand === "wartet" ? "wartet auf Büro" : ls.stand === "fehlt" ? "Fahrcheck fehlt" : "keiner (geschenkt)"}</div>` : ""}</td>
       <td class="aktionen"><div class="aktionen-box">${knoepfe}<button class="knopf klein" data-fcbearb="${esc(t.id)}" type="button">Ändern</button></div></td>
     </tr>`;
   }).join("");

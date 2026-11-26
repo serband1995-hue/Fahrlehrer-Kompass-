@@ -42,7 +42,8 @@ await soll("A4", "90 Min „2 vergessen“ → fehlt", st({ datum: "2026-12-02",
 await soll("A4", "Büro „fehlt“ ohne Vermerk → fehlt", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", bueroFc: "fehlt" }), "fehlt/0/2026-12-02");
 await soll("A4", "Vermerk „FC offen“ → fehlt", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "offen" }), "fehlt/0/2026-12-02");
 // nachgereicht
-await soll("A5", "nachgereicht (Fahrlehrer), Büro hat erst 1 von 2 → fehlt noch", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "nachgereicht", nachAm: "2026-12-20", bueroFc: "abgegeben", bueroFcAnzahl: 1 }), "fehlt/0/2026-12-02");
+await soll("A5", "nachgereicht (Fahrlehrer), Büro hat erst 1 von 2 → wartet auf die Bestätigung", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "nachgereicht", nachAm: "2026-12-20", bueroFc: "abgegeben", bueroFcAnzahl: 1 }), "wartet/0/2026-12-02");
+await soll("A5", "nachgereicht, Büro hatte „fehlt“ → wartet auf die Bestätigung", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "nachgereicht", nachAm: "2026-12-20", bueroFc: "fehlt" }), "wartet/0/2026-12-02");
 await soll("A5", "nachgereicht, Büro noch nicht geprüft → wartet", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "nachgereicht", nachAm: "2026-12-20", bueroFc: "offen" }), "wartet/0/2026-12-02");
 await soll("A5", "nachgereicht, Büro bestätigt 2 → voller Lohn am Tag des Nachreichens", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "nachgereicht", nachAm: "2026-12-20", bueroFc: "abgegeben", bueroFcAnzahl: 2 }), "zaehlt/1/2026-12-20");
 await soll("A5", "Büro „Nachgereicht“ (Datum vom Büro, Vermerk noch v1) → voller Lohn am Tag des Büros", st({ datum: "2026-12-02", von: "10:00", bis: "11:30", fc: "v1", bueroFc: "abgegeben", bueroFcAnzahl: 2, bueroFcNachAm: "2026-12-18" }), "zaehlt/1/2026-12-18");
@@ -138,10 +139,10 @@ if (!process.env.LOHN_NUR_A) {
     await soll("B4", "Büro bestätigt B im Januar → Dezember 6,67 UE, Januar unverändert 2", `${dez2.done}/${dez2.wartet}/${jan2.done}`, "6.67/0/2");
     // Verdienst-Karte Dezember
     const karte = await page.evaluate(() => { _vdMonthOffset = -1; const h = _verdienstModulHTMLContent(); _vdMonthOffset = 0; const d = document.createElement("div"); d.innerHTML = h; return d.textContent.replace(/\s+/g, " "); });
-    await pruefe("B5", "Karte: „Fahrcheck fehlt“ mit 40 € und „mit Fahrcheck bestätigt“", () => [!/4 UE: Fahrcheck fehlt/.test(karte) && "kein Fehlt-Hinweis", !/40 €/.test(karte) && "nicht 40 €", !/mit Fahrcheck bestätigt/.test(karte) && "nicht „mit Fahrcheck bestätigt“", /warten auf den Fahrcheck-Haken/.test(karte) && "Warte-Hinweis, obwohl nichts wartet"].filter(Boolean));
+    await pruefe("B5", "Karte: „Fahrcheck fehlt“ mit 40 € und „mit Fahrcheck bestätigt“", () => [!/40 € fehlen: Fahrcheck fehlt/.test(karte) && "kein Fehlt-Hinweis", !/40 €/.test(karte) && "nicht 40 €", !/mit Fahrcheck bestätigt/.test(karte) && "nicht „mit Fahrcheck bestätigt“", /wartet auf das Büro/.test(karte) && "Warte-Hinweis, obwohl nichts wartet"].filter(Boolean));
     await page.evaluate(() => { const m = _bfcStand().m; m.B = { s: "offen", n: null, nach: null }; });
     const karte2 = await page.evaluate(() => { _vdMonthOffset = -1; const h = _verdienstModulHTMLContent(); _vdMonthOffset = 0; const d = document.createElement("div"); d.innerHTML = h; return d.textContent.replace(/\s+/g, " "); });
-    await pruefe("B5", "Karte: „2 UE … warten auf den Fahrcheck-Haken vom Büro · 20 €“", () => (/2 UE gefahren, warten auf den Fahrcheck-Haken vom Büro · 20 €/.test(karte2) ? null : karte2.slice(0, 400)));
+    await pruefe("B5", "Karte: „20 € wartet auf das Büro · 2 UE gefahren“", () => (/20 € wartet auf das Büro\s*2 UE gefahren/.test(karte2) ? null : karte2.slice(0, 400)));
     // FC vergessen: C 10 + D 30 (ganz, nicht halb) + F 10 (alt halb) + J 3,33 (alt, unter 45) = 53 €
     const vergessen = await page.evaluate(() => { routeFCMissing(); return { eur: fcForgottenEuro(), text: document.getElementById("view").textContent.replace(/\s+/g, " "), n: fcForgottenLessons().map((l) => l.id).sort().join(",") }; });
     await soll("B6", "FC vergessen: C, D, F, J (E ab Stichtag unter 45 Min nicht)", vergessen.n, "C,D,F,J");
@@ -151,12 +152,19 @@ if (!process.env.LOHN_NUR_A) {
     const menue = (id) => page.evaluate((id) => { try { closeSheet(); } catch (e) {} openFCMenu(id); return document.getElementById("sheet").textContent.replace(/\s+/g, " "); }, id);
     const mC = await menue("C"), mA = await menue("A"), mF = await menue("F"), mB = await menue("B");
     await pruefe("B7", "Menü C (45 Min vergessen): „kein Lohn, bis nachgereicht“, Lohn-Zeile „Fahrcheck fehlt“", () => [!/kein Lohn, bis nachgereicht/.test(mC) && "kein neuer Text", /nur \d+ €/.test(mC) && "noch „nur … €“", !/Lohn: Fahrcheck fehlt/.test(mC) && "keine Lohn-Zeile"].filter(Boolean));
-    await pruefe("B7", "Menü A: „Lohn: zählt ✓“; Menü B: „wartet auf den Fahrcheck-Haken“", () => [!/Lohn: zählt/.test(mA) && "A ohne „zählt“", !/Lohn: wartet auf den Fahrcheck-Haken vom Büro/.test(mB) && "B ohne „wartet“"].filter(Boolean));
+    await pruefe("B7", "Menü A: „Lohn: zählt ✓“; Menü B: „wartet auf den Fahrcheck-Haken“", () => [!/Lohn: zählt/.test(mA) && "A ohne „zählt“", !/Lohn: wartet auf das Büro/.test(mB) && "B ohne „wartet“"].filter(Boolean));
     await pruefe("B7", "Menü F (vor dem Stichtag): alter Text „nur 10 €“, keine Lohn-Zeile", () => [!/nur 10 €/.test(mF) && "kein „nur 10 €“", /Lohn:/.test(mF) && "Lohn-Zeile bei alter Stunde"].filter(Boolean));
+    // Büro trägt „fehlt“ ein, Fahrlehrer hat keinen Vermerk (Prüfer Bedienung: keine Sackgasse)
+    await page.evaluate(() => { try { closeSheet(); } catch (e) {} _bfcStand().m.B = { s: "fehlt", n: null, nach: null }; });
+    const kB = await page.evaluate(() => { const m = (() => { openFCMenu("B"); const sh = document.getElementById("sheet"); return { on: (sh.querySelector("[data-fcset].on") || {}).dataset, knoepfe: [...sh.querySelectorAll("[data-fcset]")].map((b) => b.dataset.fcset) }; })(); closeSheet(); return { on: m.on ? m.on.fcset : null, nach: m.knoepfe.includes("nachgereicht"), liste: fcForgottenLessons().some((l) => l.id === "B") }; });
+    await pruefe("B10", "Büro „fehlt“ ohne Vermerk: in „FC vergessen“, Menü bietet „nachgereicht“, „Normal“ nicht markiert", () => [!kB.liste && "nicht in der Liste", !kB.nach && "kein Nachgereicht", kB.on && "markiert: " + kB.on].filter(Boolean));
+    await page.evaluate(() => setFC("B", "nachgereicht"));
+    const nachB = await page.evaluate(() => ({ ls: _lohnStandVon(DB.lessons.find((l) => l.id === "B")).stand, liste: fcForgottenLessons().some((l) => l.id === "B") }));
+    await soll("B10", "nach „nachgereicht“: Lohn wartet auf das Büro, nicht mehr in der Liste", `${nachB.ls}/${nachB.liste}`, "wartet/false");
     // ohne Fahrschule: alte Regel
     await page.evaluate(() => { try { closeSheet(); } catch (e) {} _authProfile = { id: "u-muster", rolle: "fahrlehrer" }; });
     const solo = await r("2026-12-01", "2026-12-31");
-    await soll("B8", "ohne Fahrschule: alte Regel (A2+B2+C0,5+D1,5+E0,335+I2 = 8,34 UE)", solo.done, 8.34);
+    await soll("B8", "ohne Fahrschule: alte Regel (A2+B nachgereicht 0+C0,5+D1,5+E0,335+I2 = 6,34 UE)", solo.done, 6.34);
     await soll("B8", "ohne Fahrschule: nichts wartet", solo.wartet, 0);
     await pruefe("B9", "keine JS-Fehler", () => jsFehler.length ? jsFehler.slice(0, 3).join(" | ") : null);
   } finally { await browser.close(); server.close(); }
