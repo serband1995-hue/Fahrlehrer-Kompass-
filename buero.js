@@ -466,7 +466,7 @@ function zeigeNeuNachUpdate() {
 
 function renderBald(b) {
   return `<div class="karte"><h2>${esc(b.titel)}</h2>
-    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin funktioniert alles wie gewohnt in der Kompass-App (Menü › Einstellungen › Startseite › Fahrschule).</p></div>`;
+    <p class="leise">Dieser Bereich wird gerade gebaut. Bis dahin bitte die Fahrschul-Leitung fragen.</p></div>`;
 }
 
 /* ---------- Heute ---------- */
@@ -799,6 +799,27 @@ function laeuftBaldListe(heute) {
   }
   return liste.sort((x, y) => x.datum.localeCompare(y.datum) || String(x.name || "").localeCompare(String(y.name || ""), "de") || x.art.localeCompare(y.art));
 }
+// W15 S4: Reaktivierung in „Läuft bald ab“ – Knopf „Erinnern“ (Zweitknopf, kurz: passt auch am Handy quer; öffnet die Akte mit dem Mail-Formular) und
+// der Haken der letzten Erinnerung im aktuellen Modus (Test/Echt), damit niemand doppelt erinnert
+// W15 S5: dazu Theorie, Antrag, Behörden-Frist und Umschreiber (Erinnerung ohne Zahlung, Akte → „Erinnerung per Mail“)
+const BALD_OHNE_ZAHLUNG = ["theorie", "antrag", "behoerde", "umschreiber"];
+function baldErinnernKnopf(x) {
+  if (x.wer !== "schueler") return "";
+  const s = S.schueler.find((y) => y.id === x.id);
+  if (x.art === "reaktivierung") return typeof zmErinnernKann === "function" && zmErinnernKann(s) ? `<button class="knopf klein" type="button" data-balderinnern="${esc(x.id)}" data-baldart="reaktivierung" aria-label="Erinnerung per Mail schicken" title="Erinnerung per Mail schicken">Erinnern</button>` : "";
+  if (BALD_OHNE_ZAHLUNG.includes(x.art) && typeof emKann === "function" && emKann(s, x.art)) return `<button class="knopf klein" type="button" data-balderinnern="${esc(x.id)}" data-baldart="${esc(x.art)}" aria-label="Erinnerung per Mail schicken" title="Erinnerung per Mail schicken">Erinnern</button>`;
+  return "";
+}
+function baldErinnert(x) {
+  if (x.wer !== "schueler" || typeof zmDarf !== "function" || !zmDarf()) return "";
+  if (BALD_OHNE_ZAHLUNG.includes(x.art) && typeof emLetzte === "function") {
+    const e = emLetzte(x.id, x.art);
+    return e ? `<div class="unter" data-balderinnert>✓ erinnert am ${esc(datumDE(String(e.gesendet_am || e.angelegt_am || "").slice(0, 10)))}${e.modus === "test" ? " (Test)" : ""}</div>` : "";
+  }
+  if (x.art !== "reaktivierung" || typeof zmLetzte !== "function") return "";
+  const m = zmLetzte(x.id, "reaktivierung");
+  return m ? `<div class="unter" data-balderinnert>✓ erinnert am ${esc(datumDE(String(m.gesendet_am || m.angelegt_am || "").slice(0, 10)))}${m.modus === "test" ? " (Test)" : ""}</div>` : "";
+}
 function noch(tage) { return tage === 0 ? "heute" : tage === 1 ? "morgen" : `in ${tage} Tagen`; }
 function renderFristen() {
   const heute = KR.todayISO();
@@ -846,10 +867,10 @@ function renderFristen() {
   // Am Handy wird jede Zeile eine Karte (buero.css, [data-baldliste]): Name und „Noch“ oben, darunter Was und Datum, Knopf über die ganze Breite
   const baldZeilen = baldListe.map((x) => `<tr data-bald="${esc(x.art)}">
       <td class="bald-wer"><b>${esc(x.name || "–")}</b><div class="unter">${esc(x.unter || "")}</div></td>
-      <td class="bald-was">${esc(x.was)}</td>
+      <td class="bald-was">${esc(x.was)}${baldErinnert(x)}</td>
       <td class="zeitspalte bald-am">${esc(datumDE(x.datum))}</td>
       <td class="bald-noch"><span class="marke-pill ${x.stufe === "bald" ? "gelb" : "blau"}">${esc(noch(x.tage))}</span></td>
-      <td class="aktionen bald-akte"><div class="aktionen-box"><button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
+      <td class="aktionen bald-akte"><div class="aktionen-box">${baldErinnernKnopf(x)}<button class="knopf klein" type="button" data-baldakte="${esc(x.id)}" data-baldwer="${esc(x.wer)}">Akte öffnen</button></div></td>
     </tr>`).join("");
   const umschreibZeilen = ansicht !== "umschreiber" ? "" : liste.map(({ s, u }) => {
     const [uf, ut] = UMSCHREIB_TEXT[u.stufe];
@@ -918,6 +939,7 @@ function bindeFristen(ziel) {
   ziel.querySelectorAll("[data-nichtbezahlt]").forEach((b) => b.addEventListener("click", () => nichtBezahlt(b.dataset.nichtbezahlt)));
   ziel.querySelectorAll("[data-fristen]").forEach((b) => b.addEventListener("click", () => fristenDialog(b.dataset.fristen)));
   ziel.querySelectorAll("[data-baldakte]").forEach((b) => b.addEventListener("click", () => (b.dataset.baldwer === "fahrlehrer" ? fahrlehrerAkte(b.dataset.baldakte) : schuelerDialog(b.dataset.baldakte))));
+  ziel.querySelectorAll("[data-balderinnern]").forEach((b) => b.addEventListener("click", () => (b.dataset.baldart === "reaktivierung" ? zmErinnern(b.dataset.balderinnern) : emErinnern(b.dataset.balderinnern, b.dataset.baldart))));
   ziel.querySelectorAll("[data-umschueler]").forEach((b) => b.addEventListener("click", () => schuelerDialog(b.dataset.umschueler)));
   ziel.querySelectorAll("[data-antragneu]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
@@ -2531,6 +2553,7 @@ function schuelerDialog(id) {
       ${id && typeof luIstTurbo === "function" && luIstTurbo(x) ? `<div class="voll nw-akte"><button type="button" class="knopf klein" data-luserie="${esc(id)}">Serientermine anlegen</button><span class="leise klein">Turboboost: mehrere Termine auf einmal</span></div>` : ""}
       ${id ? `<div class="voll">${pruefungenAkteHTML(id)}</div>` : ""}
       ${id && typeof zmBlockHTML === "function" ? zmBlockHTML(id) : ""}
+      ${id && typeof emBlockHTML === "function" ? emBlockHTML(id) : ""}
       ${id ? `<div class="voll">${theorieAkteHTML(id)}</div>` : ""}
       ${id && sonderZaehlerHTML(x) ? `<div class="voll">${sonderZaehlerHTML(x)}</div>` : ""}
       ${id ? `<div class="voll" id="notizBlock" data-entwurf>${notizBlockHTML(id, x.fahrlehrer_id)}</div>` : ""}
@@ -2630,6 +2653,7 @@ function schuelerDialog(id) {
   if (id) bindeNotizBlock(dlg, id, x.fahrlehrer_id);
   if (id) bindeAufgabenBlock(dlg, id);
   if (id && typeof zmBindeBlock === "function") zmBindeBlock(dlg, id); // Werkstatt 11
+  if (id && typeof emBindeBlock === "function") emBindeBlock(dlg, id); // W15 S5
   if (id && typeof nachweisDialog === "function") dlg.querySelector("#nwOeffnen").addEventListener("click", () => nachweisDialog(id));
   else if (id) dlg.querySelector("#nwOeffnen").hidden = true;
   bindeBehoerde(dlg, x);
@@ -4705,7 +4729,7 @@ async function ladeDaten() {
   setStatus("", "lade …");
   if (window.KE) { KE.lade(supa, fsId); if (KR.setzeSonderMinuten) KR.setzeSonderMinuten(KE.zahl("fahrstunden.sonderfahrt", "minuten", 45, 30, 90)); } // W11: Einstellungen der Fahrschule (wirft nie); W13: Einheit sofort aus dem Gemerkten
   try {
-    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, reaktRegel] = await Promise.all([
+    const [fs, lehrer, schueler, termine, pruefungen, fahrzeuge, pakete, pTermine, fcAbg, verk, prov, team, notizen, gelesen, aufgaben, personen, theorie, fahrzeugeWeg, preise, zahlungsdaten, zahlungsMails, konfGes, verkauft, eltern, erinnerungsMails, reaktRegel] = await Promise.all([
       supa.from("fahrschulen").select("*").eq("id", fsId).single(),
       // Fahrlehrer: auch die Leitung, die selbst fährt (faehrt_selbst), nicht die reine Leitung
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
@@ -4731,6 +4755,7 @@ async function ladeDaten() {
       supa.from("fahrzeug_konflikt_gesehen").select("*").eq("fahrschule_id", fsId).order("gesehen_am", { ascending: false }).limit(2000),   // K18; fehlt die Tabelle → null, kein „Gesehen“-Knopf
       alleSeiten(() => supa.from("schueler_pakete").select("*").eq("fahrschule_id", fsId).is("storniert_am", null).order("id")),   // Werkstatt 13: aktive verkaufte Pakete; fehlt die Tabelle → null
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
+      supa.from("erinnerungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),   // W15 S5; fehlt die Tabelle → keine Erinnerungs-Knöpfe
       holeReaktRegel(fsId),   // W15: Regel der Reaktivierung (entfällt, Monate); fehlt die Funktion → alte Regel
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
@@ -4758,6 +4783,7 @@ async function ladeDaten() {
     // null = Tabelle fehlt (alte Datenbank): ohne „Gesehen“, Warnung wie bisher. Anderer Ladefehler: letzten Stand behalten
     S.konfGesehen = konfGes && !konfGes.error ? (konfGes.data || []) : (konfGes && konfGes.error && !konfTabelleFehlt(konfGes.error) ? S.konfGesehen : null);
     if (typeof zmLaden === "function") zmLaden(zahlungsdaten, zahlungsMails, zmT0); // Werkstatt 11: Fehler tolerant
+    if (typeof emLaden === "function") emLaden(erinnerungsMails); // W15 S5: Spur der Erinnerungen; fehlt die Tabelle → keine Knöpfe
     uebernimmReaktRegel(reaktRegel); // W15: vor dem Zeichnen, damit Sperre und Fristen der Regel des Servers folgen
     // Werkstatt 13: null = Tabelle fehlt (alte Datenbank) → alte Paket-Auswahl im Schüler-Fenster. Anderer Ladefehler: letzten Stand behalten
     S.verkauft = verkauft && !verkauft.error ? (verkauft.data || []) : (verkauft && verkauft.error && !prTabelleFehlt(verkauft.error) ? S.verkauft : null);
@@ -5209,6 +5235,7 @@ $("schulWahl").addEventListener("change", (e) => {
   S.konfGesehen = null; // K18: „gesehen“-Vermerke gehören zur Fahrschule
   if (typeof zmLeeren === "function") zmLeeren(); // Werkstatt 11: Zahlungsdaten und Mail-Spur der vorigen Fahrschule weg
   S.eltern = null; S.elternFehler = false; // W14: Eltern-Adressen gehören zur Fahrschule
+  S.erinnerungsMails = null; if (typeof EM !== "undefined") { EM.lokal = []; EM.laeuft.clear(); } // W15 S5: Spur gehört zur Fahrschule
   zeigeRollenStreifen();
   zeichne();
   ladeDaten();

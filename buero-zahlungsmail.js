@@ -5,6 +5,7 @@
    im Test-Modus geht jede Mail nur an die Test-Adresse). Der Browser schickt Schüler, Art, Betrag und „wofür“.
    Tabellen: fahrschule_zahlungsdaten, zahlungs_mails (supabase/migrations/20261124_zm_01_zahlungsmail.sql).
    Fehlt eine Tabelle (alte Datenbank), ist S.zmFehlt = true: Einstellungs-Abschnitt sagt „noch nicht eingerichtet“, der Akten-Block fehlt.
+   3. W15 S5: Block „Erinnerung per Mail“ (Fristen ohne Zahlung, Edge-Funktion „erinnerungs-mail“, Spur erinnerungs_mails).
    Wird VOR buero.js geladen (buero.js startet sofort und zeichnet); nutzt S, esc, toast, toastUndo usw. erst zur Laufzeit. */
 "use strict";
 const ZM_ARTEN = {
@@ -29,6 +30,11 @@ const ZM_FEHLER = {
   nicht_gesperrt: null, // Text mit Namen in zmSende
   keine_email: "Keine E-Mail-Adresse in der Akte.",
   keine_testadresse: "Es ist keine Test-Adresse hinterlegt. Bitte unter Einstellungen eine eintragen.",
+  // W15 S4: der Server prüft, ob die Reaktivierung wirklich ansteht (gleiche Regel wie hier im Büro)
+  reakt_befreit: "Der Schüler ist von der Reaktivierung befreit. Es wurde nichts gesendet.",
+  reakt_entfaellt: "Die Reaktivierung entfällt laut Preisliste. Es wurde nichts gesendet.",
+  reakt_ohne_datum: "In der Akte fehlt das Vertragsdatum. Es wurde nichts gesendet.",
+  reakt_nicht_faellig: "Die Reaktivierung ist noch nicht fällig (noch vor der Vorwarnzeit). Es wurde nichts gesendet.",
 };
 const ZM_NICHT_MOEGLICH = ZM_NICHT_MOEGLICH_TEXT;
 const LADEFEHLER_TEXT = "Zahlungsdaten konnten nicht geladen werden. Bitte Seite neu laden.";
@@ -62,6 +68,8 @@ function zmLaden(zd, zm, t0) {
 function zmLeeren() { S.zahlungsdaten = null; S.zahlungsMails = []; S.zmFehlt = false; S.zmLadefehler = false; S.zmGeladen = false; S.zmMailsGeladen = false; S.zmVerlaufFehler = false; S.zmEntwurf = null; ZM.offen.clear(); ZM.entwurf = {}; ZM.lokal = []; }
 // Offene Akten: Block nach jedem Laden neu zeichnen, wenn sich etwas geändert hat (z. B. der Modus); Entwurf und Fokus bleiben
 function zmBloeckAktualisieren() { document.querySelectorAll("#zmBlock").forEach((b) => { if (b.dataset.zmsid) zmNeuZeichnen(b.dataset.zmsid, null, null, true); }); }
+// W15 S5 (Prüf-Team): Zahlungs- und Erinnerungs-Mail sperren sich gegenseitig – nach jeder Änderung an einer Sperre alle offenen Blöcke neu zeichnen
+function mailBloeckeAktualisieren() { zmBloeckAktualisieren(); if (typeof emBloeckAktualisieren === "function") emBloeckAktualisieren(); }
 function zmStand() { return S.zahlungsdaten ? String(S.zahlungsdaten.geaendert_am || "") : ""; }
 function zmModus() { return zmEcht() ? "echt" : "test"; }
 function zmModusText(m) { return m === "echt" ? "Echt" : m === "test" ? "Test" : null; }
@@ -221,8 +229,9 @@ function zmAngebote(x) {
     liste.push({ art: "pruefung", betrag: zmBetragFeld(preis), wofuer: wofuer.slice(0, 80) });
   }
   if (istAktiv(x)) {
-    const r = KR.reaktInfo(x);
-    if (r.gesperrt || r.stufe === "pruefen_faellig") liste.push({ art: "reaktivierung", betrag: zmBetragFeld(reaktBetrag(x)), wofuer: "Reaktivierung" });
+    // W15 S4: auch vor der Fälligkeit (gelb/blau wie in „Läuft bald ab“) als Erinnerung; der Server prüft dieselbe Regel
+    const r = KR.reaktInfo(x), bald = r.stufe === "bald" || r.stufe === "demnaechst";
+    if (r.gesperrt || r.stufe === "pruefen_faellig" || bald) liste.push({ art: "reaktivierung", betrag: zmBetragFeld(reaktBetrag(x)), wofuer: "Reaktivierung", bald, faellig: r.faellig });
   }
   const z = zahlungSperre(x);
   if (z && istAktiv(x)) liste.push({ art: "zahlung_offen", betrag: "", wofuer: (z.grund || "Offene Zahlung").slice(0, 80) });
@@ -257,15 +266,15 @@ function zmBlockHTML(sid) {
   if (ohneMail && daten && !ladefehler) hinweise.push(`<p class="zm-hinweis" data-zmkeinemail>Keine E-Mail-Adresse in der Akte.</p>`);
   const zeilen = angebote.map((a) => {
     const k = ZM_ARTEN[a.art], letzte = zmLetzte(sid, a.art), schluessel = sid + "|" + a.art;
-    const eigene = ZM.laeuft.has(schluessel), andere = ZM.laeuft.size > 0 && !eigene;
+    const eigene = ZM.laeuft.has(schluessel), andere = (ZM.laeuft.size > 0 || EM.laeuft.size > 0) && !eigene;
     const grund = ladefehler ? "Zahlungsdaten konnten nicht geladen werden" : echt && S.elternFehler ? "Eltern-Angaben konnten nicht geladen werden" : !daten ? "Zahlungsdaten fehlen" : ohneMail ? "E-Mail fehlt" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
     const e = ZM.entwurf[schluessel] || {};
     const betrag = "betrag" in e ? e.betrag : a.betrag, wofuer = "wofuer" in e ? e.wofuer : a.wofuer;
     const offen = ZM.offen.has(schluessel);
     const haken = letzte ? `<p class="zm-haken" data-zmhaken="${esc(a.art)}">✓ gesendet am ${esc(zmZeit(letzte.gesendet_am || letzte.angelegt_am))} · ${esc(zmEuroText(letzte.betrag_cent))} · ${esc(letzte.wofuer || "")}${letzte.modus === "test" ? ` <span class="zm-pill-test">Test</span>` : ""}</p>` : "";
     return `<div class="zm-art" data-zmart="${esc(a.art)}">
-      <div class="zm-art-kopf"><b>${esc(k.titel)}</b>${haken}</div>
-      <button type="button" class="knopf" data-zmoeffne="${esc(a.art)}"${grund ? " disabled" : ""}>${esc(letzte ? "Erinnerung schicken" : k.knopf)}</button>
+      <div class="zm-art-kopf"><b>${esc(k.titel)}</b>${a.faellig ? `<span class="leise klein" data-zmfaellig> · ${a.bald ? "fällig am" : "fällig seit"} ${esc(datumDE(a.faellig))}</span>` : ""}${haken}</div>
+      <button type="button" class="knopf" data-zmoeffne="${esc(a.art)}"${grund ? " disabled" : ""}>${esc(letzte || a.bald ? "Erinnerung schicken" : k.knopf)}</button>
       ${grund ? `<p class="leise klein zm-grund" data-zmgrund>${esc(grund)}</p>` : ""}
       <div class="zm-form" data-zmform${offen ? "" : " hidden"}>
         <label>Betrag in €<input type="text" inputmode="decimal" maxlength="10" autocomplete="off" data-zmbetrag value="${esc(betrag)}" placeholder="z. B. 120,00"></label>
@@ -323,7 +332,7 @@ function zmBinde(block, dlg, sid) {
       i.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); senden.click(); } });
     });
     senden.addEventListener("click", async () => {
-      if (senden.disabled || ZM.laeuft.size) return;
+      if (senden.disabled || ZM.laeuft.size || EM.laeuft.size) return;
       const cent = zmBetragCent(betragFeld.value), wofuer = wofuerFeld.value.trim();
       if (cent == null) { zeigeFehler("Bitte einen Betrag zwischen 1 und 10.000 € eintragen."); betragFeld.focus(); return; }
       if (!wofuer || wofuer.length > 80) { zeigeFehler("Bitte eintragen, wofür gezahlt werden soll (höchstens 80 Zeichen)."); wofuerFeld.focus(); return; }
@@ -332,25 +341,29 @@ function zmBinde(block, dlg, sid) {
       const modus = block.dataset.zmmodus; // genau der Modus, den dieser Bildschirm zeigt (nicht der aus S: der Block kann älter sein); der Server prüft ebenfalls
       ZM.entwurf[schluessel] = { betrag: betragFeld.value, wofuer: wofuerFeld.value }; ZM.offen.add(schluessel);
       if (modus !== zmModus()) { zmNeuZeichnen(sid, art, `Mail an ${name}: Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.`); return; }
-      senden.disabled = true; ZM.laeuft.add(schluessel);
+      senden.disabled = true; ZM.laeuft.add(schluessel); mailBloeckeAktualisieren();
+      const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
       const sitz = await zmSitzung(); // Token und PIN-Sitzung jetzt merken, nicht erst nach der Wartezeit
       zmNeuZeichnen(sid);
       // 5 Sekunden „Rückgängig“; erst danach geht die Mail wirklich los (Zeit um oder nächster Rückgängig-Hinweis)
       const anWen = zmEmpfaenger(x).map(([w]) => w === "Schüler" ? "den Schüler" : "die Eltern").join(" und ") || "den Schüler";
       const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase()); // W14: der Server sendet nur, wenn er dieselben Empfänger bestimmt
       const u = toastUndo(`${modus === "echt" ? "Wird an " + anWen + " gesendet" : "Test-Mail wird gesendet"} · ${zmEuroText(cent)} · ${name}`, async () => {
-        ZM.laeuft.delete(schluessel);
+        ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren();
         zmNeuZeichnen(sid);
         toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
       }, {
         ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000, // Vorgabe 5 Sekunden; Tests setzen window.ZM_WARTE_MS
         nachAblauf: async (verlassen) => {
-          if (verlassen) { ZM.laeuft.delete(schluessel); return; } // Seite wird verlassen: lieber nichts senden
-          const erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr);
-          ZM.laeuft.delete(schluessel);
+          if (verlassen) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); return; } // Seite wird verlassen: lieber nichts senden (Knopf frei, falls die Seite zurückkommt)
+          if (S.fsId !== fs0) { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
+          let erg;
+          try { erg = await zmSende(sid, art, cent, wofuer, modus, sitz, name, empfAdr, fs0); }
+          catch (e) { erg = { ok: false, code: null, text: ZM_NICHT_MOEGLICH }; } // unerwarteter Fehler: Sperre trotzdem lösen (Richter W15 PR 2)
+          finally { ZM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); }
           if (erg.ok) { delete ZM.entwurf[schluessel]; ZM.offen.delete(schluessel); zmNeuZeichnen(sid); return; }
           if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
-          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert") && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
+          if ((erg.code === "nicht_gesperrt" || erg.code === "empfaenger_geaendert" || /^reakt_/.test(erg.code || "")) && typeof ladeDaten === "function") ladeDaten(); // Stand der Schüler (und Eltern-Wahl) auffrischen
           const text = erg.code === "nicht_gesperrt" ? erg.text : `Mail an ${name}: ${erg.text}`;
           const b = zmFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
           if (sichtbar && erg.code !== "nicht_gesperrt") zmNeuZeichnen(sid, art, text); // Fehler nur einmal: im offenen Formular, sonst als Hinweis oben
@@ -375,8 +388,179 @@ async function zmDatenNeuLaden() {
   if ($("zmEinst")) zeichne();
 }
 
+// W15 S4: „Erinnerung schicken“ aus „Läuft bald ab“ – Akte öffnen, Formular der Reaktivierung aufgeklappt (derselbe Weg mit
+// 5 Sekunden „Rückgängig“ wie in der Akte, kein zweiter Weg zum Senden)
+function zmErinnernKann(x) {
+  if (!zmDarf() || S.zmFehlt || !x || !istAktiv(x)) return false;
+  return zmAngebote(x).some((a) => a.art === "reaktivierung");
+}
+function zmErinnern(sid) {
+  ZM.offen.add(sid + "|reaktivierung");
+  schuelerDialog(sid);
+  requestAnimationFrame(() => {
+    const z = document.querySelector(`#zmBlock[data-zmsid="${CSS.escape(sid)}"] [data-zmart="reaktivierung"]`);
+    if (!z) return;
+    z.scrollIntoView({ block: "center" });
+    const f = z.querySelector("[data-zmbetrag]");
+    if (f && !f.disabled) f.focus({ preventScroll: true });
+  });
+}
+/* ---------- 3. W15 S5: Erinnerung an eine Frist per Mail, ohne Zahlung (🗣 Serband 24.11.2026) ----------
+   Theorie (Unterricht oder Praxis nach bestandener Theorie), Führerscheinantrag, Frist der Führerscheinstelle, Umschreiber.
+   Angeboten wird genau das, was „Läuft bald ab“ zeigt (gleiche Regeln und Warnzeiten, kompass-rechnen.js); der Server
+   (erinnerungs_mail_vorbereiten) rechnet dieselbe Frist selbst und bestimmt den Empfänger. Gesendet wird über die Edge-Funktion
+   „erinnerungs-mail“ nach 5 Sekunden „Rückgängig“, wie die Zahlungs-Mail. S.erinnerungsMails = null: Spur-Tabelle fehlt
+   (Datenbank-Update noch nicht da) → keine Knöpfe. */
+const EM_FEHLER = Object.assign({}, ZM_FEHLER, {
+  ohne_datum: "In der Akte fehlt das Datum dieser Frist. Es wurde nichts gesendet.",
+  abgelaufen: "Die Frist ist schon abgelaufen. Es wurde nichts gesendet.",
+  nicht_faellig: "Die Frist ist noch nicht in der Warnzeit. Es wurde nichts gesendet.",
+  erledigt: "Die Theorieprüfung ist schon bestanden. Es wurde nichts gesendet.",
+  keine_frist: "Für diesen Schüler gibt es diese Frist nicht (z. B. Führerschein aus der EU). Es wurde nichts gesendet.",
+  nicht_aktiv: "Der Schüler ist im Archiv. Es wurde nichts gesendet.",
+});
+const EM = { laeuft: new Set(), lokal: [] };
+function emBereit() { return zmDarf() && !S.zmFehlt && Array.isArray(S.erinnerungsMails); }
+// Was steht für diesen Schüler an? [{ art, titel, frist, tage }] – wie laeuftBaldListe (nur noch nicht abgelaufen)
+function emAngebote(x) {
+  if (!emBereit() || !x || !istAktiv(x)) return [];
+  const heute = KR.todayISO(), t = KR.theorieInfo(x, heute), a = KR.antragInfo(x, heute), tf = KR.theorieFristInfo(x, heute), u = KR.umschreibInfo(x, heute);
+  const liste = [];
+  if (t.stufe === "bald" || t.stufe === "demnaechst") liste.push({ art: "theorie", titel: t.grund === "praxis" ? "Praktische Prüfung bestehen bis" : "Theorieunterricht gilt bis", frist: t.ablauf, tage: t.tage, stufe: t.stufe });
+  if (a.stufe === "bald" && a.tage >= 0) liste.push({ art: "antrag", titel: "Führerscheinantrag gilt bis", frist: a.ablauf, tage: a.tage, stufe: "bald" });
+  if (tf.stufe === "bald" || tf.stufe === "demnaechst") liste.push({ art: "behoerde", titel: "Theorieprüfung bestehen bis (Frist der Behörde)", frist: tf.ablauf, tage: tf.tage, stufe: tf.stufe });
+  if (u.stufe === "bald") liste.push({ art: "umschreiber", titel: "Ausländischer Führerschein gilt bis", frist: u.bis, tage: u.tage, stufe: "bald" });
+  return liste;
+}
+function emKann(x, art) { return emAngebote(x).some((a) => a.art === art); }
+// letzte gesendete Erinnerung dieser Art im aktuellen Modus (Test-Haken zählen im Echt-Modus nicht)
+function emLetzte(sid, art) {
+  const modus = zmModus();
+  let best = null;
+  for (const m of S.erinnerungsMails || []) {
+    if (m.schueler_id !== sid || m.art !== art || m.status !== "gesendet" || m.modus !== modus) continue;
+    const t = Date.parse(m.gesendet_am || m.angelegt_am || "") || 0;
+    if (!best || t > best.t) best = { m, t };
+  }
+  return best && best.m;
+}
+function emLaden(res) {
+  if (res && !res.error) {
+    const liste = (res.data || []).slice(), jetzt = Date.now();
+    EM.lokal = EM.lokal.filter((l) => jetzt - l.t < 3600000);
+    for (const l of EM.lokal) if (!liste.some((m) => m.id === l.row.id)) liste.unshift(l.row); // gerade gesendet, noch nicht in der Antwort
+    S.erinnerungsMails = liste;
+  } else if (!res || zmTabelleFehlt(res.error)) S.erinnerungsMails = null; // Tabelle fehlt: keine Knöpfe
+  // anderer Ladefehler: letzten Stand behalten
+  emBloeckAktualisieren(); // wie zmLaden: offene Akten zeigen z. B. einen Moduswechsel an einem anderen PC gleich (Richter W15 PR 2)
+}
+function emBloeckAktualisieren() { document.querySelectorAll("#emBlock").forEach((b) => { if (b.dataset.emsid) emNeuZeichnen(b.dataset.emsid, null, null, true); }); }
+function emFinde(sid) { return [...document.querySelectorAll("#emBlock")].find((b) => b.dataset.emsid === sid) || null; }
+function emBlockHTML(sid) {
+  const x = S.schueler.find((y) => y.id === sid);
+  const angebote = emAngebote(x);
+  if (!angebote.length) return "";
+  const echt = zmEcht(), empf = zmEmpfaenger(x), ohneMail = echt && !empf.length;
+  const kopf = echt ? `<p class="zm-echt" data-emecht>Echt: Mail geht an ${empf.length ? esc(zmEmpfaengerText(empf)) : "den Schüler (E-Mail fehlt)"}</p>`
+    : `<p class="zm-modus-zeile zm-test" data-emtest>Test-Modus: Mail geht an die Test-Adresse</p>`;
+  const zeilen = angebote.map((a) => {
+    const letzte = emLetzte(sid, a.art), eigene = EM.laeuft.has(sid + "|" + a.art), andere = (EM.laeuft.size > 0 || ZM.laeuft.size > 0) && !eigene;
+    const grund = ohneMail ? "E-Mail fehlt" : echt && S.elternFehler ? "Eltern-Angaben konnten nicht geladen werden" : eigene ? "Gerade wird gesendet" : andere ? "Erst die laufende Mail abwarten" : "";
+    const haken = letzte ? `<p class="zm-haken" data-emhaken="${esc(a.art)}">✓ erinnert am ${esc(zmZeit(letzte.gesendet_am || letzte.angelegt_am))}${letzte.modus === "test" ? ` <span class="zm-pill-test">Test</span>` : ""}</p>` : "";
+    return `<div class="zm-art" data-emart="${esc(a.art)}">
+      <div class="zm-art-kopf"><b>${esc(a.titel)} ${esc(datumDE(a.frist))}</b><span class="leise klein"> · ${esc(noch(a.tage))}</span>${haken}</div>
+      <button type="button" class="knopf" data-emsenden="${esc(a.art)}"${grund ? " disabled" : ""}>${echt ? "Erinnerung schicken" : "Test-Erinnerung schicken"}</button>
+      ${grund ? `<p class="leise klein zm-grund">${esc(grund)}</p>` : ""}
+      <p class="zm-fehler" data-emmeldung role="alert" hidden></p>
+    </div>`;
+  }).join("");
+  return `<div class="voll zm-block" id="emBlock" data-emsid="${esc(sid)}" data-emmodus="${zmModus()}"><h3>Erinnerung per Mail</h3>${kopf}${ohneMail ? `<p class="zm-hinweis">Keine E-Mail-Adresse in der Akte.</p>` : ""}${zeilen}</div>`;
+}
+function emNeuZeichnen(sid, art, meldung, nurWennGeaendert) {
+  const alt = emFinde(sid);
+  if (!alt) return;
+  const html = emBlockHTML(sid);
+  if (!html) { if (alt.hidden && !alt.firstChild) return; const leer = Object.assign(document.createElement("div"), { id: "emBlock", hidden: true }); leer.dataset.emsid = sid; alt.replaceWith(leer); return; } // Schüler-Nummer bleibt: der Block kann später wieder gefüllt werden
+  if (nurWennGeaendert && alt._emHtml === html && !meldung) return;
+  const t = document.createElement("div"); t.innerHTML = html;
+  const frisch = t.firstElementChild; frisch._emHtml = html; alt.replaceWith(frisch); emBinde(frisch, sid);
+  if (art && meldung) { const m = frisch.querySelector(`[data-emart="${art}"] [data-emmeldung]`); if (m) { m.textContent = meldung; m.hidden = false; } }
+}
+function emBindeBlock(dlg, sid) { const b = dlg.querySelector("#emBlock"); if (b && b.dataset.emsid) { b._emHtml = emBlockHTML(sid); emBinde(b, sid); } }
+function emBinde(block, sid) {
+  block.querySelectorAll("[data-emsenden]").forEach((knopf) => knopf.addEventListener("click", async () => {
+    const art = knopf.dataset.emsenden, schluessel = sid + "|" + art;
+    if (knopf.disabled || EM.laeuft.size || ZM.laeuft.size) return;
+    const x = S.schueler.find((y) => y.id === sid) || {}, name = x.name || "Schüler";
+    const modus = block.dataset.emmodus; // genau der Modus, den dieser Bildschirm zeigt; der Server prüft ebenfalls
+    if (modus !== zmModus()) { emNeuZeichnen(sid, art, `Der Modus wurde inzwischen auf ${zmModusText(zmModus())} umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.`); return; }
+    EM.laeuft.add(schluessel); mailBloeckeAktualisieren();
+    const fs0 = S.fsId; // Fahrschule beim Klick: wird inzwischen gewechselt, geht nichts los
+    const sitz = await zmSitzung();
+    emNeuZeichnen(sid);
+    const anWen = zmEmpfaenger(x).map(([w]) => (w === "Schüler" ? "den Schüler" : "die Eltern")).join(" und ") || "den Schüler";
+    const empfAdr = zmEmpfaenger(x).map(([, a]) => a.toLowerCase());
+    const u = toastUndo(`${modus === "echt" ? "Erinnerung wird an " + anWen + " gesendet" : "Test-Erinnerung wird gesendet"} · ${name}`, async () => {
+      EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); emNeuZeichnen(sid); toast(`Abgebrochen, an ${name} wurde nichts gesendet`);
+    }, {
+      ms: Number(window.ZM_WARTE_MS) > 0 ? Number(window.ZM_WARTE_MS) : 5000,
+      nachAblauf: async (verlassen) => {
+        if (verlassen) { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); return; }
+        if (S.fsId !== fs0) { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); toast(`Fahrschule gewechselt, an ${name} wurde nichts gesendet`, true); return; }
+        let erg;
+        try { erg = await emSende(sid, art, modus, sitz, name, empfAdr, fs0); }
+        catch (e) { erg = { ok: false, code: null, text: ZM_NICHT_MOEGLICH }; } // unerwarteter Fehler: Sperre trotzdem lösen (Richter W15 PR 2)
+        finally { EM.laeuft.delete(schluessel); mailBloeckeAktualisieren(); }
+        if (erg.ok) { emNeuZeichnen(sid); if (typeof zeichne === "function" && /#fristen/.test(location.hash)) zeichne(); return; }
+        if (erg.code === "modus_geaendert") await zmDatenNeuLaden();
+        if ((erg.code === "empfaenger_geaendert" || EM_FEHLER[erg.code] && !ZM_FEHLER[erg.code]) && typeof ladeDaten === "function") ladeDaten(); // Stand auffrischen
+        const b = emFinde(sid), sichtbar = !!(b && b.closest("dialog") && b.closest("dialog").open);
+        if (sichtbar) emNeuZeichnen(sid, art, `Erinnerung an ${name}: ${erg.text}`); else { emNeuZeichnen(sid); toast(`Erinnerung an ${name}: ${erg.text}`, true); }
+      },
+    });
+    if (u && u.el) u.el.classList.add("zm-toast");
+  }));
+}
+async function emSende(sid, art, erwarteterModus, sitz, name, empfAdr, fs0) {
+  let data = null, error = null;
+  try {
+    ({ data, error } = await supa.functions.invoke("erinnerungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, erwartete_empfaenger: erwarteterModus === "echt" && Array.isArray(empfAdr) ? empfAdr : undefined, erwarteter_modus: erwarteterModus } }));
+  } catch (e) { error = e || new Error("Netz"); }
+  let code = (data && data.fehler) || null, neuerModus = data && data.modus;
+  if (!code && error) {
+    try { const b = await error.context.json(); code = (b && (b.fehler || b.error)) || null; neuerModus = b && b.modus; } catch (e) { /* keine Erklärung */ }
+    if (!code && error.message && EM_FEHLER[error.message] !== undefined) code = error.message;
+  }
+  if (code === "modus_geaendert") { const m = zmModusText(neuerModus); return { ok: false, code, text: `Der Modus wurde inzwischen ${m ? "auf " + m + " " : ""}umgestellt. Es wurde nichts gesendet. Bitte prüfen und noch einmal senden.` }; }
+  if (code) return { ok: false, code, text: EM_FEHLER[code] || ZM_NICHT_MOEGLICH };
+  if (error || !data || data.ok === false) return { ok: false, code: null, text: ZM_NICHT_MOEGLICH };
+  const jetzt = data.gesendet_am || new Date().toISOString();
+  const person = (typeof PIN !== "undefined" && PIN && PIN.person && PIN.person.name) || (S.profil && S.profil.name) || null;
+  const fs = fs0 || S.fsId;
+  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: fs, schueler_id: sid, art, frist_am: data.frist_am || null, modus: data.modus || erwarteterModus,
+    empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt };
+  if (fs === S.fsId) { // inzwischen andere Fahrschule gewählt: die Zeile gehört nicht in deren Liste (Richter W15 PR 2)
+    if (!Array.isArray(S.erinnerungsMails)) S.erinnerungsMails = [];
+    S.erinnerungsMails.unshift(zeile); EM.lokal.push({ t: Date.now(), row: zeile });
+  }
+  const nichtAn = Array.isArray(data.nicht_an) ? data.nicht_an.filter((w) => w === "Eltern" || w === "Schüler") : [];
+  if (nichtAn.length) toast(`Erinnerung gesendet, aber nicht an ${nichtAn.map((w) => (w === "Eltern" ? "die Eltern" : "den Schüler")).join(" und ")}.`, true);
+  else toast(`Erinnerung gesendet an ${name} ✓${data.modus === "test" ? " (Test: an die Test-Adresse)" : ""}`);
+  return { ok: true };
+}
+// „Erinnerung schicken“ aus „Läuft bald ab“: Akte öffnen und zur Zeile der Frist springen (Empfänger sichtbar, dann senden)
+function emErinnern(sid, art) {
+  schuelerDialog(sid);
+  requestAnimationFrame(() => {
+    const z = document.querySelector(`#emBlock[data-emsid="${CSS.escape(sid)}"] [data-emart="${CSS.escape(art)}"]`);
+    if (!z) return;
+    z.scrollIntoView({ block: "center" });
+    const k = z.querySelector("[data-emsenden]");
+    if (k && !k.disabled) k.focus({ preventScroll: true });
+  });
+}
 // Aufruf der Edge-Funktion; Rückgabe { ok } oder { ok:false, code, text }
-async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr) {
+async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name, empfAdr, fs0) {
   let data = null, error = null;
   try {
     ({ data, error } = await supa.functions.invoke("zahlungs-mail", { body: { requester_token: sitz.token, buero_sitzung: sitz.sitzung, schueler_id: sid, art, betrag_cent: betragCent, wofuer, erwartete_empfaenger: erwarteterModus === "echt" && Array.isArray(empfAdr) ? empfAdr : undefined, erwarteter_modus: erwarteterModus } }));
@@ -397,9 +581,10 @@ async function zmSende(sid, art, betragCent, wofuer, erwarteterModus, sitz, name
   const jetzt = data.gesendet_am || new Date().toISOString();
   const person = (typeof PIN !== "undefined" && PIN && PIN.person && PIN.person.name) || (S.profil && S.profil.name) || null;
   if (!Array.isArray(S.zahlungsMails)) S.zahlungsMails = [];
-  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: S.fsId, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
+  const fs = fs0 || S.fsId;
+  const zeile = { id: data.id || "lokal-" + Date.now(), fahrschule_id: fs, schueler_id: sid, art, betrag_cent: betragCent, wofuer, modus: data.modus || erwarteterModus,
     empfaenger_kurz: data.empfaenger_kurz || null, status: "gesendet", bearbeiter: person, angelegt_am: jetzt, gesendet_am: jetzt };
-  S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); // ein gerade laufendes Laden darf den Eintrag nicht verlieren
+  if (fs === S.fsId) { S.zahlungsMails.unshift(zeile); ZM.lokal.push({ t: Date.now(), row: zeile }); } // ein gerade laufendes Laden darf den Eintrag nicht verlieren; andere Fahrschule: nicht in deren Liste
   // W14: je Empfänger eine eigene Mail; ging eine davon nicht raus, deutlich sagen (die andere ist gesendet)
   const nichtAn = Array.isArray(data.nicht_an) ? data.nicht_an.filter((w) => w === "Eltern" || w === "Schüler") : [];
   if (nichtAn.length) toast(`Gesendet, aber nicht an ${nichtAn.map((w) => w === "Eltern" ? "die Eltern" : "den Schüler").join(" und ")}. Die andere Mail ist angekommen. Zum Nachsenden in der Akte „${nichtAn[0] === "Eltern" ? "nur Eltern" : "nur Schüler"}“ wählen, sonst bekommt sie der andere doppelt.`, true);

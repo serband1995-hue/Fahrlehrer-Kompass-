@@ -963,7 +963,7 @@ body.kiosk .rollen-streifen{display:none;}
 @media (prefers-color-scheme:dark){.tab .zahl{background:#b3392b;}}
 @media (max-width:1400px){ .status:not(.ok) #statusText{max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} }
 /* W15: Reiter „Läuft bald ab“ – Knopf „Akte öffnen“ auch am PC mindestens 44 px (Regel für alle neuen Knöpfe) */
-.knopf.klein[data-baldakte]{min-height:44px;}
+.knopf.klein[data-baldakte],.knopf.klein[data-balderinnern]{min-height:44px;}
 /* W15 (Prüf-Team): „Läuft bald ab“ am Handy als Karten statt Tabelle – nichts abgeschnitten, Knopf erreichbar */
 .tabelle[data-baldliste] .marke-pill{white-space:nowrap;}
 @media (max-width:700px){
@@ -978,8 +978,8 @@ body.kiosk .rollen-streifen{display:none;}
   .tabelle[data-baldliste] td.bald-was{grid-column:1;grid-row:2;}
   .tabelle[data-baldliste] td.bald-am{grid-column:2;grid-row:2;justify-self:end;}
   .tabelle[data-baldliste] td.bald-akte{grid-column:1 / -1;grid-row:3;padding-top:6px;}
-  .tabelle[data-baldliste] td.bald-akte .aktionen-box{width:100%;max-width:none;margin-left:0;}
-  .tabelle[data-baldliste] td.bald-akte .knopf{width:100%;}
+  .tabelle[data-baldliste] td.bald-akte .aktionen-box{width:100%;max-width:none;margin-left:0;flex-direction:row;flex-wrap:wrap;}
+  .tabelle[data-baldliste] td.bald-akte .knopf{flex:1 1 130px;min-width:0;} /* „Erinnern“ und „Akte öffnen“ nebeneinander, bei Platzmangel untereinander */
 }
 
 /* Werkstatt 11 Schritt 2: Einstellungen nach Themen (buero-einstellungen.js). Links Themen, rechts Felder als Zeilen. */
