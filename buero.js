@@ -1795,7 +1795,7 @@ function standHTML(a, x) {
   const p = a && typeof a.standPct === "number" ? Math.max(0, Math.min(100, Math.round(a.standPct))) : null;
   if (p == null) return '<span class="leise">–</span>';
   // W22: Umschreiber gerade im Büro geändert, die App des Fahrlehrers hat den Stand noch nicht neu berechnet → keine alte Zahl zeigen
-  if (x && !umschreiberNurApp(x) && istUmschreiber(x) !== !!a.umschreiber) return '<span class="leise klein" title="Sonderfahrten zählen jetzt anders. Die Zahl kommt mit dem nächsten Abgleich der Fahrlehrer-App.">wird neu berechnet</span>';
+  if (x && istUmschreiber(x) !== !!a.umschreiber) return '<span class="leise klein" title="Sonderfahrten zählen jetzt anders. Die Zahl kommt mit dem nächsten Abgleich der Fahrlehrer-App.">wird neu berechnet</span>';
   return `<span class="stand"><span class="stand-spur"><span class="stand-balken" style="width:${p}%"></span></span><span class="stand-zahl">${p} %</span></span>`;
 }
 function paketName(id) { const p = S.pakete.find((x) => x.id === id); return p ? p.name : ""; }
@@ -2253,11 +2253,9 @@ function bindeHeute(ziel) {
    Spalten in schueler: sichtbar nur für Büro, Leitung und den eigenen Fahrlehrer (Regeln der Tabelle). */
 const VORBESITZ_KLASSEN = ["AM", "A1", "A2", "A", "B", "BE", "C1", "C1E", "C", "CE", "D1", "D1E", "D", "DE", "L", "T"];
 const LAENDER = KR.EU_EWR.concat(KR.DRITTSTAATEN).sort((a, b) => a.localeCompare(b, "de"));
-// W22: Das Büro ist die Quelle (Spalte ausbildungsart). Die App folgt und schreibt dann ausbildung.umschreiber mit dem Merker
-// umschreiberVomBuero – dieser Wert zählt hier nicht (er hinkt höchstens hinterher). Nur ein Altbestand ohne Merker
-// („nur in der App eingetragen“) zählt weiter mit, damit er nicht unbemerkt verschwindet.
-function umschreiberNurApp(x) { const a = x.ausbildung || {}; return !!a.umschreiber && !a.umschreiberVomBuero && artKey(x.ausbildungsart) !== "umschreibung"; }
-function istUmschreiber(x) { return artKey(x.ausbildungsart) === "umschreibung" || umschreiberNurApp(x); }
+// W22: Das Büro ist die einzige Quelle (Spalte ausbildungsart). ausbildung.umschreiber ist nur das Echo der Fahrlehrer-App
+// (hinkt bis zum nächsten Abgleich hinterher) und zählt hier nicht – sonst könnte das Büro einen Schüler nicht abschalten.
+function istUmschreiber(x) { return artKey(x.ausbildungsart) === "umschreibung"; }
 function sehhilfeVon(x) { return x.sehhilfe != null ? x.sehhilfe : (x.ausbildung && x.ausbildung.sehhilfe ? true : null); }
 function afsZeileHTML(f) {
   f = f || {};
@@ -2314,8 +2312,7 @@ function bindeBehoerde(dlg, x) {
     hinweis.classList.toggle("warnung", info.stufe === "abgelaufen" || info.stufe === "bald" || info.stufe === "land_pruefen");
     hinweis.classList.toggle("rot", info.stufe === "abgelaufen");
   };
-  const appUmschreiber = umschreiberNurApp(x);
-  art.addEventListener("change", () => { dlg.querySelector("#umschreiberFeld").hidden = art.value !== "umschreibung" && !appUmschreiber; neuRechnen(); });
+  art.addEventListener("change", () => { dlg.querySelector("#umschreiberFeld").hidden = art.value !== "umschreibung"; neuRechnen(); });
   dlg.querySelector("#afsNeu").addEventListener("click", () => {
     if (liste.querySelectorAll(".afs-zeile").length >= 5) { toast("Höchstens 5 Führerscheine.", true); return; }
     liste.insertAdjacentHTML("beforeend", afsZeileHTML({})); liste.lastElementChild.querySelector("input").focus();

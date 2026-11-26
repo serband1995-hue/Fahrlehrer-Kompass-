@@ -6,7 +6,8 @@
 //   U5  Lohn je Termin unverändert
 //   U6  neu laden → alles noch da; gleicher Büro-Stand ändert nichts mehr
 //   U7  Büro nimmt zurück → alles wie vorher (alte echte Sonderfahrt zählt wieder, gleiche %)
-//   U8  Altbestand „nur in der App“: bleibt, Ausschalten erlaubt, Einschalten nicht
+//   U8  Altfall (ältere App setzte „an“ ohne Merker): Büro schaltet ab → App geht zurück; „neu“/leer = kein Umschreiber
+//   U13 Büro schaltet mehrmals hin und her, bevor die App abgleicht: Endstand gilt, Merker wird nie überschrieben
 //   U9  Büro-Seite: gleiche Wahrheit (istUmschreiber), gleiche Zahl wie die App, „wird neu berechnet“ bis zum Abgleich,
 //       Termin-Fenster sperrt „Sonderfahrt“
 // Nur erfundene Daten, kein Netz. Aufruf: NODE_PATH=$(npm root -g) node scripts/umschreiber-test.mjs
@@ -69,7 +70,7 @@ async function oeffneApp({ w = 360, h = 780, mitFahrschule = true, neu = true } 
     const a = mk("u1", "Testschüler Eins"), b = mk("u2", "Testschüler Zwei");
     // u1: eine echte, früher gefahrene Sonderfahrt (Überland 1) mit Termin
     a.plan.sonder.ueberland[0] = { d: "10.11.", iso: "2026-11-10", tid: "L1" };
-    b.umschreiber = true; // u2: Altbestand, nur in der App eingetragen
+    b.umschreiber = true; // u2: wie von App v147 einmalig übernommen (ohne Merker)
     DB.students = [a, b];
     DB.lessons = [
       { id: "L1", sid: "u1", date: "2026-11-10", von: "10:00", bis: "11:30", art: "sonder", status: "gefahren", srcSonder: "u1:ueberland:0", srcSonderMin: 90, note: "Überlandfahrt" },
@@ -78,7 +79,7 @@ async function oeffneApp({ w = 360, h = 780, mitFahrschule = true, neu = true } 
     DB.termine = []; DB.exams = [];
     window._rows = [
       { id: "u1", fahrlehrer_id: "u-ich", status: "aktiv", ausbildungsart: "ersterwerb", klasse: "B", vorbesitz: [], name: "Testschüler Eins" },
-      { id: "u2", fahrlehrer_id: "u-ich", status: "aktiv", ausbildungsart: "ersterwerb", klasse: "B", vorbesitz: [], name: "Testschüler Zwei" }];
+      { id: "u2", fahrlehrer_id: "u-ich", status: "aktiv", ausbildungsart: "umschreibung", klasse: "B", vorbesitz: [], name: "Testschüler Zwei" }];
     save();
   }, [mitFahrschule, neu, "(" + mockSupa.toString() + ")()"]);
   await warte(page, 200);
@@ -156,7 +157,7 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
   const p2 = await oeffneApp({ neu: false }, ctx);
   await p2.page.evaluate(() => { window._rows = [
     { id: "u1", fahrlehrer_id: "u-ich", status: "aktiv", ausbildungsart: "umschreibung", klasse: "B", vorbesitz: [], name: "Testschüler Eins" },
-    { id: "u2", fahrlehrer_id: "u-ich", status: "aktiv", ausbildungsart: "ersterwerb", klasse: "B", vorbesitz: [], name: "Testschüler Zwei" }]; });
+    { id: "u2", fahrlehrer_id: "u-ich", status: "aktiv", ausbildungsart: "umschreibung", klasse: "B", vorbesitz: [], name: "Testschüler Zwei" }]; });
   const nachLaden = await zustand(p2.page, "u1");
   await pruefe("U6a", "neu laden: Umschreiber, Merker, %, alte Fahrt noch da", () => (nachLaden.um && nachLaden.merker && nachLaden.pct === n.pct && nachLaden.box === v.box ? null : JSON.stringify(nachLaden)));
   await pruefe("U6b", "gleicher Büro-Stand noch einmal: nichts ändert sich", () => p2.page.evaluate(async () => {
@@ -174,18 +175,40 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     const t = document.querySelector(".lage-focus .lage-val").textContent; if (!/Sonderfahrten? offen/.test(t)) return "Stand: " + t;
     openAddLessonSheet("sonder"); const x = document.querySelector('#alList [data-sid="u1"]').textContent; closeSheet(); return /Umschreiber/.test(x) ? "noch gesperrt" : null; }));
 
-  // U8: Altbestand „nur in der App“
+  // U8: Altfall wie live (Büro setzte umschreibung, App v147 übernahm „an“ ohne Merker); erster Abruf der neuen App
   const u2 = await zustand(p2.page, "u2");
-  await pruefe("U8a", "Altbestand: Abruf lässt „nur in der App“ unangetastet", () => (u2.um && !u2.merker ? null : JSON.stringify(u2)));
+  await pruefe("U8a", "Altfall: Spalte umschreibung + App an ohne Merker → bleibt an, Merker kommt dazu", () => (u2.um && u2.merker ? null : JSON.stringify(u2)));
+  await setzeArt(p2.page, "u2", "ersterwerb"); await abruf(p2.page);
+  const u2b = await zustand(p2.page, "u2");
+  await pruefe("U8b", "Altfall: Büro schaltet ab → App aus, Merker weg, Sonderfahrten zählen wieder", () => (!u2b.um && !u2b.merker && /Sonderfahrten 0\//.test(u2b.sfLabel) ? null : JSON.stringify(u2b)));
+  await pruefe("U8c", "Altfall ohne Merker direkt abgeschaltet (Büro schaltet ab, bevor die neue App je abglich) → App aus", () => p2.page.evaluate(async () => {
+    const s = DB.students.find((x) => x.id === "u2"); s.umschreiber = true; delete s.umschreiberVomBuero; _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen();
+    return !s.umschreiber && !s.umschreiberVomBuero ? null : JSON.stringify({ u: s.umschreiber, m: s.umschreiberVomBuero }); }));
+  await pruefe("U8d", "Werte „neu“, leer, null = kein Umschreiber; alte Datenbank ohne Spalte: nichts anfassen", () => p2.page.evaluate(async () => {
+    const s = DB.students.find((x) => x.id === "u2"); const r = window._rows.find((x) => x.id === "u2"); const out = [];
+    for (const w of ["neu", "", null]) { s.umschreiber = true; r.ausbildungsart = w; _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen(); out.push(!!s.umschreiber); }
+    delete r.ausbildungsart; s.umschreiber = true; _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen(); const ohneSpalte = !!s.umschreiber;
+    s.umschreiber = false; r.ausbildungsart = "ersterwerb";
+    return out.every((x) => x === false) && ohneSpalte ? null : JSON.stringify({ out, ohneSpalte }); }));
+  await pruefe("U13a", "Büro an→aus→an vor dem Abgleich: App sieht Endstand „an“, ein Merker", () => p2.page.evaluate(async () => {
+    const r = window._rows.find((x) => x.id === "u2"); const s = DB.students.find((x) => x.id === "u2");
+    r.ausbildungsart = "umschreibung"; r.ausbildungsart = "ersterwerb"; r.ausbildungsart = "umschreibung";
+    _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen();
+    window._m1 = JSON.stringify(s.umschreiberVomBuero);
+    return s.umschreiber && s.umschreiberVomBuero && s.umschreiberVomBuero.vorherApp === false ? null : JSON.stringify(s.umschreiberVomBuero); }));
+  await pruefe("U13b", "erneuter Abruf „an“ (auch nachdem die App lokal verstellt wurde): Merker unverändert, wieder an", () => p2.page.evaluate(async () => {
+    const s = DB.students.find((x) => x.id === "u2"); s.umschreiber = false; // z. B. alte App auf zweitem Gerät
+    _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen();
+    return s.umschreiber && JSON.stringify(s.umschreiberVomBuero) === window._m1 ? null : JSON.stringify({ u: s.umschreiber, m: s.umschreiberVomBuero, alt: window._m1 }); }));
+  await pruefe("U13c", "Büro aus→an→aus vor dem Abgleich: App aus, Merker weg", () => p2.page.evaluate(async () => {
+    const r = window._rows.find((x) => x.id === "u2"); const s = DB.students.find((x) => x.id === "u2");
+    r.ausbildungsart = "ersterwerb"; r.ausbildungsart = "umschreibung"; r.ausbildungsart = "ersterwerb";
+    _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen();
+    return !s.umschreiber && !s.umschreiberVomBuero ? null : JSON.stringify({ u: s.umschreiber, m: s.umschreiberVomBuero }); }));
   await p2.page.evaluate(() => routeDetail("u2")); await warte(p2.page, 300);
-  await pruefe("U8b", "Altbestand: Hinweis „im Büro eintragen“, Ausschalten geht, Einschalten nicht", async () => {
-    const h = await p2.page.evaluate(() => document.getElementById("dashUmschreiberToggle").closest(".theorie-card").textContent);
-    if (!/im Büro/.test(h)) return "Hinweis: " + h;
-    await p2.page.click("#dashUmschreiberToggle"); await warte(p2.page, 300);
-    const aus = await p2.page.evaluate(() => DB.students.find((x) => x.id === "u2").umschreiber);
+  await pruefe("U8e", "mit Fahrschule: Schalter auch bei „aus“ nur Anzeige", async () => {
     await p2.page.click("#dashUmschreiberToggle", { force: true }); await warte(p2.page, 300);
-    const wieder = await p2.page.evaluate(() => DB.students.find((x) => x.id === "u2").umschreiber);
-    return aus === false && wieder === false ? null : JSON.stringify({ aus, wieder }); });
+    return (await p2.page.evaluate(() => DB.students.find((x) => x.id === "u2").umschreiber)) === false ? null : "umgeschaltet"; });
 
   // U10: neuer Schüler vom Büro als Umschreiber; Gesamtansicht
   await pruefe("U10a", "neuer Schüler vom Büro (Umschreibung) kommt als Umschreiber mit Merker an", () => p2.page.evaluate(async () => {
@@ -197,7 +220,8 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     const a = _fsMapSchueler({ id: "g1", name: "G", ausbildungsart: "umschreibung", ausbildung: { plan: newPlan() } }, n);
     const b = _fsMapSchueler({ id: "g2", name: "G", ausbildungsart: "ersterwerb", ausbildung: { plan: newPlan(), umschreiber: true, umschreiberVomBuero: { am: "x" } } }, n);
     const c = _fsMapSchueler({ id: "g3", name: "G", ausbildungsart: "ersterwerb", ausbildung: { plan: newPlan(), umschreiber: true } }, n);
-    return a.umschreiber && a.umschreiberVomBuero && !b.umschreiber && !b.umschreiberVomBuero && c.umschreiber ? null : JSON.stringify([a.umschreiber, b.umschreiber, c.umschreiber]); }));
+    const d = _fsMapSchueler({ id: "g4", name: "G", ausbildung: { plan: newPlan(), umschreiber: true } }, n); // alte Datenbank ohne Spalte
+    return a.umschreiber && a.umschreiberVomBuero && !b.umschreiber && !b.umschreiberVomBuero && !c.umschreiber && d.umschreiber ? null : JSON.stringify([a.umschreiber, b.umschreiber, c.umschreiber, d.umschreiber]); }));
   await pruefe("U11", "keine JS-Fehler (App)", () => jsFehler.concat(p2.jsFehler));
   await ctx.close();
 }
@@ -243,12 +267,13 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     const xVor = { id: "u1", ausbildungsart: "umschreibung", ausbildung: vor };
     const xZur = { id: "u1", ausbildungsart: "ersterwerb", ausbildung: nach };
     const xAlt = { id: "u2", ausbildungsart: "ersterwerb", ausbildung: { umschreiber: true } };
-    return { ist: istUmschreiber(x), istZur: istUmschreiber(xZur), istAlt: istUmschreiber(xAlt), istVor: istUmschreiber(xVor),
-      zahl: standHTML(nach, x), zahlVor: standHTML(vor, xVor), zahlZur: standHTML(nach, xZur), zahlAlt: standHTML({ standPct: 40, umschreiber: true }, xAlt) };
+    const xNeu = { id: "u4", ausbildungsart: "neu", ausbildung: {} };
+    return { ist: istUmschreiber(x), istZur: istUmschreiber(xZur), istAlt: istUmschreiber(xAlt), istNeu: istUmschreiber(xNeu), istVor: istUmschreiber(xVor),
+      zahl: standHTML(nach, x), zahlVor: standHTML(vor, xVor), zahlZur: standHTML(nach, xZur), zahlAlt: standHTML({ standPct: 40, umschreiber: true }, xAlt), zahlNeu: standHTML({ standPct: 40 }, xNeu) };
   }, [appZeile, appZeileVorher]);
-  await pruefe("U9d", "Büro: istUmschreiber folgt der Spalte (an, zurück), Altbestand „nur App“ bleibt sichtbar", () => (r.ist && !r.istZur && r.istAlt && r.istVor ? null : JSON.stringify(r)));
+  await pruefe("U9d", "Büro: istUmschreiber folgt nur der Spalte (an, zurück; App-Echo zählt nicht; „neu“ = nein)", () => (r.ist && !r.istZur && !r.istAlt && !r.istNeu && r.istVor ? null : JSON.stringify(r)));
   await pruefe("U9e", "Büro zeigt nach dem App-Abgleich dieselbe Zahl wie die App", () => (r.zahl.includes(`>${appZeile.standPct} %<`) ? null : r.zahl + " / App " + appZeile.standPct));
-  await pruefe("U9f", "Büro zeigt vor dem App-Abgleich „wird neu berechnet“ statt der alten Zahl (beide Richtungen)", () => (/wird neu berechnet/.test(r.zahlVor) && /wird neu berechnet/.test(r.zahlZur) && /40 %/.test(r.zahlAlt) ? null : JSON.stringify([r.zahlVor, r.zahlZur, r.zahlAlt])));
+  await pruefe("U9f", "Büro zeigt vor dem App-Abgleich „wird neu berechnet“ statt der alten Zahl (beide Richtungen)", () => (/wird neu berechnet/.test(r.zahlVor) && /wird neu berechnet/.test(r.zahlZur) && /wird neu berechnet/.test(r.zahlAlt) && /40 %/.test(r.zahlNeu) ? null : JSON.stringify([r.zahlVor, r.zahlZur, r.zahlAlt, r.zahlNeu])));
   await pruefe("U9g", "Büro-Termin: Sonderfahrt für Umschreiber gesperrt, für andere nicht", () => page.evaluate(() => {
     const alt = S.schueler; S.schueler = [{ id: "u1", ausbildungsart: "umschreibung", ausbildung: {} }, { id: "u2", ausbildungsart: "ersterwerb", ausbildung: {} }];
     const r = [umschreiberSchueler("u1"), umschreiberSchueler("u2"), umschreiberSchueler("")]; S.schueler = alt;

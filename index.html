@@ -5619,9 +5619,10 @@ function _theorieVomBuero(s, datum){
   return true;
 }
 /* W22 (🗣 Serband 26.11.2026): „Umschreiber“ steuert das Büro (Spalte schueler.ausbildungsart = 'umschreibung').
-   Die App folgt in beide Richtungen. Merker umschreiberVomBuero: nur was das Büro gesetzt hat, nimmt das Büro auch wieder
-   zurück – ein nur in der App gesetzter Umschreiber (Altbestand ohne Büro-Angabe) bleibt unangetastet. Zurückgenommen heißt
-   „aus“ (sonst stünde in der App „an“, im Büro „aus“). Echte, früher gefahrene Sonderfahrten bleiben immer gespeichert. */
+   Mit Fahrschule gilt NUR die Büro-Angabe, die App folgt in beide Richtungen (eine Wahrheit; auch ein von einer älteren
+   App-Version gesetztes „an“ ohne Merker nimmt das Büro so wieder zurück). Jeder andere Wert (ersterwerb, neu, leer) = kein
+   Umschreiber. Merker umschreiberVomBuero: wann das Büro es zuerst gesetzt hat und wie die App vorher stand; er wird beim
+   erneuten Setzen nie überschrieben. Echte, früher gefahrene Sonderfahrten bleiben immer gespeichert. */
 function _umschreiberVomBuero(s, art) {
   if (!s) return false;
   if (art === "umschreibung") {
@@ -5630,8 +5631,10 @@ function _umschreiberVomBuero(s, art) {
     if (!s.umschreiber) { s.umschreiber = true; ch = true; }
     return ch;
   }
-  if (s.umschreiberVomBuero) { delete s.umschreiberVomBuero; s.umschreiber = false; return true; }
-  return false;
+  let ch = false;
+  if (s.umschreiberVomBuero) { delete s.umschreiberVomBuero; ch = true; }
+  if (s.umschreiber) { s.umschreiber = false; ch = true; }
+  return ch;
 }
 // W22: Hat dieser Fahrlehrer ein Büro (Fahrschule)? Dann ist der Umschreiber-Schalter in der App nur Anzeige.
 function _umschreiberImBuero() { return !!(_fsAgg || (_authProfile && _authProfile.fahrschule_id)); }
@@ -5668,7 +5671,7 @@ async function pullSchuelerZuweisungen() {
       let umNeu = false;
       if (lokaleIds.has(r.id)) {
         const lok = DB.students.find(x => x.id === r.id);
-        if (lok && _umschreiberVomBuero(lok, r.ausbildungsart)) { umschreiberNeu = true; umNeu = true; }
+        if (lok && "ausbildungsart" in r && _umschreiberVomBuero(lok, r.ausbildungsart)) { umschreiberNeu = true; umNeu = true; }
       }
       // Vorbesitz aus dem Büro auch auf dem Gerät merken: der Lkw-Weg (Sonderfahrten) bleibt so auch offline gleich
       if (lokaleIds.has(r.id)) { const lok = DB.students.find(x => x.id === r.id); const vb = Array.isArray(r.vorbesitz) ? r.vorbesitz : [];
@@ -5715,7 +5718,7 @@ async function pullSchuelerZuweisungen() {
         delete nst.ausgeblendetAm; // „bei mir ausgeblendet“ galt nur beim bisherigen Fahrlehrer (D1)
         if (r.sehhilfe != null) nst.sehhilfe = r.sehhilfe;
         if (Array.isArray(r.vorbesitz)) nst.vorbesitzBuero = r.vorbesitz;
-        _umschreiberVomBuero(nst, r.ausbildungsart); // W22: Umschreiber kommt vom Büro
+        if ("ausbildungsart" in r) _umschreiberVomBuero(nst, r.ausbildungsart); // W22: Umschreiber kommt vom Büro
         // Übergabe: dieselbe Regel wie oben – die Form des bisherigen Fahrlehrers bleibt, außer das Büro hat die Klasse
         // seitdem geändert oder es ist eine Lkw-Klasse (im Büro neu angelegte Schüler bekommen ihre Form schon beim Anlegen)
         if (r.klasse) {
@@ -6204,7 +6207,7 @@ function _fsMapSchueler(row,lehrerName){
     sehhilfe:row.sehhilfe!=null?row.sehhilfe:!!(row.ausbildung||{}).sehhilfe, // gemeinsame Spalte vor altem Wert im jsonb
     id:row.id, name:row.name, telefon:row.telefon
   });
-  _umschreiberVomBuero(o,row.ausbildungsart); // W22: Gesamtansicht zeigt dasselbe wie das Büro, auch bevor die App des Fahrlehrers abgeglichen hat
+  if("ausbildungsart" in row)_umschreiberVomBuero(o,row.ausbildungsart); // W22: Gesamtansicht zeigt dasselbe wie das Büro, auch bevor die App des Fahrlehrers abgeglichen hat
   return o;
 }
 function _fsMapTermin(row,lehrerName){
@@ -9885,7 +9888,6 @@ function routeDetail(id){
   const dut=$("#dashUmschreiberToggle"); if(dut)dut.addEventListener("click",()=>{
     const modus=umschreiberModus(s);
     if(modus==="buero"){ toast("Umschreiber stellt das Büro ein"); return; }
-    if(modus==="nurApp"&&!s.umschreiber){ toast("Umschreiber stellt das Büro ein"); return; }
     s.umschreiber=!s.umschreiber; save();
     toast(s.umschreiber?"Umschreiber aktiv – Sonderfahrten entfallen":"Umschreiber aus");
     routeDetail(id);
@@ -10328,19 +10330,12 @@ async function _schuelerServerSicher(sid,vorher,werte,gleich){
 }
 const VORBESITZ_KLASSEN=["AM","A1","A2","A","B","BE","C1","C1E","C","CE","D1","D1E","D","DE","L","T"];
 /* W22: Wer darf den Umschreiber in der App umschalten?
-   "frei"   – Fahrlehrer ohne Fahrschule (kein Büro): Schalter wie bisher.
-   "buero"  – mit Fahrschule: nur Anzeige, das Büro stellt es ein.
-   "nurApp" – Altbestand: nur in der App eingetragen, im Büro nicht. Ausschalten bleibt erlaubt, sonst hinge er fest. */
-function umschreiberModus(s){
-  if(!_umschreiberImBuero()) return "frei";
-  const f=_schuelerFristen[s.id]; // Stand vom Büro (erst nach dem Abruf bekannt; vorher gilt „Büro“)
-  if(f&&s.umschreiber&&!s.umschreiberVomBuero&&f.ausbildungsart!=="umschreibung") return "nurApp";
-  return "buero";
-}
+   "frei"  – Fahrlehrer ohne Fahrschule (kein Büro): Schalter wie bisher.
+   "buero" – mit Fahrschule: nur Anzeige, das Büro stellt es ein. */
+function umschreiberModus(s){ return _umschreiberImBuero()?"buero":"frei"; }
 function umschreiberKarteHTML(s){
   const modus=umschreiberModus(s), an=!!s.umschreiber;
   const sub=modus==="frei"?"Sonderfahrten entfallen und zählen nicht zur %-Wertung"
-    :modus==="nurApp"?"Nur in der App eingetragen – bitte im Büro als Umschreibung eintragen. Ausschalten geht hier."
     :an?"Vom Büro eingetragen – Sonderfahrten entfallen. Ändern nur im Büro.":"Stellt das Büro ein (Ausbildungsart „Umschreibung“).";
   const gesperrt=modus==="buero";
   return `<div class="theorie-card${gesperrt?' nur-anzeige':''}" style="margin-top:9px;">
