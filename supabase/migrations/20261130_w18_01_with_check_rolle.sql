@@ -6,7 +6,6 @@
 -- Folge: Jeder Fahrlehrer der Fahrschule konnte (über die Schnittstelle, nicht über die App)
 --   * Schüler, Termine, Prüfungen, Provisionen, Schichten, Urlaub, Tafelbilder, Fahrzeuge, Verschiebungs-Vermerke
 --     mit der fahrlehrer_id eines Kollegen (oder ohne Fahrlehrer) ANLEGEN,
---   * eigene Prüfungen an Kollegen abgeben (kein Verschiebe-Auslöser auf kalender_pruefungen),
 --   * eine eigene offene Empfehlung selbst auf „bezahlt“ mit Betrag setzen (statt nur „storniert“).
 -- Lesen, Ändern oder Löschen FREMDER Zeilen ging nicht (USING bleibt streng); fremde Fahrschulen waren nie betroffen.
 --
