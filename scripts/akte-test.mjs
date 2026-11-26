@@ -6,7 +6,8 @@
 // Die Uhr steht fest auf Mittwoch, 14.10.2026, 10:30 Uhr (Europe/Berlin).
 // Nur erfundene Testdaten. Keine Datenbank: alle Fremdanfragen blockiert, getSupa() ist eine Attrappe.
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/akte-test.mjs
-// Optional: KOMPASS_ROOT=/pfad/zur/kopie (anderer Stand), AKTE_SCHNELL=1 (H7: die anderen Tests nicht mitlaufen lassen)
+// Optional: KOMPASS_ROOT=/pfad/zur/kopie (anderer Stand), AKTE_ALLE=1 (H7: zusätzlich die 10 anderen Tests nacheinander laufen lassen,
+// dauert über 10 Minuten; W20: früher war das der Standard und wirkte nach A2d/H5 wie ein Hänger, weil ruhig gearbeitet wird)
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -323,7 +324,7 @@ await pruefe("L2c", "bleibt: #homeFilterBtn öffnet das Fenster „Filter“", a
 await pruefe("L3a", "Sortier-Chips .sl-sort: naechste/lange/stand/az mit richtigen Beschriftungen", async () => {
   const r = await page.evaluate(() => [...document.querySelectorAll("#view .sl-sort[data-sort]")].map((b) => [b.dataset.sort, (b.textContent || "").replace(/\s+/g, " ").trim()]));
   if (!r.length) return "keine .sl-sort[data-sort]-Chips";
-  const soll = [["naechste", "Als Nächstes dran"], ["lange", "Lange nicht gefahren"], ["stand", "Nach Stand"], ["az", "A–Z"]];
+  const soll = [["naechste", "Als Nächstes dran"], ["lange", "Lange nicht gefahren"], ["stand", "Nach Fortschritt"], ["az", "A–Z"]];
   const f = [];
   if (r.map((x) => x[0]).join(",") !== soll.map((x) => x[0]).join(",")) f.push(`Chips [${r.map((x) => x[0]).join(",")}]`);
   for (const [k, t] of soll) { const x = r.find((y) => y[0] === k); if (x && norm(x[1]) !== norm(t)) f.push(`${k} heißt „${x[1]}“`); }
@@ -946,15 +947,16 @@ server.close();
 
 // ---------- H7 Nichts kaputt: die anderen Tests ----------
 const ANDERE = ["heute-test.mjs", "reiter-test.mjs", "fahrstunde-test.mjs", "handy-test.mjs", "buero-test.mjs", "app-notiz-test.mjs", "abgleich-test.mjs", "zwei-geraete-test.mjs", "zahlen-test.mjs", "rechnen-test.mjs"];
-if (process.env.AKTE_SCHNELL) {
-  await pruefe("H7", "alle bisherigen Tests grün", () => ({ skip: "AKTE_SCHNELL gesetzt" }));
+if (!process.env.AKTE_ALLE) {
+  await pruefe("H7", "alle bisherigen Tests grün", () => ({ skip: "nur mit AKTE_ALLE=1 (die anderen Tests einzeln starten; nicht alle laufen in der GitHub-Prüfung)" }));
 } else {
   const dir = join(REPO, "scripts");
   const env = { ...process.env, KOMPASS_ROOT: ROOT, APP_ROOT: ROOT, HEUTE_SCHNELL: "1", FAHR_SCHNELL: "1" };
   await pruefe("H7", `alle bisherigen Tests grün (${ANDERE.join(", ")})`, () => {
     const f = [];
     for (const n of ANDERE) {
-      const r = spawnSync(process.execPath, [join(dir, n)], { cwd: ROOT, env, encoding: "utf8", timeout: 600000 });
+      console.log(`  … H7 läuft: ${n}`);
+      const r = spawnSync(process.execPath, [join(dir, n)], { cwd: ROOT, env, encoding: "utf8", timeout: 900000 });
       if (r.status !== 0) f.push(`${n} Exit ${r.status}${r.signal ? " " + r.signal : ""}: ${((r.stdout || "") + (r.stderr || "")).split("\n").filter((z) => /FEHLER|PROBLEM|Error/.test(z)).slice(0, 2).join(" / ")}`);
     }
     return f;

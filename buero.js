@@ -1461,7 +1461,9 @@ async function abgleichKalender(p) {
     }
   } catch (e) {
     console.error(e);
-    toast("Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + dbFehlerText(e), true);
+    const t = "Prüfung gespeichert, aber nicht im Kalender des Fahrlehrers: " + dbFehlerText(e);
+    window.buKalenderFehler = t; // die Karte „Zahlungsaufforderung“ zeigt den Hinweis selbst (sonst läge er unter der Karte)
+    toast(t, true);
     return false;
   }
   return true;
@@ -1551,10 +1553,11 @@ function pruefungDialog(id) {
         if (!res.error && res.data && res.data.length) Object.assign(sx, neuW);
       }
     }
+    window.buKalenderFehler = "";
     const kalenderOk = await abgleichKalender(gespeichert);
     zeichne();
     // W15c: neue Prüfung → Karte mit „Zahlungsaufforderung senden“ (ein Tipp, nie automatisch); sonst wie bisher
-    const karte = !id && !d.absagen && typeof zmNachPruefung === "function" && zmNachPruefung(gespeichert);
+    const karte = !id && !d.absagen && typeof zmNachPruefung === "function" && zmNachPruefung(gespeichert, kalenderOk ? "" : window.buKalenderFehler);
     if (kalenderOk && !karte) toast(d.absagen ? "Prüfung abgesagt" : "Prüfung gespeichert");
     return true;
   });

@@ -536,6 +536,16 @@ for (const R of ROLLEN) {
       if (!/Büro-Seite öffnen/.test(r.text)) f.push("Knopftext fehlt");
       return f;
     });
+    // W20: _bleibtText (Hinweis „Du bleibst hier, weil du gerade etwas eingibst“): Büro bekommt den Büro-Zweig, alle anderen den Einstellungs-Zweig
+    await pruefe("R28", `[Büro, ${fall}] Text „Du bleibst …“: Büro → „App neu öffnen“ (keine Einstellung), Leitung → „Einstellungen › Startseite“`, () => page.evaluate(() => {
+      const f = [], alt = _authProfile, b = _bleibtText();
+      if (!_authProfile || _authProfile.rolle !== "buero") f.push("Rolle ist nicht Büro: " + (_authProfile && _authProfile.rolle));
+      if (!/App neu öffnen/.test(b) || !/Büro-Seite/.test(b)) f.push("Büro-Text: " + b);
+      if (/Einstellungen/.test(b)) f.push("Büro-Text nennt Einstellungen (hat das Büro nicht): " + b);
+      try { _authProfile = Object.assign({}, alt, { rolle: "fahrschule_admin" }); const l = _bleibtText(); if (!/Einstellungen › Startseite/.test(l)) f.push("Leitung-Text: " + l); }
+      finally { _authProfile = alt; }
+      return f;
+    }));
     if (vorher && !aufBuero(u)) {
       // Das Fenster fürs neue Passwort liegt über dem Hinweis; danach geht es zur Büro-Seite
       await page.evaluate(() => { try { closeSheet(); } catch (e) {} _openNeuesPasswortSheet(); }); await warte(page, 500);
