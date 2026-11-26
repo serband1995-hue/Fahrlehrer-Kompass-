@@ -4,10 +4,20 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
-  { version: "2026.11.26.13", datum: "2026-11-26", kurz: "Schriften und Technik laden jetzt direkt vom Kompass.",
+  { version: "2026.11.26.18", datum: "2026-11-26", kurz: "Schriften und Technik laden jetzt direkt vom Kompass.",
     punkte: ["Schriften und die Technik für die Anmeldung kommen jetzt direkt vom Kompass, nicht mehr von fremden Servern.",
              "Das macht den Kompass unabhängiger und sicherer: Fällt ein fremder Dienst aus, startet die App trotzdem.",
              "Ohne Internet startet die App jetzt zuverlässiger, mit den gewohnten Schriften."] },
+  { version: "2026.11.26.16", datum: "2026-11-26", kurz: "Neu: Punktesystem für Schüler (zuerst aus).",
+    punkte: ["Die Fahrschule kann ein Punktesystem einschalten. Zuerst ist es aus.",
+             "Das Büro legt selbst fest, wofür es Punkte gibt und was man damit einlösen kann.",
+             "Der Fahrlehrer sieht in der Schülerakte den Punktestand und kann Punkte geben oder einlösen.",
+             "Jede Buchung zeigt, wer sie wann gemacht hat. Gebuchtes lässt sich nicht ändern, nur ausgleichen."] },
+  { version: "2026.11.26.13", datum: "2026-11-26", kurz: "Büro: Quittungen für Zahlungen drucken.",
+    punkte: ["Büro: Für eine Zahlung eines Schülers gibt es jetzt eine Quittung zum Drucken oder als PDF.",
+             "Jede Quittung bekommt die nächste Nummer und lässt sich danach nicht mehr ändern. Ist etwas falsch, wird sie storniert.",
+             "Name, Anschrift und Steuernummer der Fahrschule trägt das Büro in den Einstellungen ein.",
+             "Bargeld-Quittungen sind zuerst ausgeschaltet. Vor dem Einschalten mit dem Steuerberater sprechen."] },
   { version: "2026.11.26.12", datum: "2026-11-26", kurz: "Kleine Verbesserungen in Liste, Kalender und Büro.",
     punkte: ["Schülerliste: Die vier Sortier-Knöpfe stehen jetzt in zwei Reihen. „Nach Stand“ heißt jetzt „Nach Fortschritt“.",
              "Wochenansicht: Haben zwei Schüler denselben Vornamen, steht in der kleinen Kachel der Nachname vorn, z. B. „Müller L.“.",

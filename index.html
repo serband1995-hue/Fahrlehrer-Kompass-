@@ -1736,6 +1736,8 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .vd-bonus-note{font-size:13px;color:var(--muted);text-align:center;padding:11px;background:var(--bg-soft);border:1px solid var(--line);border-radius:11px;margin-bottom:14px;}
 .vd-bonus-note b{color:var(--mint);}
 .vd-bonus-note.ok{background:rgba(207,154,62,.12);border-color:rgba(207,154,62,.3);color:#e8c45a;font-weight:700;}
+.punkte-stand-app{font-size:14px;color:var(--muted);margin:2px 0 6px;}
+.punkte-stand-app b{font-family:'Playfair Display',Georgia,serif;font-size:28px;color:var(--txt);margin-right:4px;}
 .vd-offen{font-size:12.5px;color:#e3a294;background:rgba(207,90,72,.1);border:1px solid rgba(207,90,72,.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;text-align:center;}
 .vd-offen b{color:#f0b5a8;}
 .vd-offen.vd-lohn{text-align:left;}
@@ -8144,7 +8146,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.13";
+const APP_VERSION="2026.11.26.18";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9773,6 +9775,7 @@ function routeDetail(id){
     ${behoerdeCard(s)}
     ${theorieCard(s)}
     ${paketCard(s)}
+    ${punkteCard(s)}
     <!-- Mini-Dashboard: alles Wichtige auf einen Blick (Bereich 3, Punkt 8) -->
     <div class="mini-dash">
       <div class="mini-dash-row"><span>📊 Ausbildungsstand</span><b>${pct}%</b></div>
@@ -10491,6 +10494,96 @@ function paketCard(s){
     ${q?KR.paketHinweise(q).map(h=>klein(esc(h))).join(""):klein(qq.laden?"Stand wird gezählt …":"Stand gerade nicht abrufbar (offline?). Die Zahlen kommen, sobald wieder Verbindung da ist.")}
     ${klein("Vom Büro verkauft. Gezählt wird je Fahrcheck (45 Min.), sobald das Büro ihn abgehakt hat."+(nurEigene?" Du siehst nur deine eigenen Fahrten, den ganzen Stand hat das Büro.":"")+" Ändern nur im Büro.")}
   </div>`;
+}
+/* W19 Teil 3 (26.11.2026): Punktesystem in der Schülerakte. 🗣 Serband: „beim Punktesystem Platzhalter lassen“. Die Fahrschule legt in den
+   Büro-Einstellungen selbst fest, wofür es Punkte gibt und was man einlösen kann (punkte.regeln / punkte.praemien, hier nur lesen).
+   Sichtbar nur, wenn das System an ist und die Fahrschule bekannt ist. Der eigene Fahrlehrer sieht Kontostand und Verlauf seines Schülers
+   und bucht „Punkte geben“ / „Einlösen“ aus diesen Listen. Gebucht wird in der Tabelle schueler_punkte; Vorzeichen, Kontostand-Prüfung,
+   Wer/Wann und Rechte prüft der Server (supabase/migrations/20261202_w19_03_punkte.sql). Keine Verbindung zur Akademie. */
+const _punkte={}, _PUNKTE_MS=60000; // sid → {zeit, stand, verlauf, fehler, nicht}
+function _punkteSystem(){
+  try{ if(!window.KE||!KE.fsId||!KE.fsId()) return null; const w=KE.wert("punkte.system",{aktiv:false,verschenken:false,bedingungen:""}); return w.aktiv===true?w:null; }catch(e){ return null; }
+}
+function _punkteListe(art){
+  try{ const w=KE.wert(art==="vergeben"?"punkte.regeln":"punkte.praemien",{liste:[]});
+    return (Array.isArray(w.liste)?w.liste:[]).filter(x=>x&&typeof x==="object"&&String(x.name||"").trim()&&Number(x.punkte)>0).map(x=>({name:String(x.name).trim(),punkte:Math.floor(Number(x.punkte))}));
+  }catch(e){ return []; }
+}
+function _punkteZahl(n){ n=Number(n)||0; return (n>0?"+":n<0?"−":"")+Math.abs(n).toLocaleString("de-DE"); }
+function _punkteFehlerText(e){
+  const m=String(e&&e.message||"");
+  const n=m.match(/Nicht genug Punkte: Kontostand (-?\d+), gebraucht (\d+)/); if(n) return `Nicht genug Punkte: ${n[1]} vorhanden, ${n[2]} nötig.`;
+  if(/ausgeschaltet/.test(m)) return "Das Punktesystem ist ausgeschaltet.";
+  if(/nicht in der Liste/.test(m)) return "Das steht nicht (mehr) in der Liste der Fahrschule.";
+  if(/row-level|Keine Berechtigung|permission/i.test(m)) return "Keine Berechtigung für diesen Schüler.";
+  return "Nicht gebucht – bitte noch einmal versuchen.";
+}
+async function _punkteLaden(sid){
+  const supa=getSupa(), fs=window.KE&&KE.fsId&&KE.fsId();
+  if(_punkte[sid]&&_punkte[sid].laeuft) return;
+  if(!supa||!fs||!navigator.onLine){ // Prüfer Bedienung: offline nicht endlos „wird geladen“
+    _punkte[sid]={zeit:Date.now(),fehler:true};
+    const el=document.querySelector(`.punkte-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
+    if(el&&st) el.outerHTML=punkteCard(st);
+    return;
+  }
+  _punkte[sid]=Object.assign({},_punkte[sid],{laeuft:true});
+  try{
+    const [a,b]=await Promise.all([supa.rpc("punkte_kontostand",{p_fahrschule:fs,p_schueler:sid}),
+      supa.from("schueler_punkte").select("art,punkte,grund,erstellt_am,bearbeiter").eq("fahrschule_id",fs).eq("schueler_id",sid).order("erstellt_am",{ascending:false}).limit(5)]);
+    const err=a.error||b.error;
+    if(err) _punkte[sid]={zeit:Date.now(),nicht:/Keine Berechtigung|row-level|permission/i.test(String(err.message||"")),fehler:true};
+    else _punkte[sid]={zeit:Date.now(),stand:Number(a.data||0),verlauf:b.data||[]};
+  }catch(e){ _punkte[sid]={zeit:Date.now(),fehler:true}; }
+  const el=document.querySelector(`.punkte-karte[data-sid="${CSS.escape(String(sid))}"]`), st=(DB.students||[]).find(x=>x.id===sid);
+  if(el&&st) el.outerHTML=punkteCard(st);
+}
+function punkteCard(s){
+  if(!_punkteSystem()) return "";
+  const x=_punkte[s.id];
+  if(x&&x.nicht&&Date.now()-x.zeit<_PUNKTE_MS) return ""; // nicht der eigene Schüler: nichts zeigen (nach 1 Min. neu fragen, z. B. frisch angelegt)
+  if(!x||(!x.laeuft&&(Date.now()-x.zeit>_PUNKTE_MS||(x.fehler&&!x.nicht&&Date.now()-x.zeit>10000)))) setTimeout(()=>_punkteLaden(s.id),0);
+  const klein=t=>`<p class="muted-p" style="font-size:12px;margin:6px 0 0;">${t}</p>`;
+  let inhalt;
+  if(!x||x.stand==null) inhalt=klein(x&&x.fehler?"Punkte gerade nicht abrufbar (offline?).":"Punkte werden geladen …");
+  else{
+    const zeilen=(x.verlauf||[]).map(b=>`<div class="mini-dash-row"><span style="min-width:0;overflow-wrap:anywhere;">${esc(b.grund)}<small class="muted-p" style="display:block;font-size:12px;">${esc(new Date(b.erstellt_am).toLocaleDateString("de-DE"))}${b.bearbeiter?" · "+esc(b.bearbeiter):""}</small></span><b>${esc(_punkteZahl(b.punkte))}</b></div>`).join("");
+    inhalt=`<div class="punkte-stand-app"><b>${esc(x.stand.toLocaleString("de-DE"))}</b> Punkte</div>${zeilen}
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" style="flex:1 1 130px;min-height:44px;white-space:nowrap;" onclick="_punkteWahl(this.closest('.punkte-karte').dataset.sid,'vergeben')">Punkte geben</button>
+        <button type="button" class="btn btn-ghost" style="flex:1 1 130px;min-height:44px;" onclick="_punkteWahl(this.closest('.punkte-karte').dataset.sid,'einloesen')">Einlösen</button>
+      </div>`;
+  }
+  return `<div class="res-block punkte-karte" data-sid="${esc(String(s.id))}" style="animation:none;margin-top:9px;">
+    <h4>${_li("bogen")} Punkte</h4>${inhalt}
+  </div>`;
+}
+function _punkteWahl(sid,art){
+  const liste=_punkteListe(art), sys=_punkteSystem();
+  if(!sys) return;
+  const titel=art==="vergeben"?"Punkte geben":"Punkte einlösen";
+  openSheet(`<div class="sheet-h">${titel}</div>
+    ${liste.length?liste.map((x,i)=>`<button type="button" class="btn btn-ghost punkte-wahl" data-i="${i}" style="display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:48px;margin-top:8px;text-align:left;"><span style="min-width:0;overflow-wrap:anywhere;">${esc(x.name)}</span><b style="flex:0 0 auto;white-space:nowrap;">${art==="vergeben"?"+":"−"}${x.punkte.toLocaleString("de-DE")}</b></button>`).join("")
+      :`<p class="muted-p">Die Fahrschule hat noch nichts angelegt. Das Büro legt es in den Einstellungen unter „Punktesystem“ an.</p>`}
+    ${sys.bedingungen?`<p class="muted-p" style="font-size:12px;margin-top:10px;">${esc(sys.bedingungen).replace(/\n/g,"<br>")}</p>`:""}`);
+  $("#sheet").querySelectorAll(".punkte-wahl").forEach(b=>b.addEventListener("click",()=>_punkteBuchen(sid,art,liste[Number(b.dataset.i)])));
+}
+let _punkteBusy=false; // Prüfer Bedienung: Doppeltipp bucht sonst doppelt (Buchungen sind fest)
+async function _punkteBuchen(sid,art,eintrag){
+  if(_punkteBusy) return;
+  _punkteBusy=true;
+  const knoepfe=[...document.querySelectorAll("#sheet .punkte-wahl")]; knoepfe.forEach(b=>{ b.disabled=true; });
+  try{ await _punkteBuchenKern(sid,art,eintrag); } finally { _punkteBusy=false; knoepfe.forEach(b=>{ if(b.isConnected)b.disabled=false; }); }
+}
+async function _punkteBuchenKern(sid,art,eintrag){
+  const supa=getSupa(), fs=window.KE&&KE.fsId&&KE.fsId(), st=(DB.students||[]).find(x=>x.id===sid);
+  if(!supa||!fs||!eintrag||!st) return;
+  if(!navigator.onLine){ toast("Keine Verbindung – Punkte nur online buchen"); return; }
+  if(!confirm(`${st.name}: ${eintrag.punkte.toLocaleString("de-DE")} Punkte ${art==="vergeben"?"gutschreiben":"einlösen"} (${eintrag.name})?\n\nDie Buchung lässt sich nicht mehr ändern.`)) return;
+  const r=await supa.from("schueler_punkte").insert({fahrschule_id:fs,schueler_id:sid,art,punkte:eintrag.punkte,grund:eintrag.name});
+  if(r.error){ toast(_punkteFehlerText(r.error)); return; }
+  closeSheet(); delete _punkte[sid]; toast(art==="vergeben"?"Punkte gutgeschrieben ✓":"Eingelöst ✓");
+  _punkteLaden(sid);
 }
 function theorieStandFuer(s){
   if(!window.KR||!KR.theorieSoll)return null;

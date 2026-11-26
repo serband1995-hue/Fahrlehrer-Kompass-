@@ -104,7 +104,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const ohneZahl = (t) => t.replace(/\s*\d+$/, "").trim();
   const reiterInfo = () => page.$$eval(".zahl-reiter .tab", (l) => l.map((a) => [a.textContent.trim(), a.getAttribute("href"), a.getAttribute("aria-current") === "page", Math.round(a.getBoundingClientRect().top), !!a.querySelector(".zahl")]));
   const mitPakete = await page.evaluate(() => bkDa());
-  const rzSoll = (mitPakete ? ["Preise", "Pakete", "Verkäufe & Provision"] : ["Preise", "Verkäufe & Provision"]).join("|");
+  const rzSoll = (mitPakete ? ["Preise", "Pakete", "Belege", "Verkäufe & Provision"] : ["Preise", "Belege", "Verkäufe & Provision"]).join("|"); // W19: Reiter „Belege“
   await page.evaluate(() => { location.hash = "#zahlungen"; }); await warte(page, 350);
   let rz = await reiterInfo();
   pruefe("Z1", "#zahlungen mit wartendem Verkauf: EINE Reiterzeile in einer Linie, „Verkäufe & Provision“ aktiv und mit Zahl, keine zweite Reiterzeile", rz.map((x) => ohneZahl(x[0])).join("|") === rzSoll && rz[rz.length - 1][2] && rz[rz.length - 1][4] && rz.slice(0, -1).every((x) => !x[2] && !x[4]) && new Set(rz.map((x) => x[3])).size === 1 && (await page.locator(".bk-reiter").count()) === 0 && (await page.locator("#vMonat").count()) === 1 ? null : JSON.stringify(rz));

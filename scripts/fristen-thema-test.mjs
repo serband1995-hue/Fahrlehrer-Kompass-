@@ -240,7 +240,7 @@ try {
   {
     const { page, ctx, konsole } = await oeffneBuero();
     const l = await themenListe(page);
-    pruefe("B1a Liste: „Fristen“ nach „Zahlungen & Mails“, vor „Nachrichten-Vorlagen“", l.indexOf("Fristen") === l.indexOf("Zahlungen & Mails") + 1 && l.indexOf("Fristen") < l.indexOf("Nachrichten-Vorlagen"), l.join(" / "));
+    pruefe("B1a Liste: „Fristen“ nach „Zahlungen & Mails“, vor „Nachrichten-Vorlagen“", l.indexOf("Fristen") > l.indexOf("Zahlungen & Mails") && l.indexOf("Fristen") < l.indexOf("Nachrichten-Vorlagen") && l.slice(l.indexOf("Zahlungen & Mails") + 1, l.indexOf("Fristen")).every((t) => /^(Belege & Quittungen|Punktesystem)$/.test(t)), l.join(" / "));
     pruefe("B1b Thema offen im Rahmen: Überschrift „Fristen“, 8 Zeilen", (await page.locator("#esBox > h2.es-abschnitt").first().innerText()) === "Fristen" && (await page.locator("#esBox [data-esf-zeile]").count()) === 8);
     pruefe("B1c die Hinweise sind keine Überschrift (Schrift höchstens 16 px)", (await page.locator("#esBox [data-esf] > .es-hinweis").evaluate((e) => parseFloat(getComputedStyle(e).fontSize))) <= 16);
     // Speichern → Zeile in fahrschule_einstellungen, KR rechnet sofort damit

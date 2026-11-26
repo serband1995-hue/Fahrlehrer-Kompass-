@@ -376,6 +376,19 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       const monate = ein && window.KR.fristZahl ? window.KR.fristZahl(ein.wert && ein.wert.monate, 12, 1, 60) : (F.reaktMonate || 12);
       return window.KR.reaktRegelAusPreisen(tabelle("fahrschule_preise").filter((x) => x.fahrschule_id === p_fs), monate);
     },
+    // W19 Teil 3: wie punkte_kontostand und punkte_verschenken (20261202_w19_03_punkte.sql)
+    punkte_kontostand: ({ p_fahrschule, p_schueler }) => punkteStand(p_fahrschule, p_schueler),
+    punkte_verschenken: ({ p_fahrschule, p_von, p_an, p_punkte, p_grund }) => {
+      if (!p_von || !p_an || p_von === p_an) throw new Error("Bitte zwei verschiedene Schüler wählen");
+      if (!(Number(p_punkte) > 0)) throw new Error("Punkte müssen größer als 0 sein");
+      if (!String(p_grund || "").trim()) throw new Error("Bitte einen Grund eintragen");
+      const alt = tabelle("schueler_punkte").length;
+      const f1 = punkteStempel([{ fahrschule_id: p_fahrschule, schueler_id: p_von, art: "verschenkt_ab", punkte: p_punkte, grund: p_grund, gegen_schueler_id: p_an }]);
+      if (f1) throw new Error(f1);
+      const f2 = punkteStempel([{ fahrschule_id: p_fahrschule, schueler_id: p_an, art: "verschenkt_an", punkte: p_punkte, grund: p_grund, gegen_schueler_id: p_von }]);
+      if (f2) { F.tabellen.schueler_punkte.length = alt; throw new Error(f2); }
+      return null;
+    },
     buero_pin_anmelden: ({ p_person, p_pin, p_erste }) => {
       const p = personen().find((x) => x.id === p_person && x.aktiv !== false);
       if (!p) return { fehler: "unbekannt" };
@@ -464,6 +477,59 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person);
     zeilen.forEach((r) => { r.name = String(r.name || "").trim(); r.klasse = r.klasse ? String(r.klasse).trim() || null : null; r.aktualisiert_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; if (!Array.isArray(r.posten)) r.posten = []; if (r.aktiv == null) r.aktiv = true; });
   }
+  // W19 Teil 2: wie supabase/migrations/20261201_w19_02_zahlungsbelege.sql (Auslöser zahlungsbelege_anlegen)
+  function belegStempel(zeilen) {
+    const ein = (k) => { const z = tabelle("fahrschule_einstellungen").find((e) => e.schluessel === k); return z ? z.wert : null; };
+    const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person);
+    for (const r of zeilen) {
+      const fsZ = tabelle("belege_zaehler_fake");
+      if (r.storno_von) {
+        const o = tabelle("zahlungsbelege").find((x) => x.id === r.storno_von);
+        if (!o) return "Beleg zum Stornieren nicht gefunden";
+        if (o.storno_von) return "Ein Storno kann nicht storniert werden";
+        if (tabelle("zahlungsbelege").some((x) => x.storno_von === o.id)) return "duplicate key value violates unique constraint zahlungsbelege_ein_storno";
+        Object.assign(r, { schueler_id: o.schueler_id, schueler_name: o.schueler_name, zahlart: o.zahlart, betrag: -Number(o.betrag), fahrschule_daten: o.fahrschule_daten, steuer: o.steuer, zweck: "Storno zu Beleg Nr. " + o.nummer + (String(r.zweck || "").trim() ? ": " + String(r.zweck).trim() : "") });
+      } else {
+        if (!(Number(r.betrag) > 0)) return "Betrag muss größer als 0 sein";
+        if (r.zahlart === "bar" && !((ein("beleg.bargeld") || {}).aktiv === true)) return "Bargeld-Belege sind in den Einstellungen ausgeschaltet";
+        const s = tabelle("schueler").find((x) => x.id === r.schueler_id);
+        if (r.schueler_id && !s) return "Schüler gehört nicht zu dieser Fahrschule";
+        if (s) r.schueler_name = s.name;
+        const fs = tabelle("fahrschulen").find((x) => x.id === r.fahrschule_id);
+        const kopf = Object.assign({}, ein("beleg.fahrschule") || {}); if (!String(kopf.name || "").trim()) kopf.name = fs ? fs.name : "";
+        r.fahrschule_daten = kopf;
+        const st = ein("beleg.steuer"); r.steuer = st && st.ausweisen === true ? st : null;
+      }
+      let z = fsZ.find((x) => x.fs === r.fahrschule_id); if (!z) { z = { fs: r.fahrschule_id, letzte: 0 }; fsZ.push(z); }
+      r.nummer = ++z.letzte;
+      r.erstellt_von = (F.session && F.session.user && F.session.user.id) || null; r.bearbeiter = p ? p.name : null;
+    }
+    return null;
+  }
+  // W19 Teil 3: wie supabase/migrations/20261202_w19_03_punkte.sql (Auslöser schueler_punkte_anlegen): Schalter, Schüler, Vorzeichen, Kontostand, wer/wann
+  function punkteStand(fs, sid) { return tabelle("schueler_punkte").filter((x) => x.fahrschule_id === fs && x.schueler_id === sid).reduce((a, x) => a + Number(x.punkte || 0), 0); }
+  function punkteStempel(zeilen) {
+    const ein = (k) => { const z = tabelle("fahrschule_einstellungen").find((e) => e.schluessel === k); return z ? z.wert : null; };
+    const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person);
+    for (const r of zeilen) {
+      const sys = ein("punkte.system") || {};
+      if (sys.aktiv !== true) return "Das Punktesystem ist ausgeschaltet";
+      if ((r.art === "verschenkt_ab" || r.art === "verschenkt_an") && sys.verschenken !== true) return "Verschenken ist ausgeschaltet";
+      if (!["vergeben", "einloesen", "verschenkt_ab", "verschenkt_an"].includes(r.art)) return "check constraint schueler_punkte_art";
+      if (!tabelle("schueler").find((x) => x.id === r.schueler_id && x.fahrschule_id === r.fahrschule_id)) return "Schüler gehört nicht zu dieser Fahrschule";
+      r.grund = String(r.grund || "").trim();
+      if (!r.grund || r.grund.length > 200) return "check constraint schueler_punkte_grund";
+      const n = Math.abs(Number(r.punkte));
+      if (!(n > 0) || n > 1000000 || !Number.isInteger(n)) return "Punkte dürfen nicht 0 sein";
+      r.punkte = (r.art === "vergeben" || r.art === "verschenkt_an") ? n : -n;
+      if (r.art !== "verschenkt_ab" && r.art !== "verschenkt_an") r.gegen_schueler_id = null;
+      if (r.punkte < 0) { const b = punkteStand(r.fahrschule_id, r.schueler_id); if (b + r.punkte < 0) return "Nicht genug Punkte: Kontostand " + b + ", gebraucht " + n; }
+      r.id = r.id || ("fake-" + Math.random().toString(36).slice(2, 10));
+      r.erstellt_am = new Date().toISOString(); r.erstellt_von = (F.session && F.session.user && F.session.user.id) || null; r.bearbeiter = p ? p.name : null;
+      tabelle("schueler_punkte").push(r); // gleich buchen: die nächste Zeile derselben Anfrage sieht den neuen Stand
+    }
+    return null;
+  }
   class Abfrage {
     constructor(name) { this.name = name; this.filter = []; this.art = "select"; this.einzeln = null; this.sort = []; this.grenze = null; this.nachher = false; }
     select() { if (this.art !== "select") this.nachher = true; return this; }
@@ -496,7 +562,11 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         if (this.name === "schueler_aufgaben") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.von_person_id = si ? si.person : null; r.bearbeiter = p ? p.name : null; }); }
         // wie der Schutz-Trigger der Preisliste (K9): Verfasser und Zeit vom Server
         if (this.name === "fahrschule_preise") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.angelegt_von = (F.session && F.session.user && F.session.user.id) || null; r.angelegt_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
-        t.push(...daten);
+        // wie der Auslöser zahlungsbelege_anlegen (W19 Teil 2): Nummer, Name, Kopf und Storno vom Server, Bargeld nur mit Schalter
+        if (this.name === "zahlungsbelege") { const f = belegStempel(daten); if (f) return { data: null, error: { message: f } }; }
+        // wie der Auslöser schueler_punkte_anlegen (W19 Teil 3): Schalter, Vorzeichen, Kontostand; die Zeilen werden dort schon gebucht
+        if (this.name === "schueler_punkte") { const f = punkteStempel(daten); if (f) return { data: null, error: { message: f } }; }
+        else t.push(...daten);
         // wie der Schutz-Trigger von fahrzeug_konflikt_gesehen (K18): wer und wann kommen vom Server
         if (this.name === "fahrzeug_konflikt_gesehen") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.gesehen_von = (F.session && F.session.user && F.session.user.id) || null; r.gesehen_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         if (this.name === "zahlungs_mails") daten.forEach((r) => { r.angelegt_am = r.angelegt_am || new Date().toISOString(); });
