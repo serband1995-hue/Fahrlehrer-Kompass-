@@ -92,7 +92,9 @@ function darfCachen(url) {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(CORE_FILES))
+    // cache:"reload" (W20): am Browser-Zwischenspeicher vorbei frisch vom Server holen – sonst kann kurz nach einem Update
+    // noch eine alte index.html (GitHub Pages hält bis zu 10 Min.) in den neuen Cache geraten
+    caches.open(CACHE_VERSION).then((cache) => cache.addAll(CORE_FILES.map((u) => new Request(u, { cache: "reload" }))))
   );
   self.skipWaiting();
 });
