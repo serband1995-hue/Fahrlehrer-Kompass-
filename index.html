@@ -8124,7 +8124,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.2";
+const APP_VERSION="2026.11.26.4";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -9274,7 +9274,7 @@ function routeHome(){
   if(_homeColorFilter.length) list=list.filter(s=>_homeColorFilter.includes(s.profil));
   if(_homeOhneTelefon) list=list.filter(telefonFehlt);
   const alle=activeStudents();
-  const modus=_slSortLesen()||_homeSortMode[_fsAgg?"gesamt":"eigen"]||(_fsAgg?"az":"naechste");
+  const modus=_homeSortMode[_fsAgg?"gesamt":"eigen"]||_slSortLesen()||(_fsAgg?"az":"naechste"); // erst der Tipp in dieser Sitzung, dann der Gerätespeicher
   const alpha=(a,b)=>(a.name||"").localeCompare(b.name||"","de");
   if(modus==="stand") list.sort((a,b)=>stand(b)-stand(a)||alpha(a,b));
   else if(modus==="naechste"){ const k=x=>{ const t=_slNaechster(x); return t?t.date+" "+t.von:"9999"; }; list.sort((a,b)=>k(a).localeCompare(k(b))||alpha(a,b)); }
