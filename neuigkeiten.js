@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.7", datum: "2026-11-26", kurz: "Büro: Prüfung eintragen, Zahlung gleich anfordern.",
+    punkte: ["Trägt das Büro eine neue Prüfung ein, steht danach unten der Knopf „Zahlungsaufforderung senden“ mit dem Betrag aus der Preisliste. Ein Tipp genügt, 5 Sekunden lang geht noch „Rückgängig“.",
+             "Fehlt etwas (Preis, Zahlungsdaten oder E-Mail), steht dort, was fehlt, mit einem Link dorthin.",
+             "Wurde für diese Prüfung schon eine Zahlungsaufforderung geschickt, steht dort ein Haken statt des Knopfs."] },
   { version: "2026.11.26.6", datum: "2026-11-26", kurz: "Termine verschieben: erst 0,8 Sekunden halten, dann ziehen.",
     punkte: ["Im Kalender verschiebt sich ein Termin nur noch, wenn du ihn kurz festhältst (0,8 Sekunden). Dann hebt sich die Karte leicht an. Bei vielen Handys vibriert es dazu kurz.",
              "So passiert beim Scrollen der Woche nichts mehr aus Versehen.",
