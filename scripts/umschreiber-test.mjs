@@ -148,6 +148,16 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     const r = await page.evaluate(() => { const vor = JSON.stringify(DB.students.find((x) => x.id === "u1").plan.sonder); openSFPickerForLesson("L3", "u1", "2099-01-05", "10:00", "11:30", "", "sonder", null);
       return { gleich: JSON.stringify(DB.students.find((x) => x.id === "u1").plan.sonder) === vor, art: DB.lessons.find((l) => l.id === "L3").art, picker: !!document.querySelector(".sf-opt") }; });
     return r.gleich && r.art === "fahrstunde" && !r.picker ? null : JSON.stringify(r); });
+  await pruefe("U4d", "„Termin vergeben“ (freier Platz): bei Sonderfahrt Umschreiber ausgegraut, Tippen bucht nichts", async () => {
+    const n0 = await page.evaluate(() => DB.lessons.length);
+    await page.evaluate(() => openAssignSlotSheet("2099-01-06", "10:00", "11:30", "fahrstunde")); await warte(page, 250);
+    const vor = await page.evaluate(() => document.querySelector('#asList [data-sid="u1"]').textContent);
+    await page.click('.seg-i[data-art="sonder"]'); await warte(page, 200);
+    const nach = await page.evaluate(() => document.querySelector('#asList [data-sid="u1"]').textContent);
+    await page.click('#asList [data-sid="u1"]', { force: true }); await warte(page, 300);
+    const n1 = await page.evaluate(() => DB.lessons.length); await page.evaluate(() => closeSheet()); await warte(page, 200);
+    return !/Umschreiber/.test(vor) && /Umschreiber/.test(nach) && n1 === n0 ? null : JSON.stringify({ vor, nach, n0, n1 }); });
+  await pruefe("U2c", "„Nächster Fokus“ nennt beim Umschreiber keine Sonderfahrt-Themen", () => page.evaluate(() => { const t = autoNext(DB.students.find((x) => x.id === "u1")).text; return /Sonderfahrten/.test(t) ? t : null; }));
   await pruefe("U5", "Lohn je Termin (Lohn-Stand, UE) unverändert", async () => ((await lohn(page)) === lohnVorher ? null : "vorher " + lohnVorher + " nachher " + (await lohn(page))));
   appZeile = await page.evaluate(() => _schuelerZeile(DB.students.find((x) => x.id === "u1")).ausbildung);
 
@@ -278,6 +288,12 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     const alt = S.schueler; S.schueler = [{ id: "u1", ausbildungsart: "umschreibung", ausbildung: {} }, { id: "u2", ausbildungsart: "ersterwerb", ausbildung: {} }];
     const r = [umschreiberSchueler("u1"), umschreiberSchueler("u2"), umschreiberSchueler("")]; S.schueler = alt;
     return r[0] === true && r[1] === false && r[2] === false ? null : JSON.stringify(r); }));
+  await pruefe("U9i", "Büro-Fristen (Ausländischer Führerschein): veraltetes App-Echo zählt nicht, Spalte schon", () => page.evaluate(() => {
+    const fs = [{ land: "Türkei" }], w = "2026-01-01";
+    const a = KR.umschreibInfo({ ausbildungsart: "ersterwerb", ausbildung: { umschreiber: true }, auslands_fs: fs, wohnsitz_de_seit: w }).stufe;
+    const b = KR.umschreibInfo({ ausbildungsart: "umschreibung", ausbildung: {}, auslands_fs: fs, wohnsitz_de_seit: w }).stufe;
+    const c = KR.umschreibInfo({ ausbildung: { umschreiber: true }, auslands_fs: fs, wohnsitz_de_seit: w }).stufe; // ohne Spalte (App-Daten)
+    return a === "kein" && b !== "kein" && c !== "kein" ? null : JSON.stringify([a, b, c]); }));
   await pruefe("U9h", "keine JS-Fehler (Büro)", () => jsFehler);
   await ctx.close();
 }

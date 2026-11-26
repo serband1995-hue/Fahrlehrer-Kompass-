@@ -367,7 +367,9 @@
   function umschreibInfo(s, heute, fr) {
     heute = heute || todayISO();
     const fs = (s && Array.isArray(s.auslands_fs)) ? s.auslands_fs.filter((f) => f && f.land) : [];
-    const umschreiber = s && (s.ausbildungsart === "umschreibung" || !!(s.ausbildung && s.ausbildung.umschreiber)); // auch nur in der App markiert
+    // W22: Zeile aus der Datenbank (Feld ausbildungsart vorhanden) → nur die Büro-Spalte zählt; ausbildung.umschreiber ist dort
+    // nur das Echo der Fahrlehrer-App. Ohne Spalte (z. B. reine App-Daten) zählt das Merkmal der App wie bisher.
+    const umschreiber = s && (s.ausbildungsart === "umschreibung" || (!("ausbildungsart" in s) && !!(s.ausbildung && s.ausbildung.umschreiber)));
     if (!umschreiber || !fs.length) return { stufe: "kein", bis: null, tage: null, drittstaat: false };
     if (fs.some((f) => istEuEwr(f.land))) return { stufe: "eu", bis: null, tage: null, drittstaat: false }; // ein EU/EWR-Führerschein gilt weiter
     if (!fs.some((f) => istDrittstaat(f.land))) return { stufe: "land_pruefen", bis: null, tage: null, drittstaat: false };

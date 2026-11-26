@@ -5623,11 +5623,12 @@ function _theorieVomBuero(s, datum){
    App-Version gesetztes „an“ ohne Merker nimmt das Büro so wieder zurück). Jeder andere Wert (ersterwerb, neu, leer) = kein
    Umschreiber. Merker umschreiberVomBuero: wann das Büro es zuerst gesetzt hat und wie die App vorher stand; er wird beim
    erneuten Setzen nie überschrieben. Echte, früher gefahrene Sonderfahrten bleiben immer gespeichert. */
-function _umschreiberVomBuero(s, art) {
+function _umschreiberVomBuero(s, art, ohneZeit) {
   if (!s) return false;
   if (art === "umschreibung") {
     let ch = false;
-    if (!s.umschreiberVomBuero) { s.umschreiberVomBuero = { am: new Date().toISOString(), vorherApp: !!s.umschreiber }; ch = true; }
+    // ohneZeit (Gesamtansicht): fester Wert, sonst sähe jedes Neuladen wie eine Änderung vom Server aus
+    if (!s.umschreiberVomBuero) { s.umschreiberVomBuero = { am: ohneZeit ? null : new Date().toISOString(), vorherApp: !!s.umschreiber }; ch = true; }
     if (!s.umschreiber) { s.umschreiber = true; ch = true; }
     return ch;
   }
@@ -6207,7 +6208,7 @@ function _fsMapSchueler(row,lehrerName){
     sehhilfe:row.sehhilfe!=null?row.sehhilfe:!!(row.ausbildung||{}).sehhilfe, // gemeinsame Spalte vor altem Wert im jsonb
     id:row.id, name:row.name, telefon:row.telefon
   });
-  if("ausbildungsart" in row)_umschreiberVomBuero(o,row.ausbildungsart); // W22: Gesamtansicht zeigt dasselbe wie das Büro, auch bevor die App des Fahrlehrers abgeglichen hat
+  if("ausbildungsart" in row)_umschreiberVomBuero(o,row.ausbildungsart,true); // W22: Gesamtansicht zeigt dasselbe wie das Büro, auch bevor die App des Fahrlehrers abgeglichen hat
   return o;
 }
 function _fsMapTermin(row,lehrerName){
@@ -8827,7 +8828,8 @@ function autoNext(s){
   if(s.next) return {text:s.next,auto:false};
   // K2 GK25: ohne Plan (z. B. neu im Büro angelegt) ist noch nichts begonnen, nicht „alles grün“
   if(!s.plan||!s.plan.ampeln) return {text:"Noch nicht begonnen",auto:true};
-  for(const st of stufenFor(s)){ for(const it of st.items){ if(s.plan.ampeln[it.id]!=="gruen") return {text:it.t+" · "+st.titel,auto:true}; } }
+  for(const st of stufenFor(s)){ if(s.umschreiber&&st.key==="sonder")continue; // W22: Sonderfahrten entfallen
+    for(const it of st.items){ if(s.plan.ampeln[it.id]!=="gruen") return {text:it.t+" · "+st.titel,auto:true}; } }
   if(!stand(s)) return {text:"Noch nicht begonnen",auto:true};
   return {text:"Alles grün – Generalprobe!",auto:true};
 }
@@ -14238,6 +14240,8 @@ function openAssignSlotSheet(date,von,bis,art,opts){
   ensureDB(); opts=opts||{};
   let curArt=art||"fahrstunde";
   const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  const asItem=s=>{ const zu=curArt==="sonder"&&_umschreiberOhneSF(s.id); // W22
+    return `<button class="as-item" data-sid="${s.id}"${zu?' aria-disabled="true" style="opacity:.5;"':''}><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${zu?'Umschreiber · keine SF':esc(s.form||'')}</span></button>`; };
   // Aus „Nach der Stunde“: dieser Schüler steht oben, nach dem Buchen geht es dorthin zurück.
   if(opts.sid){ const i=cand.findIndex(x=>x.id===opts.sid); if(i>0)cand.unshift(cand.splice(i,1)[0]); }
   const artOpts=["fahrstunde","sonder","schalt"];
@@ -14248,14 +14252,16 @@ function openAssignSlotSheet(date,von,bis,art,opts){
     <div class="dur-row" id="asDur" style="margin-bottom:12px;"><button class="dur-opt on" data-half="0">90 Min · 2 UE</button><button class="dur-opt" data-half="1">45 Min · 1 UE</button></div>
     <div class="field"><input type="text" id="asSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
     <button class="es-act primary" id="asNewStudent" style="margin-bottom:10px;">+ Neuer Schüler</button>
-    <div class="as-list" id="asList">${cand.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")}</div>`);
+    <div class="as-list" id="asList">${cand.map(asItem).join("")}</div>`);
   document.querySelectorAll(".seg-i[data-art]").forEach(b=>b.addEventListener("click",()=>{
     curArt=b.dataset.art; document.querySelectorAll(".seg-i[data-art]").forEach(x=>x.classList.toggle("on",x===b));
+    render(($("#asSearch")||{}).value||""); // W22: Umschreiber bei „Sonderfahrt“ ausgrauen
   }));
-  const render=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#asList").innerHTML=list.map(s=>`<button class="as-item" data-sid="${s.id}"><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${esc(s.form||'')}</span></button>`).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindAs(); };
+  const render=(q)=>{ const list=cand.filter(s=>matchStudent(s.name,q)); $("#asList").innerHTML=list.map(asItem).join("")||'<p class="muted-p" style="font-size:13px;">Kein Treffer</p>'; bindAs(); };
   let asHalf=false;
   document.querySelectorAll("#asDur .dur-opt").forEach(b=>b.addEventListener("click",()=>{ asHalf=b.dataset.half==="1"; document.querySelectorAll("#asDur .dur-opt").forEach(x=>x.classList.toggle("on",x===b)); }));
   const finishBooking=(sid)=>{
+    if(curArt==="sonder"&&_umschreiberOhneSF(sid)){ toast("Umschreiber – Sonderfahrten entfallen"); return; } // W22
     if(_zahlungStopp(sid,date,curArt))return;
     // Büro-Stopp: gleiche Rückfrage wie beim Termin über den Kalender (Prüfer Büro, 11.10.2026)
     const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
