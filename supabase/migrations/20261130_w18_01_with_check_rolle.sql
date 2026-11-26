@@ -19,7 +19,10 @@
 -- Wer ist betroffen: Büro (is_buero), Leitung (is_fahrschule_admin, auch „fährt selbst“) arbeiten wie vorher, denn
 -- ihre Zeilen erfüllen das USING ohnehin. Super-Admin hat eigene Regeln. Fahrlehrer behalten ihre eigenen Regeln
 -- („Fahrlehrer legt eigene … an“ mit fahrlehrer_id = auth.uid()). Die App nutzt die gelockerten Wege nicht
--- (geprüft: Provisionen, Verschiebungen, Fahrzeuge, Schichten, Empfehlungen werden nur in der Leitungs-Ansicht geschrieben).
+-- (Prüf-Team W18: Provisionen, Fahrzeuge, Schichten, Empfehlungen schreiben nur Leitung/Büro mit eigener Regel).
+-- Einzige Ausnahme war schueler_verschiebungen: Dort schreibt das Büro (buero.js verschiebeSchueler) ohne eigene Regel – deshalb
+-- bekommt diese Regel Leitung ODER Büro. Büro ohne Verwalten-Recht konnte bisher Fahrzeuge nur ANLEGEN (nicht ändern); den Knopf
+-- zeigt die Büro-Seite ihm ohnehin nicht (buero.js, „+ Fahrzeug“ nur mit Verwalten-Recht).
 -- Bewusst NICHT geändert: profiles „Fahrschule-Admin verwaltet eigene Fahrlehrer“ (nur UPDATE, live mit with_check
 -- fahrschule_id = my_fahrschule_id() AND rolle = 'fahrlehrer'). Ein UPDATE erreicht nur Zeilen, deren USING passt; für einen
 -- Fahrlehrer ist das allein sein eigenes Profil („Eigenes Profil ändern“, auth.uid() = id). Die neue Zeile erfüllt dann ohnehin
