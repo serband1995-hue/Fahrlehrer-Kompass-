@@ -116,14 +116,15 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     return m && m[1] === "fc-ok" ? null : "Zeile fehlt oder nicht grün"; }));
   await page.evaluate(() => routeDetail("u1")); await warte(page, 300);
   await pruefe("U2b", "Akte: „Umschreiber – Sonderfahrten entfallen“, nichts „offen“, Schalter nur Anzeige", () => page.evaluate(() => {
-    const t = document.querySelector(".lage-focus .lage-val").textContent; const k = document.getElementById("dashUmschreiberToggle");
+    const t = document.querySelector(".lage-focus .lage-val").textContent; const k = document.getElementById("dashUmschreiberStatus");
     if (!/Umschreiber – Sonderfahrten entfallen/.test(t) || /offen/.test(t)) return "Stand: " + t;
-    if (!k || k.getAttribute("aria-disabled") !== "true" || !k.classList.contains("on")) return "Schalter: " + (k && k.outerHTML);
+    if (document.getElementById("dashUmschreiberToggle")) return "Schalter noch da";
+    if (!k || !k.classList.contains("an") || !/Büro/.test(k.textContent)) return "Etikett: " + (k && k.outerHTML);
     return /Ändern nur im Büro/.test(k.closest(".theorie-card").textContent) ? null : "Hinweis fehlt"; }));
-  await pruefe("U3a", "Schalter antippen (mit Fahrschule): nichts ändert sich, Hinweis „Büro“", async () => {
-    await page.click("#dashUmschreiberToggle", { force: true }) /* nur Anzeige (aria-disabled): Tippen zeigt den Hinweis */; await warte(page, 300);
-    const r = await page.evaluate(() => ({ um: DB.students.find((x) => x.id === "u1").umschreiber, t: document.getElementById("toast").textContent }));
-    return r.um === true && /Büro/.test(r.t) ? null : JSON.stringify(r); });
+  await pruefe("U3a", "Etikett antippen (mit Fahrschule): nichts ändert sich, Etikett-Text lesbar (≥ 13 px)", async () => {
+    await page.click("#dashUmschreiberStatus"); await warte(page, 300);
+    const r = await page.evaluate(() => ({ um: DB.students.find((x) => x.id === "u1").umschreiber, px: parseFloat(getComputedStyle(document.getElementById("dashUmschreiberStatus")).fontSize) }));
+    return r.um === true && r.px >= 13 ? null : JSON.stringify(r); });
   await pruefe("U3b", "360 px: Akte ragt nicht heraus", () => breit(page));
   // U4: neue Sonderfahrt gesperrt
   await page.evaluate(() => { routeKalender(); openAddLessonSheet("sonder"); }); await warte(page, 300);
@@ -216,9 +217,9 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     _schuelerAbrufLaeuft = false; await pullSchuelerZuweisungen();
     return !s.umschreiber && !s.umschreiberVomBuero ? null : JSON.stringify({ u: s.umschreiber, m: s.umschreiberVomBuero }); }));
   await p2.page.evaluate(() => routeDetail("u2")); await warte(p2.page, 300);
-  await pruefe("U8e", "mit Fahrschule: Schalter auch bei „aus“ nur Anzeige", async () => {
-    await p2.page.click("#dashUmschreiberToggle", { force: true }); await warte(p2.page, 300);
-    return (await p2.page.evaluate(() => DB.students.find((x) => x.id === "u2").umschreiber)) === false ? null : "umgeschaltet"; });
+  await pruefe("U8e", "mit Fahrschule bei „aus“: „Kein Umschreiber“ mit Etikett Büro, kein Schalter", () => p2.page.evaluate(() => {
+    const k = document.getElementById("dashUmschreiberStatus"); const c = k && k.closest(".theorie-card");
+    return k && !k.classList.contains("an") && !document.getElementById("dashUmschreiberToggle") && /Kein Umschreiber/.test(c.textContent) ? null : (c ? c.textContent : "fehlt"); }));
 
   // U10: neuer Schüler vom Büro als Umschreiber; Gesamtansicht
   await pruefe("U10a", "neuer Schüler vom Büro (Umschreibung) kommt als Umschreiber mit Merker an", () => p2.page.evaluate(async () => {
@@ -256,7 +257,11 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
   const { ctx, page, jsFehler } = await oeffneApp({ w: 740, h: 360 });
   await setzeArt(page, "u1", "umschreibung"); await abruf(page);
   await page.evaluate(() => routeDetail("u1")); await warte(page, 300);
-  await pruefe("U12", "quer: nichts ragt heraus, Schalter ≥ 44 px Tippfläche", async () => (await breit(page)) || page.evaluate(() => { const r = document.getElementById("dashUmschreiberToggle").getBoundingClientRect(); return r.width + 12 >= 44 && r.height + 12 >= 44 ? null : "klein"; }));
+  await pruefe("U12", "quer: nichts ragt heraus, Etikett ganz sichtbar", async () => (await breit(page)) || page.evaluate(() => { const e = document.getElementById("dashUmschreiberStatus"), r = e.getBoundingClientRect(), c = e.closest(".theorie-card").getBoundingClientRect(); return r.right <= c.right + 0.5 && r.height >= 30 ? null : JSON.stringify([r.right, c.right, r.height]); }));
+  await pruefe("U12c", "gesperrte Knöpfe lesbar: keine Durchsichtigkeit, Hinweis ≥ 13 px", () => page.evaluate(() => {
+    openEventEdit("L3"); const b = document.querySelector('.es-art[data-art="sonder"]'), h = document.querySelector(".sf-gesperrt-hinweis");
+    const r = { op: getComputedStyle(b).opacity, px: h ? parseFloat(getComputedStyle(h).fontSize) : 0 }; closeSheet();
+    return r.op === "1" && r.px >= 13 ? null : JSON.stringify(r); }));
   await pruefe("U12b", "keine JS-Fehler (quer)", () => jsFehler);
   await ctx.close();
 }

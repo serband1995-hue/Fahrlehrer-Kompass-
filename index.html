@@ -704,8 +704,12 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 /* K2+K4: unsichtbar größere Tippfläche (mind. 44 px hoch), der Schalter selbst sieht gleich aus */
 .check-toggle::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px;}
 .check-toggle.on::after{left:23px;background:#fff;}
-.theorie-card.nur-anzeige .check-toggle{opacity:.55;cursor:default;}
-.tc-buero{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:700;background:var(--surface-2);color:var(--muted);vertical-align:1px;}
+/* W22: gesperrt, aber lesbar (Kontrast bleibt): gedämpfte Schrift, gestrichelter Rand statt Durchsichtigkeit */
+[data-gesperrt]{color:var(--muted) !important;border-style:dashed !important;background:transparent !important;cursor:not-allowed;}
+.as-item[data-gesperrt] .as-nm{color:var(--text);}
+.sf-gesperrt-hinweis{display:flex;align-items:center;gap:6px;font-size:13px;line-height:1.35;color:var(--muted);margin:6px 0 0;}
+.tc-buero-fest{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:4px 11px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);white-space:nowrap;}
+.tc-buero-fest.an{border-color:var(--gruen-line);color:var(--gruen);}
 .plan-sec{margin-top:22px;}
 .plan-sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
 .plan-sec-h .nr{font-family:'Anton',sans-serif;color:var(--orange);font-size:15px;}
@@ -7783,8 +7787,8 @@ async function fsSerientermineSheet(sid){
     <div class="field"><label>Startdatum</label><input type="date" id="stDate" value="${todayISO()}"></div>
     <div class="field"><label>Uhrzeit</label><input type="time" id="stVon" value="10:00"></div>
     <div class="field"><label>Art</label>
-      <div class="es-arten"><button class="es-art on" data-art="fahrstunde">Fahrstunde</button><button class="es-art" data-art="sonder"${s.umschreiber?' disabled aria-disabled="true" style="opacity:.4;"':''}>Sonderfahrt</button></div>
-      ${s.umschreiber?`<p class="muted-p" style="font-size:12px;margin:4px 0 0;">Umschreiber: keine Sonderfahrten.</p>`:''}
+      <div class="es-arten"><button class="es-art on" data-art="fahrstunde">Fahrstunde</button><button class="es-art" data-art="sonder"${s.umschreiber?' disabled aria-disabled="true" data-gesperrt="1"':''}>Sonderfahrt</button></div>
+      ${s.umschreiber?`<p class="sf-gesperrt-hinweis">${_li("schloss")} Sonderfahrt nicht möglich – Umschreiber</p>`:''}
     </div>
     <div class="field"><label>Intervall</label>
       <div class="es-arten"><button class="es-art on" data-intervall="1">Täglich</button><button class="es-art" data-intervall="2">Jeden 2. Tag</button><button class="es-art" data-intervall="7">Wöchentlich</button></div>
@@ -10339,10 +10343,14 @@ function umschreiberKarteHTML(s){
   const modus=umschreiberModus(s), an=!!s.umschreiber;
   const sub=modus==="frei"?"Sonderfahrten entfallen und zählen nicht zur %-Wertung"
     :an?"Vom Büro eingetragen – Sonderfahrten entfallen. Ändern nur im Büro.":"Stellt das Büro ein (Ausbildungsart „Umschreibung“).";
-  const gesperrt=modus==="buero";
-  return `<div class="theorie-card${gesperrt?' nur-anzeige':''}" style="margin-top:9px;">
-      <div class="tc-body"><div class="tc-name">Umschreiber${gesperrt?` <span class="tc-buero">${an?'an':'aus'} · Büro</span>`:''}</div><div class="tc-sub">${esc(sub)}</div></div>
-      <button class="check-toggle ${an?'on':''}" id="dashUmschreiberToggle" aria-label="Umschreiber${gesperrt?' – stellt das Büro ein':''}"${gesperrt?' aria-disabled="true"':''}></button>
+  // Mit Fahrschule: festes Etikett mit Schloss statt Schalter (nur Anzeige, keine tote Tippfläche)
+  if(modus==="buero") return `<div class="theorie-card nur-anzeige" style="margin-top:9px;">
+      <div class="tc-body"><div class="tc-name">${an?"Umschreiber":"Kein Umschreiber"}</div><div class="tc-sub">${esc(sub)}</div></div>
+      <span class="tc-buero-fest${an?' an':''}" id="dashUmschreiberStatus">${_li("schloss")} Büro</span>
+    </div>`;
+  return `<div class="theorie-card" style="margin-top:9px;">
+      <div class="tc-body"><div class="tc-name">Umschreiber</div><div class="tc-sub">${esc(sub)}</div></div>
+      <button class="check-toggle ${an?'on':''}" id="dashUmschreiberToggle" aria-label="Umschreiber"></button>
     </div>`;
 }
 // W22: Für diesen Schüler keine neuen Sonderfahrten anbieten (Umschreiber). Früher eingetragene bleiben unberührt.
@@ -13861,7 +13869,7 @@ function openAddLessonSheet(art){
   const defTime=art==="theorie"?"18:00":art==="nacht"?"19:30":"10:00";
   // W22: Bei „Sonderfahrt“ sind Umschreiber sichtbar, aber nicht wählbar
   const alItem=s=>{ const zu=art==="sonder"&&_umschreiberOhneSF(s.id);
-    return `<button class="as-item" data-sid="${s.id}"${zu?' aria-disabled="true" style="opacity:.5;"':''}><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${zu?'Umschreiber · keine SF':esc(s.form||'')}</span></button>`; };
+    return `<button class="as-item" data-sid="${s.id}"${zu?' aria-disabled="true" data-gesperrt="1"':''}><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${zu?'Umschreiber · keine Sonderfahrt':esc(s.form||'')}</span></button>`; };
   // Schritt 1: Schüler wählen
   openSheet(`<div class="sheet-h">${lab} · mit wem?</div>
     <div class="field"><input type="text" id="alSearch" placeholder="Schüler suchen …" autocomplete="off"></div>
@@ -14190,8 +14198,8 @@ function openEventEdit(id,overrides){
     <div class="field"><label>Datum</label><input type="date" id="esDate" value="${esc(cur.date)}"></div>
     <div class="field"><label>Uhrzeit (Beginn)</label><input type="time" id="esTime" value="${esc(cur.von)}"></div>
     <div class="field"><label>Art</label>
-      <div class="es-arten">${[["fahrstunde","Fahrstunde"],["sonder","Sonderfahrt"],["schalt","Schaltk."],["theorie","Theorie"]].map(([k,la])=>{ const zu=k==="sonder"&&cur.art!=="sonder"&&_umschreiberOhneSF(l.sid); return `<button class="es-art${cur.art===k?' on':''}" data-art="${k}"${zu?' disabled aria-disabled="true" style="opacity:.4;"':''}>${la}</button>`; }).join("")}</div>
-      ${cur.art!=="sonder"&&_umschreiberOhneSF(l.sid)?`<p class="muted-p" style="font-size:12px;margin:4px 0 0;">Umschreiber: keine Sonderfahrten.</p>`:''}
+      <div class="es-arten">${[["fahrstunde","Fahrstunde"],["sonder","Sonderfahrt"],["schalt","Schaltk."],["theorie","Theorie"]].map(([k,la])=>{ const zu=k==="sonder"&&cur.art!=="sonder"&&_umschreiberOhneSF(l.sid); return `<button class="es-art${cur.art===k?' on':''}" data-art="${k}"${zu?' disabled aria-disabled="true" data-gesperrt="1"':''}>${la}</button>`; }).join("")}</div>
+      ${cur.art!=="sonder"&&_umschreiberOhneSF(l.sid)?`<p class="sf-gesperrt-hinweis">${_li("schloss")} Sonderfahrt nicht möglich – Umschreiber</p>`:''}
     </div>
     <div class="field" id="esFzWrap" style="${fzRelevant?'':'display:none;'}"><label>Fahrzeug</label><button class="es-act" id="esFzBtn" type="button">${cur.fahrzeug?esc(cur.fahrzeug):'Kein Fahrzeug — antippen zum Zuweisen'} ›</button></div>
     ${konfliktBlock}
@@ -14241,7 +14249,7 @@ function openAssignSlotSheet(date,von,bis,art,opts){
   let curArt=art||"fahrstunde";
   const cand=activeStudents().sort((a,b)=>a.name.localeCompare(b.name,'de'));
   const asItem=s=>{ const zu=curArt==="sonder"&&_umschreiberOhneSF(s.id); // W22
-    return `<button class="as-item" data-sid="${s.id}"${zu?' aria-disabled="true" style="opacity:.5;"':''}><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${zu?'Umschreiber · keine SF':esc(s.form||'')}</span></button>`; };
+    return `<button class="as-item" data-sid="${s.id}"${zu?' aria-disabled="true" data-gesperrt="1"':''}><span class="as-nm">${esc(s.name)}</span><span class="as-cls">${zu?'Umschreiber · keine Sonderfahrt':esc(s.form||'')}</span></button>`; };
   // Aus „Nach der Stunde“: dieser Schüler steht oben, nach dem Buchen geht es dorthin zurück.
   if(opts.sid){ const i=cand.findIndex(x=>x.id===opts.sid); if(i>0)cand.unshift(cand.splice(i,1)[0]); }
   const artOpts=["fahrstunde","sonder","schalt"];
@@ -17136,6 +17144,7 @@ function _wetterKurz(icon){
 }
 /* Umbau Schritt 6b: ruhige Linien-Bildchen statt bunter Emojis (Strich in Textfarbe) */
 const _LI_PFADE={
+  schloss:`<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`, // W22: nur Anzeige (Büro stellt ein)
   handy:'<rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/>',
   kalender:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   geld:'<rect x="3" y="6.5" width="18" height="12" rx="2.2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6.5 9.5v.01M17.5 15.5v.01"/>',
