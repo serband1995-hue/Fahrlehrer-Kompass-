@@ -31,6 +31,12 @@
 //   Fahrcheck, Kalender, Trennung, Abmelden und Prüfung der Reste auf dem Gerät. Die 3 Fahrlehrer ohne App kommen nur über die
 //   Gesamtansicht (Leitung/Super-Admin) und die Büro-Seite vor. Die Büro-Seite (buero.html) läuft mit der vorhandenen Attrappe
 //   buero-vorfuehrung.js, gefüllt mit derselben Besetzung (dort gelten keine Zugriffsregeln, das Büro sieht alles).
+// WAS DER TEST NICHT ABDECKT (ehrlich): echte Datenbank (Trigger, Spaltenprüfung, Papierkorb, Fahrcheck-Haken, Zahlungssperre, PIN-Anmeldung
+//   des Büros mit echtem Server), E-Mail/Push, mehrere Geräte gleichzeitig am selben Konto (das macht zwei-geraete-test), Service Worker/Cache
+//   (hier blockiert, Cache Storage wird zwar geprüft, ist aber leer), Zeitfenster-Wettläufe zwischen zwei Fahrlehrern, die GLEICHZEITIG speichern
+//   (die Konten laufen nacheinander), echte Passwörter/Einladungs-E-Mails, Fahrlehrer-Akte/Klassen-Pflege im Büro, die Büro-Seite mit echten
+//   Zugriffsregeln, Lohn/Abrechnung als eigene Rechnung (nur Statistik und Verkäufe & Provision werden geöffnet). Fahrlehrer ohne App melden sich
+//   nie an; sie kommen nur in Listen/Auswahlen der Leitung, des Super-Admins und des Büros vor.
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -588,6 +594,27 @@ async function arbeitstag(page, u, davor, tief) {
     const lFremd = await page.evaluate((k) => DB.lessons.filter((l) => /^t-/.test(l.id) && !l.id.startsWith("t-" + k + "-")).map((l) => l.id), u.k);
     if (dbFremd.s.length) f.push("DB.students enthält fremde: " + dbFremd.s.join(", ")); if (lFremd.length) f.push("DB.lessons enthält fremde: " + lFremd.join(", "));
     return f;
+  });
+  await pruefe("A13", `${P} Zugriffsregeln (Attrappe = Spiegel von rechte-abzug.sql): Urlaub/Schichten/Fahrzeuge der Fahrschule lesbar; Schüler, Termine, Profile, Snapshots nur eigene; fremde Zeilen weder anlegbar noch änderbar`, async () => {
+    const fr = u.k === "carl" ? FL[4] : FL[3];
+    return page.evaluate(async ([ich, fid, fsid, ftermin]) => {
+      const f = []; const s = getSupa();
+      const n = async (t, sp) => { const r = await s.from(t).select(sp || "*"); return r.data || []; };
+      if ((await n("fahrschule_urlaub")).length < 2) f.push("Urlaub der Fahrschule nicht lesbar");
+      if ((await n("fahrschule_schichten")).length < 2) f.push("Schichtplan nicht lesbar");
+      if ((await n("fahrschule_fahrzeuge")).length < 2) f.push("Fahrzeuge nicht lesbar");
+      const pr = await n("profiles"); if (pr.length !== 1 || pr[0].id !== ich) f.push("Profile: " + pr.length + " sichtbar statt nur dem eigenen");
+      const sc = (await n("schueler")).filter((x) => x.fahrlehrer_id !== ich); if (sc.length) f.push(sc.length + " fremde Schüler lesbar");
+      const te = (await n("kalender_termine")).filter((x) => x.fahrlehrer_id !== ich); if (te.length) f.push(te.length + " fremde Termine lesbar");
+      const sn = (await n("snapshots", "user_id")).filter((x) => x.user_id !== ich); if (sn.length) f.push("fremder Snapshot lesbar");
+      let r = await s.from("schueler").upsert([{ id: fsid, fahrschule_id: "fs-muster", fahrlehrer_id: ich, name: "Übernommen Muster" }], { onConflict: "id" });
+      if (!r.error) f.push("fremden Schüler an sich gerissen (upsert klappte)");
+      r = await s.from("schueler").upsert([{ id: "s-x-" + ich, fahrschule_id: "fs-muster", fahrlehrer_id: fid, name: "Untergeschoben Muster" }], { onConflict: "id" });
+      if (!r.error) f.push("Schüler für einen anderen Fahrlehrer angelegt");
+      r = await s.from("kalender_termine").update({ status: "abgebrochen" }).eq("id", ftermin).select("id");
+      if (r.data && r.data.length) f.push("fremden Termin geändert");
+      return f;
+    }, [u.id, fr.id, fr.sid, "t-" + fr.k + "-2"]);
   });
   await pruefe("A11", `${P} Daten dieses Fahrlehrers in der Datenbank nur unter seiner ID (nichts fremdes angelegt)`, () => {
     const f = [];
