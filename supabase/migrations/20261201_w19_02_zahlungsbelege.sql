@@ -83,7 +83,7 @@ begin
     new.schueler_id := o.schueler_id; new.schueler_name := o.schueler_name; new.zahlart := o.zahlart;
     new.betrag := -o.betrag; new.fahrschule_daten := o.fahrschule_daten; new.steuer := o.steuer;
     new.zweck := 'Storno zu Beleg Nr. ' || o.nummer || coalesce(nullif(': ' || left(btrim(coalesce(new.zweck, '')), 150), ': '), '');
-    new.datum := current_date;   -- Gegenbeleg immer mit dem Tag des Stornos (Prüfer Daten)
+    new.datum := (now() at time zone 'Europe/Berlin')::date;   -- Gegenbeleg immer mit dem Tag des Stornos, deutsche Zeit (Prüfer Daten, Richter)
   else
     if new.betrag is null or new.betrag <= 0 then raise exception 'Betrag muss größer als 0 sein' using errcode = '22023'; end if;
     if new.schueler_id is not null then
@@ -99,7 +99,7 @@ begin
         raise exception 'Bargeld-Belege sind in den Einstellungen ausgeschaltet' using errcode = '42501';
       end if;
     end if;
-    if new.datum is null or new.datum > current_date + 1 or new.datum < current_date - 3650 then
+    if new.datum is null or new.datum > (now() at time zone 'Europe/Berlin')::date + 1 or new.datum < (now() at time zone 'Europe/Berlin')::date - 3650 then
       raise exception 'Datum der Zahlung ungültig' using errcode = '22023';
     end if;
     -- Kopie von Fahrschul-Kopf und Steuer-Einstellung: der Beleg bleibt so, auch wenn die Einstellung später geändert wird

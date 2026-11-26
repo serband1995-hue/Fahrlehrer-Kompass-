@@ -137,6 +137,7 @@ async function belegDialog(sid) {
     const zahlart = (form.querySelector("input[name=zahlart]:checked") || {}).value || "ec";
     // Prüfer Daten: nach einem Verbindungsabbruch nicht unbemerkt doppelt (frisch laden, gleicher Schüler/Betrag/Tag)
     await belegeLaden(true);
+    if (!S.belege) { toast("Belege gerade nicht abrufbar – bitte gleich noch einmal versuchen.", true); return false; } // Richter: ohne frische Liste keine Doppel-Prüfung
     const doppelt = (S.belege || []).find((b) => !b.storno_von && b.schueler_id === sId && Number(b.betrag) === betrag && b.datum === datum && !belegStorniert(b));
     if (doppelt && !(await bestaetige("Gibt es schon", `Für ${st.name} gibt es schon Beleg Nr. ${doppelt.nummer} über ${belegEuro(betrag)} vom ${datumDE(datum)}. Trotzdem einen weiteren Beleg erstellen?`, "Ja, weiteren Beleg"))) return false;
     if (!(await bestaetige("Beleg erstellen?", `${belegEuro(betrag)} von ${st.name} (${BELEG_ZAHLART[zahlart]}) für „${zweck}“ am ${datumDE(datum)}. Danach lässt sich der Beleg nicht mehr ändern, nur stornieren.`, "Ja, Beleg erstellen"))) return false;
@@ -270,7 +271,7 @@ function belegDrucken(b) {
           await KE.setze(ctx.sb, ctx.fahrschuleId, "beleg.steuer", { ausweisen: !!f.ausweisen.checked, satz: f.ausweisen.checked ? satzText : "", hinweis: f.hinweis.value.trim() });
           if (barGut !== bar) await KE.setze(ctx.sb, ctx.fahrschuleId, "beleg.bargeld", { aktiv: barGut });
           ctx.meldung("Gespeichert.", "ok"); toast("Einstellungen gespeichert");
-        } catch (x) { ctx.meldung("Nicht gespeichert: " + String((x && x.message) || x) + (/Unbekannte Einstellung|fe_schluessel|check constraint/i.test(String(x && x.message)) ? " (Datenbank noch nicht bereit)" : ""), "fehler"); }
+        } catch (x) { ctx.meldung("Nicht gespeichert: " + String((x && x.message) || x) + (/Unbekannte Einstellung|fe_schluessel|check constraint|nicht erlaubt/i.test(String(x && x.message)) ? " (Datenbank noch nicht bereit)" : ""), "fehler"); }
       });
     },
   });
