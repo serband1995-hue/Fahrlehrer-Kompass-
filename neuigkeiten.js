@@ -4,6 +4,17 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.12", datum: "2026-11-26", kurz: "Büro: Quittungen für Zahlungen drucken.",
+    punkte: ["Büro: Für eine Zahlung eines Schülers gibt es jetzt eine Quittung zum Drucken oder als PDF.",
+             "Jede Quittung bekommt die nächste Nummer und lässt sich danach nicht mehr ändern. Ist etwas falsch, wird sie storniert.",
+             "Name, Anschrift und Steuernummer der Fahrschule trägt das Büro in den Einstellungen ein.",
+             "Bargeld-Quittungen sind zuerst ausgeschaltet. Vor dem Einschalten mit dem Steuerberater sprechen."] },
+  { version: "2026.11.26.11", datum: "2026-11-26", kurz: "Ab 1. Dezember: Lohn zählt, sobald das Büro die Fahrchecks hat.",
+    punkte: ["Ab dem 1. Dezember zählt der Lohn einer Fahrstunde, sobald das Büro ihre Fahrchecks als abgegeben bestätigt hat.",
+             "Bei „Verdienst“ siehst du, wie viel noch auf den Haken vom Büro wartet und wie viel schon zählt.",
+             "Fehlt ein Fahrcheck, gibt es für die Stunde keinen Lohn, bis er nachgereicht ist. Dann zählt der volle Lohn, nicht mehr nur der halbe.",
+             "Stunden unter 45 Minuten haben keinen Fahrcheck. Ihr Lohn zählt sofort.",
+             "Büro: Bei den Fahrchecks steht je Fahrlehrer, wie viele Stunden noch auf den Lohn warten."] },
   { version: "2026.11.26.10", datum: "2026-11-26", kurz: "Abmelden lässt nichts mehr auf dem Handy zurück.",
     punkte: ["Haben zwei Fahrlehrer den gleichen Vornamen, steht im Tageskalender der Leitung auch der Anfang vom Nachnamen dabei.",
              "Wechselt das Büro bei einem Schüler den Fahrlehrer und der Hinweis an die Fahrlehrer klappt nicht, sagt die Büro-Seite das jetzt.",

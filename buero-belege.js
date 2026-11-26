@@ -32,24 +32,34 @@ function belegFehlerText(err) {
 // S.belege: null = noch nicht geladen; S.belegeFehlt = Tabelle fehlt; S.belegeFs = Fahrschule des geladenen Stands
 async function belegeLaden(erzwingen) {
   if (!belegDarf() || !S.fsId) return;
-  if (!erzwingen && S.belege && S.belegeFs === S.fsId) return;
+  if (!erzwingen && S.belege && S.belegeFs === S.fsId && Date.now() - (S.belegeAm || 0) < 60000) return; // höchstens 1 Minute alt (zweiter Büro-PC)
   const fs = S.fsId;
   const res = await supa.from("zahlungsbelege").select("*").eq("fahrschule_id", fs).order("nummer", { ascending: false }).limit(1000);
   if (S.fsId !== fs) return; // inzwischen andere Fahrschule (Super-Admin)
-  if (res.error) { S.belegeFehlt = belegFehltTabelle(res.error); S.belegeFehler = S.belegeFehlt ? null : belegFehlerText(res.error); S.belege = []; S.belegeFs = fs; return; }
-  S.belegeFehlt = false; S.belegeFehler = null; S.belege = res.data || []; S.belegeFs = fs;
+  if (res.error) {
+    S.belegeFehlt = belegFehltTabelle(res.error);
+    if (S.belegeFehlt) { S.belegeFehler = null; S.belege = []; S.belegeFs = fs; return; }
+    // anderer Fehler (Netz, Anmeldung abgelaufen): nichts zwischenspeichern, später neu versuchen (Prüfer Bedienung)
+    S.belegeFehler = belegFehlerText(res.error); S.belegeFehlerAm = Date.now(); S.belege = null; return;
+  }
+  S.belegeFehlt = false; S.belegeFehler = null; S.belege = res.data || []; S.belegeFs = fs; S.belegeAm = Date.now();
 }
 function belegStorniert(b) { return (S.belege || []).find((x) => x.storno_von === b.id) || null; }
 
 /* ---------- Seite #belege ---------- */
 function renderBelege() {
   if (!belegDarf()) return `<p class="leer">Belege sehen nur Büro und Leitung.</p>`;
+  if ((!S.belege || S.belegeFs !== S.fsId) && S.belegeFehler && Date.now() - (S.belegeFehlerAm || 0) < 30000)
+    return `<div class="karte"><p class="fl-warnung">Belege gerade nicht abrufbar: ${esc(S.belegeFehler)}</p><button class="knopf haupt" type="button" id="belegNochmal">Erneut laden</button></div>`;
+  if (S.belege && S.belegeFs === S.fsId && Date.now() - (S.belegeAm || 0) >= 60000 && !S.belegeLaeuft) { S.belegeLaeuft = true; belegeLaden(true).finally(() => { S.belegeLaeuft = false; if (document.body.dataset.bereich === "belege") zeichne(); }); }
   if (!S.belege || S.belegeFs !== S.fsId) { belegeLaden().then(() => { if (document.body.dataset.bereich === "belege") zeichne(); }); return `<p class="leer">Belege werden geladen …</p>`; }
   if (S.belegeFehlt) return `<div class="karte"><p class="leer">Datenbank noch nicht bereit (Belege). Sobald sie eingespielt ist, erscheinen die Belege hier.</p></div>`;
   const suche = (fristenParam("suche") || "").trim().toLowerCase();
   const liste = S.belege.filter((b) => !suche || [b.schueler_name, String(b.nummer), b.zweck, datumDE(b.datum)].join(" ").toLowerCase().includes(suche));
   const heute = KR.todayISO();
-  const summeHeute = S.belege.filter((b) => b.datum === heute).reduce((a, b) => a + Number(b.betrag || 0), 0);
+  const heuteListe = S.belege.filter((b) => b.datum === heute);
+  const summeHeute = heuteListe.filter((b) => !b.storno_von).reduce((a, b) => a + Number(b.betrag || 0), 0);
+  const stornoHeute = heuteListe.filter((b) => b.storno_von);
   const zeilen = liste.slice(0, 300).map((b) => {
     const st = belegStorniert(b);
     return `<tr>
@@ -63,7 +73,8 @@ function renderBelege() {
   }).join("");
   return `<div class="kacheln">
       <div class="kachel"><div class="wert">${S.belege.length}</div><div class="name">Belege insgesamt</div></div>
-      <div class="kachel gruen"><div class="wert">${esc(belegEuro(summeHeute))}</div><div class="name">heute belegt (mit Storno)</div></div>
+      <div class="kachel gruen"><div class="wert">${esc(belegEuro(summeHeute))}</div><div class="name">heute erhalten (${heuteListe.length - stornoHeute.length} Beleg${heuteListe.length - stornoHeute.length === 1 ? "" : "e"})</div></div>
+      <div class="kachel${stornoHeute.length ? " rot" : ""}"><div class="wert">${esc(belegEuro(stornoHeute.reduce((a, b) => a + Number(b.betrag || 0), 0)))}</div><div class="name">heute storniert (${stornoHeute.length})</div></div>
     </div>
     <div class="karte">
       <div class="filterzeile">
@@ -80,6 +91,7 @@ function renderBelege() {
 function bindeBelege(ziel) {
   const su = ziel.querySelector("#belegSuche");
   if (su) { let t = null; su.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { setzeFilter("belege", { suche: su.value.trim() }); const n = $("belegSuche"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250); }); }
+  const noch = ziel.querySelector("#belegNochmal"); if (noch) noch.addEventListener("click", () => { S.belegeFehlerAm = 0; zeichne(); });
   const neu = ziel.querySelector("#belegNeu"); if (neu) neu.addEventListener("click", () => belegDialog(null));
   ziel.querySelectorAll("[data-belegdruck]").forEach((b) => b.addEventListener("click", () => { const x = (S.belege || []).find((y) => y.id === b.dataset.belegdruck); if (x) belegDrucken(x); }));
   ziel.querySelectorAll("[data-belegstorno]").forEach((b) => b.addEventListener("click", () => belegStornieren(b.dataset.belegstorno)));
@@ -89,11 +101,14 @@ function bindeBelege(ziel) {
 async function belegDialog(sid) {
   if (!belegDarf()) return;
   await belegeLaden();
+  if (!S.belege && S.belegeFehler) { toast("Belege gerade nicht abrufbar: " + S.belegeFehler, true); return; }
   if (S.belegeFehlt) { toast("Datenbank noch nicht bereit (Belege). Bitte später noch einmal versuchen.", true); return; }
   const bar = belegBargeldAn();
   const schueler = S.schueler.filter((x) => istAktiv(x) || x.id === sid).slice().sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "de"));
   const heute = KR.todayISO();
-  const body = `<div class="formular">
+  const kopf = belegKopf();
+  const kopfFehlt = [!String(kopf.anschrift || "").trim() && "Anschrift", !String(kopf.steuernummer || "").trim() && !String(kopf.ustid || "").trim() && "Steuernummer"].filter(Boolean);
+  const body = `${kopfFehlt.length ? `<p class="fl-warnung">Auf der Quittung fehlt noch: ${esc(kopfFehlt.join(" und "))}. <a href="#einstellungen?thema=belege">Jetzt in den Einstellungen ergänzen</a> – ein erstellter Beleg lässt sich nicht mehr ändern.</p>` : ""}<div class="formular">
       <label class="voll">Schüler
         <select name="schueler" required><option value="">– bitte wählen –</option>${schueler.map((x) => `<option value="${esc(x.id)}"${x.id === sid ? " selected" : ""}>${esc(x.name || "(ohne Namen)")}</option>`).join("")}</select></label>
       <label>Datum der Zahlung<input type="date" name="datum" value="${esc(heute)}" max="${esc(heute)}" required></label>
@@ -106,9 +121,9 @@ async function belegDialog(sid) {
         <label class="wahl"><input type="radio" name="zahlart" value="bar"${bar ? "" : " disabled"}> Bar${bar ? "" : " (ausgeschaltet)"}</label>
       </fieldset>
     </div>
-    ${bar ? "" : `<p class="leise klein">Bargeld-Belege sind in den Einstellungen ausgeschaltet. ${esc(BELEG_BARGELD_HINWEIS)}</p>`}
+    ${bar ? "" : `<p class="leise klein">Bar ist ausgeschaltet (<a href="#einstellungen?thema=belege">Einstellungen</a>).</p>`}
     <p class="leise klein">Nach dem Speichern bekommt der Beleg die nächste Nummer und lässt sich nicht mehr ändern. Danach öffnet sich der Druck.</p>`;
-  oeffneDialog("Neuer Beleg", body, async (form) => {
+  const dlg = oeffneDialog("Neuer Beleg", body, async (form) => {
     const sId = form.schueler.value;
     const st = S.schueler.find((x) => x.id === sId);
     if (!st) { toast("Bitte einen Schüler wählen.", true); return false; }
@@ -120,6 +135,10 @@ async function belegDialog(sid) {
     const datum = form.datum.value;
     if (!/^\d{4}-\d\d-\d\d$/.test(datum) || datum > heute) { toast("Bitte ein gültiges Datum wählen (nicht in der Zukunft).", true); return false; }
     const zahlart = (form.querySelector("input[name=zahlart]:checked") || {}).value || "ec";
+    // Prüfer Daten: nach einem Verbindungsabbruch nicht unbemerkt doppelt (frisch laden, gleicher Schüler/Betrag/Tag)
+    await belegeLaden(true);
+    const doppelt = (S.belege || []).find((b) => !b.storno_von && b.schueler_id === sId && Number(b.betrag) === betrag && b.datum === datum && !belegStorniert(b));
+    if (doppelt && !(await bestaetige("Gibt es schon", `Für ${st.name} gibt es schon Beleg Nr. ${doppelt.nummer} über ${belegEuro(betrag)} vom ${datumDE(datum)}. Trotzdem einen weiteren Beleg erstellen?`, "Ja, weiteren Beleg"))) return false;
     if (!(await bestaetige("Beleg erstellen?", `${belegEuro(betrag)} von ${st.name} (${BELEG_ZAHLART[zahlart]}) für „${zweck}“ am ${datumDE(datum)}. Danach lässt sich der Beleg nicht mehr ändern, nur stornieren.`, "Ja, Beleg erstellen"))) return false;
     const res = await supa.from("zahlungsbelege").insert({ fahrschule_id: S.fsId, schueler_id: sId, schueler_name: st.name || "(ohne Namen)", datum, betrag, zweck, zahlart }).select("*");
     if (res.error || !res.data || !res.data.length) { toast("Nicht gespeichert: " + (res.error ? belegFehlerText(res.error) : "keine Berechtigung"), true); return false; }
@@ -129,6 +148,7 @@ async function belegDialog(sid) {
     belegDrucken(res.data[0]);
     return true;
   }, "Beleg erstellen");
+  if (sid && dlg) { const b = dlg.querySelector("input[name=betrag]"); if (b) b.focus(); } // Schüler schon gewählt: gleich den Betrag
 }
 
 /* ---------- Storno ---------- */
@@ -177,20 +197,25 @@ function belegHTML(b) {
   .summe td{font-size:13pt;font-weight:700;border-bottom:2px solid #111}
   .klein{font-size:9pt;color:#333;margin-top:14px}
   .storno{border:2px solid #111;padding:4px 8px;display:inline-block;font-weight:700;margin-bottom:10px}
+  .erhalten{margin:14px 0 0}
+  .unterschrift{display:flex;gap:24px;margin-top:34px}
+  .unterschrift div{flex:1;border-top:1px solid #111;padding-top:3px;font-size:9pt;color:#333}
 </style></head><body>
   <div class="kopf"><b>${esc(k.name || "")}</b>${k.anschrift ? `<br>${zeilen(k.anschrift)}` : ""}${k.steuernummer ? `<br>Steuernummer: ${esc(k.steuernummer)}` : ""}${k.ustid ? `<br>USt-IdNr.: ${esc(k.ustid)}` : ""}</div>
   ${b.storno_von ? `<div class="storno">STORNO${orig ? ` zu Beleg Nr. ${esc(String(orig.nummer))}` : ""}</div>` : ""}
   <h1>Quittung</h1>
-  <div class="nr">Beleg Nr. ${esc(String(b.nummer))} · ${esc(datumDE(b.datum))}</div>
+  <div class="nr">Beleg Nr. ${esc(String(b.nummer))} · Datum der Zahlung: ${esc(datumDE(b.datum))}</div>
   <table>
     <tr><td>Erhalten von</td><td class="r">${esc(b.schueler_name)}</td></tr>
     <tr><td>Zweck</td><td class="r">${esc(b.zweck)}</td></tr>
     <tr><td>Zahlart</td><td class="r">${esc(BELEG_ZAHLART[b.zahlart] || b.zahlart)}</td></tr>
     ${steuerZeile}
-    <tr class="summe"><td>Betrag</td><td class="r">${esc(belegEuro(b.betrag))}</td></tr>
+    <tr class="summe"><td>${b.storno_von ? "STORNO – Betrag" : "Betrag"}</td><td class="r">${esc(belegEuro(b.betrag))}</td></tr>
   </table>
+  ${b.storno_von ? "" : `<p class="erhalten">Betrag erhalten.</p>`}
+  <div class="unterschrift"><div>Ort, Datum</div><div>Unterschrift / Stempel</div></div>
   ${st && st.hinweis ? `<p class="klein">${zeilen(st.hinweis)}</p>` : ""}
-  <p class="klein">Ausgestellt am ${esc(new Date(b.erstellt_am || Date.now()).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }))}${b.bearbeiter ? ` von ${esc(b.bearbeiter)}` : ""}.</p>
+  <p class="klein">Erstellt am ${esc(new Date(b.erstellt_am || Date.now()).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }))}${b.bearbeiter ? ` von ${esc(b.bearbeiter)}` : ""}.</p>
 </body></html>`;
 }
 function belegDrucken(b) {
@@ -237,11 +262,13 @@ function belegDrucken(b) {
         const satzText = String(f.satz.value || "").trim().replace(",", ".");
         if (f.ausweisen.checked && !(/^\d{1,2}(\.\d{1,2})?$/.test(satzText) && Number(satzText) > 0)) { ctx.meldung("Bitte einen Steuersatz eintragen (z. B. 19) oder den Haken entfernen.", "fehler"); return; }
         const barNeu = f.bargeld.checked;
-        if (barNeu && !bar && !(await bestaetige("Bargeld-Belege einschalten?", BELEG_BARGELD_HINWEIS + " Wurde das geklärt?", "Ja, geklärt – einschalten"))) { f.bargeld.checked = false; return; }
+        let barGut = barNeu;
+        // Nein bei der Rückfrage: nur Bargeld bleibt aus, Kopf und Steuer werden trotzdem gespeichert (Prüfer Bedienung)
+        if (barNeu && !bar && !(await bestaetige("Bargeld-Belege einschalten?", BELEG_BARGELD_HINWEIS + " Wurde das geklärt?", "Ja, geklärt – einschalten"))) { f.bargeld.checked = false; barGut = false; }
         try {
           await KE.setze(ctx.sb, ctx.fahrschuleId, "beleg.fahrschule", { name: f.name.value.trim(), anschrift: f.anschrift.value.trim(), steuernummer: f.steuernummer.value.trim(), ustid: f.ustid.value.trim() });
           await KE.setze(ctx.sb, ctx.fahrschuleId, "beleg.steuer", { ausweisen: !!f.ausweisen.checked, satz: f.ausweisen.checked ? satzText : "", hinweis: f.hinweis.value.trim() });
-          if (barNeu !== bar) await KE.setze(ctx.sb, ctx.fahrschuleId, "beleg.bargeld", { aktiv: barNeu });
+          if (barGut !== bar) await KE.setze(ctx.sb, ctx.fahrschuleId, "beleg.bargeld", { aktiv: barGut });
           ctx.meldung("Gespeichert.", "ok"); toast("Einstellungen gespeichert");
         } catch (x) { ctx.meldung("Nicht gespeichert: " + String((x && x.message) || x) + (/Unbekannte Einstellung|fe_schluessel|check constraint/i.test(String(x && x.message)) ? " (Datenbank noch nicht bereit)" : ""), "fehler"); }
       });
