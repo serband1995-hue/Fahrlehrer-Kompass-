@@ -7177,7 +7177,7 @@ function _fsFlVorname(e){
   if(!_fsAgg||!e||!e._fahrlehrerName)return "";
   const voll=String(e._fahrlehrerName).split("@")[0].trim(), vn=firstName(voll);
   // W18: Zwei Fahrlehrer mit gleichem Vornamen (z. B. zwei „Anna“) bekommen den Nachnamen dazu, so kurz wie möglich
-  // und trotzdem eindeutig („Anna Muster“ / „Anna Musterm.“)
+  // und trotzdem eindeutig (z. B. „Eva Bauer“ / „Eva Bauerm.“ bei Bauer und Bauermann)
   const nach=(n)=>n.slice(firstName(n).length).trim();
   const andere=(_fsAgg.lehrer||[]).map(l=>String(l.name||l.email||"").split("@")[0].trim()).filter(n=>n&&n!==voll&&firstName(n)===vn).map(nach);
   if(!andere.length)return vn;
@@ -8137,7 +8137,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.8";
+const APP_VERSION="2026.11.26.10";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.

@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.10", datum: "2026-11-26", kurz: "Bereit für viele Fahrlehrer in einer Fahrschule.",
+    punkte: ["Im Kalender der Leitung hat jetzt jeder Fahrlehrer seine eigene Farbe, auch bei zehn und mehr.",
+             "Haben zwei Fahrlehrer den gleichen Vornamen, steht im Kalender auch der Anfang vom Nachnamen dabei.",
+             "Nach dem Abmelden bleibt nichts mehr vom eigenen Zugang auf dem Handy. Die nächste Person sieht nichts davon."] },
   { version: "2026.11.26.8", datum: "2026-11-26", kurz: "Schülerliste jetzt in klaren Gruppen.",
     punkte: ["Die Schülerliste ist geordnet: Heute, Nächste 7 Tage, Später, Ohne Termin. Über jeder Gruppe steht, wie viele es sind.",
              "Auch „Lange nicht gefahren“ und „Nach Stand“ zeigen feste Gruppen.",
