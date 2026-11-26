@@ -192,6 +192,8 @@ jobs:
           npx -y playwright@1.63.0 install --with-deps chromium
       - name: "Büro-Test (alle Bereiche, Rollen, Kalender, Schüler, Fristen, Handy-Größen)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-test.mjs
+      - name: "Büro-Auswertung (Durchfallgründe, Verschiebungen)"
+        run: NODE_PATH=$(npm root -g) node scripts/buero-auswertung-test.mjs
       - name: "Einstellungen-Baustein KE (Laden, Speichern, Grenzen)"
         run: node scripts/ke-test.mjs
       - name: "Büro: Einstellungen nach Themen (Entwürfe, Zurück, Handy)"

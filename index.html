@@ -1997,6 +1997,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="kompass-rechnen.js"></script>
 <script src="kompass-einstellungen.js"></script>
+<script src="kompass-fehler.js"></script>
 <script src="neuigkeiten.js"></script>
 <script src="startseite.js"></script>
 <script src="lernszenen.js" defer></script>
@@ -8150,7 +8151,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.26.16";
+const APP_VERSION="2026.11.26.17";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -15595,43 +15596,7 @@ function ensurePruefer(nm){ if(!DB.prueferData[nm])DB.prueferData[nm]={behoerde:
 function prueferStats(nm){ const ex=window.PW?PW.examsFuer(nm):DB.exams.filter(e=>e.pruefer===nm); /* K5: mit den Prüfungen der anderen Fahrlehrer */ const q=quoteOf(ex); const dates=ex.filter(istPruefung).map(e=>e.date).filter(Boolean).sort(); const last=dates.length?dates[dates.length-1]:null; return {total:ex.filter(istPruefung).length,last,quote:q,faults:faultCounts(ex).slice(0,3),eingriff:eingriffQuote(ex)}; }
 ensureDB();
 
-const FAULTS=[
- {area:"Innerorts", items:[
-   ["io_beob","Verkehrsbeobachtung (Schulterblick/Spiegel)"],
-   ["io_vorfahrt","Vorfahrt missachtet (rechts vor links)"],
-   ["io_stop","Stoppschild überfahren"],
-   ["io_rot","Rotlichtverstoß"],
-   ["io_abbieg","Doppelspuriges Abbiegen falsch"],
-   ["io_einbahn","Falsch in Einbahnstraße eingefahren"],
-   ["io_verbot","„Verbot der Einfahrt“ missachtet"],
-   ["io_anlieger","„Anlieger frei“ missachtet"],
-   ["io_fuss","Fußgänger/Zebrastreifen missachtet"],
-   ["io_spur","Spurführung/Einordnen falsch"]]},
- {area:"30er-Zone / Tempo", items:[
-   ["t_speed","Geschwindigkeit überschritten"],
-   ["t_anpass","Tempo nicht angepasst (Schule/Spielstraße)"],
-   ["t_langsam","Verkehrsfluss behindert (zu langsam)"]]},
- {area:"Außerorts", items:[
-   ["ao_ueberhol","Überholen unsicher/falsch"],
-   ["ao_kurve","Tempo in Kurven nicht angepasst"],
-   ["ao_einmuend","Beobachtung beim Einmünden/Abbiegen"],
-   ["ao_abstand","Seitenabstand zu gering"]]},
- {area:"Autobahn", items:[
-   ["bab_rechts","Rechts überholt"],
-   ["bab_auffahr","Zu langsam aufgefahren (Beschleunigungsstreifen)"],
-   ["bab_spur","Einfädeln/Spurwechsel falsch"],
-   ["bab_abstand","Sicherheitsabstand zu gering"]]},
- {area:"Grundfahraufgaben", items:[
-   ["gf_park","Einparken ungenügend"],
-   ["gf_brems","Gefahrenbremsung ungenügend"],
-   ["gf_sonst","Sonstige Grundfahraufgabe falsch"]]},
- {area:"Bedienung / Sonstiges", items:[
-   ["be_motor","Motor mehr als 3× abgewürgt"],
-   ["be_schalt","Anfahren/Schalten/Kupplung"],
-   ["be_anweis","Anweisung des Prüfers nicht umgesetzt"]]}
-];
-const FAULT_LABEL={};
-FAULTS.forEach(g=>g.items.forEach(([id,lab])=>{FAULT_LABEL[id]=lab;}));
+/* FAULTS und FAULT_LABEL stehen in kompass-fehler.js (gemeinsam mit der Büro-Seite) */
 
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());}
 function isoDERoh(iso){ if(!iso)return ""; const t=""+iso; if(!/^\d{4}-\d{2}-\d{2}/.test(t))return t; const p=t.slice(0,10).split("-"); return `${p[2]}.${p[1]}.${p[0].slice(2)}`; }

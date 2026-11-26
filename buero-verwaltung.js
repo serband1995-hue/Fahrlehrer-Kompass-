@@ -8,7 +8,7 @@
    Löschen ohne Rückfrage, 6 Sekunden „Rückgängig“ (K7). */
 "use strict";
 
-const VW = { fsId: null, urlaub: null, schichten: null, backups: null, fehler: {}, lauf: {}, nr: {}, stand: {}, zeitraum: null };
+const VW = { fsId: null, urlaub: null, schichten: null, backups: null, verlauf: null, fehler: {}, lauf: {}, nr: {}, stand: {}, zeitraum: null };
 // So lange gilt eine geladene Liste. Danach lädt das nächste Zeichnen neu (beim Öffnen des Bereichs und im Takt von buero.js),
 // damit Einträge aus der App oder von anderen Büro-PCs ohne Neuladen der Seite erscheinen (Daten-Prüfer W16 Teil 2).
 const VW_FRISCH_MS = 30000;
@@ -48,7 +48,7 @@ function vwZeitraum(von, bis) { return `<span class="vw-nowrap">${von === bis ? 
 // Andere Fahrschule gewählt (Super-Admin): nichts von der vorigen zeigen
 function vwSchule() {
   if (VW.fsId === S.fsId) return;
-  VW.fsId = S.fsId; VW.urlaub = null; VW.schichten = null; VW.backups = null; VW.fehler = {}; VW.lauf = {}; VW.stand = {}; VW.zeitraum = null;
+  VW.fsId = S.fsId; VW.urlaub = null; VW.schichten = null; VW.backups = null; VW.verlauf = null; VW.fehler = {}; VW.lauf = {}; VW.stand = {}; VW.zeitraum = null;
   Object.keys(VW.nr).forEach((k) => { VW.nr[k]++; }); // Antworten für die vorige Fahrschule zählen nie mehr
 }
 function vwFehlerKarte(was, titel) {
