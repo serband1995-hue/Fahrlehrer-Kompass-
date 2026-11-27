@@ -459,6 +459,8 @@ async function terminAnlegen(page, sid, datum, von, fzName) {
   await page.fill("#alDate", datum); await page.fill("#alTime", von);
   await page.click("#alSave"); await warte(page, 350);
   if (fzName) { const fz = await page.$(`.fz-opt[data-fzid="fz-${fzName === FZ1 ? "s" : "a"}"]`); if (!fz) return "Fahrzeug-Auswahl fehlt"; await fz.click(); await warte(page, 350); }
+  // W25: Doppelbelegung ist hier gewollt – die Überschneidungs-Rückfrage bewusst mit „Trotzdem speichern“ bestätigen
+  const kf = await page.$("#kfJa"); if (kf) { await kf.click(); await warte(page, 350); }
   return page.evaluate(([sid, datum, von]) => { const l = DB.lessons.find((x) => x.sid === sid && x.date === datum && x.von === von); return l ? l.id : null; }, [sid, datum, von]);
 }
 async function abmelden(page) {
