@@ -87,6 +87,10 @@ as $function$
 declare v_buero boolean := auth.uid() is null or is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid());
 begin
   new.aktualisiert_am := now();
+  -- Das letzte Fenster muss vor Mitternacht enden (sonst liefe die Uhrzeit über 24 Uhr)
+  if extract(epoch from new.start)::int / 60 + new.fenster_zahl * 55 > 23 * 60 + 59 then
+    raise exception 'W21:start_zu_spaet' using errcode = 'P0001', hint = 'Das letzte Fenster muss vor Mitternacht enden.';
+  end if;
   if tg_op = 'INSERT' then
     if new.erstellt_von is null then new.erstellt_von := auth.uid(); end if;
     return new;
@@ -379,9 +383,17 @@ begin
   if pa.pruefungstag_id is null or pb.pruefungstag_id is null then raise exception 'W21:nur_fenster' using errcode = 'P0001', hint = 'Tauschen geht nur zwischen Zeitfenstern.'; end if;
   update public.pruefungstermine set pruefungstag_id = null, fenster = null, aktualisiert_am = now() where id = a;
   get diagnostics n = row_count; if n = 0 then raise exception 'W21:keine_berechtigung' using errcode = 'P0001'; end if;
-  update public.pruefungstermine set pruefungstag_id = pa.pruefungstag_id, fenster = pa.fenster, aktualisiert_am = now() where id = b;
-  get diagnostics n = row_count; if n = 0 then raise exception 'W21:keine_berechtigung' using errcode = 'P0001'; end if;
-  update public.pruefungstermine set pruefungstag_id = pb.pruefungstag_id, fenster = pb.fenster, aktualisiert_am = now() where id = a;
+  begin
+    update public.pruefungstermine set pruefungstag_id = pa.pruefungstag_id, fenster = pa.fenster, aktualisiert_am = now() where id = b;
+    get diagnostics n = row_count; if n = 0 then raise exception 'W21:keine_berechtigung' using errcode = 'P0001'; end if;
+    update public.pruefungstermine set pruefungstag_id = pb.pruefungstag_id, fenster = pb.fenster, aktualisiert_am = now() where id = a;
+  exception when others then
+    -- Lkw (zwei Fenster) passt nicht an den Platz des anderen: eigene, verständliche Meldung (alles wird zurückgerollt)
+    if sqlerrm like 'W21:fenster_belegt%' or sqlerrm like 'W21:fenster_ungueltig%' or sqlerrm like '%pruefungstermine_fenster_frei%' then
+      raise exception 'W21:tausch_passt_nicht' using errcode = 'P0001', hint = 'Eine Lkw-Prüfung braucht zwei freie Fenster hintereinander.';
+    end if;
+    raise;
+  end;
 end $function$;
 revoke all on function public.pruefung_tauschen(uuid, uuid) from public, anon;
 grant execute on function public.pruefung_tauschen(uuid, uuid) to authenticated;

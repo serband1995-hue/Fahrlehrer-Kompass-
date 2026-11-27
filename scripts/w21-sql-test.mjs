@@ -217,6 +217,11 @@ ok("Lkw belegt zwei Fenster (14:30, 85 Min im Kalender)", !r.fehler && kl.bis ==
 r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's12', 'praxis', $2, 7, $3)`, [FS, TAG2, U.fl2]);
 ok("Zweites Lkw-Fenster gilt als belegt", /W21:fenster_belegt/.test(r.fehler || ""), r);
 
+r = await als(db, U.buero, `select public.pruefung_tauschen($1, $2)`, [(await p("s11")).id, (await p("s1")).id]);
+ok("Tauschen Lkw (2 Fenster) gegen B auf zu engen Platz: eigene Meldung, nichts verändert", /W21:tausch_passt_nicht/.test(r.fehler || "") && (await p("s11")).fenster === 6, r);
+r = await als(db, U.buero, `update public.pruefungstage set start = '16:00' where id = $1`, [TAG2]);
+ok("Startzeit so spät, dass Fenster über Mitternacht liefen: verweigert", /W21:start_zu_spaet/.test(r.fehler || ""), r);
+
 // ---------- 7. Fall 5: Fahrlehrer nachträglich ändern ----------
 const p3 = await p("s3");
 r = await als(db, U.buero, `update public.pruefungstermine set fahrlehrer_id = $2 where id = $1`, [p3.id, U.fl2]);

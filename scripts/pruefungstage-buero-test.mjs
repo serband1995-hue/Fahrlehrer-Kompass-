@@ -111,6 +111,7 @@ async function tagAnlegen(page, datum, pruefer, start) {
   pruefe("T3d der Server legt die Kalender-Einträge an (einer je Prüfung mit Fahrlehrer), der Browser schreibt keine", kal === mitFl && kal >= 8, kal + " von " + mitFl);
   pruefe("T3e Hinweis D: neun neue Prüfungen warten auf die Zahlungsaufforderung", /9 neue Prüfungen – Zahlungsaufforderung offen/.test(await page.locator("[data-pthinweisd]").innerText().catch(() => "")), await page.locator("[data-pthinweisd]").innerText().catch(() => "keine Karte"));
   pruefe("T3f nichts automatisch gesendet", (await db(page, () => window.__FAKE.log.filter((l) => l.function === "zahlungs-mail").length)) === 0);
+  await page.locator("[data-pthinweisd] summary").click(); // Liste ist eingeklappt (eine Zeile)
   await page.locator("[data-ptzm]").first().click();
   await page.waitForTimeout(200);
   pruefe("T3g Knopf öffnet die Karte „Zahlungsaufforderung“", (await page.locator("#zmKarte").count()) === 1);

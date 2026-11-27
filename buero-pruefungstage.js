@@ -29,7 +29,7 @@ async function ptLaden() {
   try {
     if (typeof PT === "undefined") return null;
     const heute = KR.todayISO();
-    return await PT.ladeBelegung(supa, KR.addDaysISO(heute, -60), KR.addDaysISO(heute, 180));
+    return await PT.ladeBelegung(supa, KR.addDaysISO(heute, -60), KR.addDaysISO(heute, 400));
   } catch (e) { console.warn("Prüfungstage nicht geladen:", e && e.message); return null; }
 }
 // Nach jedem Schreiben: Prüfungen und Tage frisch holen (der Server rechnet Datum/Uhrzeit und Kalender) und zeichnen
@@ -161,9 +161,10 @@ function ptZahlungsHinweisHTML() {
   const l = ptOffeneZahlung();
   if (!l.length) return "";
   const alleApp = l.every(({ p }) => p.quelle === "app");
-  return `<div class="karte pt-hinweis-karte" data-pthinweisd><div class="karte-kopf"><h2>${l.length} neue Prüfung${l.length === 1 ? "" : "en"}${alleApp ? " aus der App" : ""} – Zahlungsaufforderung offen</h2></div>
+  // Eine Zeile; die Liste erst nach dem Aufklappen (Design-Kritik W21: sonst schiebt sie die Tage weit nach unten)
+  return `<details class="karte pt-hinweis-karte" data-pthinweisd><summary class="karte-kopf"><h2>${l.length} neue Prüfung${l.length === 1 ? "" : "en"}${alleApp ? " aus der App" : ""} – Zahlungsaufforderung offen</h2><span class="knopf klein">Ansehen</span></summary>
     <ul class="pt-liste">${l.map(({ p, d }) => `<li><span><b>${esc(d.x.name || "Schüler")}</b> · ${esc(datumDE(p.datum))}${p.von ? " " + esc(PT.hm(p.von)) : ""}${p.quelle === "app" ? ` <span class="leise klein">aus der App</span>` : ""}${d.grund ? ` <span class="leise klein">(${esc(d.grund)})</span>` : ""}</span><button class="knopf klein haupt" data-ptzm="${esc(p.id)}" type="button">Zahlungsaufforderung ansehen</button></li>`).join("")}</ul>
-    <p class="leise klein">Es wird nichts automatisch verschickt. Der Knopf öffnet die Karte, dort sendest du mit einem Tipp.</p></div>`;
+    <p class="leise klein">Es wird nichts automatisch verschickt. Der Knopf öffnet die Karte, dort sendest du mit einem Tipp.</p></details>`;
 }
 function ptTageHTML(frueher) {
   const heute = KR.todayISO(), ab = frueher ? "0000-00-00" : KR.addDaysISO(heute, -PT_TAGE_FRUEHER);
@@ -240,6 +241,8 @@ async function ptAblegen(id, tagId, fenster) {
       if (ptKalenderHinweis(z)) toast("Verschoben auf " + ptZeitText(z) + " am " + datumDE(tag.datum));
     } else {
       if (ziel.t.status !== "geplant") { toast("Hier steht eine Prüfung mit Ergebnis. Tauschen geht nur mit ausstehenden.", true); return; }
+      const tA = p.pruefungstag_id ? ptTag(p.pruefungstag_id) : null;
+      if (tA && PT.tauschPasst && !PT.tauschPasst(tA, ptTagTermine(tA), p, tag, T, ziel.t)) { toast("Tauschen geht nicht: Eine Lkw-Prüfung braucht zwei freie Fenster hintereinander.", true); return; }
       await PT.tauschen(supa, id, ziel.t.id);
       toast("Getauscht");
     }
@@ -266,13 +269,14 @@ function ptTagDialog(id) {
   const standard = tag || { datum: KR.addDaysISO(KR.todayISO(), 7), start: PT.START, pruefer: "" };
   const body = `<div class="formular">
       <label>Datum<input type="date" name="datum" required value="${esc(standard.datum)}"></label>
-      <label>Start (erstes Fenster)<input type="time" name="start" required step="300" value="${esc(PT.tagStart(standard))}"></label>
+      <label>Start (erstes Fenster)<input type="time" name="start" required step="300" max="${PT.startMax ? PT.startMax() : "15:44"}" value="${esc(PT.tagStart(standard))}"></label>
       <label class="voll">Prüfer (nur Initialen)<input type="text" name="pruefer" maxlength="10" value="${esc(standard.pruefer || "")}"></label>
     </div>
     <p class="leise klein">${PT.FENSTER_ZAHL} Fenster à ${PT.FENSTER_MIN} Minuten.${tag && T.length ? " Ändert sich der Start, rücken alle Zeiten des Tages mit und die Schüler sollten informiert werden." : ""}</p>`;
   oeffneDialog(tag ? "Prüfungstag ändern" : "Prüfungstag anlegen", body, async (form) => {
     const d = Object.fromEntries(new FormData(form).entries());
     if (!d.datum || !d.start) { toast("Bitte Datum und Start eintragen.", true); return false; }
+    if (PT.startOk && !PT.startOk(d.start)) { toast(`Start spätestens ${PT.startMax()}: das letzte Fenster muss vor Mitternacht enden.`, true); return false; }
     const werte = { datum: d.datum, start: d.start, pruefer: (d.pruefer || "").trim().toUpperCase() || null };
     try {
       if (tag) {

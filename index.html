@@ -781,7 +781,7 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
   transition:border-color .18s var(--ease),transform .14s var(--ease);animation:cardIn .45s var(--ease) both;}
 .wait-card:hover{border-color:var(--orange-line);}
 .wait-card:active{transform:scale(.985);}
-.pruef-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:4px;}
+.pruef-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:7px;margin-bottom:16px;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:4px;}
 .pt-tab{flex:1 1 auto;white-space:nowrap;padding:10px 6px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--muted);background:transparent;display:flex;align-items:center;justify-content:center;gap:5px;}
 .pt-tab.on{background:var(--gruen-soft);color:var(--mint);box-shadow:var(--inset-top);}
 .pt-cnt{font-size:10.5px;background:var(--surface-2);color:var(--muted);border-radius:10px;padding:1px 6px;font-weight:800;}
@@ -1224,7 +1224,8 @@ body.light .dt-n{background:linear-gradient(160deg,#24242a 10%,#2f5d3f 90%);-web
 .pt-z{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);border-left:4px solid var(--line);background:var(--surface-2);color:var(--txt);text-align:left;font-size:13.5px;}
 .pt-zeit{flex:0 0 auto;font-weight:700;font-size:12.5px;color:var(--muted);min-width:84px;}
 .pt-inh{flex:1 1 auto;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pt-st{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--muted);}
+.pt-st{flex:0 0 auto;font-size:12.5px;font-weight:800;color:var(--muted);}
+.pt-z.s-geplant .pt-st{color:var(--h-gelb-t,var(--gelb));}
 .pt-z.frei{border-style:dashed;border-left-style:dashed;}
 .pt-z.frei .pt-inh{color:var(--akzent);}
 .pt-z.fremd{opacity:.7;}
@@ -15855,14 +15856,14 @@ function _ptBlock(r){ const von=PT.hm(r.von)||"09:00"; return {id:r.id,date:r.da
 function _ptEigeneOffen(mitVergangen){ const h=todayISO(); return (_pt.eigene||[]).filter(r=>r.status==="geplant"&&(r.art||"praxis")==="praxis"&&r.datum&&r.schueler_id&&(mitVergangen||r.datum>=h)); }
 // Alle Prüfungen in der alten Form {id,date,von,bis,slots:[sid]}: neue Quelle, sonst die alte Tafel
 function _tafel(mitVergangen){ if(!_ptAktiv())return DB.termine||[]; return _ptEigeneOffen(mitVergangen).map(_ptBlock); }
-function _ptNeuZeichnen(){ try{ if(sheetOffen())return; const tb=$("#tbTitle"); if(tb&&tb.textContent==="Prüfungen"&&document.querySelector("#view .pruef-tabs")){ const y=view.scrollTop; routePruefungen(); view.scrollTop=y; } }catch(e){} }
+function _ptNeuZeichnen(){ try{ if(sheetOffen()){ window._ptNachSheet=true; return; } window._ptNachSheet=false; const tb=$("#tbTitle"); if(tb&&tb.textContent==="Prüfungen"&&document.querySelector("#view .pruef-tabs")){ const y=view.scrollTop; routePruefungen(); view.scrollTop=y; } }catch(e){} }
 async function ptLaden(){
   if(!_ptMoeglich())return;
   if(_pt.laeuft){ _pt.nochmal=true; return; }
   _pt.laeuft=true; let ok=false;
   try{
     const supa=getSupa(), heute=todayISO();
-    const tage=await PT.ladeBelegung(supa,addDays(heute,-1),addDays(heute,180));
+    const tage=await PT.ladeBelegung(supa,addDays(heute,-1),addDays(heute,400));
     const r=await supa.from("pruefungstermine").select("*").eq("fahrlehrer_id",_authUser.id).gte("datum",addDays(heute,-90));
     if(r.error)throw r.error;
     if(_pt.user!==_authUser.id)Object.assign(_pt,{tage:[],eigene:[],geladen:false,user:_authUser.id});
@@ -15889,6 +15890,9 @@ function _ptTagTitel(tag){ return `${deWeekday(tag.datum)} ${isoDE(tag.datum).sl
 function _ptSupaBasis(){ return {fahrschule_id:_authProfile.fahrschule_id,art:"praxis",quelle:"app",fahrlehrer_id:_authUser.id}; }
 function _ptZeitText(row){ const tag=row.pruefungstag_id?_pt.tage.find(t=>t.id===row.pruefungstag_id):null; return tag&&row.fenster!=null?`${PT.fensterVon(tag,row.fenster)}–${PT.fensterBis(tag,row.fenster,row.fenster_anzahl||1)}`:(PT.hm(row.von)||""); }
 
+// Lkw (zwei Fenster) nur dorthin tauschen, wo am Platz des anderen genug frei ist
+function _ptTauschPasst(aId,b){ const a=_pt.eigene.find(r=>r.id===aId); if(!a||!b)return false; const ta=_pt.tage.find(t=>t.id===a.pruefungstag_id), tb=_pt.tage.find(t=>t.id===b.pruefungstag_id); if(!ta||!tb)return false;
+  return !PT.tauschPasst||PT.tauschPasst(ta,_ptTagTermine(ta),a,tb,_ptTagTermine(tb),b); }
 /* ---------- Anzeige: Reiter „Termine“ ---------- */
 function _ptZeilen(tag){
   const termine=_ptTagTermine(tag), b=PT.belegung(tag,termine);
@@ -15898,7 +15902,7 @@ function _ptZeilen(tag){
     const row=c.t.id?_pt.eigene.find(r=>r.id===c.t.id):null;
     if(!row)return `<div class="pt-z fremd"><span class="pt-zeit">${zeit}</span><span class="pt-inh">belegt</span></div>`;
     const s=DB.students.find(x=>x.id===row.schueler_id), si=PT.statusInfo(row.status);
-    const tauschbar=_ptTausch&&_ptTausch!==row.id&&row.status==="geplant"&&row.pruefungstag_id;
+    const tauschbar=_ptTausch&&_ptTausch!==row.id&&row.status==="geplant"&&row.pruefungstag_id&&_ptTauschPasst(_ptTausch,row);
     const name=c.erstes?esc(s?s.name:"Schüler"):"↳ zweites Fenster";
     return `<button class="pt-z s-${esc(row.status)}${_ptTausch===row.id?" gewaehlt":""}${tauschbar?" tauschbar":""}" data-ptp="${esc(row.id)}"><span class="pt-zeit">${zeit}</span><span class="pt-inh">${name}</span>${c.erstes?`<span class="pt-st">${tauschbar?"tauschen":esc(si.text)}</span>`:""}</button>`;
   }).join("");
@@ -15919,7 +15923,7 @@ function _ptTageHTML(){
   });
   const frei=_ptEigeneOffen(false).filter(r=>!r.pruefungstag_id).sort((a,b)=>(a.datum+PT.hm(a.von)).localeCompare(b.datum+PT.hm(b.von)));
   if(frei.length){
-    h+=`<div class="blk-h" style="margin-top:16px;">Mit freier Uhrzeit</div><div class="pt-zeilen">${frei.map(r=>{ const s=DB.students.find(x=>x.id===r.schueler_id);
+    h+=`<div class="blk-h" style="margin-top:16px;">Ohne festes Fenster</div><div class="pt-zeilen">${frei.map(r=>{ const s=DB.students.find(x=>x.id===r.schueler_id);
       return `<button class="pt-z s-geplant" data-ptp="${esc(r.id)}"><span class="pt-zeit">${deWeekday(r.datum)} ${isoDE(r.datum).slice(0,6)} · ${esc(PT.hm(r.von)||"–")}</span><span class="pt-inh">${esc(s?s.name:"Schüler")}</span><span class="pt-st">${esc(r.klasse||"")}</span></button>`; }).join("")}</div>`;
   }
   return h;
@@ -15972,7 +15976,8 @@ function _ptFensterWahl(box,o){
   if(!tage.length){ box.innerHTML=`<p class="muted-p" style="margin-bottom:10px;">Noch kein Prüfungstag. Bitte unten einen neuen Tag anlegen.</p>`; return; }
   let sel=tage.find(t=>t.id===o.tagId)||tage[0];
   const zeichne=()=>{
-    const termine=_ptTagTermine(sel), frei=PT.freieFenster(sel,termine,o.anzahl,o.ignoriere), fl=PT.fensterListe(sel);
+    const eigen=o.ignoriere?_pt.eigene.find(r=>r.id===o.ignoriere):null;
+    const termine=_ptTagTermine(sel), frei=PT.freieFenster(sel,termine,o.anzahl,o.ignoriere).filter(i=>!(eigen&&eigen.pruefungstag_id===sel.id&&eigen.fenster===i)), fl=PT.fensterListe(sel);
     box.innerHTML=`<div class="field"><label>Prüfungstag</label><select id="pwTag">${tage.map(t=>`<option value="${esc(t.id)}"${t.id===sel.id?" selected":""}>${deWeekday(t.datum)} ${isoDE(t.datum).slice(0,6)}${t.pruefer?` · ${esc(t.pruefer)}`:""} · ${esc(PT.zaehlText(t,_ptTagTermine(t)))}</option>`).join("")}</select></div>
       <div class="field"><label>Freies Zeitfenster</label>${frei.length?`<div class="pt-fgrid">${frei.map(i=>`<button class="pt-f" data-pwf="${i}">${fl[i].von}–${PT.fensterBis(sel,i,o.anzahl)}</button>`).join("")}</div>`:`<p class="muted-p">An diesem Tag ist nichts mehr frei.</p>`}</div>`;
     $("#pwTag").addEventListener("change",e=>{ sel=tage.find(t=>t.id===e.target.value)||sel; zeichne(); });
@@ -16040,18 +16045,19 @@ function ptTagSheet(tagId,nachher){
   openSheet(`<div class="sheet-h">${tag?"Startzeit ändern":"Neuer Prüfungstag"}</div>
     ${tag?`<p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${_ptTagTitel(tag)}</p>`:`<div class="field"><label>Datum</label><input type="date" id="ptDatum" value="${esc(todayISO())}"></div>`}
     <div class="field"><label>Prüfer (Kürzel, kann leer bleiben)</label><input type="text" id="ptPruefer" maxlength="12" value="${esc(tag?tag.pruefer||"":"")}" placeholder="z. B. AB" autocomplete="off"></div>
-    <div class="field"><label>Erstes Fenster beginnt um</label><input type="time" id="ptStart" value="${esc(start)}" step="60"></div>
+    <div class="field"><label>Erstes Fenster beginnt um</label><input type="time" id="ptStart" value="${esc(start)}" step="60" max="${PT.startMax?PT.startMax():"15:44"}"></div>
     <p class="muted-p" id="ptVorschau" style="font-size:12.5px;margin:-4px 0 12px;"></p>
     <div class="btn-row"><button class="btn btn-ghost" id="ptZu" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="ptSave">${tag?"Speichern":"Tag anlegen"}</button></div>`);
   const vor=()=>{ const st=$("#ptStart").value||PT.START; $("#ptVorschau").textContent=`${PT.FENSTER_ZAHL} Fenster à ${PT.FENSTER_MIN} Min: ${st}–${PT.min2hm(PT.hm2min(st)+PT.FENSTER_MIN)} bis ${PT.min2hm(PT.hm2min(st)+(PT.FENSTER_ZAHL-1)*PT.FENSTER_MIN)}–${PT.min2hm(PT.hm2min(st)+PT.FENSTER_ZAHL*PT.FENSTER_MIN)}`; };
   vor(); $("#ptStart").addEventListener("input",vor);
   $("#ptZu").addEventListener("click",closeSheet);
   $("#ptSave").addEventListener("click",async()=>{
-    const st=$("#ptStart").value||PT.START, pr=$("#ptPruefer").value.trim();
+    const st=$("#ptStart").value||PT.START, pr=$("#ptPruefer").value.trim().toUpperCase();
+    if(PT.startOk&&!PT.startOk(st)){ toast(`Start spätestens ${PT.startMax()}: das letzte Fenster muss vor Mitternacht enden.`); return; }
     if(tag){ await _ptSchreiben(()=>PT.tagAendern(getSupa(),tag.id,{start:st,pruefer:pr||null}),"Gespeichert ✓"); return; }
     const d=$("#ptDatum").value; if(!d){ toast("Bitte Datum wählen"); return; }
     if(d<todayISO()){ toast("Das Datum liegt in der Vergangenheit."); return; }
-    const da=_pt.tage.find(t=>t.datum===d&&String(t.pruefer||"")===pr);
+    const da=_pt.tage.find(t=>t.datum===d&&String(t.pruefer||"").toUpperCase()===pr);
     if(da){ closeSheet(); _ptOffen[da.id]=true; toast("Diesen Prüfungstag gibt es schon."); _ptNeuZeichnen(); return; }
     let neu=null;
     const ok=await _ptSchreiben(async()=>{ neu=await PT.tagAnlegen(getSupa(),{fahrschule_id:_authProfile.fahrschule_id,datum:d,start:st,pruefer:pr||null,erstellt_von:_authUser.id}); },"Prüfungstag angelegt ✓");
@@ -16320,7 +16326,7 @@ function openSheet(html,opts){
   if(offen){ sh.classList.remove("sheet-wechsel"); void sh.offsetWidth; sh.classList.add("sheet-wechsel"); }
   sh.classList.add("open"); $("#sheetScrim").classList.add("open");
 }
-function closeSheet(){ const sh=$("#sheet"); sh.classList.remove("open","sheet-wechsel"); sh.style.transform=""; $("#sheetScrim").classList.remove("open");
+function closeSheet(){ if(window._ptNachSheet){ window._ptNachSheet=false; setTimeout(()=>{ try{ _ptNeuZeichnen(); }catch(e){} },0); } const sh=$("#sheet"); sh.classList.remove("open","sheet-wechsel"); sh.style.transform=""; $("#sheetScrim").classList.remove("open");
   _sheetStapel=[]; _sheetEbene=null;
   const f=_sheetBeimSchliessen; _sheetBeimSchliessen=null; if(f){ try{ f(); }catch(e){ console.warn("[Kompass] Abschluss beim Schließen:",e.message); } }
   if(_fsNeuZeigenOffen) setTimeout(_fsNeuZeigenNachholen,0); } // W14b: Server-Stand aus der Gesamtansicht jetzt zeigen

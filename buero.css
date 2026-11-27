@@ -1231,7 +1231,10 @@ tr.pt-st-gelb td:first-child{box-shadow:inset 5px 0 0 var(--gelb);}
 .pt-tabelle td{padding:8px 6px;}
 .pt-tabelle th{padding:8px 6px;}
 .pt-tabelle td:nth-child(2){min-width:150px;}
-.pt-tabelle select.pt-fl{width:100%;min-width:120px;max-width:170px;}
+.pt-tabelle select.pt-fl{width:100%;min-width:120px;max-width:200px;}
+details.pt-hinweis-karte>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+details.pt-hinweis-karte>summary::-webkit-details-marker{display:none;}
+details.pt-hinweis-karte[open]>summary .knopf{display:none;}
 .pt-tabelle .aktionen-box{min-width:0;max-width:none;}
 .pt-tabelle .haken-reihe{gap:4px;}
 .pt-tabelle .pt-status{white-space:normal;} .pt-tabelle .pt-status .marke-pill{font-size:13px;padding:2px 8px;}

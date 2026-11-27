@@ -204,7 +204,7 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
   pruefe("W29 alte Tafel einmal übernommen (freie Uhrzeit 10:30, kein Tag), nichts doppelt", alt.zeilen.length === 2 && alt.zeilen.every((z) => z.von === "10:30" && !z.tag) && alt.uebernommen && alt.uebernommen.length === 2, JSON.stringify(alt));
   pruefe("W30 alte Tafel nichts gelöscht", alt.nachher === alt.vorher && alt.slots.length === 2 && alt.slots.every(Boolean));
   const frei = await page.evaluate(() => { _pruefTab = "termine"; routePruefungen(); return document.querySelector("#view").innerText; });
-  pruefe("W31 Prüfungen mit freier Uhrzeit als eigene Liste, Warteliste ohne Eingeteilte", /Mit freier Uhrzeit/i.test(frei));
+  pruefe("W31 Prüfungen mit freier Uhrzeit als eigene Liste, Warteliste ohne Eingeteilte", /Ohne festes Fenster/i.test(frei));
   // Kalender: Spiegel nicht ziehbar, Hinweis im Blatt
   const kal = await page.evaluate(async ([info]) => {
     const row = _pt.eigene.find((r) => r.schueler_id === info.ids[4]); const iso = row.datum;

@@ -49,6 +49,20 @@
     for (let k = 0; k < (anzahl || 1); k++) if (b[i + k]) return false;
     return true;
   }
+  // Passt ein Tausch von a und b? (Lkw braucht zwei Fenster: am Platz des anderen muss genug frei sein)
+  function tauschPasst(tagA, termineA, a, tagB, termineB, b) {
+    const na = Number(a.fenster_anzahl || a.anzahl || 1), nb = Number(b.fenster_anzahl || b.anzahl || 1);
+    const ohne = (l) => (l || []).filter((t) => t.id !== a.id && t.id !== b.id);
+    if (tagA && tagB && tagA.id === tagB.id) {
+      const L = ohne(termineA);
+      if (!passt(tagA, L, a.fenster, nb)) return false;
+      return passt(tagA, L.concat([{ id: "_b", fenster: a.fenster, fenster_anzahl: nb, status: "geplant" }]), b.fenster, na);
+    }
+    return passt(tagA, ohne(termineA), a.fenster, nb) && passt(tagB, ohne(termineB), b.fenster, na);
+  }
+  // Startzeit: das letzte Fenster muss am selben Tag enden (spätestens 23:59)
+  function startOk(start, zahl) { const m = hm2min(start); return /^\d\d:\d\d/.test(String(start || "")) && m + (zahl || FENSTER_ZAHL) * FENSTER_MIN <= 23 * 60 + 59; }
+  function startMax(zahl) { return min2hm(23 * 60 + 59 - (zahl || FENSTER_ZAHL) * FENSTER_MIN); }
   function freieFenster(tag, termine, anzahl, ignoriere) {
     const out = []; for (let i = 0; i < tagZahl(tag); i++) if (passt(tag, termine, i, anzahl, ignoriere)) out.push(i); return out;
   }
@@ -78,6 +92,8 @@
     if (/W21:tag_nicht_leer/.test(m)) return "Erst alle Prüfungen des Tages verschieben oder absagen.";
     if (/W21:tag_fremde_pruefungen/.test(m)) return "An diesem Tag prüfen auch Schüler anderer Fahrlehrer. Bitte das Büro fragen.";
     if (/W21:nur_fenster/.test(m)) return "Tauschen geht nur zwischen Zeitfenstern.";
+    if (/W21:tausch_passt_nicht/.test(m)) return "Tauschen geht nicht: Eine Lkw-Prüfung braucht zwei freie Fenster hintereinander.";
+    if (/W21:start_zu_spaet/.test(m)) return "So spät geht nicht: Das letzte Fenster muss vor Mitternacht enden (Start spätestens " + startMax() + ").";
     if (/W21:(nicht_gefunden|keine_berechtigung)/.test(m) || /row-level security|permission denied/i.test(m)) return "Dafür fehlt die Berechtigung.";
     if (/Zahlung ausstehend/.test(m)) return m.replace(/^.*?(Zahlung ausstehend)/, "$1") + " – bitte zuerst im Büro klären.";
     if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "Keine Verbindung. Bitte gleich nochmal versuchen.";
@@ -149,7 +165,7 @@
   const PT = {
     FENSTER_MIN, FENSTER_ZAHL, START,
     hm2min, min2hm, hm, istLkwKlasse, istFensterKlasse, nurFreieUhrzeit, fensterAnzahlFuer, dauerFuer,
-    tagStart, tagZahl, fensterVon, fensterBis, fensterListe, belegung, passt, freieFenster, zaehle, zaehlText, statusInfo, STATUS, fehlerText,
+    tagStart, tagZahl, fensterVon, fensterBis, fensterListe, belegung, passt, tauschPasst, startOk, startMax, freieFenster, zaehle, zaehlText, statusInfo, STATUS, fehlerText,
     ladeBelegung, tagAnlegen, tagAendern, tagLoeschen, einplanen, aendern, verschieben, fahrlehrerAendern, ergebnis, absagen, tauschen, mehrereEinplanen,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = PT;

@@ -490,7 +490,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const sa = JSON.parse(JSON.stringify(pa)), sb = JSON.parse(JSON.stringify(pb));
     const schritt = (ziel, werte) => { const n = Object.assign(JSON.parse(JSON.stringify(ziel)), werte); const f = w21Pruefe(n, JSON.parse(JSON.stringify(ziel))); if (f) throw new Error(f); Object.assign(ziel, n); };
     try { schritt(pa, { pruefungstag_id: null, fenster: null }); schritt(pb, { pruefungstag_id: sa.pruefungstag_id, fenster: sa.fenster }); schritt(pa, { pruefungstag_id: sb.pruefungstag_id, fenster: sb.fenster }); }
-    catch (e) { Object.assign(pa, sa); Object.assign(pb, sb); throw e; }
+    catch (e) { Object.assign(pa, sa); Object.assign(pb, sb); if (/W21:fenster_(belegt|ungueltig)/.test(e.message)) throw new Error("W21:tausch_passt_nicht"); throw e; }
     return null;
   };
   for (const [k, f] of Object.entries(R)) if (!F.rpcs[k]) F.rpcs[k] = f;
@@ -672,6 +672,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     void T; return null;
   }
   function w21TagPruefe(n, alt) {
+    { const st = String(n.start || "08:00").split(":"); if ((+st[0]) * 60 + (+(st[1] || 0)) + Number(n.fenster_zahl || 9) * 55 > 23 * 60 + 59) return "W21:start_zu_spaet"; }
     if (!alt) { n.start = n.start || "08:00"; n.fenster_zahl = n.fenster_zahl || 9; n.geloescht = !!n.geloescht; n.erstellt_von = n.erstellt_von || w21Uid(); n.aktualisiert_am = new Date().toISOString(); return null; }
     const drin = tabelle("pruefungstermine").filter((q) => q.pruefungstag_id === alt.id && q.status !== "abgesagt");
     if (n.geloescht && !alt.geloescht && drin.length) return "W21:tag_nicht_leer";
