@@ -1667,14 +1667,20 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .ct-ev-a{font-size:11px;color:var(--muted);}
 .cd-stat{color:var(--rot);font-weight:700;margin-left:5px;}
 /* P1.4a/b (W25): Überschneidung – Warnzeichen und Farbe; schmale Spalten in der Tagesansicht */
-.kf-zeichen{display:inline-block;margin-right:4px;color:#e0a030;font-weight:800;}
-.ct-ev.kf-ueber,.cw-ev.kf-ueber{box-shadow:inset 0 0 0 1.5px #e0a030,0 3px 8px rgba(0,0,0,.2);background:linear-gradient(160deg,rgba(224,160,48,.16),var(--surface-2));}
+:root{--kf-farbe:#e0a030;} body.light{--kf-farbe:#9a5b00;} /* Bernstein: hell dunkler für genug Kontrast (3:1) */
+.kf-zeichen{display:inline-block;margin-right:4px;color:var(--kf-farbe);font-weight:800;}
+.ct-ev.kf-ueber,.cw-ev.kf-ueber{box-shadow:inset 0 0 0 2px var(--kf-farbe),0 3px 8px rgba(0,0,0,.2);}
+.cw-ev.kf-ueber{position:relative;}
+.kf-zeichen.kf-ecke{position:absolute;top:1px;right:2px;margin:0;font-size:10px;line-height:1;}
+.ct-ev.ct-schmal{min-height:44px;}
+.ct-ev.ct-sehr-schmal .ct-ev-a{display:none;}
+.kf-liste{max-height:34vh;overflow:auto;}
 .ct-ev.ct-schmal{padding:5px 6px;}
 .ct-ev.ct-schmal .ct-ev-n{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ct-ev.ct-schmal .ct-ev-a,.ct-ev.ct-schmal .ct-fl{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ct-ev.ct-blockhinten{z-index:0;opacity:.75;}
 .kf-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
-.kf-liste li{border:1px solid var(--line);border-left:3px solid #e0a030;border-radius:10px;padding:8px 10px;font-size:14px;line-height:1.35;}
+.kf-liste li{border:1px solid var(--line);border-left:3px solid var(--kf-farbe);border-radius:10px;padding:8px 10px;font-size:14px;line-height:1.35;}
 .kf-grund{font-size:12.5px;color:var(--muted);}
 .ct-free{position:absolute;left:2px;right:2px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px;background:transparent;}
 .ct-free>span:first-child{font-size:11.5px;color:var(--muted);font-weight:600;}
@@ -2849,7 +2855,6 @@ body:not(.light) .tab-i.on .tab-ic{background:rgba(143,202,164,.22);}
 .cal-kw{border-radius:999px !important;}
 .cw-col,.cd-card,.ct-ev,.pf-route,.route-preview,.toggle-row{border-radius:16px !important;}
 .ct-ev{background:var(--surface) !important;}
-.ct-ev.kf-ueber,.cw-ev.kf-ueber{background:linear-gradient(160deg,rgba(224,160,48,.18),var(--surface)) !important;}
 .ct-ev.ct-schmal{border-radius:10px !important;}
 .vd-seg.done,.vl i.done{background:var(--akzent) !important;}
 .vd-seg.plan,.vl i.plan{background:var(--orange-line) !important;}
@@ -7936,7 +7941,7 @@ async function fsSerientermineSheet(sid){
     }
     // P1.4a: Serie gegen den Kalender prüfen, eine Rückfrage für alle Treffer
     const kf=_kfFinde(rows.map(r=>({date:r.datum,von:r.von,bis:r.bis,art:r.art,sid:r.schueler_id,_fahrlehrerId:r.fahrlehrer_id})));
-    if(kf.length&&!(await new Promise(ok=>_kfFrage(kf,()=>ok(true),()=>{ sheetZurueck(true); ok(false); }))))return;
+    if(kf.length&&!(await new Promise(ok=>_kfFrage(kf,()=>ok(true),()=>{ if(sheetZurueck(true)==="leer")closeSheet(); ok(false); }))))return;
     const {error}=await supa.from("kalender_termine").insert(rows);
     if(error){toast("Fehler: "+error.message);return;}
     closeSheet(); toast(`${anzahl} Termine angelegt ✓`);
@@ -13974,7 +13979,10 @@ function openBlockEventSheet(l){
 function _kfLehrerNeu(){ if(!_fsAgg)return "ich"; if(_fsCalLehrerFilter.length===1)return _fsCalLehrerFilter[0]; return (_fsAgg.lehrer||[]).length===1?_fsAgg.lehrer[0].id:null; }
 function _kfAusLesson(l){ return {id:l.id,datum:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant",fahrlehrer:_fsAgg?(l._fahrlehrerId||null):"ich",schueler:l.sid||"",fahrzeug:l.fahrzeug||""}; }
 // neue: ein Termin oder mehrere ({id?,date,von,bis,art,sid,fahrzeug,_fahrlehrerId?}); Ergebnis ohne doppelte Treffer
+// Ältere kompass-rechnen.js aus einem Zwischenspeicher (ohne den Baustein): keine Rückfrage, kein ⚠, volle Breite – nichts bricht ab
+function _kfDa(){ return typeof KR!=="undefined"&&!!KR.terminKonflikte&&!!KR.konfliktIds&&!!KR.spaltenLayout; }
 function _kfFinde(neue){
+  if(!_kfDa())return [];
   const alle=(DB.lessons||[]).map(_kfAusLesson), out=[], schon=new Set();
   [].concat(neue||[]).forEach(o=>{ if(!o||o.art==="block")return; const n=_kfAusLesson(o); if(_fsAgg&&!n.fahrlehrer)n.fahrlehrer=_kfLehrerNeu();
     KR.terminKonflikte(n,alle).forEach(k=>{ const key=k.t.id+"|"+n.datum; if(schon.has(key))return; schon.add(key); k.datumNeu=n.datum; out.push(k); }); });
@@ -13992,15 +14000,17 @@ function _kfFrage(konflikte,weiter,abbruch){
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 8px;">Zur gleichen Zeit ist schon etwas eingetragen:</p>
     <ul class="kf-liste">${zeilen}${mehr}</ul>
     <p style="font-size:14px;margin:10px 0 14px;font-weight:600;">Trotzdem speichern?</p>
-    <div class="btn-row"><button class="btn btn-ghost" id="kfJa" style="flex:1;">Trotzdem speichern</button><button class="btn btn-primary" id="kfNein" style="flex:1;">Abbrechen</button></div>`);
+    <div class="btn-row"><button class="btn btn-ghost" id="kfJa" style="flex:1;">Speichern</button><button class="btn btn-primary" id="kfNein" style="flex:1;">Abbrechen</button></div>`);
   setTimeout(()=>{ const b=$("#kfNein"); if(b)try{ b.focus({preventScroll:true}); }catch(e){} },0);
   $("#kfNein").addEventListener("click",()=>{ if(abbruch)abbruch(); else if(sheetZurueck(true)==="leer")closeSheet(); });
-  $("#kfJa").addEventListener("click",()=>weiter());
+  let erledigt=false; // ein zweites schnelles Tippen speichert nicht doppelt
+  $("#kfJa").addEventListener("click",()=>{ if(erledigt)return; erledigt=true; weiter(); });
 }
 // Ids der Termine eines Tages mit Überschneidung (für das Warnzeichen im Kalender)
 let _kfTagCache=null; // nur für einen Zeichenvorgang (Woche: viele Kacheln je Tag), danach sofort verworfen
 function _kfIdsAmTag(iso){
   if(!_kfTagCache){ _kfTagCache=new Map(); setTimeout(()=>{ _kfTagCache=null; },0); }
+  if(!_kfDa())return new Set();
   if(!_kfTagCache.has(iso))_kfTagCache.set(iso,KR.konfliktIds((DB.lessons||[]).filter(l=>l.date===iso).map(_kfAusLesson)));
   return _kfTagCache.get(iso);
 }
@@ -15044,6 +15054,7 @@ function wireCalendarDrag(){
             if(l.sid&&date!==prevDate&&_zahlungStopp(l.sid,date,l.art)){ routeKalender(); return; } // K8: Zahlung ausstehend – nicht auf einen anderen Tag ziehen
             const durMin=hm2min(l.bis)-hm2min(l.von);
             const verschieben=()=>{
+              const l=DB.lessons.find(x=>x.id===lid); if(!l){ toast("Termin nicht mehr da – nicht verschoben."); return; } // nach einem Abruf während der Rückfrage: das aktuelle Objekt ändern
               l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
               save();
               toastUndo("Fahrstunde verschoben ✓",()=>{
@@ -15192,7 +15203,7 @@ function calEventChip(e,iso){
   const draggable=_calZiehbar(e,iso);
   const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(_kachelName(e));
   const kf=e.kind==="lesson"&&_kfIdsAmTag(iso).has(e.id); // P1.4a: Warnzeichen bei Überschneidung
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}${zahlTag?' zahl-offen':''}${kf?' kf-ueber':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${kf?'<span class="kf-zeichen" title="Überschneidung" aria-label="Überschneidung">⚠</span>':''}${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${zahlTag}${pruefLabel}</span>${flTag}</div>`;
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}${zahlTag?' zahl-offen':''}${kf?' kf-ueber':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}>${kf?'<span class="kf-zeichen kf-ecke" title="Überschneidung" aria-label="Überschneidung">⚠</span>':''}<span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${zahlTag}${pruefLabel}</span>${flTag}</div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -15218,7 +15229,7 @@ function calDayHTML(){
   items.sort((a,b)=>a.von-b.von);
   // P1.4b (W25): überlappende Termine nebeneinander (Spalten); ganze Blocktage (Urlaub) bleiben volle Breite dahinter
   const spIds=new Map(); items.forEach((it,i)=>{ if(it.type==="ev"&&it.e.art!=="block")spIds.set("i"+i,it); });
-  const lay=KR.spaltenLayout([...spIds.entries()].map(([k,it])=>({id:k,von:min2hm(it.von),bis:min2hm(it.bis)})));
+  const lay=!_kfDa()?new Map():KR.spaltenLayout([...spIds.entries()].map(([k,it])=>({id:k,von:min2hm(it.von),bis:min2hm(it.bis)})));
   const kfIds=_kfIdsAmTag(iso);
   items.forEach((it,i)=>{
     const top=(it.von-startH*60)*pxPerMin; const h=Math.max(34,(it.bis-it.von)*pxPerMin-3);
@@ -15234,8 +15245,9 @@ function calDayHTML(){
       const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${esc(e.status)}</span>`:"";
       const sf=c.sf?`<span class="ct-sf">${sfKuerzel(e)}</span>`:'';
       const examSoon=e.sid&&!!terminFor(e.sid);
-      const dispNameDay=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name);
-      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}${kfKl}${sp&&sp.spalten>1?' ct-schmal':''}${e.art==='block'?' ct-blockhinten':''}" style="top:${top}px;height:${h}px;${spStil}border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${kfZ}${min2hm(it.von)}${flTxt}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
+      const sehrSchmal=sp&&sp.spalten>=3; // ab 3 Spalten: nur Zeit und Vorname, die Art-Zeile entfällt
+      const dispNameDay=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(sehrSchmal?firstName(e.name):e.name);
+      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}${kfKl}${sp&&sp.spalten>1?' ct-schmal':''}${sehrSchmal?' ct-sehr-schmal':''}${e.art==='block'?' ct-blockhinten':''}" style="top:${top}px;height:${h}px;${spStil}border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${kfZ}${min2hm(it.von)}${flTxt}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
     } else if(it.type==="free"){ const s=it.s; const c=CAL_ARTEN[s.art]||CAL_ARTEN.fahrstunde;
       blocks+=`<button class="ct-free" style="top:${top}px;height:${h}px" data-freeslot="${esc(iso)}|${esc(s.von)}|${esc(s.bis)}|${esc(s.art)}"><span>${min2hm(it.von)} · frei</span><span class="ct-free-p">+ vergeben</span></button>`;
     } else { const c=CAL_ARTEN.theorie;

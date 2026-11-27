@@ -65,11 +65,14 @@ ok("App: Bearbeiten prüft", /_kfFrage\(kf,/.test(block(html, "openEventEdit")))
 ok("App: Ziehen prüft", /_kfFinde\(/.test(block(html, "wireCalendarDrag")));
 ok("App: Serie prüft", /_kfFinde\(rows\.map/.test(html));
 ok("App: Tagesansicht nutzt Spalten", /KR\.spaltenLayout/.test(block(html, "calDayHTML")));
-ok("App: Abbrechen ist Hauptknopf", /id="kfJa"[^>]*>Trotzdem speichern<\/button><button class="btn btn-primary" id="kfNein"/.test(html));
+ok("App: Abbrechen ist Hauptknopf", /id="kfJa"[^>]*>Speichern<\/button><button class="btn btn-primary" id="kfNein"/.test(html));
 ok("Büro: Termin-Dialog prüft", /kfFrage\(kfFinde\(/.test(block(buero, "terminDialog")));
 ok("Büro: Serie prüft", /kfFrage\(kfFinde\(/.test(block(luecken, "luSerienDialog")));
 ok("Büro: Kalender nutzt Spalten", /KR\.spaltenLayout/.test(block(buero, "kSpaltenBloecke")));
 ok("Büro: Rückfrage vorsichtig (Abbrechen Hauptknopf)", /"Trotzdem speichern", "Abbrechen", true\)/.test(block(buero, "kfFrage")));
 
+ok("App: Schutz gegen alte Rechendatei", /function _kfDa\(/.test(html) && /if\(!_kfDa\(\)\)return \[\]/.test(block(html, "_kfFinde")));
+ok("Büro: Schutz gegen alte Rechendatei", /function kfDa\(/.test(buero) && /if \(!kfDa\(\)\) return \[\]/.test(block(buero, "kfFinde")));
+ok("App: Doppeltipp auf Speichern gesperrt", /if\(erledigt\)return; erledigt=true; weiter\(\)/.test(block(html, "_kfFrage")));
 console.log(fehler ? `❌ ${fehler} von ${faelle} Prüfungen fehlgeschlagen` : `✅ Konflikt-Test: alle ${faelle} Prüfungen bestanden`);
 process.exit(fehler ? 1 : 0);

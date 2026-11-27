@@ -126,6 +126,28 @@ for (const breite of [360, 412]) {
     await page.evaluate(() => { closeSheet(); const l = DB.lessons.find((x) => x.id === "B"); l.von = "10:45"; l.bis = "12:15"; save(); _calView = "woche"; routeKalender(); }); await warte(page, 400);
     return page.evaluate(() => document.querySelectorAll(".cw-ev.kf-ueber .kf-zeichen").length >= 2 ? true : "Warnzeichen fehlen");
   });
+  await pruefe("B8" + b, "drei gleichzeitige Termine: 3 Spalten, nur Zeit und Vorname, Uhrzeit nicht abgeschnitten", async () => {
+    await page.evaluate((tag) => { closeSheet(); DB.lessons.push({ id: "D", sid: "m1", date: tag, von: "10:30", bis: "12:00", art: "fahrstunde", status: "geplant" }); save(); _calView = "tag"; routeKalender(); }, tag); await warte(page, 400);
+    return page.evaluate(() => {
+      const f = [], els = ["A", "B", "D"].map((id) => document.querySelector(`.ct-ev[data-evedit^="lesson|${id}|"]`));
+      if (els.some((e) => !e)) return "Termine fehlen";
+      if (!els.every((e) => e.classList.contains("ct-sehr-schmal"))) f.push("nicht als sehr schmal markiert");
+      if (els.some((e) => getComputedStyle(e.querySelector(".ct-ev-a")).display !== "none")) f.push("Art-Zeile sichtbar");
+      if (els.some((e) => { const t = e.querySelector(".ct-ev-t"); return t.scrollWidth > t.clientWidth + 1; })) f.push("Uhrzeit abgeschnitten");
+      return f;
+    });
+  });
+  await pruefe("B9" + b, "Wochenansicht: Uhrzeit neben ⚠ vollständig", async () => {
+    await page.evaluate(() => { _calView = "woche"; routeKalender(); }); await warte(page, 400);
+    return page.evaluate(() => { const z = [...document.querySelectorAll(".cw-ev.kf-ueber .cw-evt")]; if (!z.length) return "keine Kachel mit ⚠";
+      const kurz = z.filter((e) => e.scrollWidth > e.clientWidth + 1 || !/^\d\d:\d\d$/.test(e.textContent.trim())); return kurz.length ? "abgeschnitten: " + kurz.map((e) => e.textContent).join(",") : true; });
+  });
+  await pruefe("B10" + b, "alte Rechendatei ohne Baustein: Kalender zeichnet trotzdem", async () => {
+    const r = await page.evaluate(() => { const alt = { t: KR.terminKonflikte, k: KR.konfliktIds, s: KR.spaltenLayout }; delete KR.terminKonflikte; delete KR.konfliktIds; delete KR.spaltenLayout;
+      let fehler = null; try { _calView = "tag"; routeKalender(); _calView = "woche"; routeKalender(); if (_kfFinde({ date: todayISO(), von: "10:00", bis: "11:00", art: "fahrstunde", sid: "m1" }).length) fehler = "Treffer ohne Baustein"; } catch (e) { fehler = e.message; }
+      Object.assign(KR, { terminKonflikte: alt.t, konfliktIds: alt.k, spaltenLayout: alt.s }); return fehler; });
+    return r || true;
+  });
   await pruefe("B7" + b, "kein seitliches Überlaufen, keine JS-Fehler", async () => {
     await page.evaluate(() => { _calView = "tag"; routeKalender(); }); await warte(page, 400);
     const f = [];

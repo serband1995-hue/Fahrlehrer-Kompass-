@@ -2825,7 +2825,10 @@ function kfForm(t) {
   return { id: t.id, datum: t.datum, von: t.von, bis: t.bis, art: t.art, status: (t.payload && t.payload.status) || t.status || "geplant",
     fahrlehrer: t.fahrlehrer_id || null, schueler: t.schueler_id || "", fahrzeug: t.fahrzeug || "", geloescht: !!t.geloescht };
 }
+// Ältere kompass-rechnen.js aus einem Zwischenspeicher (ohne den Baustein): keine Rückfrage, kein Zeichen, volle Breite
+function kfDa() { return typeof KR !== "undefined" && !!KR.terminKonflikte && !!KR.konfliktIds && !!KR.spaltenLayout; }
 function kfFinde(neue) {
+  if (!kfDa()) return [];
   const alle = S.termine.map(kfForm), out = [], schon = new Set();
   for (const n of [].concat(neue || [])) {
     if (!n || n.art === "block") continue;
@@ -2841,18 +2844,19 @@ function kfName(t) {
 function kfFrage(konflikte) {
   if (!konflikte || !konflikte.length) return Promise.resolve(true);
   const mitDatum = new Set(konflikte.map((k) => k.t.datum)).size > 1;
-  return bestaetige("Überschneidung", "Zur gleichen Zeit ist schon etwas eingetragen:\n" + KR.konfliktText(konflikte, kfName, mitDatum) + "\n\nTrotzdem speichern?", "Trotzdem speichern", "Abbrechen", true);
+  return bestaetige("⇄ Überschneidung", "Zur gleichen Zeit ist schon etwas eingetragen:\n" + KR.konfliktText(konflikte, kfName, mitDatum) + "\n\nTrotzdem speichern?", "Trotzdem speichern", "Abbrechen", true);
 }
 // Ids aller Termine eines Tages mit Überschneidung (Warnzeichen im Kalender); gilt für einen Zeichenvorgang
 let kfTagCache = null;
 function kfIdsAmTag(datum) {
   if (!kfTagCache) { kfTagCache = new Map(); setTimeout(() => { kfTagCache = null; }, 0); }
+  if (!kfDa()) return new Set();
   if (!kfTagCache.has(datum)) kfTagCache.set(datum, KR.konfliktIds(S.termine.filter((t) => t.datum === datum).map(kfForm)));
   return kfTagCache.get(datum);
 }
 // P1.4b (W25): überlappende Termine in einer Kalenderspalte nebeneinander (Blocktage bleiben volle Breite)
 function kSpaltenBloecke(eigene) {
-  const lay = KR.spaltenLayout(eigene.filter((t) => t.art !== "block"));
+  const lay = !kfDa() ? new Map() : KR.spaltenLayout(eigene.filter((t) => t.art !== "block"));
   return eigene.map((t) => kTerminBlock(t, lay.get(t.id))).join("");
 }
 function kTerminBlock(t, sp) {
@@ -2863,7 +2867,7 @@ function kTerminBlock(t, sp) {
   const kf = t.art !== "block" && kfIdsAmTag(t.datum).has(t.id);
   const spStil = sp && sp.spalten > 1 ? `left:calc(${(sp.spalte * 100 / sp.spalten).toFixed(3)}% + 2px);right:auto;width:calc(${(100 / sp.spalten).toFixed(3)}% - 4px);` : "";
   return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}${kf ? " kf-ueber" : ""}${spStil ? " k-schmal" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : kf ? ' title="Überschneidung: gleicher Fahrlehrer, Schüler oder Fahrzeug zur gleichen Zeit"' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;${spStil}--farbe:${K_FARBEN[t.art] || "#6a6a74"}">
-        <span class="k-zeit">${kf ? '<span class="kf-zeichen" aria-label="Überschneidung">⚠</span>' : ""}${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
+        <span class="k-zeit">${kf ? '<span class="kf-zeichen" aria-label="Überschneidung">⇄</span>' : ""}${esc(t.von)}${spStil ? "" : "–" + esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
 }
 function kStundenAchse() {
   const stunden = [];
@@ -3108,6 +3112,7 @@ function terminDialog(id, vorgabe) {
     if (spiegel) { // nur das Fahrzeug gehört dem Kalender; alles andere lässt der Server nicht zu
       const fz = form.querySelector("select[name=fahrzeug]").value || null;
       if ((t.fahrzeug || null) === fz) return true;
+      if (fz && !(await kfFrage(kfFinde(Object.assign({}, t, { fahrzeug: fz }))))) return false; // W25: Fahrzeug schon belegt?
       const r = await supa.from("kalender_termine").update({ fahrzeug: fz, aktualisiert_am: new Date().toISOString() }).eq("id", id).select("*");
       if (r.error || !r.data || !r.data.length) { toast("Nicht gespeichert: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return false; }
       Object.assign(t, r.data[0]); toast("Fahrzeug gespeichert"); zeichne(); return true;

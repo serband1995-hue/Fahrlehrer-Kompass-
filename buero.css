@@ -268,11 +268,13 @@ body.kiosk .tag-titel{font-size:30px;}
 .k-termin:hover{box-shadow:var(--schatten);}
 .k-termin.block{background:var(--surface) repeating-linear-gradient(135deg,rgba(128,128,140,.28) 0,rgba(128,128,140,.28) 6px,transparent 6px,transparent 12px);border-left-color:var(--faint);}
 .k-termin.gesperrt{outline:2px solid var(--rot);}
-/* P1.4a/b (W25): Überschneidung (Warnzeichen, Farbe) und schmale Spalten für überlappende Termine */
-.k-termin.kf-ueber{box-shadow:inset 0 0 0 2px #d9922b;}
-.k-termin .kf-zeichen{color:#d9922b;font-weight:800;margin-right:3px;}
+/* P1.4a/b (W25): Überschneidung (Zeichen ⇄, Bernstein-Rand – nicht verwechselbar mit „Zahlung ausstehend“ rot ⚠) und schmale Spalten */
+:root{--kf-farbe:#9a5b00;}
+@media (prefers-color-scheme:dark){:root{--kf-farbe:#e0a030;}}
+.k-termin.kf-ueber{box-shadow:inset 0 0 0 2px var(--kf-farbe);}
+.k-termin .kf-zeichen{color:var(--kf-farbe);font-weight:800;margin-right:3px;}
 .k-termin.k-schmal{padding:3px 4px;font-size:12.5px;}
-.k-termin.k-schmal .k-name,.k-termin.k-schmal .k-fz{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.k-termin.k-schmal .k-zeit,.k-termin.k-schmal .k-name,.k-termin.k-schmal .k-fz{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .k-zeit{font-weight:700;font-size:13px;color:var(--muted);}
 .k-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .k-fz{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
