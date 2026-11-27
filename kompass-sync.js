@@ -226,7 +226,9 @@
     if (!aktiv() || typeof openSheet !== "function") return;
     openSheet('<div class="sheet-h">Datensicherung</div><div id="syncFenster">' + fensterInhalt(zustand()) + "</div>");
   }
+  var _sendetBis = 0;
   function jetztSenden() {
+    if (Date.now() < _sendetBis) return; _sendetBis = Date.now() + 3000; // Doppeltipp: nicht zweimal senden
     try { if (typeof pushToCloud === "function") pushToCloud(); } catch (x) {}
     try { if (typeof _brueckenSofort === "function") _brueckenSofort(); } catch (x) {}
     zeichnen();

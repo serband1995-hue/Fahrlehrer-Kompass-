@@ -172,6 +172,7 @@ await abschnitt("S2", async () => {
   await warteFarbe(page, "gruen");
   await ctx.setOffline(true);
   await page.evaluate(() => { window.__hook = (tab, art) => (art === "select" ? null : { message: "TypeError: Failed to fetch" }); DB.lessons.push({ id: "L2", date: "2026-11-25", von: "10:00", bis: "11:30", art: "fahrstunde", sid: "s-a", name: "", status: "geplant", note: "", fc: null }); save(); });
+  await warte(page, 150); // neu gezeichnet wird im nächsten Bildschirm-Takt
   await pruefe("S2a", "direkt nach dem Speichern: gelb (wird gesendet)", async () => ((await farbe(page)) === "gelb" ? null : "Farbe " + (await farbe(page))));
   await page.waitForTimeout(6500);
   await pruefe("S2b", "offline nach dem Sendeversuch: gelb (nicht rot)", async () => ((await farbe(page)) === "gelb" ? null : "Farbe " + (await farbe(page))));
