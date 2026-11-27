@@ -241,6 +241,67 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
   pruefe("W36 keine JS-Fehler (Teil 2)", fehler.length === 0, fehler.join(" | "));
 }
 
+// ---------- Teil 2b: Funde des Prüf-Teams (Klasse B78, Büro-Rückgängig, Alt-Tafel, Prüfer-Kürzel, Datum-Abweichung) ----------
+{
+  const { ctx, page, fehler } = await starte();
+  const r = await page.evaluate(async () => {
+    const aus = {}, l = DB.students.filter((s) => !s.passed).slice(0, 6); l.forEach((s) => { s.ready = new Date().toISOString(); s.form = "B"; });
+    const plus = (n) => { const x = new Date(todayISO() + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+    const supa = getSupa(), tag = await PT.tagAnlegen(supa, { fahrschule_id: _authProfile.fahrschule_id, datum: plus(5), start: "08:00", pruefer: "EF", erstellt_von: _authUser.id });
+    await ptLaden();
+    // F4: Automatik wird als B78 geschrieben (Büro/Preisliste), bleibt Fensterklasse
+    l[0].form = "Automatik";
+    aus.hilfe = [_ptKlasse(l[0]), _ptKlasse({ form: "CE" }), _ptKlasse({})].join();
+    await ptEinteilen(l[0], _pt.tage.find((x) => x.id === tag.id), 0);
+    const z0 = window.__FAKE.tabellen.pruefungstermine.find((x) => x.schueler_id === l[0].id && x.status === "geplant");
+    aus.klasse = z0 && z0.klasse; aus.fenster = z0 && z0.fenster; aus.istFenster = PT.istFensterKlasse("B78");
+    // F5: Büro trägt „nicht bestanden“ ein, danach „Rückgängig“ (Server markiert kalender_pruefungen geloescht)
+    const z1 = await PT.einplanen(supa, Object.assign(_ptSupaBasis(), { schueler_id: l[1].id, klasse: "B", pruefungstag_id: tag.id, fenster: 2, fenster_anzahl: 1 }));
+    await ptLaden();
+    const ich = window.__FAKE.session; window.__FAKE.session = { user: { id: "ad-1", email: "leitung@example.org" } };
+    try { await PT.ergebnis(supa, z1.id, "nicht_bestanden"); } finally { window.__FAKE.session = ich; }
+    await ptLaden();
+    const s1 = DB.students.find((x) => x.id === l[1].id);
+    aus.vorher = { ex: DB.exams.filter((e) => e.sid === s1.id && e.quelle === "buero").length, att: s1.attempts || 0 };
+    window.__FAKE.tabellen.kalender_pruefungen.filter((k) => k.schueler_id === s1.id).forEach((k) => { k.geloescht = true; });
+    await ptLaden();
+    aus.nachher = { ex: DB.exams.filter((e) => e.sid === s1.id).length, att: s1.attempts || 0, hist: (s1.hist || []).some((h) => /zurückgenommen/.test(h.text)) };
+    await ptLaden(); aus.nochmal = { att: s1.attempts || 0 };
+    // F6: alte Tafel, Übernahme scheitert → Platz bleibt sichtbar; später klappt es mit quelle app_alt
+    const echt = PT.einplanen; let kaputt = true; PT.einplanen = (...a) => kaputt ? Promise.reject(new Error("W21:zahlung_offen")) : echt.apply(PT, a);
+    const t = { id: "alt2", date: plus(11), plaetze: 1, slots: [l[2].id], von: "10:30", bis: "11:25" }; DB.termine.push(t);
+    await ptLaden(); await new Promise((q) => setTimeout(q, 600));
+    aus.altSichtbar = _tafel().some((x) => x.slots.includes(l[2].id) && x.date === plus(11)); aus.altTerminFor = !!terminFor(l[2].id);
+    _pruefTab = "termine"; routePruefungen(); aus.altText = document.querySelector("#view").innerText;
+    aus.uebFalsch = (t.uebernommen || []).length;
+    kaputt = false; await ptLaden(); await new Promise((q) => setTimeout(q, 400)); aus.ohneWarten = (t.uebernommen || []).length; // höchstens alle 5 Min
+    Object.keys(_ptUeberVersucht).forEach((k) => { _ptUeberVersucht[k] = Date.now() - 301000; });
+    await ptLaden(); await new Promise((q) => setTimeout(q, 800)); await ptLaden();
+    PT.einplanen = echt;
+    const z2 = window.__FAKE.tabellen.pruefungstermine.find((x) => x.schueler_id === l[2].id && x.datum === plus(11));
+    aus.uebernommen = (t.uebernommen || []).length; aus.quelleAlt = z2 && z2.quelle; aus.altWeg = !_ptAltOffen(false).some((x) => x.slots.includes(l[2].id));
+    // F11: Datum weicht ab → genau eine offene Prüfung
+    aus.rowAbw = (_ptRowFuer(l[0].id, plus(1)) || {}).id === z0.id;
+    aus.rowKein = _ptRowFuer(l[3].id, plus(1));
+    // F10: Kürzel-Feld
+    ptTagSheet(null, () => {}); aus.maxlen = document.querySelector("#ptPruefer").maxLength; closeSheet();
+    // Startzeit ändern bei Ergebnissen: verständliche Meldung
+    aus.fehlerText = PT.fehlerText(new Error("W21:tag_hat_ergebnisse"));
+    return aus;
+  });
+  pruefe("W42 Hilfsfunktion: Automatik → B78, sonst Klasse oder B", r.hilfe === "B78,CE,B", r.hilfe);
+  pruefe("W43 Einteilen schreibt Klasse B78 (nicht „Automatik“), B78 bleibt Fensterklasse", r.klasse === "B78" && r.fenster === 0 && r.istFenster === true, JSON.stringify([r.klasse, r.fenster, r.istFenster]));
+  pruefe("W44 Büro-Ergebnis erst übernommen (1 Prüfung, Versuch 1)", r.vorher.ex === 1 && r.vorher.att === 1, JSON.stringify(r.vorher));
+  pruefe("W45 Büro „Rückgängig“: Prüfung weg, Versuch zurück auf 0, Verlauf-Eintrag, kein zweites Abziehen", r.nachher.ex === 0 && r.nachher.att === 0 && r.nachher.hist && r.nochmal.att === 0, JSON.stringify([r.nachher, r.nochmal]));
+  pruefe("W46 Alt-Tafel: Übernahme scheitert → Platz bleibt in Tafel, Terminen und „Noch nicht übertragen“", r.altSichtbar && r.altTerminFor && /noch nicht übertragen/i.test(r.altText) && r.uebFalsch === 0, JSON.stringify([r.altSichtbar, r.altTerminFor, r.uebFalsch]));
+  pruefe("W47 Neuer Versuch erst nach 5 Minuten, dann übernommen mit quelle app_alt, Platz nicht mehr „offen“", r.ohneWarten === 0 && r.uebernommen === 1 && r.quelleAlt === "app_alt" && r.altWeg, JSON.stringify([r.ohneWarten, r.uebernommen, r.quelleAlt, r.altWeg]));
+  pruefe("W48 Datum weicht ab: genau eine offene Prüfung wird gefunden, sonst keine", r.rowAbw && r.rowKein === null, JSON.stringify([r.rowAbw, r.rowKein]));
+  pruefe("W49 Prüfer-Kürzel höchstens 10 Zeichen", r.maxlen === 10, String(r.maxlen));
+  pruefe("W50 „Tag hat Ergebnisse“ wird verständlich gemeldet", /\S/.test(r.fehlerText) && !/W21:/.test(r.fehlerText), r.fehlerText);
+  await ctx.close();
+  pruefe("W51 keine JS-Fehler (Teil 2b)", fehler.length === 0, fehler.join(" | "));
+}
+
 // ---------- Teil 3: Handy-Größen (360/412 hoch, quer): nichts läuft über, Tippflächen mindestens 44 px ----------
 for (const g of [{ n: "360", w: 360, h: 780 }, { n: "412", w: 412, h: 860 }, { n: "quer", w: 740, h: 360 }]) {
   const { ctx, page, fehler } = await starte({ width: g.w, height: g.h });
