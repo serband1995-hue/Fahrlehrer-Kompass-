@@ -26,10 +26,21 @@ const VW_TAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 .vw-plan tr.heute td:first-child{box-shadow:inset 3px 0 0 var(--akzent)}
 .vw-inhalt .zahl{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vw-inhalt{margin:6px 0 12px}
-.vw-modus{border:none;padding:0;margin:0 0 10px;display:grid;gap:8px}
-.vw-modus label{display:flex;gap:10px;align-items:flex-start;min-height:44px;cursor:pointer}
-.vw-modus input{margin-top:4px;flex:none;width:20px;height:20px}
-.vw-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;letter-spacing:3px}
+.vw-inhalt th,.vw-inhalt td{padding-left:6px;padding-right:6px}
+@media (max-width:600px){.vw-inhalt{font-size:14px}}
+.vw-modus{border:none;padding:0;margin:0 0 12px;display:grid;gap:10px}
+.vw-modus label{display:flex;gap:12px;align-items:flex-start;min-height:56px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:12px;cursor:pointer}
+.vw-modus label:has(input:checked){border-color:var(--akzent);box-shadow:inset 0 0 0 1px var(--akzent)}
+.vw-modus input{margin-top:2px;flex:none;width:22px;height:22px}
+.vw-modus .vw-modus-text{display:block;font-weight:600}
+.vw-modus .vw-modus-erkl{display:block;font-weight:400;font-size:14px;opacity:.85;margin-top:2px}
+.vw-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;letter-spacing:3px}
+.vw-code-feld{display:block;margin-top:8px;font-weight:600}
+.vw-code-feld input{display:block;width:100%;box-sizing:border-box;min-height:48px;margin-top:6px;font-size:20px;letter-spacing:4px;text-transform:uppercase;font-family:ui-monospace,Menlo,Consolas,monospace}
+.vw-warn{display:block;margin:8px 0;padding:8px 12px;border-radius:10px;background:var(--gelb-soft);color:var(--pill-gelb);font-weight:400;line-height:1.4}
+.vw-backups .aktionen-box{display:flex;gap:8px;flex-wrap:wrap}
+.dialog footer .knopf.haupt.gefahr,.dialog footer .knopf.gefahr{background:#b3392b;border-color:#b3392b;color:#fff}
+.dialog footer .knopf.haupt.gefahr:hover{background:#962e23}
 @media (max-width:600px){
   .vw-plan{display:table;overflow:visible}
   .vw-plan thead{display:none}
@@ -267,19 +278,20 @@ function schichtDialog(datum) {
 function vwLadeBackups(neu) {
   vwSchule();
   const spalten = window.KS ? KS.SPALTEN : "id,erstellt_am,automatisch";
-  return vwLaden("backups", () => supa.from("fahrschule_backups").select(spalten).eq("fahrschule_id", S.fsId).order("erstellt_am", { ascending: false }).limit(40), neu);
+  return vwLaden("backups", () => supa.from("fahrschule_backups").select(spalten).eq("fahrschule_id", S.fsId).order("erstellt_am", { ascending: false }).limit(window.KS ? KS.LIMIT : 30), neu);
 }
 function vwBackupZeit(b) { return new Date(b.erstellt_am).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }); }
 function renderBackups() {
   vwSchule();
   const ks = window.KS;
   const letztes = VW.backups && VW.backups[0] ? vwBackupZeit(VW.backups[0]) : "";
-  const kopf = `<div class="karte-kopf"><h2>${letztes ? "Letztes: " + esc(letztes) : VW.backups ? "Noch keins" : "Backups"}</h2><button class="knopf haupt" id="vwBackupJetzt" type="button">Jetzt alles sichern</button></div>
-    <p class="leise klein">Gesichert wird alles der Fahrschule: Schüler (auch gelöschte), Termine mit Papierkorb, Belege, Pakete, Preise, Notizen, Einstellungen und die Handy-Stände. Läuft jede Nacht von selbst, die letzten 30 bleiben. Nicht enthalten: Anmeldedaten (PINs, Passwörter). <span class="marke-pill gelb vw-hinweis">Alle Backups liegen in derselben Datenbank. Lade darum etwa einmal pro Woche eins herunter und bewahre es sicher auf (es enthält Personendaten). Handy-Stände und private Angaben der Schüler sind gesichert, stehen aber nicht in der Datei: sie darf nur der Fahrlehrer selbst sehen.</span></p>`;
+  const kopf = `<div class="karte-kopf"><h2>${letztes ? "Letzte Sicherung: " + esc(letztes) : VW.backups ? "Noch keins" : "Backups"}</h2><button class="knopf haupt" id="vwBackupJetzt" type="button">Jetzt alles sichern</button></div>
+    <p class="leise klein">Gesichert wird alles der Fahrschule: Schüler (auch gelöschte), Termine mit Papierkorb, Belege, Pakete, Preise, Notizen, Einstellungen und die Handy-Stände. Läuft jede Nacht von selbst, die letzten 30 bleiben. Von Hand gesicherte bleiben immer. Die Liste zeigt die neuesten 60. Nicht enthalten: Anmeldedaten (PINs, Passwörter).</p>
+    <p class="vw-warn klein">Alle Backups liegen in derselben Datenbank. Lade darum etwa einmal pro Woche eins herunter und bewahre es sicher auf (es enthält Personendaten). Handy-Stände und private Angaben der Schüler sind gesichert, stehen aber nicht in der Datei: sie darf nur der Fahrlehrer selbst sehen.</p>`;
   if (!VW.backups) return `<div class="karte">${kopf}${vwFehlerKarte("backups", "Die Liste der Backups")}</div>`;
   if (!VW.backups.length) return `<div class="karte">${kopf}${vwAltHinweis("backups")}<p class="leer">Noch keine Backups vorhanden. „Jetzt alles sichern“ legt das erste an.</p></div>`;
   return `<div class="karte">${kopf}${vwAltHinweis("backups")}<table class="tabelle vw-liste vw-backups"><thead><tr><th>Erstellt</th><th>Art und Inhalt</th><th></th></tr></thead><tbody>${VW.backups.map((b) => {
-    const inhalt = ks && b.zaehlung ? `${ks.summe(b.zaehlung).toLocaleString("de-DE")} Einträge · ${Object.keys(b.zaehlung).length} Bereiche · ${esc(ks.groesse(b.groesse_bytes))}` : "";
+    const inhalt = ks && b.zaehlung ? `<span class="vw-nowrap">${ks.mengeText(ks.summe(b.zaehlung), "Eintrag", "Einträge")}</span> · <span class="vw-nowrap">${ks.mengeText(Object.keys(b.zaehlung).length, "Bereich", "Bereiche")}</span> · <span class="vw-nowrap">${esc(ks.groesse(b.groesse_bytes))}</span>` : "";
     return `<tr>
       <td>${esc(vwBackupZeit(b))}</td>
       <td>${esc(ks ? ks.art(b) : (b.automatisch ? "automatisch" : "von Hand"))}${inhalt ? `<br><span class="leise klein">${inhalt}</span>` : ""}</td>
@@ -290,14 +302,14 @@ function renderBackups() {
 // Zurückschreiben darf nur die Leitung (der Server prüft das auch); vorher sichert der Server den jetzigen Stand.
 function vwBackupAnsehen(b) {
   const ks = window.KS;
-  const zeilen = ks.bereiche(b).map((x) => `<tr><td>${esc(x.name)}${x.art === "entdeckt" ? ' <span class="leise klein">(nur gesichert)</span>' : ""}</td><td class="zahl">${x.n}</td></tr>`).join("");
+  const zeilen = ks.bereiche(b).map((x) => `<tr><td>${esc(x.name)}${x.art === "entdeckt" ? ' <span class="leise klein">(nur gesichert)</span>' : ""}</td><td class="zahl">${x.art === "fehler" ? '<span class="marke-pill rot">nicht gesichert</span>' : x.n}</td></tr>`).join("");
   const darfZurueck = ks.wiederherstellbar(b);
   const inhalt = `<p class="leise klein">${esc(ks.art(b))} · ${esc(vwBackupZeit(b))} · ${esc(ks.groesse(b.groesse_bytes))}</p>
     <table class="tabelle vw-inhalt"><thead><tr><th>Bereich</th><th class="zahl">Einträge</th></tr></thead><tbody>${zeilen}</tbody></table>
     ${darfZurueck ? `<h3>Zurückholen</h3>
     <fieldset class="vw-modus"><legend class="leise klein">Wie?</legend>
-      <label><input type="radio" name="modus" value="ergaenzen" checked> Nur Fehlendes zurückholen <span class="leise klein">(ändert und löscht nichts)</span></label>
-      <label><input type="radio" name="modus" value="komplett"> Alles auf diesen Stand setzen <span class="leise klein">(Belege und Protokolle bleiben immer)</span></label>
+      <label><input type="radio" name="modus" value="ergaenzen" checked><span><span class="vw-modus-text">Nur Fehlendes zurückholen</span><span class="vw-modus-erkl">Ändert und löscht nichts.</span></span></label>
+      <label><input type="radio" name="modus" value="komplett"><span><span class="vw-modus-text">Alles auf diesen Stand setzen</span><span class="vw-modus-erkl">Neuere Änderungen gehen verloren. Belege, Protokolle und gelaufene Stunden bleiben immer.</span></span></label>
     </fieldset>
     <div id="vwVorschau" aria-live="polite"></div>` : `<p class="leise klein">Alte Sicherung: nur zum Herunterladen.</p>`}`;
   let vorschau = null;
@@ -306,19 +318,24 @@ function vwBackupAnsehen(b) {
     const modus = form.modus.value;
     if (!vorschau || vorschau.modus !== modus) {
       const res = await supa.rpc("fahrschule_backup_vorschau", { backup_id: b.id, modus, tabellen: null });
+      if (form.modus.value !== modus) return false; // während der Abfrage umgeschaltet: alte Antwort verwerfen (Fehlersucher Daten)
       if (res.error || !res.data) { vwVorschauMeldung(dlg, "Vorschau ging nicht: " + (res.error ? dbFehlerText(res.error) : "keine Antwort")); return false; }
       vorschau = res.data;
       vwVorschauZeigen(dlg, vorschau);
       return false;
     }
     const code = (form.code && form.code.value || "").trim().toUpperCase();
-    if (!vorschau.darf_wiederherstellen || !vorschau.wiederherstellbar) return false;
-    if (code !== vorschau.code) { vwVorschauMeldung(dlg, "Der Code stimmt nicht. Bitte genau so eintippen: " + vorschau.code); return false; }
+    // Nicht zurückholbar, nichts zu tun oder kein Recht: der Knopf heißt dann „Schließen“
+    if (!vorschau.ok || !vorschau.wiederherstellbar || !vorschau.darf_wiederherstellen
+        || !((vorschau.einfuegen || 0) + (vorschau.aendern || 0) + (vorschau.loeschen || 0))) return true;
+    if (code !== vorschau.code) { vwVorschauMeldung(dlg, "Der Code stimmt nicht. Bitte genau so eintippen: " + vorschau.code, true); return false; }
     const res = await supa.rpc("fahrschule_backup_wiederherstellen", { backup_id: b.id, modus, tabellen: null, bestaetigung: code });
     if (res.error || !res.data || !res.data.ok) {
       vorschau = null; // Stand geändert o. ä.: neue Vorschau nötig
-      vwVorschauMeldung(dlg, "Nicht zurückgeholt: " + (res.error ? dbFehlerText(res.error) : "unbekannt") + " Es wurde nichts geändert.");
-      dlg.querySelector("footer button[value=ok]").textContent = "Vorschau ansehen";
+      const box = dlg.querySelector("#vwVorschau"); if (box) box.innerHTML = "";
+      // Der Server sagt bei seinen Fehlern selbst „Es wurde nichts geändert“; bei Netzfehlern ist das nicht sicher
+      vwVorschauMeldung(dlg, "Nicht zurückgeholt: " + (res.error ? dbFehlerText(res.error) : "unbekannt") + " Bitte die Liste der Backups prüfen und die Vorschau neu öffnen.");
+      const k = dlg.querySelector("footer button[value=ok]"); k.textContent = "Vorschau ansehen"; k.classList.remove("gefahr"); k.classList.add("haupt");
       return false;
     }
     toast(res.data.nichts_zu_tun ? "Nichts zu tun: alles ist schon so" : "Zurückgeholt. Der Stand davor ist als eigenes Backup gesichert.");
@@ -329,36 +346,45 @@ function vwBackupAnsehen(b) {
   dlg.querySelectorAll("input[name=modus]").forEach((r) => r.addEventListener("change", () => {
     vorschau = null;
     const box = dlg.querySelector("#vwVorschau"); if (box) box.innerHTML = "";
-    dlg.querySelector("footer button[value=ok]").textContent = "Vorschau ansehen";
+    const k = dlg.querySelector("footer button[value=ok]"); k.textContent = "Vorschau ansehen"; k.classList.remove("gefahr"); k.classList.add("haupt");
+    delete dlg.dataset.geaendert; // nur Auswahl gewechselt: beim Schließen nichts zu verwerfen
   }));
 }
-function vwVorschauMeldung(dlg, text) {
+// Meldung im Fenster: beim Code direkt über dem Feld, sonst oben in der Vorschau; immer in den sichtbaren Bereich holen
+function vwVorschauMeldung(dlg, text, beimCode) {
   const box = dlg.querySelector("#vwVorschau");
-  if (box) box.insertAdjacentHTML("afterbegin", `<p class="dialog-meldung fehler" role="alert">${esc(text)}</p>`);
+  if (!box) return;
+  box.querySelectorAll(".vw-meldung").forEach((m) => m.remove());
+  const feld = beimCode && box.querySelector(".vw-code-feld");
+  (feld || box).insertAdjacentHTML(feld ? "beforebegin" : "afterbegin", `<p class="dialog-meldung fehler vw-meldung" role="alert">${esc(text)}</p>`);
+  const m = box.querySelector(".vw-meldung"); if (m && m.scrollIntoView) m.scrollIntoView({ block: "nearest" });
 }
 function vwVorschauZeigen(dlg, v) {
   const box = dlg.querySelector("#vwVorschau"), knopf = dlg.querySelector("footer button[value=ok]");
   const ks = window.KS;
   const geaendert = (v.tabellen || []).filter((t) => (t.einfuegen || 0) + (t.aendern || 0) + (t.loeschen || 0) > 0);
   const summe = (v.einfuegen || 0) + (v.aendern || 0) + (v.loeschen || 0);
-  const liste = geaendert.length ? `<table class="tabelle vw-inhalt"><thead><tr><th>Bereich</th><th class="zahl">dazu</th><th class="zahl">geändert</th><th class="zahl">weg</th></tr></thead><tbody>${geaendert.map((t) =>
+  const liste = geaendert.length ? `<table class="tabelle vw-inhalt"><thead><tr><th>Bereich</th><th class="zahl">neu</th><th class="zahl">geänd.</th><th class="zahl">weg</th></tr></thead><tbody>${geaendert.map((t) =>
     `<tr><td>${esc(ks.name(t.tabelle))}</td><td class="zahl">${t.einfuegen || 0}</td><td class="zahl">${t.aendern || 0}</td><td class="zahl">${t.loeschen || 0}</td></tr>`).join("")}</tbody></table>` : "";
   let fuss;
   if (!v.ok || !v.wiederherstellbar) fuss = `<p class="dialog-meldung fehler" role="alert">Diese Sicherung lässt sich nicht zurückholen (${esc(v.grund === "pruefsumme" ? "sie wurde nachträglich verändert" : v.grund === "altes_format" ? "altes Format" : v.grund === "folge_loeschung" ? "dabei würden weitere Einträge mitgelöscht" : "sie enthält Einträge, die nicht zu dieser Fahrschule gehören")}).</p>`;
   else if (!summe) fuss = `<p class="marke-pill gruen">Nichts zu tun: alles ist schon so.</p>`;
-  else if (!v.darf_wiederherstellen) fuss = `<p class="leise klein">Zurückholen darf nur die Leitung der Fahrschule. Sie sieht dieselbe Vorschau.</p>`;
+  else if (!v.darf_wiederherstellen) fuss = `<p class="vw-warn">🔒 Zurückholen darf nur die Leitung der Fahrschule. Sie sieht dieselbe Vorschau.</p>`;
   else fuss = `<p>Vorher wird der jetzige Stand automatisch gesichert. Zum Bestätigen den Code eintippen: <b class="vw-code">${esc(v.code)}</b></p>
-    <label>Code<input name="code" autocomplete="off" autocapitalize="characters" maxlength="6" required></label>`;
+    <label class="vw-code-feld">Code eintippen<input name="code" autocomplete="off" autocapitalize="characters" maxlength="6" placeholder="${esc(v.code)}" required></label>`;
   // Komplett: was seit dem Backup dazukam und nie gelöscht wird (Belege, Punkte, Mails, Protokoll) – Zahlungsstand am Schüler
   // kann danach davon abweichen (Richter W24)
   const bleiben = v.modus === "komplett" ? (v.tabellen || []).filter((t) => t.art === "anhaengen" && t.gewaehlt && (t.zuviel || 0) > 0) : [];
-  const anhang = bleiben.length ? `<p class="marke-pill gelb vw-hinweis">Seit dem Backup dazugekommen, bleibt erhalten: ${bleiben.map((t) => `${t.zuviel} ${esc(ks.name(t.tabelle))}`).join(", ")}. Bitte danach den Zahlungsstand der betroffenen Schüler ansehen.</p>` : "";
+  const anhang = bleiben.length ? `<p class="vw-warn">Seit dem Backup dazugekommen, bleibt erhalten: ${bleiben.map((t) => `${t.zuviel} ${esc(ks.name(t.tabelle))}`).join(", ")}. Bitte danach den Zahlungsstand der betroffenen Schüler ansehen.</p>` : "";
   const fest = v.bleibt_fest ? `<p class="leise klein">${v.bleibt_fest} gelaufene, unterschriebene oder stornierte Stunden bleiben, wie sie sind (werden nie geändert oder gelöscht).</p>` : "";
-  box.innerHTML = `<p><b>${summe ? `${v.einfuegen || 0} kommen dazu, ${v.aendern || 0} werden geändert, ${v.loeschen || 0} fallen weg.` : "Keine Unterschiede."}</b></p>${liste}${anhang}${fest}${fuss}`;
+  // Handys behalten ihren eigenen Stand (Handy-Stände werden hier nicht mit zurückgeholt)
+  const handy = v.modus === "komplett" && geaendert.some((t) => t.tabelle === "schueler") ? `<p class="vw-warn">Die Handys der Fahrlehrer behalten ihren eigenen Stand. Bitte danach bei den Fahrlehrern die zurückgeholten Schüler ansehen: ein Handy kann eigene Änderungen wieder hochladen.</p>` : "";
+  const kopfzeile = v.ok && v.wiederherstellbar ? `<p><b>${summe ? `${v.einfuegen || 0} kommen dazu, ${v.aendern || 0} werden geändert, ${v.loeschen || 0} fallen weg.` : "Keine Unterschiede."}</b></p>` : "";
+  box.innerHTML = `${kopfzeile}${liste}${anhang}${handy}${fest}${fuss}`;
   const darf = v.ok && v.wiederherstellbar && summe > 0 && v.darf_wiederherstellen;
-  knopf.textContent = darf ? "Jetzt zurückholen" : "Vorschau ansehen";
-  if (darf) { knopf.classList.add("gefahr"); const c = box.querySelector("input[name=code]"); if (c) c.focus(); }
-  else knopf.classList.remove("gefahr");
+  knopf.textContent = darf ? "Jetzt zurückholen" : "Schließen";
+  if (darf) { knopf.classList.remove("haupt"); knopf.classList.add("gefahr"); const c = box.querySelector("input[name=code]"); if (c) c.focus(); }
+  else { knopf.classList.remove("gefahr"); knopf.classList.add("haupt"); }
 }
 function bindeBackups(ziel) {
   if (vwVeraltet("backups")) vwLadeBackups();

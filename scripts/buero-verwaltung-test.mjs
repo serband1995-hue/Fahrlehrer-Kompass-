@@ -174,6 +174,7 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
   inhalt.bereiche = /Schüler \(auch gelöschte\)/.test(await page.textContent("dialog[open]")) && /Handy-Stände/.test(await page.textContent("dialog[open]"));
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
   inhalt.nurLeitung = /nur die Leitung/.test(await page.textContent("dialog[open]")) && !(await page.locator("dialog[open] input[name=code]").count());
+  inhalt.schliessenKnopf = (await page.textContent("dialog[open] footer button[value=ok]")).trim() === "Schließen";
   await page.click("dialog[open] [data-schliessen]").catch(() => {}); await warte(page, 300);
   await page.evaluate(() => { window.__FAKE.darf = true; });
   await page.click("[data-vwbackupsieh]"); await warte(page, 300);
@@ -184,6 +185,9 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
   await page.fill("dialog[open] input[name=code]", "XXXXXX");
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
   inhalt.falsch = /Code stimmt nicht/.test(await page.textContent("dialog[open]")) && (await page.evaluate(() => window.__FAKE.zurueck.length)) === 0;
+  inhalt.meldungSichtbar = await page.evaluate(() => { const m = document.querySelector("dialog[open] .vw-meldung"); const d = document.querySelector("dialog[open] .dialog-inhalt") || document.querySelector("dialog[open]");
+    if (!m) return false; const a = m.getBoundingClientRect(), b = d.getBoundingClientRect(); return a.bottom > b.top && a.top < b.bottom && a.top >= 0 && a.bottom <= innerHeight; });
+  inhalt.knopfRot = await page.evaluate(() => { const k = document.querySelector("dialog[open] footer button[value=ok]"); return k.classList.contains("gefahr") && !k.classList.contains("haupt"); });
   await page.fill("dialog[open] input[name=code]", "ab12cd");
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 500);
   const aufruf = await page.evaluate(() => window.__FAKE.zurueck[0] || null);

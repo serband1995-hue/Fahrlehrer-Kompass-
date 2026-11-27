@@ -7,7 +7,7 @@
    KS.art(backup)                → „Nacht (automatisch)“, „von Hand“, „vor dem Zurückholen“, „alt (nur 4 Bereiche)“
    KS.groesse(bytes)             → „12 KB“, „3,4 MB“
    KS.summe(zaehlung)            → Zahl aller Einträge
-   KS.bereiche(backup)           → [{tabelle, name, n, art}] sortiert: mit Einträgen zuerst, dann nach Name
+   KS.bereiche(backup)           → [{tabelle, name, n, art}]: nicht gesicherte (art „fehler“, n null) zuerst, dann mit Einträgen, dann nach Name
    KS.wiederherstellbar(backup)  → true nur bei Format 2 (alte Sicherungen kann man nur herunterladen) */
 (function () {
   "use strict";
@@ -47,10 +47,15 @@
     },
     bereiche(b) {
       const z = (b && b.zaehlung) || {}, a = (b && b.arten) || {};
-      return Object.keys(z).map((t) => ({ tabelle: t, name: KS.name(t), n: Number(z[t]) || 0, art: a[t] || "" }))
-        .sort((x, y) => (y.n > 0) - (x.n > 0) || x.name.localeCompare(y.name, "de"));
+      // „fehler“: Bereich konnte nicht gesichert werden (steht nur in arten) – ganz oben zeigen
+      const fehlt = Object.keys(a).filter((t) => a[t] === "fehler" && !(t in z)).map((t) => ({ tabelle: t, name: KS.name(t), n: null, art: "fehler" }));
+      return fehlt.concat(Object.keys(z).map((t) => ({ tabelle: t, name: KS.name(t), n: Number(z[t]) || 0, art: a[t] || "" }))
+        .sort((x, y) => (y.n > 0) - (x.n > 0) || x.name.localeCompare(y.name, "de")));
     },
-    wiederherstellbar(b) { return !!(b && b.format >= 2); }
+    wiederherstellbar(b) { return !!(b && b.format >= 2); },
+    LIMIT: 60,
+    mengeText(n, eins, mehr) { return Number(n).toLocaleString("de-DE") + " " + (Number(n) === 1 ? eins : mehr); },
+    zahlText(x) { return x.art === "fehler" ? "nicht gesichert" : String(x.n); }
   };
   if (typeof window !== "undefined") window.KS = KS;
   if (typeof module !== "undefined" && module.exports) module.exports = KS;

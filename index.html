@@ -7449,11 +7449,11 @@ async function routeFahrschuleBackups(){
 async function _fsLadeBackups(){
   const supa=getSupa();
   const ks=window.KS; // ohne kompass-sicherung.js (alter Zwischenspeicher): Liste wie vor W24
-  const {data,error}=await supa.from("fahrschule_backups").select(ks?ks.SPALTEN:"id,erstellt_am,automatisch").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(30);
+  const {data,error}=await supa.from("fahrschule_backups").select(ks?ks.SPALTEN:"id,erstellt_am,automatisch").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(ks&&ks.LIMIT?ks.LIMIT:30);
   const rows=(data||[]).map(b=>{
     const art=ks?ks.art(b):(b.automatisch?"Automatisch":"Manuell erstellt");
-    const inhalt=ks&&b.zaehlung?`${ks.summe(b.zaehlung).toLocaleString("de-DE")} Einträge · ${Object.keys(b.zaehlung).length} Bereiche · ${ks.groesse(b.groesse_bytes)}`:"";
-    const bereiche=ks&&b.zaehlung?`<details class="fs-backup-inhalt"><summary>Was ist drin?</summary><div>${ks.bereiche(b).map(x=>`<div class="fs-backup-zeile"><span>${esc(x.name)}</span><b>${x.n}</b></div>`).join("")}</div></details>`:"";
+    const inhalt=ks&&b.zaehlung?`${ks.mengeText?ks.mengeText(ks.summe(b.zaehlung),"Eintrag","Einträge"):ks.summe(b.zaehlung)+" Einträge"} · ${ks.mengeText?ks.mengeText(Object.keys(b.zaehlung).length,"Bereich","Bereiche"):Object.keys(b.zaehlung).length+" Bereiche"} · ${ks.groesse(b.groesse_bytes)}`:"";
+    const bereiche=ks&&b.zaehlung?`<details class="fs-backup-inhalt"><summary>Was ist drin?</summary><div>${ks.bereiche(b).map(x=>`<div class="fs-backup-zeile"><span>${esc(x.name)}</span><b>${esc(ks.zahlText?ks.zahlText(x):String(x.n))}</b></div>`).join("")}</div></details>`:"";
     return `<div class="fs-card">
     <div class="fs-name">${esc(new Date(b.erstellt_am).toLocaleString("de-DE"))}</div>
     <div class="fs-sub">${esc(art)}${inhalt?`<br>${esc(inhalt)}`:""}</div>${bereiche}
@@ -7464,7 +7464,7 @@ async function _fsLadeBackups(){
     <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;">
       <h4>💾 Backups</h4>
-      <p style="font-size:13px;color:var(--muted);">Gesichert wird alles der Fahrschule (auch gelöschte Schüler, Papierkorb, Belege, Handy-Stände). Läuft jede Nacht von selbst, die letzten 30 bleiben. Nicht enthalten: Anmeldedaten (PINs, Passwörter). Du kannst jederzeit zusätzlich sichern. Zurückholen geht im Büro am PC.</p>
+      <p style="font-size:13px;color:var(--muted);">Gesichert wird alles der Fahrschule (auch gelöschte Schüler, Papierkorb, Belege, Handy-Stände). Läuft jede Nacht von selbst, die letzten 30 bleiben, von Hand gesicherte bleiben immer. Nicht enthalten: Anmeldedaten (PINs, Passwörter). Handy-Stände und private Angaben der Schüler sind gesichert, stehen aber nicht in der heruntergeladenen Datei. Du kannst jederzeit zusätzlich sichern. Zurückholen geht im Büro am PC.</p>
       <div class="btn-row"><button class="btn btn-primary" onclick="_fsJetztSichern()">Jetzt alles sichern</button></div>
     </div>
     <div class="res-block" style="animation:none;"><h4>Verlauf (${(data||[]).length})</h4>${rows}</div>`;
