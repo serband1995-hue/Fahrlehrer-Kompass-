@@ -194,7 +194,9 @@ function belegHTML(b, opt) {
   const kn = window.KR && KR.kundennummerText ? KR.kundennummerText(b.kundennummer) : "";
   const adr = window.KR && KR.adresseZeilen && b.schueler_adresse && typeof b.schueler_adresse === "object" ? KR.adresseZeilen(b.schueler_adresse) : [];
   const zart = b.zahlart ? (BELEG_ZAHLART[b.zahlart] || b.zahlart) : "";
-  const aussteller = String(b.aussteller || b.bearbeiter || "").trim();
+  // W26: nur echte Personennamen; ein Rollen-Etikett wie „Super-Admin“ (Profilname des Betreiber-Kontos) gehört nicht auf die Quittung
+  const ausstellerRoh = String(b.aussteller || b.bearbeiter || "").trim();
+  const aussteller = /^(super[\s_-]*admin|admin|büro|buero)$/i.test(ausstellerRoh) ? "" : ausstellerRoh;
   const erstellt = b.erstellt_am ? new Date(b.erstellt_am) : null;
   const erstelltText = erstellt && !isNaN(erstellt) ? erstellt.toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }) : "";
   const kopfZeilen = [k.anschrift ? zeilen(k.anschrift) : "", k.steuernummer ? "Steuernummer: " + esc(k.steuernummer) : "", k.ustid ? "USt-IdNr.: " + esc(k.ustid) : ""].filter(Boolean);
