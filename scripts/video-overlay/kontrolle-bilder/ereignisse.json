@@ -1,0 +1,4 @@
+[{"t": 0.15, "type": "whoosh", "len": 0.7},
+ {"t": 4.865, "type": "horn"},
+ {"t": 5.40, "type": "brake"},
+ {"t": 9.20, "type": "whoosh", "len": 0.6, "g": 0.7}]
