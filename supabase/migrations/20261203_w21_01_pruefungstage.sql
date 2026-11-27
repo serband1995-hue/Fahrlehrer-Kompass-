@@ -207,6 +207,7 @@ begin
     end if;
   end if;
   if new.status is null then new.status := 'geplant'; end if;
+  new.aktualisiert_am := now(); -- Server-Zeit (für die 15-Minuten-Frist beim Zurücknehmen einer Absage)
   -- Ergebnis neu gesetzt: vom Büro = schon in der Akte; aus der App (Fahrlehrer, auch über kalender_pruefungen) = Büro übernimmt es
   if tg_op = 'UPDATE' and new.status is distinct from old.status then
     new.ergebnis_uebernommen := case when new.status not in ('bestanden', 'nicht_bestanden') then true
@@ -252,8 +253,9 @@ begin
     -- Zahlungssperre wie im Büro: neue künftige Praxisprüfung im Kalender (neu, oder anderer Tag/Schüler) für gesperrte Schüler nicht
     -- Neu ist: neue Prüfung, anderer Tag/Schüler/Fahrlehrer, wieder aktiv. Ein Haken oder Ergebnis an einer alten Zeile ohne
     -- Kalender-Eintrag ist nicht neu: dann bei gesperrtem Schüler nur keinen Kalender-Eintrag anlegen, aber speichern.
+    -- wie K8: Fahrlehrerwechsel ist kein neuer Termin; „Absage zurücknehmen“ innerhalb von 15 Minuten ist ein Versehen, kein neuer Termin
     v_neu_im_kalender := tg_op = 'INSERT' or new.datum is distinct from old.datum or new.schueler_id is distinct from old.schueler_id
-                         or new.fahrlehrer_id is distinct from old.fahrlehrer_id or old.status = 'abgesagt';
+                         or (old.status = 'abgesagt' and coalesce(old.aktualisiert_am < now() - interval '15 minutes', true));
     if auth.uid() is not null and new.datum >= (now() at time zone 'Europe/Berlin')::date
        and (v_neu_im_kalender or new.kalender_termin_id is null) then
       v_g := public.schueler_buchung_gesperrt(new.schueler_id::text);
@@ -298,19 +300,31 @@ create trigger trg_termin_a_pruefung_spiegel before update on public.kalender_te
 create or replace function public.kp_ergebnis_spiegel()
  returns trigger language plpgsql security definer set search_path to 'public'
 as $function$
-declare v_status text;
+declare v_status text; v_pt uuid; v_n int;
 begin
   if coalesce(current_setting('kompass.w21_ergebnis', true), '') = '1' then return null; end if;
   if new.schueler_id is null or new.datum is null then return null; end if;
-  -- Ergebnis gelöscht (App: Rückgängig): Tafel wieder „geplant“, wenn kein anderes Ergebnis für Schüler + Tag bleibt
+  -- Schaltkompetenz B197 ist keine Prüfung (index.html istPruefung): nie die Tafel ändern
+  if coalesce(new.payload->>'b197', '') not in ('', 'false') then return null; end if;
+  -- Zugehörige Praxisprüfung: gleicher Tag; sonst die einzige offene des Schülers im Umkreis von 3 Tagen (Datum im App-Dialog geändert)
+  select id into v_pt from public.pruefungstermine
+   where schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis' and status <> 'abgesagt'
+   order by aktualisiert_am desc nulls last limit 1;
+  if v_pt is null then
+    select count(*), min(id::text)::uuid into v_n, v_pt from public.pruefungstermine
+     where schueler_id::text = new.schueler_id::text and datum between new.datum - 3 and new.datum + 3
+       and coalesce(art, 'praxis') = 'praxis' and status = 'geplant';
+    if v_n <> 1 then v_pt := null; end if;
+  end if;
+  -- Ergebnis gelöscht (App: Rückgängig): Tafel wieder „geplant“, wenn kein anderes Ergebnis bleibt und das Büro nicht korrigiert hat
   if coalesce(new.geloescht, false) or new.result is null then
-    if tg_op = 'UPDATE' and not coalesce(old.geloescht, false) and old.result is not null
+    if tg_op = 'UPDATE' and v_pt is not null and not coalesce(old.geloescht, false) and old.result is not null
+       and coalesce(new.payload->>'buero_korrektur_am', '') = ''
        and not exists (select 1 from public.kalender_pruefungen k where k.id <> new.id and k.schueler_id::text = new.schueler_id::text and k.datum = new.datum
-                         and not coalesce(k.geloescht, false) and k.result is not null) then
+                         and not coalesce(k.geloescht, false) and k.result is not null and coalesce(k.payload->>'b197', '') in ('', 'false')) then
       perform set_config('kompass.w21_ergebnis', '1', true);
       begin
-        update public.pruefungstermine set status = 'geplant', aktualisiert_am = now()
-         where schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis' and status in ('bestanden', 'nicht_bestanden');
+        update public.pruefungstermine set status = 'geplant', aktualisiert_am = now() where id = v_pt and status in ('bestanden', 'nicht_bestanden');
       exception when others then null;
       end;
       perform set_config('kompass.w21_ergebnis', '', true);
@@ -319,12 +333,17 @@ begin
   end if;
   v_status := case when new.result in ('pass', 'bestanden') then 'bestanden' when new.result in ('fail', 'nicht_bestanden') then 'nicht_bestanden' end;
   if v_status is null then return null; end if;
-  if tg_op = 'UPDATE' and new.result is not distinct from old.result and new.datum is not distinct from old.datum then return null; end if;
   perform set_config('kompass.w21_ergebnis', '1', true);
   begin
-    update public.pruefungstermine set status = v_status, ergebnis_uebernommen = false, aktualisiert_am = now()
-     where schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis'
-       and status in ('geplant', 'bestanden', 'nicht_bestanden') and status <> v_status;
+    -- Eigene App-Zeile ersetzt eine vom Server angelegte Büro-Ergebniszeile desselben Tages (sonst zählte die Prüfung doppelt)
+    if new.id not like 'pt-%' then
+      update public.kalender_pruefungen set geloescht = true, aktualisiert_am = now()
+       where id like 'pt-%' and id <> new.id and schueler_id::text = new.schueler_id::text and datum = new.datum and not coalesce(geloescht, false);
+    end if;
+    if not (tg_op = 'UPDATE' and new.result is not distinct from old.result and new.datum is not distinct from old.datum) and v_pt is not null then
+      update public.pruefungstermine set status = v_status, aktualisiert_am = now()
+       where id = v_pt and status in ('geplant', 'bestanden', 'nicht_bestanden') and status <> v_status;
+    end if;
   exception when others then null; -- das Ergebnis der App wird nie dadurch verhindert
   end;
   perform set_config('kompass.w21_ergebnis', '', true);

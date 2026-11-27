@@ -609,7 +609,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const soll = (n.art || "praxis") === "praxis" && n.fahrlehrer_id && n.von && n.status !== "abgesagt";
     let soll2 = soll;
     if (soll) {
-      const neuIm = !alt || n.datum !== alt.datum || n.schueler_id !== alt.schueler_id || n.fahrlehrer_id !== alt.fahrlehrer_id || alt.status === "abgesagt";
+      const neuIm = !alt || n.datum !== alt.datum || n.schueler_id !== alt.schueler_id || (alt.status === "abgesagt" && !(alt.aktualisiert_am && Date.now() - Date.parse(alt.aktualisiert_am) < 15 * 60000));
       const s = tabelle("schueler").find((x) => x.id === n.schueler_id);
       const gesperrt = w21Uid() && n.datum >= w21Heute() && s && s.zahlung_gesperrt_seit;
       if (gesperrt && neuIm) return "Zahlung ausstehend: " + (s.zahlung_gesperrt_grund || "Zahlung ausstehend");
@@ -650,14 +650,20 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   let w21AusKp = false;
   function w21KpNachPt(r, alt) {
     if (!r || !r.schueler_id || !r.datum) return;
+    if (r.payload && r.payload.b197 && r.payload.b197 !== "false") return; // Schaltkompetenz ist keine Prüfung
+    const T = tabelle("pruefungstermine"), KP = tabelle("kalender_pruefungen");
+    let q = T.find((x) => x.schueler_id === r.schueler_id && x.datum === r.datum && (x.art || "praxis") === "praxis" && x.status !== "abgesagt");
+    if (!q) { const nah = T.filter((x) => x.schueler_id === r.schueler_id && (x.art || "praxis") === "praxis" && x.status === "geplant" && Math.abs((new Date(x.datum) - new Date(r.datum)) / 864e5) <= 3); if (nah.length === 1) q = nah[0]; }
     if (r.geloescht || r.result == null) {
-      if (alt && !alt.geloescht && alt.result != null && !tabelle("kalender_pruefungen").some((k) => k.id !== r.id && k.schueler_id === r.schueler_id && k.datum === r.datum && !k.geloescht && k.result != null))
-        tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["bestanden", "nicht_bestanden"].includes(q.status)) q.status = "geplant"; });
+      if (q && alt && !alt.geloescht && alt.result != null && !(r.payload && r.payload.buero_korrektur_am)
+        && !KP.some((k) => k.id !== r.id && k.schueler_id === r.schueler_id && k.datum === r.datum && !k.geloescht && k.result != null && !(k.payload && k.payload.b197))
+        && ["bestanden", "nicht_bestanden"].includes(q.status)) q.status = "geplant";
       return;
     }
     const st = ["pass", "bestanden"].includes(r.result) ? "bestanden" : ["fail", "nicht_bestanden"].includes(r.result) ? "nicht_bestanden" : null;
     if (!st) return;
-    tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["geplant", "bestanden", "nicht_bestanden"].includes(q.status) && q.status !== st) { q.status = st; q.ergebnis_uebernommen = false; } });
+    if (!String(r.id).startsWith("pt-")) KP.forEach((k) => { if (String(k.id).startsWith("pt-") && k.id !== r.id && k.schueler_id === r.schueler_id && k.datum === r.datum && !k.geloescht) k.geloescht = true; });
+    if (q && q.status !== st && ["geplant", "bestanden", "nicht_bestanden"].includes(q.status)) { q.status = st; q.ergebnis_uebernommen = false; }
   }
   function w21Einfuegen(daten) {
     const T = tabelle("pruefungstermine"), neu = [];

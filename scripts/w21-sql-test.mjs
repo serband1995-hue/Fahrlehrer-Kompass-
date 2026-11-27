@@ -257,7 +257,7 @@ r = await als(db, U.fl1, `update public.pruefungstermine set status = 'nicht_bes
 ok("App setzt Ergebnis an eigener Prüfung direkt", !r.fehler && r.n === 1 && (await p("s4")).status === "nicht_bestanden", r);
 ok("… ohne zweite Ergebnis-Zeile (Fahrlehrer schreiben ihr Ergebnis selbst nach kalender_pruefungen)", (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's4'")).n === 0);
 r = await als(db, U.fl1, `update public.kalender_pruefungen set geloescht = true where id = 'app-ex-6'`);
-ok("App „Rückgängig“ (Ergebnis gelöscht) → Tafel wieder geplant", !r.fehler && (await p("s6")).status === "geplant", (await p("s6")).status);
+ok("App „Rückgängig“ nach Büro-Korrektur: Büro-Ergebnis bleibt", !r.fehler && (await p("s6")).status === "bestanden", (await p("s6")).status);
 
 r = await als(db, U.buero, `update public.pruefungstage set start = '10:00' where id = $1`, [TAG]);
 ok("Tag mit Ergebnissen: Startzeit bleibt (abgeschlossene Prüfungen verrutschen nicht)", /W21:tag_hat_ergebnisse/.test(r.fehler || ""), r);
@@ -324,6 +324,30 @@ r = await als(db, "a0000000-0000-0000-0000-000000000009", `select public.pruefun
 ok("Super-Admin sieht die Tage der gewählten Fahrschule", !r.fehler && r.rows[0].b.length >= 2, r);
 r = await als(db, U.buero, `select public.pruefungstage_belegung(current_date, current_date + 30, $1) b`, [FS2]);
 ok("Büro kann keine fremde Fahrschule wählen (bekommt die eigene)", !r.fehler && r.rows[0].b.every((t) => t.id !== null) && r.rows[0].b.length >= 2, r);
+
+// Daten-Prüfer W21: einfaches App-Rückgängig, B197, Datum abweichend, doppelte Ergebniszeile
+const p5b = await eins(db, "select * from public.pruefungstermine where schueler_id = 's5' and pruefungstag_id = $1", [TAG3]);
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-5', $1, $2, 's5', $3, 'fail', '{}')`, [FS, U.fl1, p5b.datum]);
+ok("App-Ergebnis an Tag 3 → Tafel nicht bestanden", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "nicht_bestanden");
+r = await als(db, U.fl1, `update public.kalender_pruefungen set geloescht = true where id = 'app-ex-5'`);
+ok("App „Rückgängig“ (ohne Büro-Korrektur) → Tafel wieder geplant", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "geplant");
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-b197-5', $1, $2, 's5', $3, 'pass', '{"b197":true}')`, [FS, U.fl1, p5b.datum]);
+ok("B197-Schaltkompetenz ändert die Tafel nicht", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "geplant");
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-5b', $1, $2, 's5', $3::date + 1, 'pass', '{}')`, [FS, U.fl1, p5b.datum]);
+ok("Ergebnis einen Tag daneben trifft die einzige offene Prüfung", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "bestanden");
+const p12 = await eins(db, "select * from public.pruefungstermine where schueler_id = 's12' and pruefungstag_id = $1", [TAG3]);
+await als(db, U.buero, `update public.pruefungstermine set status = 'bestanden' where id = $1`, [p12.id]);
+r = await als(db, U.fl2, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-12', $1, $2, 's12', $3, 'pass', '{}')`, [FS, U.fl2, p12.datum]);
+ok("Büro zuerst, dann App: nur EINE aktive Ergebniszeile", !r.fehler && (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's12' and not geloescht")).n === 1);
+// Zahlungssperre kommt nach der Planung: Fahrlehrer wechseln und Absage kurz danach zurücknehmen gehen weiter
+await db.exec(`update public.schueler set zahlung_gesperrt_seit = now(), zahlung_gesperrt_grund = 'Test' where id = 's13'`);
+const p7n = await eins(db, "select * from public.pruefungstermine where schueler_id = 's13' and status = 'geplant'");
+r = await als(db, U.buero, `update public.pruefungstermine set fahrlehrer_id = $2 where id = $1`, [p7n.id, U.fl1]);
+ok("Gesperrter Schüler: Fahrlehrer wechseln geht weiter (wie K8)", !!p7n && !r.fehler && r.n === 1, r);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'abgesagt' where id = $1`, [p7n.id]);
+const r2 = await als(db, U.buero, `update public.pruefungstermine set status = 'geplant' where id = $1`, [p7n.id]);
+ok("Gesperrter Schüler: Absage gleich wieder zurücknehmen geht (Versehen, wie K8)", !r.fehler && !r2.fehler, [r, r2]);
+await db.exec(`update public.schueler set zahlung_gesperrt_seit = null where id = 's13'`);
 
 // ---------- 13. Fall 10: Probe ----------
 let pr = await probe(db);
