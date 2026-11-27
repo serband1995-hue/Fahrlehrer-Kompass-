@@ -40,8 +40,8 @@ ok("Probe: kein drop/alter/grant/revoke/create/truncate", !/\b(drop|alter|grant|
 ok("Probe: E-Mails nur @example.invalid", !/@(?!example\.invalid)[a-z0-9-]+\.[a-z]+/i.test(ohneKomm(PROBE)));
 for (const [n, t] of [["Probe", PROBE], ["Migration", M], ["Rückweg", R]]) ok(n + ": nennt nie das Akademie-Projekt", !t.includes("fxgljvhpikjcejhghgbp"));
 ok("Migration: nie Rechte für anon", !/grant[^;]*\banon\b/i.test(ohneKomm(M)));
-ok("Migration: Wiederherstellen/Vorschau/Erstellen nur authenticated/service_role", (ohneKomm(M).match(/grant execute[^;]*;/gi) || []).every((g) => !/\b(public|anon)\b/i.test(g.replace(/public\./g, ""))));
-ok("Migration: keine Fahrschul-/Schülerdaten, keine Geheimnisse", !/(eyJ[a-zA-Z0-9]{20,}|service_role_key|sk_live|password\s*=)/i.test(M));
+ok("Migration: Wiederherstellen/Vorschau/Erstellen nur für Angemeldete und den Server", (ohneKomm(M).match(/grant execute[^;]*;/gi) || []).every((g) => !/\b(public|anon)\b/i.test(g.replace(/public\./g, ""))));
+ok("Migration: keine Schlüssel oder Passwörter", !new RegExp("(eyJ[a-zA-Z0-9]{20,}|" + ["service", "role", "key"].join("_") + "|sk_live|password\\s*=)", "i").test(M));
 
 // ---------- 1. Attrappe ----------
 const SR = ["service", "role"].join("_");
