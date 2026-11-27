@@ -2035,6 +2035,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <script src="vendor/supabase-js-2.119.2.js"></script>
 <script src="kompass-rechnen.js"></script>
 <script src="kompass-einstellungen.js"></script>
+<script src="kompass-sicherung.js"></script>
 <script src="kompass-pruefungstage.js"></script>
 <script src="kompass-fehler.js"></script>
 <script src="neuigkeiten.js"></script>
@@ -2130,6 +2131,10 @@ body.light .lo-err.ok{color:#1e6b46;}
 .fs-card{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;}
 .fs-name{font-size:14px;font-weight:700;color:var(--txt);}
 .fs-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.fs-backup-inhalt{margin-top:8px;font-size:13px;}
+.fs-backup-inhalt summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--akzent-bright);font-weight:600;}
+.fs-backup-zeile{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--line);}
+.fs-backup-zeile b{font-variant-numeric:tabular-nums;}
 .fs-status-on{color:#4a8b45;font-weight:700;}
 .fs-status-off{color:#a52a2a;font-weight:700;}
 body:not(.light) .fs-status-off{color:#ff8a80;}
@@ -7430,7 +7435,7 @@ async function routeFahrschuleVerschiebungsverlauf(){
     <div class="res-block" style="animation:none;"><h4>🔀 Verschiebungs-Verlauf (${(data||[]).length})</h4>${rows}</div>`;
 }
 
-/* ===== Backups (automatisch wöchentlich + manuell) ===== */
+/* ===== Backups (W24: jede Nacht automatisch + von Hand; Inhalt lesend, Zurückholen im Büro) ===== */
 async function routeFahrschuleBackups(){
   if(!_fsAgg)return;
   window._fsAktuelleRoute=routeFahrschuleBackups;
@@ -7443,18 +7448,23 @@ async function routeFahrschuleBackups(){
 }
 async function _fsLadeBackups(){
   const supa=getSupa();
-  const {data}=await supa.from("fahrschule_backups").select("id,erstellt_am,automatisch").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(30);
-  const rows=(data||[]).map(b=>`<div class="fs-card">
-    <div class="fs-name">${new Date(b.erstellt_am).toLocaleString("de-DE")}</div>
-    <div class="fs-sub">${b.automatisch?'Automatisch (wöchentlich)':'Manuell erstellt'}</div>
+  const ks=window.KS; // ohne kompass-sicherung.js (alter Zwischenspeicher): Liste wie vor W24
+  const {data,error}=await supa.from("fahrschule_backups").select(ks?ks.SPALTEN:"id,erstellt_am,automatisch").eq("fahrschule_id",_fsAgg.fahrschuleId).order("erstellt_am",{ascending:false}).limit(ks&&ks.LIMIT?ks.LIMIT:30);
+  const rows=(data||[]).map(b=>{
+    const art=ks?ks.art(b):(b.automatisch?"Automatisch":"Manuell erstellt");
+    const inhalt=ks&&b.zaehlung?`${ks.mengeText?ks.mengeText(ks.summe(b.zaehlung),"Eintrag","Einträge"):ks.summe(b.zaehlung)+" Einträge"} · ${ks.mengeText?ks.mengeText(Object.keys(b.zaehlung).length,"Bereich","Bereiche"):Object.keys(b.zaehlung).length+" Bereiche"} · ${ks.groesse(b.groesse_bytes)}`:"";
+    const bereiche=ks&&b.zaehlung?`<details class="fs-backup-inhalt"><summary>Was ist drin?</summary><div>${ks.bereiche(b).map(x=>`<div class="fs-backup-zeile"><span>${esc(x.name)}</span><b>${esc(ks.zahlText?ks.zahlText(x):String(x.n))}</b></div>`).join("")}</div></details>`:"";
+    return `<div class="fs-card">
+    <div class="fs-name">${esc(new Date(b.erstellt_am).toLocaleString("de-DE"))}</div>
+    <div class="fs-sub">${esc(art)}${inhalt?`<br>${esc(inhalt)}`:""}</div>${bereiche}
     <div class="fs-actions"><button class="fs-btn-activate" onclick="_fsBackupHerunterladen(${_jsArg(b.id)})">Herunterladen</button></div>
-  </div>`).join("")||'<p class="muted-p">Noch keine Backups vorhanden.</p>';
+  </div>`;}).join("")||(error?`<p class="muted-p">Liste nicht geladen (${esc(error.message||"Fehler")}). <button class="btn btn-ghost" onclick="_fsLadeBackups()">Nochmal laden</button></p>`:'<p class="muted-p">Noch keine Backups vorhanden.</p>');
   const wrap=document.getElementById("fsBackupWrap");
   if(wrap)wrap.innerHTML=`
     <button class="btn btn-ghost" style="margin-bottom:10px;" onclick="routeFahrschuleDashboard()">← Zurück zur Übersicht</button>
     <div class="res-block" style="animation:none;">
       <h4>💾 Backups</h4>
-      <p style="font-size:13px;color:var(--muted);">Läuft automatisch jeden Sonntag um 23 Uhr. Du kannst jederzeit zusätzlich manuell sichern.</p>
+      <p style="font-size:13px;color:var(--muted);">Gesichert wird alles der Fahrschule (auch gelöschte Schüler, Papierkorb, Belege, Handy-Stände). Läuft jede Nacht von selbst, die letzten 30 bleiben, von Hand gesicherte bleiben immer. Nicht enthalten: Anmeldedaten (PINs, Passwörter). Handy-Stände und private Angaben der Schüler sind gesichert, stehen aber nicht in der heruntergeladenen Datei. Du kannst jederzeit zusätzlich sichern. Zurückholen geht im Büro am PC.</p>
       <div class="btn-row"><button class="btn btn-primary" onclick="_fsJetztSichern()">Jetzt alles sichern</button></div>
     </div>
     <div class="res-block" style="animation:none;"><h4>Verlauf (${(data||[]).length})</h4>${rows}</div>`;
@@ -8219,7 +8229,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.27.3";
+const APP_VERSION="2026.11.27.4";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
