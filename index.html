@@ -14642,7 +14642,7 @@ function openQuickNewStudentSheet(onCreated){
     <div class="field"><label>Telefonnummer <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
       <input id="qnsTel" type="tel" placeholder="z.B. 0151 23456789" autocomplete="off"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="qnsCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="qnsSave">Anlegen</button></div>
-    ${_umschreiberImBuero()&&window.KR?`<button id="qnsAdrAuf" type="button" style="background:none;border:0;color:var(--akzent-bright);font:inherit;font-size:14px;font-weight:600;padding:8px 0;margin:6px 0 0;min-height:36px;cursor:pointer;">＋ Anschrift dazu</button><div id="qnsAdrBox" hidden>${_adrFelderHTML({},"qnsA")}</div>`:""}`);
+    ${_umschreiberImBuero()&&window.KR?`<button id="qnsAdrAuf" type="button" style="background:none;border:0;color:var(--akzent-bright);font:inherit;font-size:14px;font-weight:600;padding:10px 0;margin:4px 0 0;min-height:44px;cursor:pointer;">＋ Anschrift dazu</button><div id="qnsAdrBox" hidden>${_adrFelderHTML({},"qnsA")}</div>`:""}`);
   $("#qnsCancel").addEventListener("click",closeSheet);
   const adrAuf=$("#qnsAdrAuf"); if(adrAuf)adrAuf.addEventListener("click",()=>{ const box=$("#qnsAdrBox"); const reihe=$("#qnsCancel").closest(".btn-row"); reihe.parentNode.insertBefore(box,reihe); box.hidden=false; adrAuf.remove(); const e=$("#qnsAStrasse"); if(e)e.focus(); }); // W26: Anschrift erst auf Wunsch (Blatt bleibt kurz)
   $("#qnsSave").addEventListener("click",()=>{
