@@ -296,6 +296,8 @@ async function tagAnlegen(page, datum, pruefer, start) {
       mk("alt1", "s5", "fl-3", { quelle: "app_alt", datum: K(3), von: "12:00:00" }),
       mk("sp1", "s7", "fl-2", { datum: K(6), von: "14:00:00", kalender_termin_id: "kt-sp1" }),
       mk("p-old", "s6", "fl-1", { status: "bestanden", pruefungstag_id: "tg-old", fenster: 3, datum: K(-200), von: "10:45:00" })];
+    F.tabellen.schueler.forEach((x) => { if (x.id === "s11" || x.id === "s13") x.theorie_bestanden_am = K(-30); if (x.id === "s14") x.klasse = "A"; });
+    F.tabellen.pruefungstermine.push(mk("nb1", "s11", "fl-1", { status: "nicht_bestanden", datum: K(-3), von: "09:00:00" }), mk("ap2", "s21", "fl-3", { quelle: "app", entgelt_bezahlt: true, datum: K(5), von: "13:00:00" }));
     F.tabellen.kalender_termine.push({ id: "kt-sp1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-2", schueler_id: "s7", datum: K(6), von: "14:00", bis: "15:30", art: "pruefung", fahrzeug: null, status: "geplant", geloescht: false, payload: { pruefungstermin_id: "sp1" } });
   `;
   const { page, ctx, konsole } = await oeffne({ vorbereiten: vor, hoehe: 1600 });
@@ -364,6 +366,22 @@ async function tagAnlegen(page, datum, pruefer, start) {
   await d8.locator("footer button[value=ok]").click(); await fertig(page);
   const po = await db(page, () => window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "p-old"));
   pruefe("F8c Speichern verschiebt nichts (Tag, Fenster, Datum, Uhrzeit gleich), Notiz gespeichert", po.notiz === "nur Notiz" && po.pruefungstag_id === "tg-old" && po.fenster === 3 && String(po.von).slice(0, 5) === "10:45", JSON.stringify(po));
+  // Lead 5/6/9: Wiederholungsfrist, bezahltes Entgelt, nur Fenster-Klassen
+  await page.evaluate(() => ptMehrereDialog("tg-a")); await page.waitForTimeout(200);
+  const dm = dlg(page);
+  const s11 = dm.locator('input[name=sid][value="s11"]'), s13 = dm.locator('input[name=sid][value="s13"]');
+  console.log('DBG', JSON.stringify(await page.evaluate(() => [S.pruefungstermine.filter(p => p.id === 'nb1'), ptWiederholungText('s11')])));
+  const l5 = [await s11.count(), await s11.isChecked(), await s13.isChecked(), await dm.locator('label:has(input[value="s11"])').innerText()];
+  pruefe("L5a Mehrere einplanen: Schüler mit „nicht bestanden“ (letzte 14 Tage) nicht vorab angehakt, mit „Wiederholung frühestens ab“", l5[0] === 1 && !l5[1] && l5[2] && /Wiederholung in der Regel frühestens ab/.test(l5[3]), JSON.stringify(l5));
+  pruefe("L9a Mehrere einplanen: Klasse „A“ (ohne Prüfungsfenster) wird nicht angeboten", (await dm.locator('input[name=sid][value="s14"]').count()) === 0);
+  await dm.locator("[data-schliessen]").first().click(); await page.waitForTimeout(200);
+  await page.evaluate(() => ptPlusDialog("tg-a", 4)); await page.waitForTimeout(200);
+  const dpl = dlg(page);
+  pruefe("L9b „+ Schüler“: Klasse „A“ nicht in der Auswahl", (await dpl.locator('select[name=schueler_id] option[value="s14"]').count()) === 0 && (await dpl.locator('select[name=schueler_id] option[value="s11"]').count()) === 1);
+  await dpl.locator('select[name=schueler_id]').selectOption("s11");
+  pruefe("L5b „+ Schüler“: Hinweis „Wiederholung frühestens ab“ nach der Wahl", /frühestens ab/.test(await dpl.locator("#ptPlusWh").innerText()));
+  await dpl.locator("[data-schliessen]").first().click(); await page.waitForTimeout(200);
+  pruefe("L6 Hinweis D: bezahltes Entgelt wird übersprungen (weiter 1 Prüfung)", /1 neue Prüfung aus der App/.test(await page.evaluate(() => ptZahlungsHinweisHTML().replace(/<[^>]+>/g, " "))));
   pruefe("F8d keine JS-Fehler", konsole.length === 0, konsole.join(" | ").slice(0, 300));
   await ctx.close();
 }

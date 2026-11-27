@@ -1521,8 +1521,8 @@ async function abgleichKalenderAlt(p) {
   }
   return true;
 }
-function schuelerOptionen(gewaehlt) {
-  return S.schueler.filter((x) => istAktiv(x) || x.id === gewaehlt).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
+function schuelerOptionen(gewaehlt, filter) {
+  return S.schueler.filter((x) => (istAktiv(x) && (!filter || filter(x))) || x.id === gewaehlt).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"))
     .map((s) => `<option value="${esc(s.id)}"${s.id === gewaehlt ? " selected" : ""}>${esc(s.name)}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}</option>`).join("");
 }
 // Form in der Fahrlehrer-App aus der Klasse (Lkw-Klassen bleiben, was sie sind; B78 heißt in der App „Automatik“)

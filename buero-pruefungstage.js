@@ -147,7 +147,7 @@ function ptOffeneZahlung() {
   if (typeof zmKarteDaten !== "function" || typeof zmFuerPruefungGesendet !== "function") return [];
   const heute = KR.todayISO(), aus = [];
   for (const p of S.pruefungstermine) {
-    if (p.status !== "geplant" || p.art !== "praxis" || p.datum < heute) continue;
+    if (p.status !== "geplant" || p.art !== "praxis" || p.datum < heute || p.entgelt_bezahlt) continue; // Entgelt schon bezahlt: nichts mehr offen
     if (p.quelle !== "app" && !ptMerkOhneZahlung.has(p.id)) continue;
     let d = null;
     try { d = zmKarteDaten(p); } catch (e) { d = null; }
@@ -310,7 +310,8 @@ function ptPlusDialog(tagId, fenster) {
   const von = PT.fensterVon(tag, fenster);
   const body = `<p>Fenster <b>${esc(von)}–${esc(PT.fensterBis(tag, fenster, 1))}</b> am ${esc(ptTagTitel(tag))}.</p>
     <div class="formular">
-      <label class="voll">Schüler<select name="schueler_id" required><option value="">– bitte wählen –</option>${schuelerOptionen("")}</select></label>
+      <label class="voll">Schüler<select name="schueler_id" required><option value="">– bitte wählen –</option>${schuelerOptionen("", ptFensterSchueler)}</select></label>
+      <p class="voll leise klein" id="ptPlusWh" aria-live="polite"></p>
       <label>Klasse<select name="klasse">${klassenOptionen("")}</select></label>
       <label>Fahrlehrer<select name="fahrlehrer_id">${lehrerOptionen("", false, "")}</select></label>
     </div>
@@ -340,6 +341,7 @@ function ptPlusDialog(tagId, fenster) {
   const sel = dlg.querySelector("select[name=schueler_id]");
   sel.addEventListener("change", () => {
     const s = S.schueler.find((x) => x.id === sel.value);
+    dlg.querySelector("#ptPlusWh").innerHTML = s ? ptWiederholungText(s.id) : "";
     if (!s) return;
     if (s.fahrlehrer_id) dlg.querySelector("select[name=fahrlehrer_id]").value = s.fahrlehrer_id;
     const k = s.klasse || (typeof klasseVon === "function" ? klasseVon(s) : "");
@@ -348,11 +350,18 @@ function ptPlusDialog(tagId, fenster) {
 }
 
 // Schüler für „Mehrere einplanen“: wer bereit ist (Theorie bestanden, noch keine Praxis) und noch keine Prüfung hat, steht vorne
+// Letzte nicht bestandene Praxisprüfung, deren Wiederholungsfrist (14 Tage) noch läuft: Hinweistext oder ""
+function ptWiederholungText(sid) {
+  let best = null;
+  for (const p of S.pruefungstermine) if (p.schueler_id === sid && p.art === "praxis" && p.status === "nicht_bestanden" && wiederholungHinweis(p) && (!best || p.datum > best.datum)) best = p;
+  return best ? wiederholungHinweis(best) : "";
+}
+function ptFensterSchueler(s) { return PT.istFensterKlasse(s.klasse || (typeof klasseVon === "function" ? klasseVon(s) : null) || null); }
 function ptSchuelerGruppen() {
   const heute = KR.todayISO();
   const hat = new Set();
   for (const p of S.pruefungstermine) if (p.art === "praxis" && p.status === "geplant" && p.datum >= heute) hat.add(p.schueler_id);
-  const l = S.schueler.filter(istAktiv).map((s) => {
+  const l = S.schueler.filter(istAktiv).filter(ptFensterSchueler).map((s) => { // nur Klassen mit Prüfungsfenstern (andere: „+ Prüfung planen“ mit freier Uhrzeit)
     let g = 2;
     if (hat.has(s.id)) g = 3;
     else if (!s.praxis_bestanden_am && (s.theorie_bestanden_am || (typeof wartetArt === "function" && wartetArt(s) === "praxis"))) g = 1;
@@ -372,9 +381,10 @@ function ptMehrereDialog(tagId) {
   let letzteG = 0;
   const zeilen = liste.map(({ s, g, hat }) => {
     const gesperrt = bueroGesperrt(s);
-    const an = g === 1 && !gesperrt && vorn < frei; if (an) vorn++;
+    const wh = ptWiederholungText(s);
+    const an = g === 1 && !gesperrt && !wh && vorn < frei; if (an) vorn++;
     const kopf = g !== letzteG ? `<div class="pt-gruppe">${kopfG[g]}</div>` : ""; letzteG = g;
-    return `${kopf}<label class="wahl pt-wahl" data-ptname="${esc(String(s.name || "").toLowerCase())}"><input type="checkbox" name="sid" value="${esc(s.id)}"${an ? " checked" : ""}${gesperrt ? " disabled" : ""}> <b>${esc(s.name)}</b> <span class="leise klein">${esc(s.klasse || "")}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}${gesperrt ? " · Zahlung ausstehend" : ""}${hat ? " · hat schon eine Prüfung" : ""}</span></label>`;
+    return `${kopf}<label class="wahl pt-wahl" data-ptname="${esc(String(s.name || "").toLowerCase())}"><input type="checkbox" name="sid" value="${esc(s.id)}"${an ? " checked" : ""}${gesperrt ? " disabled" : ""}> <b>${esc(s.name)}</b> <span class="leise klein">${esc(s.klasse || "")}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}${gesperrt ? " · Zahlung ausstehend" : ""}${hat ? " · hat schon eine Prüfung" : ""}</span>${wh ? ` ${wh}` : ""}</label>`;
   }).join("");
   const body = `<p><b>${esc(ptTagTitel(tag))}</b>: ${esc(PT.zaehlText(tag, T0))}. Haken setzen: Die Schüler kommen der Reihe nach in die freien Fenster.</p>
     <input type="search" class="suche pt-suche" id="ptSuche" placeholder="Schüler suchen" aria-label="Schüler suchen">
