@@ -975,7 +975,9 @@ function schneide(html, name) {
 // damit der Rest von dayEvents (Rechnen) weiter streng gegen den alten Stand verglichen wird.
 function w21Zurueck(q) {
   const ersetze = (von, nach) => { if (!q.includes(von)) throw new Error("W21-Stelle fehlt in dayEvents: " + von.slice(0, 50)); q = q.replace(von, nach); };
-  ersetze('.filter(l=>l.date===iso&&!(_ptAktiv()&&_ptIstSpiegel(l)&&(DB.exams||[]).some(ex=>ex.sid===l.sid&&ex.date===iso&&istPruefung(ex))))', '.filter(l=>l.date===iso)');
+  // Gesamtprüfung (W27): seit dort ohne „_ptAktiv()&&“ – beide Fassungen gelten als W21-Stelle
+  const spiegelAlt = '.filter(l=>l.date===iso&&!(_ptAktiv()&&_ptIstSpiegel(l)&&(DB.exams||[]).some(ex=>ex.sid===l.sid&&ex.date===iso&&istPruefung(ex))))';
+  ersetze(q.includes(spiegelAlt) ? spiegelAlt : spiegelAlt.replace("_ptAktiv()&&", ""), '.filter(l=>l.date===iso)');
   ersetze('kind:"lesson",ptSpiegel:_ptIstSpiegel(l),id:l.id', 'kind:"lesson",id:l.id');
   q = q.replace(/\n  \/\/ W21: mit der neuen Quelle[^\n]*\n  \(_ptAktiv\(\)\?_ptEigeneOffen\(true\)[^\n]*?:\(DB\.termine\|\|\[\]\)\.filter\(t=>t\.date===iso\)\)/, "\n  (DB.termine||[]).filter(t=>t.date===iso)");
   ersetze('_tafel(true).forEach(t=>{ if(t.date&&t.date>iso', '(DB.termine||[]).forEach(t=>{ if(t.date&&t.date>iso');
