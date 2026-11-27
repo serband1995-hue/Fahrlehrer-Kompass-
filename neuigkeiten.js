@@ -4,6 +4,9 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.2", datum: "2026-11-27", kurz: "Büro: auch Nachtfahrt für Umschreiber gesperrt.",
+    punkte: ["Büro: Für Umschreiber lässt sich jetzt auch keine Nachtfahrt mehr eintragen.",
+             "Ein schon eingetragener Termin bleibt bearbeitbar."] },
   { version: "2026.11.27.1", datum: "2026-11-27", kurz: "Umschreiber stellt jetzt das Büro ein.",
     punkte: ["Das Büro trägt „Umschreibung“ ein. Die App übernimmt das von selbst, der Fahrlehrer muss nichts einstellen.",
              "Bei Umschreibern entfallen die Sonderfahrten. Im Freigabe-Check steht „entfällt (Umschreiber)“ in Grün.",

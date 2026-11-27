@@ -304,6 +304,38 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
     const b = KR.umschreibInfo({ ausbildungsart: "umschreibung", ausbildung: {}, auslands_fs: fs, wohnsitz_de_seit: w }).stufe;
     const c = KR.umschreibInfo({ ausbildung: { umschreiber: true }, auslands_fs: fs, wohnsitz_de_seit: w }).stufe; // ohne Spalte (App-Daten)
     return a === "kein" && b !== "kein" && c !== "kein" ? null : JSON.stringify([a, b, c]); }));
+  await pruefe("U9k", "Büro-Termin: auch „Nachtfahrt“ gesperrt; bestehende SF bleibt bearbeitbar; Schülertausch auf Umschreiber gesperrt", () => page.evaluate(() => {
+    const alt = S.schueler; S.schueler = [{ id: "u1", ausbildungsart: "umschreibung", ausbildung: {} }, { id: "u2", ausbildungsart: "ersterwerb", ausbildung: {} }];
+    const r = [umschreiberSfGesperrt({}, "nacht", "u1"), umschreiberSfGesperrt({}, "sonder", "u1"), umschreiberSfGesperrt({}, "fahrstunde", "u1"),
+      umschreiberSfGesperrt({}, "nacht", "u2"), umschreiberSfGesperrt({ id: "t1", art: "nacht", schueler_id: "u1" }, "nacht", "u1"),
+      umschreiberSfGesperrt({ id: "t2", art: "sonder", schueler_id: "u2" }, "sonder", "u1"), umschreiberSfGesperrt({ id: "t3", art: "sonder", schueler_id: "u1" }, "nacht", "u1"), umschreiberSfGesperrt({ art: "nacht", schueler_id: "u1" }, "nacht", "u1")];
+    S.schueler = alt;
+    return JSON.stringify(r) === JSON.stringify([true, true, false, false, false, true, false, true]) ? null : JSON.stringify(r); }));
+  await pruefe("U9l", "Büro-Termin-Fenster: Hinweis bei Umschreiber + Nachtfahrt sichtbar, Speichern blockiert", async () => {
+    const r = await page.evaluate(async () => {
+      // Büro ohne Anmeldung: Testschüler und Testfahrlehrer selbst hinlegen
+      S.lehrer = (S.lehrer || []).concat([{ id: "fl-test", name: "Test Lehrer", aktiv: true }]); S.team = S.team || []; S.fahrzeuge = S.fahrzeuge || []; S.termine = S.termine || [];
+      const x = { id: "u9", name: "Testschüler Neun", fahrlehrer_id: "fl-test", status: "aktiv", ausbildungsart: "ersterwerb", ausbildung: {} };
+      S.schueler = (S.schueler || []).concat([x]); const altArt = x.ausbildungsart; x.ausbildungsart = "umschreibung";
+      const vorher = S.termine.length;
+      terminDialog(null, { datum: KR.todayISO(), von: "10:00", art: "nacht", schueler_id: x.id, fahrlehrer_id: x.fahrlehrer_id });
+      await new Promise((ok) => setTimeout(ok, 200));
+      const dlg = [...document.querySelectorAll("dialog[open]")].pop(); const h = dlg && dlg.querySelector("#umSfHinweis");
+      const sichtbar = !!h && !h.hidden;
+      const knopf = dlg && dlg.querySelector("button[value=ok]"); if (knopf) knopf.click();
+      await new Promise((ok) => setTimeout(ok, 400));
+      const offen = !!(dlg && dlg.open); if (dlg && dlg.open) dlg.close();
+      x.ausbildungsart = altArt; return { sichtbar, offen, neu: S.termine.length - vorher };
+    });
+    return r.sichtbar && r.offen && r.neu === 0 ? null : JSON.stringify(r); });
+  await pruefe("U9m", "Büro-Serientermine (Turboboost): Umschreiber ohne Auswahl „Sonderfahrt“, andere mit", () => page.evaluate(async () => {
+    S.lehrer = (S.lehrer || []).concat([{ id: "fl-s", name: "Test Serie", aktiv: true }]);
+    const a = { id: "us1", name: "Testschüler S1", fahrlehrer_id: "fl-s", status: "aktiv", ausbildungsart: "umschreibung", ausbildung: {} };
+    const b = { id: "us2", name: "Testschüler S2", fahrlehrer_id: "fl-s", status: "aktiv", ausbildungsart: "ersterwerb", ausbildung: {} };
+    S.schueler = (S.schueler || []).concat([a, b]);
+    const opt = async (sid) => { luSerienDialog(sid); await new Promise((ok) => setTimeout(ok, 150)); const dlg = [...document.querySelectorAll("dialog[open]")].pop();
+      const r = !!dlg.querySelector('select[name=art] option[value="sonder"]'); dlg.close(); return r; };
+    const r = [await opt("us1"), await opt("us2")]; return r[0] === false && r[1] === true ? null : JSON.stringify(r); }));
   await pruefe("U9h", "keine JS-Fehler (Büro)", () => jsFehler);
   await ctx.close();
 }
