@@ -21,7 +21,7 @@ Serban's long-term memory lives in the private repo `serband1995-hue/obsidian-va
 Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, almost everything in `index.html`), Supabase project `oectrvkjunntzsggyhxv`, GitHub Pages. Also hosts the live quiz "Lernzielkontrolle" (`quiz*.html`, `quiz-fragen.js`). Details: vault `Projekte/Fahrlehrer-Kompass.md`.
 - Work on a branch, ship via pull request.
 - Bump `APP_VERSION` (`index.html`) and `CACHE_VERSION` (`sw.js`) with every release.
-- Before every merge run the review team `/pruefen` (two bug hunters, one design critic, Opus judge in `.claude/agents/`); merge only after the judge says „abgenommen“.
+- Before every merge run the review team `/pruefen` (two bug hunters, one design critic, Fable judge (rule R558) in `.claude/agents/`); merge only after the judge says „abgenommen“.
 - Before shipping run `bash scripts/release-check.sh` (versions bumped, no secrets) and `NODE_PATH=$(npm root -g) node scripts/handy-test.mjs` (pages at 360/412 px, portrait and landscape).
 - Roles (🗣 21.11.2026, after the Jelena case): any change to login, views, menus, rights or student/appointment creation must keep `NODE_PATH=$(npm root -g) node scripts/rollen-test.mjs` green (also runs in the GitHub check). It plays every role from app start to a saved student: Fahrlehrer, Leitung, Leitung that drives herself (`profiles.faehrt_selbst`), Büro, Super-Admin. New role-dependent features extend this test.
 - End of a session or "Vault aktualisieren": run `/vault-abschluss`.
@@ -33,7 +33,7 @@ Fahrlehrer-Kompass: PWA for driving instructors, plain HTML/CSS/JS (no build, al
 - **Regel: Unabhängige Bau-Aufgaben an die Sonnet-Teammitglieder abgeben, damit der Kontext der Hauptsitzung klein bleibt.** Teammitglieder: `team-frontend` (Bildschirme), `team-backend` (Daten, Schnittstellen, Speicherung), `team-integration` (Testdaten, ganzer Ablauf). Dateibereiche stehen in `.claude/agents/team-*.md` und überschneiden sich nicht.
 - Schema- und Konfig-Änderungen bleiben beim Lead.
 - Besitz, Fortschritt und Abhängigkeiten laufen über die gemeinsame Aufgabenliste; Teammitglieder klären Schnittstellen und Blocker direkt untereinander per Nachricht.
-- Opus übernimmt an drei Punkten: **bevor ein Plan feststeht**, **wenn ein Teammitglied blockiert ist**, **bevor etwas „fertig“ heißt** (gesamten Diff ansehen, Ablauf prüfen).
+- Opus übernimmt an drei Punkten: **bevor ein Plan feststeht**, **wenn ein Teammitglied blockiert ist**, **bevor etwas „fertig“ heißt** (gesamten Diff ansehen, Ablauf prüfen). Die Abnahme selbst macht der Fable-Richter (R558).
 - Team nur bei Aufgaben mit mindestens zwei unabhängigen Teilen. Kleine Aufgaben macht der Lead allein (Teams kosten deutlich mehr Kontingent).
 - Bestehende Regeln gelten weiter: Prüf-Team/Richter vor dem Merge, Tests grün, selbst mergen nach Serbands Merge-Regel.
 

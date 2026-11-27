@@ -1,13 +1,13 @@
 ---
 name: pruefen
-description: Prüf-Team für jede Änderung am Fahrlehrer-Kompass, bevor sie live geht - zwei Fehlersucher (Daten, Bedienung), ein Design-Kritiker, danach der Richter (Opus) für die Abnahme. Use before every merge/release of the Kompass, and whenever Serband says „prüfen“, „Prüf-Team“, „Richter“ or „abnehmen“.
+description: Prüf-Team für jede Änderung am Fahrlehrer-Kompass, bevor sie live geht - zwei Fehlersucher (Daten, Bedienung), ein Design-Kritiker, danach der Richter (Fable, R558) für die Abnahme. Use before every merge/release of the Kompass, and whenever Serband says „prüfen“, „Prüf-Team“, „Richter“ or „abnehmen“.
 ---
 
 # Prüf-Team (🗣 Serband, 11.10.2026)
 
-„Drei Agenten: einer ist Design-Kritiker und sucht Design-Verbesserungen, die anderen suchen Fehler. Opus – das stärkste System – entscheidet am Ende als Richter, ob alles abgenommen wird.“
+„Drei Agenten: einer ist Design-Kritiker und sucht Design-Verbesserungen, die anderen suchen Fehler. Opus – das stärkste System – entscheidet am Ende als Richter, ob alles abgenommen wird.“ Seit 21.11.2026 ist der Richter Fable (R558: „Fable soll alles kontrollieren.“).
 
-Die Agenten liegen in `.claude/agents/`: `fehlersucher-daten`, `fehlersucher-bedienung`, `pruefer-buero`, `design-kritiker` (Sonnet) und `richter` (Opus).
+Die Agenten liegen in `.claude/agents/`: `fehlersucher-daten`, `fehlersucher-bedienung`, `pruefer-buero`, `design-kritiker` (Sonnet) und `richter` (Fable, Regel R558).
 
 🗣 Zusatz 11.10.2026: App und Büro-Seite (PC) müssen immer zusammenpassen – deshalb prüft `pruefer-buero` jede Änderung an der Fahrlehrer-App mit.
 
@@ -28,7 +28,7 @@ Die Agenten liegen in `.claude/agents/`: `fehlersucher-daten`, `fehlersucher-bed
    - `pruefer-buero` (App ↔ Büro-Seite: gleiche Daten, Büro-Knöpfe kommen an, nichts Benötigtes entfernt)
    - `design-kritiker` (nur wenn die Änderung etwas Sichtbares betrifft; sonst weglassen und das dem Richter sagen)
 3. **Funde selbst prüfen und reparieren:** echte Fehler beheben, Design-**Muss**-Punkte umsetzen, **Kann**-Punkte sammeln. Tests erneut grün, pushen, Diff neu ablegen.
-4. **Richter** (`richter`, Opus) mit: Diff-Pfad, Ziel, den vier Berichten (Kurzfassung) und was repariert wurde bzw. bewusst nicht (mit Grund).
+4. **Richter** (`richter`, Fable – R558: ohne Fable „abgenommen“ kein Merge) mit: Diff-Pfad, Ziel, den vier Berichten (Kurzfassung) und was repariert wurde bzw. bewusst nicht (mit Grund).
 5. Urteil:
    - „abgenommen“ → Pull Request, Merge (wenn Serband das Bauen freigegeben hat).
    - „abgenommen nach Reparatur von …“ → reparieren, Tests grün, dem Richter die Reparaturen zur **Nachprüfung** schicken (SendMessage an denselben Richter), erst nach „abgenommen“ mergen.
