@@ -172,52 +172,109 @@ async function belegStornieren(id) {
   }, "Stornieren");
 }
 
-/* ---------- Druck (auch „Als PDF speichern“ im Druckfenster) ---------- */
-function belegHTML(b) {
+/* ---------- Druck (auch „Als PDF speichern“ im Druckfenster) ----------
+   W26 (27.11.2026): Quittung als Geschäftsdokument, A4 hoch. Nur echte Daten: Fehlt ein Wert, entfällt die ganze Zeile.
+   Logo: logos/<slug der Fahrschule>.png (Slug aus fahrschulen.slug). Fehlt die Datei, steht kein Logo und keine leere Fläche. */
+function belegLogoUrl() {
+  const slug = String((S.fs && S.fs.slug) || "").trim();
+  if (!/^[a-z0-9][a-z0-9_-]{0,60}$/i.test(slug)) return "";
+  try { return new URL("logos/" + slug.toLowerCase() + ".png", location.href).href; } catch (e) { return ""; }
+}
+// opt.logo: Bild-Adresse (Test/Vorschau); ohne Angabe aus der Fahrschule. belegHTML läuft ohne Druck (Tests).
+function belegHTML(b, opt) {
   const k = b.fahrschule_daten || {};
-  const zeilen = (t) => esc(String(t || "")).replace(/\n/g, "<br>");
+  const zeilen = (t) => esc(String(t || "").trim()).replace(/\n/g, "<br>");
   const st = b.steuer && b.steuer.ausweisen === true ? b.steuer : null;
   const satz = st ? Number(String(st.satz).replace(",", ".")) : NaN;
-  let steuerZeile = "";
+  let steuerZeilen = "";
   if (st && satz > 0 && satz < 100) {
     const brutto = Number(b.betrag), ust = Math.round(brutto * satz / (100 + satz) * 100) / 100;
-    steuerZeile = `<tr><td>Darin enthalten ${esc(String(satz).replace(".", ","))} % USt</td><td class="r">${esc(belegEuro(ust))}</td></tr><tr><td>Nettobetrag</td><td class="r">${esc(belegEuro(Math.round((brutto - ust) * 100) / 100))}</td></tr>`;
+    steuerZeilen = `<tr class="neben"><td colspan="2">Nettobetrag</td><td class="r">${esc(belegEuro(Math.round((brutto - ust) * 100) / 100))}</td></tr><tr class="neben"><td colspan="2">Darin enthalten ${esc(String(satz).replace(".", ","))} % USt</td><td class="r">${esc(belegEuro(ust))}</td></tr>`;
   }
-  const orig = b.storno_von ? (S.belege || []).find((x) => x.id === b.storno_von) : null;
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Beleg Nr. ${esc(String(b.nummer))}</title>
+  const storno = !!b.storno_von;
+  const orig = storno ? (S.belege || []).find((x) => x.id === b.storno_von) : null;
+  const logo = opt && "logo" in opt ? opt.logo : belegLogoUrl();
+  const nr = b.nummer != null && b.nummer !== "" ? String(b.nummer) : "";
+  const kn = window.KR && KR.kundennummerText ? KR.kundennummerText(b.kundennummer) : "";
+  const adr = window.KR && KR.adresseZeilen && b.schueler_adresse && typeof b.schueler_adresse === "object" ? KR.adresseZeilen(b.schueler_adresse) : [];
+  const zart = b.zahlart ? (BELEG_ZAHLART[b.zahlart] || b.zahlart) : "";
+  const aussteller = String(b.aussteller || b.bearbeiter || "").trim();
+  const erstellt = b.erstellt_am ? new Date(b.erstellt_am) : null;
+  const erstelltText = erstellt && !isNaN(erstellt) ? erstellt.toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }) : "";
+  const kopfZeilen = [k.anschrift ? zeilen(k.anschrift) : "", k.steuernummer ? "Steuernummer: " + esc(k.steuernummer) : "", k.ustid ? "USt-IdNr.: " + esc(k.ustid) : ""].filter(Boolean);
+  const meta = [
+    nr ? ["Quittungsnummer", "Nr. " + esc(nr)] : null,
+    b.datum ? ["Datum der Zahlung", esc(datumDE(b.datum))] : null,
+    kn ? ["Kundennummer", esc(kn)] : null,
+    storno ? ["Gegenbeleg zu", orig && orig.nummer != null ? "Nr. " + esc(String(orig.nummer)) : "früherem Beleg"] : null,
+  ].filter(Boolean);
+  const titel = "Quittung" + (nr ? " Nr. " + nr : "");
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(titel)}</title>
 <style>
-  @page{size:A5 portrait;margin:14mm}
-  body{font:11pt/1.45 Georgia,"Times New Roman",serif;color:#111;margin:0}
-  .kopf{border-bottom:1px solid #111;padding-bottom:8px;margin-bottom:14px}
-  .kopf b{font-size:13pt}
-  h1{font-size:15pt;margin:0 0 4px}
-  .nr{font-size:10.5pt;color:#333;margin-bottom:14px}
-  table{width:100%;border-collapse:collapse}
-  td{padding:5px 0;vertical-align:top;border-bottom:1px solid #ddd}
-  td.r{text-align:right;white-space:nowrap}
-  .summe td{font-size:13pt;font-weight:700;border-bottom:2px solid #111}
-  .klein{font-size:9pt;color:#333;margin-top:14px}
-  .storno{border:2px solid #111;padding:4px 8px;display:inline-block;font-weight:700;margin-bottom:10px}
-  .erhalten{margin:14px 0 0}
-  .unterschrift{display:flex;gap:24px;margin-top:34px}
-  .unterschrift div{flex:1;border-top:1px solid #111;padding-top:3px;font-size:9pt;color:#333}
+  @page{size:A4 portrait;margin:20mm 20mm 22mm 20mm;@bottom-left{content:"${erstelltText ? "Erstellt am " + erstelltText.replace(/["\\]/g, "") : ""}";font:8pt system-ui,"Segoe UI",Helvetica,Arial,sans-serif;color:#666}@bottom-right{content:"${titel.replace(/[^\w .]/g, "")} · Seite " counter(page) " von " counter(pages);font:8pt system-ui,"Segoe UI",Helvetica,Arial,sans-serif;color:#666}}
+  *{box-sizing:border-box}
+  body{font:10pt/1.5 system-ui,"Segoe UI",Helvetica,Arial,sans-serif;color:#1c1c1c;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12mm;padding-bottom:6mm;border-bottom:.6pt solid #9a9a9a}
+  .absender .name{font-size:13pt;font-weight:600;letter-spacing:.2pt;margin-bottom:1.5mm}
+  .absender .zeile{font-size:9pt;color:#555;line-height:1.45}
+  .logo{flex:none;max-width:48mm;max-height:24mm;width:auto;height:auto;object-fit:contain}
+  h1{font-size:24pt;font-weight:300;letter-spacing:1.2pt;margin:14mm 0 0}
+  .stempel{display:inline-block;margin:3mm 0 0;padding:1mm 3.5mm;border:.75pt solid #7a1f1f;color:#7a1f1f;font-size:10pt;font-weight:600;letter-spacing:1.5pt}
+  .meta{display:flex;flex-wrap:wrap;gap:3mm 8mm;margin:7mm 0 0;padding:4mm 0;border-top:.5pt solid #cfcfcf;border-bottom:.5pt solid #cfcfcf}
+  .meta div{min-width:30mm}
+  .label{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.8pt;color:#777;margin-bottom:.8mm}
+  .meta b{font-weight:600;font-size:10.5pt}
+  .empf{margin:9mm 0 0}
+  .empf .wer{font-size:11.5pt;font-weight:600}
+  .empf .zeile{color:#333}
+  table{width:100%;border-collapse:collapse;margin-top:11mm}
+  th{font-size:7.5pt;text-transform:uppercase;letter-spacing:.8pt;color:#777;font-weight:500;text-align:left;padding:0 0 2mm;border-bottom:.6pt solid #9a9a9a}
+  td{padding:3.2mm 0;vertical-align:top;border-bottom:.5pt solid #dcdcdc}
+  th.r,td.r{text-align:right;white-space:nowrap}
+  tr.neben td{padding:1.8mm 0;font-size:9pt;color:#555;border-bottom:0}
+  tr.summe td{padding:4.5mm 0 2mm;border-bottom:0;border-top:.75pt solid #1c1c1c;font-size:15pt;font-weight:600}
+  tr.summe td:first-child{font-size:10pt;font-weight:500;letter-spacing:.8pt;text-transform:uppercase;color:#555;vertical-align:bottom}
+  .dank{margin:9mm 0 0;font-size:10.5pt}
+  .hinweis{margin:5mm 0 0;font-size:8.5pt;color:#555}
+  .aussteller{margin:9mm 0 0;font-size:9pt;color:#444}
+  .unterschrift{display:flex;gap:14mm;margin-top:22mm;break-inside:avoid}
+  .unterschrift div{flex:1;border-top:.6pt solid #666;padding-top:1.6mm;font-size:8pt;color:#666}
+  .logo,.kopf,table,.meta{break-inside:avoid}
+  @media screen{body{max-width:170mm;margin:0 auto;padding:12mm 8mm}}
 </style></head><body>
-  <div class="kopf"><b>${esc(k.name || "")}</b>${k.anschrift ? `<br>${zeilen(k.anschrift)}` : ""}${k.steuernummer ? `<br>Steuernummer: ${esc(k.steuernummer)}` : ""}${k.ustid ? `<br>USt-IdNr.: ${esc(k.ustid)}` : ""}</div>
-  ${b.storno_von ? `<div class="storno">STORNO${orig ? ` zu Beleg Nr. ${esc(String(orig.nummer))}` : ""}</div>` : ""}
+  <div class="kopf">
+    <div class="absender">${k.name ? `<div class="name">${esc(k.name)}</div>` : ""}${kopfZeilen.map((z) => `<div class="zeile">${z}</div>`).join("")}</div>
+    ${logo ? `<img class="logo" src="${esc(logo)}" alt="">` : ""}
+  </div>
   <h1>Quittung</h1>
-  <div class="nr">Beleg Nr. ${esc(String(b.nummer))} · Datum der Zahlung: ${esc(datumDE(b.datum))}</div>
+  ${storno ? `<div class="stempel">STORNO</div>` : ""}
+  ${meta.length ? `<div class="meta">${meta.map(([l, w]) => `<div><span class="label">${l}</span><b>${w}</b></div>`).join("")}</div>` : ""}
+  ${b.schueler_name ? `<div class="empf"><span class="label">Erhalten von</span><div class="wer">${esc(b.schueler_name)}</div>${adr.map((z) => `<div class="zeile">${esc(z)}</div>`).join("")}</div>` : ""}
   <table>
-    <tr><td>Erhalten von</td><td class="r">${esc(b.schueler_name)}</td></tr>
-    <tr><td>Zweck</td><td class="r">${esc(b.zweck)}</td></tr>
-    <tr><td>Zahlart</td><td class="r">${esc(BELEG_ZAHLART[b.zahlart] || b.zahlart)}</td></tr>
-    ${steuerZeile}
-    <tr class="summe"><td>${b.storno_von ? "STORNO – Betrag" : "Betrag"}</td><td class="r">${esc(belegEuro(b.betrag))}</td></tr>
+    <thead><tr><th>Leistung</th>${zart ? `<th>Zahlungsart</th>` : ""}<th class="r">Betrag</th></tr></thead>
+    <tbody>
+      ${b.zweck ? `<tr><td>${esc(b.zweck)}</td>${zart ? `<td>${esc(zart)}</td>` : ""}<td class="r">${esc(belegEuro(b.betrag))}</td></tr>` : ""}
+      ${steuerZeilen.replace(/colspan="2"/g, `colspan="${zart ? 2 : 1}"`)}
+      <tr class="summe"><td colspan="${zart ? 2 : 1}">${storno ? "Storno – Betrag" : "Gesamtbetrag"}</td><td class="r">${esc(belegEuro(b.betrag))}</td></tr>
+    </tbody>
   </table>
-  ${b.storno_von ? "" : `<p class="erhalten">Betrag erhalten.</p>`}
+  ${storno ? "" : `<p class="dank">Betrag dankend erhalten.</p>`}
+  ${st && st.hinweis ? `<p class="hinweis">${zeilen(st.hinweis)}</p>` : ""}
+  ${aussteller ? `<p class="aussteller">Ausgestellt von ${esc(aussteller)}</p>` : ""}
   <div class="unterschrift"><div>Ort, Datum</div><div>Unterschrift / Stempel</div></div>
-  ${st && st.hinweis ? `<p class="klein">${zeilen(st.hinweis)}</p>` : ""}
-  <p class="klein">Erstellt am ${esc(new Date(b.erstellt_am || Date.now()).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }))}${b.bearbeiter ? ` von ${esc(b.bearbeiter)}` : ""}.</p>
 </body></html>`;
+}
+// Logo muss geladen sein, bevor print() startet (höchstens ~1,5 s warten; Bild fehlt oder lädt nicht: ohne Logo weiter)
+function belegBildBereit(doc) {
+  const bilder = [...doc.images];
+  if (!bilder.length) return Promise.resolve();
+  return Promise.race([
+    Promise.all(bilder.map((img) => new Promise((ok) => {
+      const fertig = () => { if (!(img.complete && img.naturalWidth > 0)) img.remove(); ok(); };
+      if (img.complete) fertig(); else { img.addEventListener("load", fertig, { once: true }); img.addEventListener("error", fertig, { once: true }); }
+    }))),
+    new Promise((ok) => setTimeout(() => { bilder.forEach((img) => { if (!(img.complete && img.naturalWidth > 0)) img.remove(); }); ok(); }, 1500)),
+  ]);
 }
 function belegDrucken(b) {
   const alt = document.getElementById("belegDruckRahmen"); if (alt) alt.remove();
@@ -226,7 +283,7 @@ function belegDrucken(b) {
   f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
   document.body.appendChild(f);
   const d = f.contentWindow.document; d.open(); d.write(belegHTML(b)); d.close();
-  setTimeout(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast("Drucken ging nicht. Bitte noch einmal versuchen.", true); } }, 150);
+  belegBildBereit(d).then(() => new Promise((ok) => setTimeout(ok, 150))).then(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast("Drucken ging nicht. Bitte noch einmal versuchen.", true); } });
 }
 
 /* ---------- Einstellungen › Belege & Quittungen ---------- */
