@@ -48,6 +48,7 @@ const bS = daten.tabellen.schueler.filter((s) => !s.inaktiv_seit && s.status !==
 if (bS.length < 12) { console.log("FEHLER Testdaten: zu wenige Schüler"); process.exit(1); }
 bS.forEach((s, i) => { s.klasse = "B"; s.ausbildung = Object.assign({}, s.ausbildung, { form: "B" }); s.fahrlehrer_id = i < 5 || i === 9 ? "fl-1" : i < 9 || i === 10 ? "fl-2" : "fl-3"; });
 const anton = bS.slice(0, 5), berta = bS.slice(5, 9);
+berta[3].ausbildungsart = "umschreibung"; // W22: Umschreiber (Büro sperrt Sonder-/Nachtfahrten) – eine Prüfung muss trotzdem gehen
 const NEUN = [...anton, ...berta];
 // Fall 7+8 (Umschreiber macht W22): eine bestehende Prüfung mit freier Uhrzeit, die unverändert bleiben muss
 const ALT = { id: "pt-alt-umschreib", fahrschule_id: FS, schueler_id: bS[11].id, art: "praxis", klasse: "B", datum: addTage(heute, 12),
@@ -122,6 +123,7 @@ const reihe = NEUN.map((s) => pt(st, s.id)).filter(Boolean).sort((a, b) => a.fen
 pruefe("Fall 1b: 9 Prüfungen auf einmal, Fenster 08:00 … 15:20", reihe.join(",") === "0@08:00,1@08:55,2@09:50,3@10:45,4@11:40,5@12:35,6@13:30,7@14:25,8@15:20", reihe.join(","));
 pruefe("Fall 1c: Büro zeigt „9 geplant, 0 frei“", /9 geplant, 0 frei/.test(await bueroKarte(B.page, TAG.id)));
 pruefe("Fall 1d: Server legt 9 Kalender-Einträge an", st.kalender_termine.filter((k) => k.art === "pruefung" && !k.geloescht && k.payload && NEUN.some((s) => pt(st, s.id) && pt(st, s.id).id === k.payload.pruefungstermin_id)).length === 9);
+pruefe("Umschreiber: Prüfung im Fenster eingeplant, Kalender-Eintrag „Prüfung“", !!pt(st, berta[3].id) && st.kalender_termine.some((k) => k.id === pt(st, berta[3].id).kalender_termin_id && k.art === "pruefung" && !k.geloescht));
 STAND = st;
 
 // ===== Fall 9 (Teil 1): App zeigt denselben Tag =====
