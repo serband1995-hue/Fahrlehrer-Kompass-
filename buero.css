@@ -1281,3 +1281,12 @@ details.pt-hinweis-karte[open]>summary .knopf{display:none;}
 .pt-tabelle .wiederholung-hinweis{display:block;}
 .pt-tabelle.pt-uhrzeit th:first-child,.pt-tabelle.pt-uhrzeit td:first-child{white-space:normal;width:auto;min-width:110px;}
 details[data-ergapphinweis][open]>summary .knopf{display:inline-flex;}
+
+/* W28: Terminarten-Filter und Link im Büro-Kalender */
+.k-art-filter{margin:4px 0 8px;}
+.k-art-filter > summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:14px;}
+.k-art-filter .chips{margin-top:2px;}
+.k-art-punkt{display:inline-block;width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+.k-art-chip{align-items:center;gap:6px;}
+.k-link-zeile{margin:10px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+@media print{.k-art-filter,.k-link-zeile{display:none !important;}}

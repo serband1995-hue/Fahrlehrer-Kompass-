@@ -4959,9 +4959,11 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
     if (!eintraege.length) { console.warn("[Kompass] " + tabelle + ": lokaler Bestand leer - Löschung übersprungen."); return geschrieben; }
     for (let i = 0; i < bekanntWeg.length; i += 150) {
       const teil = bekanntWeg.slice(i, i + 150);
-      const { data: noch, error } = await aktivFilter(supa.from(tabelle).select("id").eq("fahrlehrer_id", _authUser.id).in("id", teil));
+      const termine = tabelle === "kalender_termine";
+      const { data: noch, error } = await aktivFilter(supa.from(tabelle).select(termine ? "id,art" : "id").eq("fahrlehrer_id", _authUser.id).in("id", teil));
       if (error) throw error;
-      let zuLoeschen = (noch || []).map(r => r.id);
+      // W28: Büro-Termine (Vortest, Simulator, Beratung, MPU) löscht die App nie – auch nicht über eine alte Kopie
+      let zuLoeschen = (noch || []).filter(r => !termine || !istNurBueroArt(r.art)).map(r => r.id);
       // K7: Stornierte Stunden einzeln (mit Grund und Vermerk); was es aktiv nicht mehr gibt, braucht keinen Storno mehr
       if (loeschWertFuer) {
         const aktiv = new Set(zuLoeschen);
@@ -5966,7 +5968,7 @@ async function pullTermineZuweisungen() {
     const supa = getSupa();
     const gen = _abglGen;
     // Seitenweise lesen (mehr als 1000 Termine). Fehler brechen ab: sonst gälte eine leere Antwort als "alles gelöscht".
-    const rows = await _alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false));
+    const rows = (await _alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrlehrer_id", _authUser.id).eq("geloescht", false))).filter(r => !istNurBueroArt(r.art)); // W28: Büro-Arten nie in die App (fehlen sie, räumt der Abruf alte Kopien weg)
     _bfcAusZeilen(rows); // W19: Fahrcheck-Haken vom Büro für den Lohn merken (nicht in die Termine)
     const remoteIds = new Set(rows.map(r => r.id));
     // Termine, die das Büro einem anderen Fahrlehrer gegeben hat, sieht man selbst nicht mehr (RLS) -
@@ -6382,7 +6384,7 @@ async function _fsLoadAggData(fahrschuleId){
       supa.from("fahrschulen").select("*").eq("id",fahrschuleId).single(),
       supa.from("profiles").select("*").eq("fahrschule_id",fahrschuleId).in("rolle",["fahrlehrer","super_admin","fahrschule_admin"]).order("email").then(_fsNurUnterrichtende),
       _alleSeiten(()=>supa.from("schueler").select("*").eq("fahrschule_id",fahrschuleId).neq("status","geloescht")).then(data=>({data})),
-      _alleSeiten(()=>supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
+      _alleSeiten(()=>supa.from("kalender_termine").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data:data.filter(r=>!istNurBueroArt(r.art))})), // W28: vor der Abgleich-Basis
       _alleSeiten(()=>supa.from("kalender_pruefungen").select("*").eq("fahrschule_id",fahrschuleId).eq("geloescht",false)).then(data=>({data})),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id",fahrschuleId).eq("aktiv",true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id",fahrschuleId),
@@ -7406,7 +7408,7 @@ function _fsInjectFilterTiles(){
       ${fahrzeuge.length?fahrzeuge.map(fz=>checkRow("fsfz",fz,fz,_fsCalFahrzeugFilter.includes(fz))).join(""):'<p class="muted-p" style="font-size:12px;">Keine Fahrzeuge.</p>'}
       ${isBuero?`<div class="fs-check-group-label" style="margin-top:10px;">🏢 Kategorien</div>
       <p class="muted-p" style="font-size:11.5px;margin:-2px 0 4px;">Leer = alle anzeigen</p>
-      ${FS_BUERO_ARTEN.map(a=>checkRow("fsbuero",a,bueroLabels[a]||a,_fsCalBueroFilter.includes(a))).join("")}`:''}
+      ${FS_APP_BUERO_ARTEN.map(a=>checkRow("fsbuero",a,bueroLabels[a]||a,_fsCalBueroFilter.includes(a))).join("")}`:''}
       ${(_fsCalFahrzeugFilter.length||_fsCalLehrerFilter.length||(isBuero&&_fsCalBueroFilter.length))?`<button class="btn btn-ghost" style="width:100%;margin-top:12px;" onclick="_fsResetKalFilter()">Filter zurücksetzen</button>`:''}
       ${keinFilterAktiv?`<div class="res-block" style="animation:none;background:rgba(207,154,62,.1);border-color:rgba(207,154,62,.35);text-align:center;margin-top:12px;"><p style="font-size:13px;color:var(--muted);margin:0;">Wähle einen Fahrlehrer oder ein Fahrzeug, um Termine zu sehen.</p></div>`:''}
     </aside>
@@ -7606,9 +7608,6 @@ function routeFahrschuleFehleranalyse(){
 
 /* ===== Neue Kalender-Kategorien: Vortest, Simulator, Beratung, Theorie-Prüfung, Erste Hilfe ===== */
 const FS_KATEGORIEN={
-  vortest:{titel:"Vortest",art:"vortest",icon:"🎯"},
-  simulator:{titel:"Simulator",art:"simulator",icon:"🕹️"},
-  beratung:{titel:"Beratung",art:"beratung",icon:"💬"},
   theorie_pruefung:{titel:"Theorie-Prüfung",art:"theorie",icon:"📘"},
   ersthilfe:{titel:"Erste Hilfe",art:"ersthilfe",icon:"🚑"}
 };
@@ -8163,7 +8162,7 @@ async function routeFahrschuleKalender(fahrschuleId,weekStart){
         .gte("datum",_fsFmtDate(monday)).lte("datum",_fsFmtDate(sonntag)).order("von"),
     supa.from("schueler").select("id,name").eq("fahrschule_id",fahrschuleId)
   ]);
-  const lehrer=lehrerR.data||[], termine=termineR.data||[];
+  const lehrer=lehrerR.data||[], termine=(termineR.data||[]).filter(t=>!istNurBueroArt(t.art)); // W28
   const schuelerNamen={};
   (schuelerR.data||[]).forEach(s=>{ schuelerNamen[s.id]=s.name; });
   window._fsKalLehrer=lehrer;
@@ -8317,7 +8316,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.27.8";
+const APP_VERSION="2026.11.28.1";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13938,9 +13937,6 @@ function openAddSheet(){
   openSheet(`<div class="sheet-h">Hinzufügen</div>
     <div class="add-grid">
       ${buero?`
-      <button class="add-opt" data-add="vortest"><span class="ao-ic" style="color:${CAL_ARTEN.vortest.col}">🎯</span><span class="ao-l">Vortest</span></button>
-      <button class="add-opt" data-add="simulator"><span class="ao-ic" style="color:${CAL_ARTEN.simulator.col}">🕹️</span><span class="ao-l">Simulator</span></button>
-      <button class="add-opt" data-add="beratung"><span class="ao-ic" style="color:${CAL_ARTEN.beratung.col}">💬</span><span class="ao-l">Beratung</span></button>
       <button class="add-opt" data-add="ersthilfe"><span class="ao-ic" style="color:${CAL_ARTEN.ersthilfe.col}">🚑</span><span class="ao-l">Erste Hilfe</span></button>
       `:`
       <button class="add-opt" data-add="fahrstunde"><span class="ao-ic" style="color:${CAL_ARTEN.fahrstunde.col}">${ICN.cal||"+"}</span><span class="ao-l">Fahrstunde</span></button>
@@ -14908,7 +14904,11 @@ function _lektionFinde(n){ const k=String(n); return LEKTIONEN.find(x=>String(x.
 function lektionLabel(n){ const l=_lektionFinde(n); return l?("Lektion "+l.n):""; }
 function lektionTitel(n){ const l=_lektionFinde(n); return l?l.t:""; }
 let _fsCalFahrzeugFilter=[], _fsCalLehrerFilter=[], _fsCalBueroFilter=[];
-const FS_BUERO_ARTEN=["beratung","ersthilfe","vortest","simulator"];
+const FS_BUERO_ARTEN=["beratung","ersthilfe","vortest","simulator","mpu"];
+// W28: Diese Arten gibt es nur im Büro (buero.html). Die App zeigt, zählt und löscht sie nie; die Datenbank verbirgt sie vor Fahrlehrern.
+const NUR_BUERO_ARTEN=["vortest","simulator","beratung","mpu"];
+function istNurBueroArt(a){ return ["vortest","simulator","beratung","mpu"].includes(a); } // eigene Liste: auch vor der Zeile oben aufrufbar
+const FS_APP_BUERO_ARTEN=FS_BUERO_ARTEN.filter(a=>!istNurBueroArt(a));
 let _fsKalenderModus="fahrlehrer"; // "fahrlehrer" | "buero"
 function eventMatchesFilter(e,iso){
   if(_calNurFrei)return false; // "Nur freie Slots" blendet alle Termine aus
@@ -14920,7 +14920,7 @@ function eventMatchesFilter(e,iso){
     if(_fsCalFahrzeugFilter.length&&!_fsCalFahrzeugFilter.includes(e.fahrzeug))return false;
     if(_fsCalLehrerFilter.length&&!_fsCalLehrerFilter.includes(e._fahrlehrerId))return false;
     if(_fsKalenderModus==="buero"){
-      if(!FS_BUERO_ARTEN.includes(e.art))return false;
+      if(!FS_APP_BUERO_ARTEN.includes(e.art))return false;
       if(_fsCalBueroFilter.length&&!_fsCalBueroFilter.includes(e.art))return false;
     }
     if(_fsKalenderModus==="fahrlehrer"&&FS_BUERO_ARTEN.includes(e.art))return false;
