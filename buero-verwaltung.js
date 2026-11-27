@@ -340,6 +340,7 @@ function vwBackupAnsehen(b) {
     }
     toast(res.data.nichts_zu_tun ? "Nichts zu tun: alles ist schon so" : "Zurückgeholt. Der Stand davor ist als eigenes Backup gesichert.");
     vwLadeBackups(true); zeichne();
+    if (typeof ladeDaten === "function") ladeDaten(); // Schüler und Termine gleich neu (sonst erst mit dem nächsten Takt)
     return true;
   }, darfZurueck ? "Vorschau ansehen" : "Schließen");
   // Anderer Modus = neue Vorschau
@@ -367,7 +368,7 @@ function vwVorschauZeigen(dlg, v) {
   const liste = geaendert.length ? `<table class="tabelle vw-inhalt"><thead><tr><th>Bereich</th><th class="zahl">neu</th><th class="zahl">geänd.</th><th class="zahl">weg</th></tr></thead><tbody>${geaendert.map((t) =>
     `<tr><td>${esc(ks.name(t.tabelle))}</td><td class="zahl">${t.einfuegen || 0}</td><td class="zahl">${t.aendern || 0}</td><td class="zahl">${t.loeschen || 0}</td></tr>`).join("")}</tbody></table>` : "";
   let fuss;
-  if (!v.ok || !v.wiederherstellbar) fuss = `<p class="dialog-meldung fehler" role="alert">Diese Sicherung lässt sich nicht zurückholen (${esc(v.grund === "pruefsumme" ? "sie wurde nachträglich verändert" : v.grund === "altes_format" ? "altes Format" : v.grund === "folge_loeschung" ? "dabei würden weitere Einträge mitgelöscht" : "sie enthält Einträge, die nicht zu dieser Fahrschule gehören")}).</p>`;
+  if (!v.ok || !v.wiederherstellbar) fuss = `<p class="dialog-meldung fehler" role="alert">Diese Sicherung lässt sich nicht zurückholen (${esc(v.grund === "pruefsumme" ? "sie wurde nachträglich verändert" : v.grund === "altes_format" ? "altes Format" : v.grund === "folge_loeschung" ? "dabei würden weitere Einträge mitgelöscht" : v.grund === "konflikt" ? "ein Eintrag gehört inzwischen zu einer anderen Fahrschule" : "sie enthält Einträge, die nicht zu dieser Fahrschule gehören")}).</p>`;
   else if (!summe) fuss = `<p class="marke-pill gruen">Nichts zu tun: alles ist schon so.</p>`;
   else if (!v.darf_wiederherstellen) fuss = `<p class="vw-warn">🔒 Zurückholen darf nur die Leitung der Fahrschule. Sie sieht dieselbe Vorschau.</p>`;
   else fuss = `<p>Vorher wird der jetzige Stand automatisch gesichert. Zum Bestätigen den Code eintippen: <b class="vw-code">${esc(v.code)}</b></p>

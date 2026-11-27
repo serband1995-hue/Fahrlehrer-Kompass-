@@ -23,7 +23,8 @@
     kalender_termine: "Termine (mit Papierkorb)", pruefungstermine: "Prüfungen", kalender_pruefungen: "Prüfungsergebnisse",
     fc_abgaben: "Fahrcheck-Abgaben", public_bookings: "Online-Buchungen", fahrzeug_konflikt_gesehen: "Fahrzeug-Hinweise gesehen",
     zahlungsbelege: "Belege", zahlungs_mails: "Zahlungs-Mails", erinnerungs_mails: "Erinnerungs-Mails",
-    aenderungsprotokoll: "Änderungsprotokoll", snapshots: "Handy-Stände der Fahrlehrer"
+    aenderungsprotokoll: "Änderungsprotokoll", snapshots: "Handy-Stände der Fahrlehrer",
+    theorie_teilnahme: "Theorie-Teilnahme", lc_zuordnung: "LeadConnector-Zuordnung"
   };
   const KS = {
     SPALTEN: "id,erstellt_am,automatisch,format,anlass,zaehlung,arten,groesse_bytes",
