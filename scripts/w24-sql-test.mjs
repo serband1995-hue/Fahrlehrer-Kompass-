@@ -61,8 +61,8 @@ async function baueDb() {
     grant usage on schema auth to anon, authenticated;
     create table auth.users (instance_id uuid, id uuid primary key, aud text, role text, email text unique, encrypted_password text,
       email_confirmed_at timestamptz, raw_app_meta_data jsonb, raw_user_meta_data jsonb, created_at timestamptz, updated_at timestamptz);
-    create table public.fahrschulen (id uuid primary key, name text, slug text not null unique);
-    insert into public.fahrschulen values ('${FS}', 'Test', 'test'), ('${FS2}', 'Andere', 'andere');
+    create table public.fahrschulen (id uuid primary key, name text, slug text not null unique, aktiv boolean not null default true);
+    insert into public.fahrschulen (id, name, slug) values ('${FS}', 'Test', 'test'), ('${FS2}', 'Andere', 'andere');
     create table public.profiles (id uuid primary key, email text, name text, rolle text not null default 'fahrlehrer', fahrschule_id uuid, aktiv boolean not null default true, faehrt_selbst boolean default false);
     create function public.handle_new_user() returns trigger language plpgsql security definer set search_path to 'public' as $$
       begin insert into public.profiles (id, email, rolle, aktiv) values (new.id, new.email, 'fahrlehrer', true); return new; end $$;
@@ -89,7 +89,7 @@ async function baueDb() {
         insert into public.aenderungsprotokoll (fahrschule_id, tabelle, datensatz_id, feld, alt, neu) values (new.fahrschule_id, 'schueler', new.id, 'status', old.status, new.status);
       end if; return new; end $$;
     create trigger trg_schueler_protokoll after update on public.schueler for each row execute function public.att_schueler_protokoll();
-    create table public.schueler_notizen (id uuid primary key default gen_random_uuid(), schueler_id text not null references public.schueler(id) on delete cascade, text text);
+    create table public.schueler_notizen (id uuid primary key default gen_random_uuid(), fahrschule_id uuid not null, schueler_id text not null references public.schueler(id) on delete cascade, text text);
 
     create table public.kalender_termine (id text primary key, fahrschule_id uuid not null, fahrlehrer_id uuid not null, schueler_id text, datum date not null,
       von text, bis text, art text, fahrzeug text, status text, geloescht boolean not null default false, payload jsonb default '{}',
@@ -108,9 +108,17 @@ async function baueDb() {
       wert jsonb not null, geaendert_am timestamptz not null default now(), geaendert_von uuid default auth.uid(), primary key (fahrschule_id, schluessel));
     create function public.fahrschule_einstellung(fs uuid, k text) returns jsonb language sql stable security definer set search_path to 'public' as $$
       select wert from public.fahrschule_einstellungen where fahrschule_id = fs and schluessel = k $$;
-    create table public.snapshots (user_id uuid primary key, data jsonb, updated_at timestamptz default now());
+    create table public.snapshots (id uuid primary key default gen_random_uuid(), user_id uuid not null unique, data jsonb not null, updated_at timestamptz);
     create function public.snapshots_set_server_zeit() returns trigger language plpgsql as $$ begin new.updated_at := clock_timestamp(); return new; end $$;
     create trigger trg_snapshots_server_zeit before insert or update on public.snapshots for each row execute function public.snapshots_set_server_zeit();
+    create table public.buero_personen (id uuid primary key default gen_random_uuid(), fahrschule_id uuid not null, name text not null, pin_hash text, hat_pin boolean not null default false);
+    insert into public.buero_personen (fahrschule_id, name, pin_hash, hat_pin) values ('${FS}', 'Muster', 'GEHEIMER-HASH', true);
+    create table public.buero_sitzungen (token_hash text primary key, person_id uuid, fahrschule_id uuid not null, user_id uuid not null);
+    insert into public.buero_sitzungen values ('TOKEN-HASH', null, '${FS}', '${U.buero}');
+    create table public.schueler_notiz_gelesen (notiz_id uuid not null references public.schueler_notizen(id) on delete cascade, fahrlehrer_id uuid not null, gelesen_am timestamptz not null default now(), primary key (notiz_id, fahrlehrer_id));
+    -- Tabelle der Liste OHNE die erwartete Spalte (Schema geändert): darf die Sicherung nicht brechen, wird „entdeckt“
+    create table public.provisionen (id uuid primary key default gen_random_uuid(), schueler_id text, betrag numeric);
+    insert into public.provisionen (schueler_id, betrag) values ('s1', 5), ('sx', 7);
     -- unbekannte Tabelle (soll „entdeckt“ und gesichert werden)
     create table public.att_neu (id serial primary key, fahrschule_id uuid, wert text);
     insert into public.att_neu (fahrschule_id, wert) values ('${FS}', 'a'), ('${FS2}', 'b');
@@ -135,7 +143,8 @@ async function baueDb() {
   await db.exec(`
     insert into public.schueler (id, fahrschule_id, fahrlehrer_id, name) values ('s1', '${FS}', '${U.fl1}', 'Eins'), ('s2', '${FS}', '${U.fl1}', 'Zwei'), ('sx', '${FS2}', '${U.fremd}', 'Fremd');
     update public.schueler set status = 'geloescht' where id = 's2';
-    insert into public.schueler_notizen (schueler_id, text) values ('s1', 'Notiz eins'), ('sx', 'fremde Notiz');
+    insert into public.schueler_notizen (fahrschule_id, schueler_id, text) values ('${FS}', 's1', 'Notiz eins'), ('${FS2}', 'sx', 'fremde Notiz');
+    insert into public.schueler_notiz_gelesen (notiz_id, fahrlehrer_id) select id, '${U.fl1}' from public.schueler_notizen;
     insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, geloescht)
       values ('t1', '${FS}', '${U.fl1}', 's1', current_date, '08:00', '09:30', 'fahrstunde', false), ('t2', '${FS}', '${U.fl1}', 's1', current_date, '10:00', '11:30', 'fahrstunde', true),
              ('tx', '${FS2}', '${U.fremd}', 'sx', current_date, '08:00', '09:30', 'fahrstunde', false);
@@ -181,7 +190,7 @@ ok("Altbestand Format 1: Anlass und Zählung nachgetragen, Daten unverändert", 
 r = await eins(db, "select count(*)::int n from pg_policies where tablename = 'fahrschule_backups' and cmd = 'INSERT'");
 ok("Client-INSERT-Regel entfernt", r.n === 0, r);
 r = await eins(db, "select array_agg(tabelle order by tabelle) t from public.w24_tabellen() where entdeckt");
-ok("Unbekannte Tabelle mit fahrschule_id wird entdeckt", JSON.stringify(r.t) === '["att_neu"]', r);
+ok("Unbekannte Tabelle und Listen-Tabelle ohne erwartete Spalte werden entdeckt (Sicherung bricht nicht)", JSON.stringify(r.t) === '["att_neu","provisionen"]', r);
 
 // ---------- 3. App/Büro-Aufruf wie heute ----------
 r = await als(db, U.buero, "select public.fahrschule_backup_erstellen($1, false) id", [FS]);
@@ -190,9 +199,11 @@ const BK = r.rows && r.rows[0].id;
 r = await eins(db, "select format, anlass, automatisch, zaehlung, arten, groesse_bytes, daten from public.fahrschule_backups where id = $1", [BK]);
 ok("Sicherung: Format 2, von Hand, Zählung (2 Schüler inkl. gelöschtem, 2 Termine inkl. Papierkorb, 2 Fahrzeuge, 1 Notiz, 1 Beleg, 1 Handy-Stand, entdeckt 1)",
   r.format === 2 && r.anlass === "hand" && r.automatisch === false && r.zaehlung.schueler === 2 && r.zaehlung.kalender_termine === 2 && r.zaehlung.fahrschule_fahrzeuge === 2
-  && r.zaehlung.schueler_notizen === 1 && r.zaehlung.zahlungsbelege === 1 && r.zaehlung.snapshots === 1 && r.zaehlung.att_neu === 1 && r.arten.att_neu === "entdeckt"
+  && r.zaehlung.schueler_notizen === 1 && r.zaehlung.provisionen === 1 && r.zaehlung.zahlungsbelege === 1 && r.zaehlung.snapshots === 1 && r.zaehlung.att_neu === 1 && r.arten.att_neu === "entdeckt"
   && r.arten.zahlungsbelege === "anhaengen" && r.arten.snapshots === "auf_wunsch" && r.groesse_bytes > 500, { z: r.zaehlung, a: r.arten });
 ok("Sicherung enthält nichts der fremden Fahrschule", !JSON.stringify(r.daten).includes(FS2) && !JSON.stringify(r.daten).includes('"sx"'));
+ok("Keine Anmeldedaten: kein PIN-Hash, keine Sitzungen; Büro-Person und Notiz-gelesen (1) drin", !JSON.stringify(r.daten).includes("GEHEIMER-HASH") && !JSON.stringify(r.daten).includes("TOKEN-HASH")
+  && r.zaehlung.buero_personen === 1 && r.zaehlung.schueler_notiz_gelesen === 1 && !("buero_sitzungen" in r.zaehlung), r.zaehlung);
 r = await als(db, U.fl1, "select public.fahrschule_backup_erstellen($1, false) id", [FS]);
 ok("Fahrlehrer: keine Berechtigung", /Keine Berechtigung/.test(r.fehler || ""), r);
 r = await als(db, U.buero, "insert into public.fahrschule_backups (fahrschule_id, automatisch, daten) values ($1, false, '{}')", [FS]);

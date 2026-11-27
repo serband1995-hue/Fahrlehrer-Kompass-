@@ -34,11 +34,19 @@
 --    Während des Zurückschreibens sind die Nutzer-Auslöser der beschriebenen Tabellen aus (ALTER TABLE … DISABLE TRIGGER USER,
 --    nur in dieser Transaktion; Fremdschlüssel bleiben aktiv). Grund: Auslöser würden zurückgeschriebene Zeilen verändern
 --    (Bearbeiter, FC-Haken, Papierkorb-Zeit, Belegnummer) oder sperren (Belege fest, Zahlungssperre).
--- 4. Nachtlauf: fahrschule_backups_nachtlauf() sichert jede Fahrschule (Fehler einer Fahrschule stoppt die anderen nicht)
---    und räumt danach auf: fahrschule_backups_aufraeumen() behält je Fahrschule die neuesten 14 Nacht-Sicherungen, die
---    neuesten 20 von Hand, die Sicherungen „vor_wiederherstellung“ mindestens 90 Tage (und immer die neuesten 5). Nichts,
---    was jünger als 2 Tage ist, wird gelöscht. pg_cron (falls vorhanden): täglich 01:23 UTC; alte Sicherungs-Aufträge, die
---    fahrschule_backup_erstellen aufrufen, werden ersetzt.
+-- 4. Nachtlauf: Es gab schon einen täglichen Auftrag (02:00 UTC, Name „woechentliches-fahrschule-backup“, behielt 30 automatische,
+--    manuelle nie gelöscht). Er wird ehrlich ersetzt durch „kompass-sicherung-nacht“ (gleiche Zeit, vor papierkorb_leeren um
+--    03:17 UTC): fahrschule_backups_nachtlauf() sichert jede aktive Fahrschule (Fehler einer Fahrschule stoppt die anderen
+--    nicht) und räumt mit fahrschule_backups_aufraeumen() auf. Aufbewahrung je Fahrschule: die neuesten 30 Nacht-Sicherungen
+--    (wie bisher; ~0,7 MB je Sicherung bei der größten Fahrschule inkl. Handy-Stände, also ~21 MB), von Hand nie löschen (wie
+--    bisher), „vor_wiederherstellung“ mindestens 90 Tage und immer die neuesten 5. Nichts unter 2 Tagen wird gelöscht.
+--    Die Plattform-Sicherung (Tarif pro, 7 Tage) setzt nur die GANZE Datenbank zurück; darum diese Sicherung je Fahrschule.
+--    Alle Sicherungen liegen in derselben Datenbank: Kopie außerhalb = „Herunterladen“ im Büro.
+-- 5. Inhalt bewusst: Bankdaten der Fahrschule (fahrschule_zahlungsdaten) gehören hinein (Geschäftsdaten, stehen auf Belegen).
+--    Büro-Personen nur zum Nachschlagen und OHNE PIN-Hash (w24_ohne_spalten). Nie hinein: Büro-Sitzungen (Anmelde-Token),
+--    alte Handy-Kopien (snapshot_backups), private Trinkgelder der Fahrlehrer (trinkgeld_privat), Push-Anmeldungen.
+--    Online-Buchungen (public_bookings) und LeadConnector-Zuordnungen gehören über den Fahrlehrer zur Fahrschule: nur gesichert.
+--    Tabellen ohne Fahrschul-Bezug (theorie_*, quiz_*, lc_eingang) gehören nicht in die Fahrschul-Sicherung.
 -- NICHT IN DER SICHERUNG: Dateien im Speicher (Storage, z. B. Theorie-Folien/Bilder) – nur ihre Tabellenzeilen;
 --   Anmeldekonten (auth.users). Profile werden nur gesichert (Namen/Rollen zum Nachschlagen), nie zurückgeschrieben.
 -- =====================================================================================================================
@@ -88,49 +96,59 @@ as $function$
     (32,  'fahrschule_pruefer',          'fs',       'fahrschule_id', 'voll'),
     (34,  'fahrschule_pruefer_notizen',  'fs',       'fahrschule_id', 'voll'),
     (36,  'fahrschule_tafelbilder',      'fs',       'fahrschule_id', 'voll'),
-    (38,  'fahrschule_empfehlungen',     'fs',       'fahrschule_id', 'voll'),
     (40,  'fahrschule_urlaub',           'fs',       'fahrschule_id', 'voll'),
     (42,  'fahrschule_schichten',        'fs',       'fahrschule_id', 'voll'),
-    (44,  'buero_personen',              'fs',       'fahrschule_id', 'voll'),
+    (44,  'buero_personen',              'fs',       'fahrschule_id', 'nur_sichern'),
     (46,  'theorie_freigabe',            'fs',       'fahrschule_id', 'voll'),
     (50,  'schueler',                    'fs',       'fahrschule_id', 'voll'),
     (52,  'schueler_privat',             'schueler', 'schueler_id',   'voll'),
     (54,  'schueler_eltern',             'fs',       'fahrschule_id', 'voll'),
-    (56,  'schueler_notizen',            'schueler', 'schueler_id',   'voll'),
-    (57,  'schueler_notiz_gelesen',      'schueler', 'schueler_id',   'voll'),
-    (58,  'schueler_aufgaben',           'schueler', 'schueler_id',   'voll'),
+    (56,  'schueler_notizen',            'fs',       'fahrschule_id', 'voll'),
+    (57,  'schueler_notiz_gelesen',      'notiz',    'notiz_id',      'voll'),
+    (58,  'schueler_aufgaben',           'fs',       'fahrschule_id', 'voll'),
     (60,  'schueler_pakete',             'fs',       'fahrschule_id', 'voll'),
-    (62,  'schueler_verschiebungen',     'schueler', 'schueler_id',   'voll'),
+    (62,  'schueler_verschiebungen',     'fs',       'fahrschule_id', 'voll'),
     (64,  'schueler_punkte',             'fs',       'fahrschule_id', 'anhaengen'),
     (66,  'provisionen',                 'fs',       'fahrschule_id', 'voll'),
+    (68,  'fahrschule_empfehlungen',     'fs',       'fahrschule_id', 'voll'),
+    (69,  'theorie_teilnahme',           'fs',       'fahrschule_id', 'voll'),
     (70,  'pruefungstage',               'fs',       'fahrschule_id', 'voll'),
     (72,  'kalender_termine',            'fs',       'fahrschule_id', 'voll'),
     (74,  'pruefungstermine',            'fs',       'fahrschule_id', 'voll'),
     (76,  'kalender_pruefungen',         'fs',       'fahrschule_id', 'voll'),
     (78,  'fc_abgaben',                  'fs',       'fahrschule_id', 'voll'),
-    (80,  'public_bookings',             'fs',       'fahrschule_id', 'voll'),
     (82,  'fahrzeug_konflikt_gesehen',   'fs',       'fahrschule_id', 'voll'),
     (84,  'zahlungsbelege',              'fs',       'fahrschule_id', 'anhaengen'),
     (86,  'zahlungs_mails',              'fs',       'fahrschule_id', 'anhaengen'),
     (88,  'erinnerungs_mails',           'fs',       'fahrschule_id', 'anhaengen'),
     (90,  'aenderungsprotokoll',         'fs',       'fahrschule_id', 'anhaengen'),
+    (92,  'public_bookings',             'profil',   'fahrlehrer_id', 'nur_sichern'),
+    (94,  'lc_zuordnung',                'profil',   'fahrlehrer_id', 'nur_sichern'),
     (98,  'snapshots',                   'profil',   'user_id',       'auf_wunsch')
 $function$;
 
 -- Tabellen, die NIE in eine Sicherung gehören (die Sicherungen selbst).
 create or replace function public.w24_ausgenommen()
  returns text[] language sql immutable set search_path to 'public'
-as $function$ select array['fahrschule_backups']::text[] $function$;
+as $function$ select array['fahrschule_backups', 'buero_sitzungen', 'snapshot_backups', 'trinkgeld_privat', 'push_subscriptions']::text[] $function$;
 
--- Wirksame Liste: feste Liste (nur vorhandene Tabellen) + entdeckte Tabellen (nur sichern).
+-- Spalten, die NIE in eine Sicherung gehören (Anmeldedaten). Fehlen sie im Backup, bleiben sie beim Zurückschreiben unberührt.
+create or replace function public.w24_ohne_spalten(p_tabelle text)
+ returns text[] language sql immutable set search_path to 'public'
+as $function$ select case p_tabelle when 'buero_personen' then array['pin_hash']::text[] else '{}'::text[] end $function$;
+
+-- Wirksame Liste: feste Liste (nur vorhandene Tabellen MIT der erwarteten Spalte) + entdeckte Tabellen (nur sichern).
+-- Fehlt einer Tabelle der Liste die Spalte (Schema geändert), scheitert die Sicherung nicht: die Tabelle wird dann „entdeckt“.
 create or replace function public.w24_tabellen()
  returns table(reihe integer, tabelle text, bereich text, spalte text, art text, entdeckt boolean)
  language sql stable set search_path to 'public'
 as $function$
-  select l.reihe, l.tabelle, l.bereich, l.spalte, l.art, false
-    from public.w24_tabellen_liste() l
-   where exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
-                  where n.nspname = 'public' and c.relname = l.tabelle and c.relkind in ('r', 'p'))
+  with liste as (
+    select l.* from public.w24_tabellen_liste() l
+     where exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+                     join pg_attribute a on a.attrelid = c.oid and a.attname = l.spalte and a.attnum > 0 and not a.attisdropped
+                    where n.nspname = 'public' and c.relname = l.tabelle and c.relkind in ('r', 'p')))
+  select l.reihe, l.tabelle, l.bereich, l.spalte, l.art, false from liste l
   union all
   select (900 + row_number() over (order by d.relname))::integer, d.relname::text,
          case when d.hat_fs then 'fs' else 'schueler' end,
@@ -142,11 +160,12 @@ as $function$
             join pg_attribute a on a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped
            where n.nspname = 'public' and c.relkind in ('r', 'p') and a.attname in ('fahrschule_id', 'schueler_id')
            group by c.relname) d
-   where d.relname::text not in (select l2.tabelle from public.w24_tabellen_liste() l2)
+   where d.relname::text not in (select l2.tabelle from liste l2)
      and d.relname::text <> all (public.w24_ausgenommen())
 $function$;
 
 -- WHERE-Teil „Zeile gehört zur Fahrschule $1“ (Alias z). Nur aus festen Werten gebaut (keine Nutzereingabe).
+-- notiz = Spalte ist eine Notiz (schueler_notizen.id) der Fahrschule.
 create or replace function public.w24_bereich_sql(p_bereich text, p_spalte text, p_alias text default 'z')
  returns text language plpgsql immutable set search_path to 'public'
 as $function$
@@ -156,6 +175,7 @@ begin
     when 'id'       then format('%I.%I = $1', p_alias, p_spalte)
     when 'schueler' then format('%I.%I::text in (select s.id::text from public.schueler s where s.fahrschule_id = $1)', p_alias, p_spalte)
     when 'profil'   then format('%I.%I in (select p.id from public.profiles p where p.fahrschule_id = $1)', p_alias, p_spalte)
+    when 'notiz'    then format('%I.%I in (select n.id from public.schueler_notizen n where n.fahrschule_id = $1)', p_alias, p_spalte)
   end;
 end;
 $function$;
@@ -171,9 +191,9 @@ create or replace function public.w24_zeilen(p_tabelle text, p_bereich text, p_s
 as $function$
 declare r jsonb;
 begin
-  execute format('select coalesce(jsonb_agg(to_jsonb(z)), ''[]''::jsonb) from public.%I z where %s',
+  execute format('select coalesce(jsonb_agg(to_jsonb(z) - $2), ''[]''::jsonb) from public.%I z where %s',
                  p_tabelle, public.w24_bereich_sql(p_bereich, p_spalte))
-    into r using p_fs;
+    into r using p_fs, public.w24_ohne_spalten(p_tabelle);
   return r;
 end;
 $function$;
@@ -269,6 +289,7 @@ begin
   select array_agg(a.attname::text order by a.attnum) into v_cols
     from pg_attribute a
    where a.attrelid = v_rel and a.attnum > 0 and not a.attisdropped and a.attgenerated = ''
+     and a.attname::text <> all (public.w24_ohne_spalten(p_tabelle))
      and (jsonb_array_length(coalesce(p_rows, '[]')) = 0 or (p_rows -> 0) ? a.attname::text);
   if v_pk is null then
     execute format('select jsonb_build_object(''im_backup'', jsonb_array_length($2), ''jetzt'', (select count(*) from public.%I z where %s), ''ohne_schluessel'', true)',
@@ -279,7 +300,8 @@ begin
   -- Gültig: Fahrschul-Spalte = diese Fahrschule; Schüler-Spalte = Schüler dieser Fahrschule (jetzt oder im Backup);
   -- Konto-Spalte = Konto dieser Fahrschule.
   v_gueltig := case p_bereich
-    when 'schueler' then format('(b.%1$I::text = any($3) or %2$s)', p_spalte, v_scope_b)
+    when 'schueler' then format('(''s:'' || b.%1$I::text = any($3) or %2$s)', p_spalte, v_scope_b)
+    when 'notiz'    then format('(''n:'' || b.%1$I::text = any($3) or %2$s)', p_spalte, v_scope_b)
     else v_scope_b end;
   execute format($q$
     with b as (select * from jsonb_populate_recordset(null::public.%1$I, $2)),
@@ -293,7 +315,7 @@ begin
       'zuviel',    (select count(*) from j z where not exists (select 1 from b where %3$s)),
       'konflikt',  (select count(*) from b join public.%1$I z on %3$s where not (%2$s)),
       'ungueltig', (select count(*) from b where not coalesce(%4$s, false)),
-      'stand',     (select md5(coalesce(string_agg(h, ',' order by h), '')) from (select md5(to_jsonb(z)::text) h from j z) x)
+      'stand',     (select md5(coalesce(string_agg(h, ',' order by h), '')) from (select md5(public.w24_teil(to_jsonb(z), $4)::text) h from j z) x)
     )$q$, p_tabelle, v_scope_z, v_on, v_gueltig)
     into r using p_fs, p_rows, p_schueler_ids, v_cols;
   return r || jsonb_build_object('spalten', to_jsonb(v_cols), 'schluessel', to_jsonb(v_pk));
@@ -331,7 +353,9 @@ begin
   if p_tabellen is not null and exists (select 1 from unnest(p_tabellen) x where x not in (select tabelle from public.w24_tabellen())) then
     raise exception 'W24: unbekannte Tabelle in der Auswahl';
   end if;
-  select coalesce(array_agg(s ->> 'id'), '{}') into v_sids from jsonb_array_elements(coalesce(b.daten -> 'tabellen' -> 'schueler', '[]')) s;
+  -- IDs, die im Backup selbst stehen (gehören zur Fahrschule, auch wenn sie jetzt fehlen): Schüler (s:) und Notizen (n:)
+  select coalesce(array_agg('s:' || (s ->> 'id')), '{}') into v_sids from jsonb_array_elements(coalesce(b.daten -> 'tabellen' -> 'schueler', '[]')) s;
+  v_sids := v_sids || coalesce((select array_agg('n:' || (n ->> 'id')) from jsonb_array_elements(coalesce(b.daten -> 'tabellen' -> 'schueler_notizen', '[]')) n), '{}');
   v_codequelle := b.id::text || '|' || p_modus || '|' || coalesce(array_to_string(array(select unnest(p_tabellen) order by 1), ','), '*');
 
   for t in select * from public.w24_tabellen() order by reihe loop
@@ -453,6 +477,7 @@ begin
   v_vorher_id := public.w24_sichern(v_fs, 'vor_wiederherstellung', auth.uid(),
                    jsonb_build_object('fuer_backup', backup_id, 'modus', modus, 'auswahl', to_jsonb(tabellen)));
 
+  begin
   -- Betroffene Tabellen: Auslöser aus (nur in dieser Transaktion).
   for v_info in select x from jsonb_array_elements(v_vor -> 'tabellen') x loop
     if (v_info ->> 'einfuegen')::bigint + (v_info ->> 'aendern')::bigint + (v_info ->> 'loeschen')::bigint > 0 then
@@ -539,6 +564,12 @@ begin
     raise exception 'W24: Nachprüfung fehlgeschlagen, nichts geändert: %', v_nach;
   end if;
 
+  exception when foreign_key_violation then
+    -- z. B. ein Termin eines Fahrlehrers, dessen Zugang endgültig gelöscht ist: melden, nichts still überspringen
+    raise exception 'W24: Zurückholen nicht möglich, ein Eintrag verweist auf etwas, das es nicht mehr gibt (%). Es wurde nichts geändert.', sqlerrm
+      using errcode = '23503';
+  end;
+
   update public.fahrschule_backups set hinweis = coalesce(hinweis, '{}'::jsonb) || jsonb_build_object('ergebnis', v_ergebnis, 'fertig_am', now())
    where id = v_vorher_id;
   return jsonb_build_object('ok', true, 'vorher_backup_id', v_vorher_id, 'tabellen', v_ergebnis,
@@ -560,8 +591,7 @@ begin
      where p_fs is null or fahrschule_id = p_fs)
   delete from public.fahrschule_backups x using r
    where x.id = r.id and r.erstellt_am < now() - interval '2 days'
-     and ((r.a = 'nacht' and r.nr > 14)
-       or (r.a = 'hand' and r.nr > 20)
+     and ((r.a = 'nacht' and r.nr > 30)
        or (r.a = 'vor_wiederherstellung' and r.nr > 5 and r.erstellt_am < now() - interval '90 days'));
   get diagnostics v_n = row_count;
   return v_n;
@@ -577,7 +607,7 @@ declare
   v_fehler jsonb := '[]'::jsonb;
   v_weg integer;
 begin
-  for f in select id from public.fahrschulen order by id loop
+  for f in select id from public.fahrschulen where aktiv order by id loop
     begin
       perform public.w24_sichern(f.id, 'nacht');
       v_ok := v_ok + 1;
@@ -593,6 +623,7 @@ $function$;
 -- ===== 7. Rechte =====
 revoke all on function public.w24_tabellen_liste() from public, anon, authenticated;
 revoke all on function public.w24_ausgenommen() from public, anon, authenticated;
+revoke all on function public.w24_ohne_spalten(text) from public, anon, authenticated;
 revoke all on function public.w24_tabellen() from public, anon, authenticated;
 revoke all on function public.w24_bereich_sql(text, text, text) from public, anon, authenticated;
 revoke all on function public.w24_teil(jsonb, text[]) from public, anon, authenticated;
@@ -617,23 +648,26 @@ do $plan$
 declare j record;
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
-    for j in execute 'select jobid from cron.job where jobname = ''kompass-sicherung-nacht'' or command ilike ''%fahrschule_backup_erstellen%''' loop
+    -- Bisheriger Auftrag (Name sagt „wöchentlich“, lief aber täglich 02:00 UTC: alle_fahrschulen_woechentlich_sichern + backups_aufraeumen)
+    for j in execute 'select jobid from cron.job where jobname in (''woechentliches-fahrschule-backup'', ''kompass-sicherung-nacht'') or command ilike ''%alle_fahrschulen_woechentlich_sichern%''' loop
       perform cron.unschedule(j.jobid);
     end loop;
-    perform cron.schedule('kompass-sicherung-nacht', '23 1 * * *', 'select public.fahrschule_backups_nachtlauf()');
+    -- Gleiche Zeit wie bisher: 02:00 UTC, vor papierkorb_leeren (03:17 UTC) – was der Papierkorb endgültig löscht, ist vorher gesichert.
+    perform cron.schedule('kompass-sicherung-nacht', '0 2 * * *', 'select public.fahrschule_backups_nachtlauf()');
   else
     raise notice 'W24: pg_cron fehlt – Nachtlauf nicht geplant';
   end if;
 end;
 $plan$;
 
--- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=15, nachtlauf_geplant=true bei pg_cron)
+-- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=16, nachtlauf = 1 Auftrag 'kompass-sicherung-nacht', alter Auftrag weg)
 select
   (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'fahrschule_backups'
      and column_name in ('format', 'anlass', 'zaehlung', 'arten', 'groesse_bytes', 'pruefsumme', 'erstellt_von', 'hinweis')) as spalten,
   (select count(*) from pg_policies where schemaname = 'public' and tablename = 'fahrschule_backups' and cmd = 'INSERT') as insert_regel,
   (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
-     and p.proname in ('w24_tabellen_liste', 'w24_ausgenommen', 'w24_tabellen', 'w24_bereich_sql', 'w24_teil', 'w24_zeilen', 'w24_sichern',
+     and p.proname in ('w24_tabellen_liste', 'w24_ausgenommen', 'w24_ohne_spalten', 'w24_tabellen', 'w24_bereich_sql', 'w24_teil', 'w24_zeilen', 'w24_sichern',
                        'w24_darf', 'w24_vergleich', 'w24_vorschau', 'fahrschule_backup_erstellen', 'fahrschule_backup_vorschau',
                        'fahrschule_backup_wiederherstellen', 'fahrschule_backups_aufraeumen', 'fahrschule_backups_nachtlauf')) as funktionen,
-  (select array_agg(tabelle order by reihe) from public.w24_tabellen() where entdeckt) as entdeckte_tabellen;
+  (select array_agg(tabelle order by reihe) from public.w24_tabellen() where entdeckt) as entdeckte_tabellen,
+  (select array_agg(l.tabelle) from public.w24_tabellen_liste() l where l.tabelle not in (select tabelle from public.w24_tabellen() where not entdeckt)) as fehlende_tabellen;

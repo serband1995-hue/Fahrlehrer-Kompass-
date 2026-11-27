@@ -18,7 +18,7 @@
 --   gelöschter Schüler, inaktives Fahrzeug, Papierkorb, Beleg, Handy-Stand, nichts von B) → Vorschau = nichts zu tun →
 --   Daten „verlieren“ und ändern → Vorschau zählt richtig → falscher Code/Büro/fremde Leitung abgewiesen → Ergänzen → Komplett
 --   (Stand = Backup, neuer Beleg bleibt, Zähler nie kleiner, Auslöser wieder an, B unverändert) → Handy-Stand nur auf Wunsch →
---   Rückgängig über die Sicherung „vor_wiederherstellung“ → Prüfsumme/gefälschtes Backup/altes Format abgewiesen → Aufräumen.
+--   Rückgängig über die Sicherung „vor_wiederherstellung“ → Prüfsumme/gefälschtes Backup/altes Format abgewiesen → Aufräumen (30 Nacht, von Hand nie).
 -- NICHT GETESTET: echtes gleichzeitiges Schreiben aus zwei Verbindungen (ein DO-Block = eine Verbindung); der Nachtlauf über
 --   ALLE Fahrschulen (würde jede echte Fahrschule sichern) – geprüft wird w24_sichern(…,'nacht') und das Aufräumen für A.
 -- =====================================================================================================================
@@ -387,15 +387,18 @@ begin
   select count(*) into v_n from public.fahrschule_backups where id = v_bk2 and automatisch and anlass = 'nacht' and format = 2;
   v_pr := v_pr || jsonb_build_object('name', 'Nacht-Sicherung: automatisch, Format 2', 'kat', 'pflicht', 'ok', v_n = 1, 'ist', v_n);
   insert into public.fahrschule_backups (fahrschule_id, automatisch, daten, format, anlass, erstellt_am)
-  select v_fsa, true, '{}'::jsonb, 2, 'nacht', now() - (g || ' days')::interval from generate_series(3, 20) g;
+  select v_fsa, true, '{}'::jsonb, 2, 'nacht', now() - (g || ' days')::interval from generate_series(3, 35) g;
   insert into public.fahrschule_backups (fahrschule_id, automatisch, daten, format, anlass, erstellt_am)
-  select v_fsb, true, '{}'::jsonb, 2, 'nacht', now() - (g || ' days')::interval from generate_series(3, 20) g;
+  select v_fsa, false, '{}'::jsonb, 2, 'hand', now() - (g || ' days')::interval from generate_series(3, 27) g;
+  insert into public.fahrschule_backups (fahrschule_id, automatisch, daten, format, anlass, erstellt_am)
+  select v_fsb, true, '{}'::jsonb, 2, 'nacht', now() - (g || ' days')::interval from generate_series(3, 35) g;
   v_n := public.fahrschule_backups_aufraeumen(v_fsa);
   select count(*) into v_n2 from public.fahrschule_backups where fahrschule_id = v_fsa and anlass = 'nacht';
   v_t := (select count(*) from public.fahrschule_backups where fahrschule_id = v_fsa and anlass = 'vor_wiederherstellung')::text
+      || '/' || (select count(*) from public.fahrschule_backups where fahrschule_id = v_fsa and coalesce(anlass, 'hand') = 'hand')::text
       || '/' || (select count(*) from public.fahrschule_backups where fahrschule_id = v_fsb)::text;
-  v_pr := v_pr || jsonb_build_object('name', 'Aufräumen: 14 Nacht-Sicherungen bleiben, vor_wiederherstellung bleibt, B unberührt', 'kat', 'pflicht',
-    'ok', v_n = 5 and v_n2 = 14 and v_t = '4/18', 'ist', jsonb_build_array(v_n, v_n2, v_t));
+  v_pr := v_pr || jsonb_build_object('name', 'Aufräumen: 30 Nacht-Sicherungen bleiben, von Hand und vor_wiederherstellung bleiben, B unberührt', 'kat', 'pflicht',
+    'ok', v_n = 4 and v_n2 = 30 and v_t = '4/29/33', 'ist', jsonb_build_array(v_n, v_n2, v_t));
 
   perform set_config('role', v_start, true);
   v_ergebnis := jsonb_build_object(

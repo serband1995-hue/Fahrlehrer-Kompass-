@@ -1,8 +1,8 @@
 -- Rückweg zu 20261204_w24_01_sicherung_vollstaendig.sql
 -- Folgen: „Jetzt sichern“ sichert wieder nur die 4 Tabellen von k1_04; Vorschau/Wiederherstellen gibt es nicht mehr.
 -- Vorhandene Sicherungen (auch Format 2) und die neuen Spalten BLEIBEN (nichts geht verloren; Herunterladen geht weiter).
--- Der Nachtlauf „kompass-sicherung-nacht“ wird entfernt. Den früheren Sicherungs-Auftrag danach bei Bedarf von Hand neu planen
--- (Befehl steht im Bericht von HS7 vom 27.11.2026).
+-- Der Nachtlauf „kompass-sicherung-nacht“ wird entfernt und der frühere Auftrag „woechentliches-fahrschule-backup“ (täglich
+-- 02:00 UTC, alle_fahrschulen_woechentlich_sichern) wieder geplant.
 -- Büro/App ab W24 rufen fahrschule_backup_vorschau auf: vorher die Seiten auf den Stand davor zurücksetzen.
 begin;
 do $r$
@@ -12,6 +12,9 @@ begin
     for j in execute 'select jobid from cron.job where jobname = ''kompass-sicherung-nacht''' loop
       perform cron.unschedule(j.jobid);
     end loop;
+    if to_regprocedure('public.alle_fahrschulen_woechentlich_sichern()') is not null then
+      perform cron.schedule('woechentliches-fahrschule-backup', '0 2 * * *', 'select public.alle_fahrschulen_woechentlich_sichern()');
+    end if;
   end if;
 end;
 $r$;
@@ -76,6 +79,7 @@ drop function if exists public.w24_teil(jsonb, text[]);
 drop function if exists public.w24_bereich_sql(text, text, text);
 drop function if exists public.w24_tabellen();
 drop function if exists public.w24_ausgenommen();
+drop function if exists public.w24_ohne_spalten(text);
 drop function if exists public.w24_tabellen_liste();
 
 drop policy if exists "Fahrschule-Admin/Buero erstellt eigene Backups" on public.fahrschule_backups;
