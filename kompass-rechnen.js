@@ -653,7 +653,69 @@
     const n = adresseNorm(a);
     return [n.strasse, [n.plz, n.ort].filter(Boolean).join(" ")].filter(Boolean);
   }
-  const api = { paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+
+  // P1.4a (W25): Überschneidung von Terminen – EIN Prüf-Baustein für App und Büro (nur Hinweis, nie Sperre).
+  // Termin-Form (beide Seiten wandeln vorher um): { id, datum, von, bis, art, status, fahrlehrer, schueler, fahrzeug, geloescht }
+  // Konflikt = gleicher Tag, Zeiten überlappen (Ende = Anfang ist KEIN Konflikt) und gleicher Fahrlehrer, Schüler oder Fahrzeug.
+  // Abgesagte, abgebrochene, geplatzte und gelöschte Termine zählen nicht. Fahrzeug über den Namen (Groß/Klein, Leerzeichen egal).
+  const KONFLIKT_AUS = ["abgesagt", "abgebrochen", "geplatzt", "storniert"];
+  function fahrzeugNorm(n) { return String(n == null ? "" : n).trim().toLowerCase().replace(/\s+/g, " "); }
+  function terminZaehltFuerKonflikt(t) {
+    return !!t && !t.geloescht && !!t.datum && !!t.von && !!t.bis && KONFLIKT_AUS.indexOf(t.status || "") < 0 && hm2min(t.bis) > hm2min(t.von);
+  }
+  function terminUeberlappt(a, b) {
+    return a.datum === b.datum && hm2min(a.von) < hm2min(b.bis) && hm2min(a.bis) > hm2min(b.von);
+  }
+  // Gründe, warum a und b kollidieren (leer = kein Konflikt). Reihenfolge: fahrlehrer, schueler, fahrzeug
+  function konfliktGruende(a, b) {
+    if (!terminZaehltFuerKonflikt(a) || !terminZaehltFuerKonflikt(b) || (a.id != null && a.id === b.id) || !terminUeberlappt(a, b)) return [];
+    const g = [];
+    if (a.fahrlehrer != null && a.fahrlehrer !== "" && a.fahrlehrer === b.fahrlehrer) g.push("fahrlehrer"); // unbekannter Fahrlehrer (null) vergleicht nicht
+    if (a.schueler && a.schueler === b.schueler) g.push("schueler");
+    const fa = fahrzeugNorm(a.fahrzeug);
+    if (fa && fa === fahrzeugNorm(b.fahrzeug)) g.push("fahrzeug");
+    return g;
+  }
+  // Alle Termine aus liste, die mit neu kollidieren: [{ t, gruende }], nach Anfangszeit
+  function terminKonflikte(neu, liste) {
+    const out = [];
+    for (const t of liste || []) { const g = konfliktGruende(neu, t); if (g.length) out.push({ t, gruende: g }); }
+    return out.sort((x, y) => hm2min(x.t.von) - hm2min(y.t.von));
+  }
+  // Ids aller Termine eines Tages (oder mehrerer), die mit mindestens einem anderen kollidieren (für das Warnzeichen)
+  function konfliktIds(liste) {
+    const ids = new Set(), l = (liste || []).filter(terminZaehltFuerKonflikt);
+    for (let i = 0; i < l.length; i++) for (let j = i + 1; j < l.length; j++) {
+      if (konfliktGruende(l[i], l[j]).length) { ids.add(l[i].id); ids.add(l[j].id); }
+    }
+    return ids;
+  }
+  const KONFLIKT_WORTE = { fahrlehrer: "gleicher Fahrlehrer", schueler: "gleicher Schüler", fahrzeug: "gleiches Fahrzeug" };
+  // Eine Zeile je Konflikt, z. B. „10:00–11:30 Max (gleicher Fahrlehrer, gleiches Fahrzeug)“; name(t) liefert den Namen
+  function konfliktText(konflikte, name, mitDatum) {
+    return (konflikte || []).slice(0, 4).map((k) => {
+      const n = name ? name(k.t) : "";
+      return (mitDatum ? k.t.datum.slice(8, 10) + "." + k.t.datum.slice(5, 7) + ". " : "") + k.t.von + "–" + k.t.bis + (n ? " " + n : "") + " (" + k.gruende.map((g) => KONFLIKT_WORTE[g]).join(", ") + ")";
+    }).join("\n") + ((konflikte || []).length > 4 ? "\n… und " + (konflikte.length - 4) + " weitere" : "");
+  }
+  // P1.4b (W25): Spalten für überlappende Termine in einer Tagesspalte. items: [{ id, von, bis }] (HH:MM).
+  // Ergebnis: Map id → { spalte, spalten } – Termine, die sich (auch über Ketten) überlappen, teilen sich die Breite.
+  function spaltenLayout(items) {
+    const l = (items || []).filter((x) => x && x.von && x.bis).map((x) => ({ id: x.id, a: hm2min(x.von), b: Math.max(hm2min(x.bis), hm2min(x.von) + 1) }))
+      .sort((x, y) => x.a - y.a || y.b - x.b);
+    const res = new Map();
+    let gruppe = [], ende = -1, enden = [];
+    const abschliessen = () => { const n = enden.length || 1; gruppe.forEach((g) => res.set(g.id, { spalte: g.s, spalten: n })); gruppe = []; enden = []; };
+    for (const x of l) {
+      if (gruppe.length && x.a >= ende) { abschliessen(); ende = -1; }
+      let s = enden.findIndex((e) => e <= x.a);
+      if (s < 0) { s = enden.length; enden.push(x.b); } else enden[s] = x.b;
+      gruppe.push({ id: x.id, s }); ende = Math.max(ende, x.b);
+    }
+    abschliessen();
+    return res;
+  }
+  const api = { KONFLIKT_AUS, fahrzeugNorm, terminZaehltFuerKonflikt, terminUeberlappt, konfliktGruende, terminKonflikte, konfliktIds, konfliktText, spaltenLayout, paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
     FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS,
     kundennummerText, plzOk, adresseNorm, adresseZeilen, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, lohnStand, LOHN_FC_AB, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };

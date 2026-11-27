@@ -1668,6 +1668,22 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .ct-ev-n{font-size:13px;font-weight:700;line-height:1.2;}
 .ct-ev-a{font-size:11px;color:var(--muted);}
 .cd-stat{color:var(--rot);font-weight:700;margin-left:5px;}
+/* P1.4a/b (W25): Überschneidung – Warnzeichen und Farbe; schmale Spalten in der Tagesansicht */
+:root{--kf-farbe:#e0a030;} body.light{--kf-farbe:#9a5b00;} /* Bernstein: hell dunkler für genug Kontrast (3:1) */
+.kf-zeichen{display:inline-block;margin-right:4px;color:var(--kf-farbe);font-weight:800;}
+.ct-ev.kf-ueber,.cw-ev.kf-ueber{box-shadow:inset 0 0 0 2px var(--kf-farbe),0 3px 8px rgba(0,0,0,.2);}
+.cw-ev.kf-ueber{position:relative;}
+.kf-zeichen.kf-ecke{position:absolute;top:1px;right:2px;margin:0;font-size:10px;line-height:1;}
+.ct-ev.ct-schmal{min-height:44px;}
+.ct-ev.ct-sehr-schmal .ct-ev-a{display:none;}
+.kf-liste{max-height:34vh;overflow:auto;}
+.ct-ev.ct-schmal{padding:5px 6px;}
+.ct-ev.ct-schmal .ct-ev-n{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ct-ev.ct-schmal .ct-ev-a,.ct-ev.ct-schmal .ct-fl{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ct-ev.ct-blockhinten{z-index:0;opacity:.75;}
+.kf-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.kf-liste li{border:1px solid var(--line);border-left:3px solid var(--kf-farbe);border-radius:10px;padding:8px 10px;font-size:14px;line-height:1.35;}
+.kf-grund{font-size:12.5px;color:var(--muted);}
 .ct-free{position:absolute;left:2px;right:2px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px;background:transparent;}
 .ct-free>span:first-child{font-size:11.5px;color:var(--muted);font-weight:600;}
 .ct-free-p{font-size:11px;color:var(--mint-soft);font-weight:800;}
@@ -2847,6 +2863,7 @@ body:not(.light) .tab-i.on .tab-ic{background:rgba(143,202,164,.22);}
 .cal-kw{border-radius:999px !important;}
 .cw-col,.cd-card,.ct-ev,.pf-route,.route-preview,.toggle-row{border-radius:16px !important;}
 .ct-ev{background:var(--surface) !important;}
+.ct-ev.ct-schmal{border-radius:10px !important;}
 .vd-seg.done,.vl i.done{background:var(--akzent) !important;}
 .vd-seg.plan,.vl i.plan{background:var(--orange-line) !important;}
 .es-act.good{color:var(--akzent-dark) !important;}
@@ -7933,6 +7950,9 @@ async function fsSerientermineSheet(sid){
       rows.push({id:uid(),fahrschule_id:_fsAgg.fahrschuleId,fahrlehrer_id:zielLehrer,schueler_id:sid,datum:iso,von,bis,art,status:"geplant",geloescht:false,payload:{},erstellt_von:_uidAus(sessionData),aktualisiert_am:new Date().toISOString()});
       d.setDate(d.getDate()+intervall);
     }
+    // P1.4a: Serie gegen den Kalender prüfen, eine Rückfrage für alle Treffer
+    const kf=_kfFinde(rows.map(r=>({date:r.datum,von:r.von,bis:r.bis,art:r.art,sid:r.schueler_id,_fahrlehrerId:r.fahrlehrer_id})));
+    if(kf.length&&!(await new Promise(ok=>_kfFrage(kf,()=>ok(true),()=>{ if(sheetZurueck(true)==="leer")closeSheet(); ok(false); }))))return;
     const {error}=await supa.from("kalender_termine").insert(rows);
     if(error){toast("Fehler: "+error.message);return;}
     closeSheet(); toast(`${anzahl} Termine angelegt ✓`);
@@ -8291,7 +8311,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.27.6";
+const APP_VERSION="2026.11.27.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -14090,6 +14110,47 @@ function openBlockEventSheet(l){
     });
   });
 }
+/* P1.4a (W25): Überschneidungs-Warnung. Gemeinsamer Prüf-Baustein KR.terminKonflikte (kompass-rechnen.js, auch im Büro).
+   Gleicher Fahrlehrer, gleicher Schüler oder gleiches Fahrzeug zur gleichen Zeit → Rückfrage, „Abbrechen“ ist der Hauptknopf.
+   Nur ein Hinweis, nichts wird gesperrt. Eigene Termine (ohne Fahrschul-Gesamtansicht) gehören alle demselben Fahrlehrer („ich“). */
+function _kfLehrerNeu(){ if(!_fsAgg)return "ich"; if(_fsCalLehrerFilter.length===1)return _fsCalLehrerFilter[0]; return (_fsAgg.lehrer||[]).length===1?_fsAgg.lehrer[0].id:null; }
+function _kfAusLesson(l){ return {id:l.id,datum:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant",fahrlehrer:_fsAgg?(l._fahrlehrerId||null):"ich",schueler:l.sid||"",fahrzeug:l.fahrzeug||""}; }
+// neue: ein Termin oder mehrere ({id?,date,von,bis,art,sid,fahrzeug,_fahrlehrerId?}); Ergebnis ohne doppelte Treffer
+// Ältere kompass-rechnen.js aus einem Zwischenspeicher (ohne den Baustein): keine Rückfrage, kein ⚠, volle Breite – nichts bricht ab
+function _kfDa(){ return typeof KR!=="undefined"&&!!KR.terminKonflikte&&!!KR.konfliktIds&&!!KR.spaltenLayout; }
+function _kfFinde(neue){
+  if(!_kfDa())return [];
+  const alle=(DB.lessons||[]).map(_kfAusLesson), out=[], schon=new Set();
+  [].concat(neue||[]).forEach(o=>{ if(!o||o.art==="block")return; const n=_kfAusLesson(o); if(_fsAgg&&!n.fahrlehrer)n.fahrlehrer=_kfLehrerNeu();
+    KR.terminKonflikte(n,alle).forEach(k=>{ const key=k.t.id+"|"+n.datum; if(schon.has(key))return; schon.add(key); k.datumNeu=n.datum; out.push(k); }); });
+  return out;
+}
+function _kfName(t){ const st=t.schueler&&DB.students.find(s=>s.id===t.schueler); if(st)return st.name;
+  const l=(DB.lessons||[]).find(x=>x.id===t.id); if(t.art==="block")return (l&&l.name)||"Blockiert"; return (CAL_ARTEN[t.art]||{}).lab||""; }
+// Rückfrage zeigen, wenn es Überschneidungen gibt; sonst sofort weiter(). abbruch() nach „Abbrechen“ (Standard: zurück zum vorigen Fenster bzw. zu)
+function _kfFrage(konflikte,weiter,abbruch){
+  if(!konflikte||!konflikte.length){ weiter(); return; }
+  const tage=new Set(konflikte.map(k=>k.datumNeu)), mitTag=tage.size>1;
+  const zeilen=konflikte.slice(0,6).map(k=>`<li><b>${mitTag?esc(isoDE(k.t.datum).slice(0,6))+" ":""}${esc(k.t.von)}–${esc(k.t.bis)}</b> ${esc(_kfName(k.t))}${_fsAgg&&k.t.fahrlehrer?esc(" · "+((DB.lessons.find(x=>x.id===k.t.id)||{})._fahrlehrerName||"")):""}<br><span class="kf-grund">${k.gruende.map(g=>({fahrlehrer:"gleicher Fahrlehrer",schueler:"gleicher Schüler",fahrzeug:"gleiches Fahrzeug"})[g]).join(" · ")}</span></li>`).join("");
+  const mehr=konflikte.length>6?`<li>… und ${konflikte.length-6} weitere</li>`:"";
+  openSheet(`<div class="sheet-h">⚠ Überschneidung</div>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 8px;">Zur gleichen Zeit ist schon etwas eingetragen:</p>
+    <ul class="kf-liste">${zeilen}${mehr}</ul>
+    <p style="font-size:14px;margin:10px 0 14px;font-weight:600;">Trotzdem speichern?</p>
+    <div class="btn-row"><button class="btn btn-ghost" id="kfJa" style="flex:1;">Speichern</button><button class="btn btn-primary" id="kfNein" style="flex:1;">Abbrechen</button></div>`);
+  setTimeout(()=>{ const b=$("#kfNein"); if(b)try{ b.focus(); }catch(e){} },0);
+  $("#kfNein").addEventListener("click",()=>{ if(abbruch)abbruch(); else if(sheetZurueck(true)==="leer")closeSheet(); });
+  let erledigt=false; // ein zweites schnelles Tippen speichert nicht doppelt
+  $("#kfJa").addEventListener("click",()=>{ if(erledigt)return; erledigt=true; setTimeout(()=>{ erledigt=false; },600); weiter(); });
+}
+// Ids der Termine eines Tages mit Überschneidung (für das Warnzeichen im Kalender)
+let _kfTagCache=null; // nur für einen Zeichenvorgang (Woche: viele Kacheln je Tag), danach sofort verworfen
+function _kfIdsAmTag(iso){
+  if(!_kfTagCache){ _kfTagCache=new Map(); setTimeout(()=>{ _kfTagCache=null; },0); }
+  if(!_kfDa())return new Set();
+  if(!_kfTagCache.has(iso))_kfTagCache.set(iso,KR.konfliktIds((DB.lessons||[]).filter(l=>l.date===iso).map(_kfAusLesson)));
+  return _kfTagCache.get(iso);
+}
 /* Fahrstunde/Theorie/Nacht hinzufügen */
 /* Gemeinsame Fahrzeug-Auswahl — von JEDEM Ort benutzt, der ein Fahrzeug braucht (keine eigenen Kopien mehr).
    onPick(fahrzeugNameOderNull) wird nach der Wahl aufgerufen. Ohne konfigurierte Fahrzeuge: sofort null. */
@@ -14153,10 +14214,12 @@ function openAddLessonSheet(art){
       const stoppN=(_bueroNotizen[sid]||[]).filter(n=>n.art==="stopp");
       if(stoppN.length&&["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0&&!confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?"))return;
       const doBook=(fzName)=>{
-        if(isSchalt){ addLesson({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fzName}); }
-        else if(dur===0.5){ addLesson({date,von,bis:min2hm(hm2min(von)+45),art,sid,note,fahrzeug:fzName}); }
-        else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); addLesson({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:"",fahrzeug:fzName}); } }
-        closeSheet(); toast(lab+" eingetragen ✓"); routeKalender();
+        const neue=[];
+        if(isSchalt){ neue.push({date,von,bis:min2hm(hm2min(von)+15),art,sid,note,fahrzeug:fzName}); }
+        else if(dur===0.5){ neue.push({date,von,bis:min2hm(hm2min(von)+45),art,sid,note,fahrzeug:fzName}); }
+        else { for(let i=0;i<dur;i++){ const v=min2hm(hm2min(von)+i*blockMin); neue.push({date,von:v,bis:min2hm(hm2min(v)+blockMin),art,sid,note:i===0?note:"",fahrzeug:fzName}); } }
+        // P1.4a: Überschneidung? Erst fragen („Abbrechen“ führt zurück zur Fahrzeugwahl bzw. zum Formular)
+        _kfFrage(_kfFinde(neue),()=>{ neue.forEach(o=>addLesson(o)); closeSheet(); toast(lab+" eingetragen ✓"); routeKalender(); });
       };
       const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(art)>=0;
       if(fzRelevant) openVehiclePicker({title:st?st.name:"",sub:`${isoDERoh(date)} · ${von}`},doBook);
@@ -14488,12 +14551,17 @@ function openEventEdit(id,overrides){
     const note=$("#esNote").value.trim();
     // K8: Verschieben auf ein anderes Datum = neuer Termin; gleicher Tag oder Art-Wechsel bleibt erlaubt (wie in der Datenbank)
     if(date!==l.date&&_zahlungStopp(l.sid,date,newArt))return;
+    // P1.4a: nur fragen, wenn sich Zeit, Tag, Art oder Fahrzeug ändert (eine alte Überschneidung blockiert nicht jedes Notiz-Speichern)
+    const zeitNeu=date!==l.date||von!==l.von||bis!==l.bis||newArt!==l.art||(newFahrzeug||null)!==(l.fahrzeug||null);
+    const kf=zeitNeu?_kfFinde(Object.assign({},l,{date,von,bis,art:newArt,fahrzeug:newFahrzeug})):[];
+    _kfFrage(kf,()=>{
     if(newArt==="sonder"&&l.art!=="sonder"&&l.sid){
       // Art wird auf Sonderfahrt geändert → SF-Picker anzeigen
       openSFPickerForLesson(id,l.sid,date,von,bis,note,"sonder",newFahrzeug);
     } else {
       updateLesson(id,{date,von,bis,art:newArt,note,fahrzeug:newFahrzeug}); closeSheet(); toast("Gespeichert ✓"); routeKalender();
     }
+    });
   });
 }
 /* Freien Slot an Schüler vergeben */
@@ -14530,7 +14598,8 @@ function openAssignSlotSheet(date,von,bis,art,opts){
       if(!confirm("STOPP vom Büro bei "+(st?st.name:"diesem Schüler")+":\n\n"+stoppN.map(n=>n.text).join("\n")+"\n\nTrotzdem eintragen?"))return; }
     const effBis=curArt==="schalt"?min2hm(hm2min(von)+15):(asHalf?min2hm(hm2min(von)+45):bis);
     const fzRelevant=["fahrstunde","sonder","nacht","schalt"].indexOf(curArt)>=0;
-    const doBook=(fzName)=>{ addLesson({date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName}); closeSheet(); toast("Termin vergeben ✓"); if(opts.nachher)opts.nachher(); else routeKalender(); };
+    const doBook=(fzName)=>{ const neu={date,von,bis:effBis,art:curArt,sid,fahrzeug:fzName};
+      _kfFrage(_kfFinde(neu),()=>{ addLesson(neu); closeSheet(); toast("Termin vergeben ✓"); if(opts.nachher)opts.nachher(); else routeKalender(); }); };
     if(fzRelevant) openVehiclePicker({sub:`${isoDERoh(date)} · ${von}`},doBook);
     else doBook(null);
   };
@@ -15125,13 +15194,20 @@ function wireCalendarDrag(){
             if(prevDate===date&&prevVon===von){ routeKalender(); return; }
             if(l.sid&&date!==prevDate&&_zahlungStopp(l.sid,date,l.art)){ routeKalender(); return; } // K8: Zahlung ausstehend – nicht auf einen anderen Tag ziehen
             const durMin=hm2min(l.bis)-hm2min(l.von);
-            l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
-            save();
-            toastUndo("Fahrstunde verschoben ✓",()=>{
-              const l2=DB.lessons.find(x=>x.id===lid);
-              if(l2){ l2.date=prevDate;l2.von=prevVon;l2.bis=prevBis; save(); }
-              routeKalender();
-            });
+            const verschieben=()=>{
+              const l=DB.lessons.find(x=>x.id===lid); if(!l){ toast("Termin nicht mehr da – nicht verschoben."); return; } // nach einem Abruf während der Rückfrage: das aktuelle Objekt ändern
+              l.date=date;l.von=von;l.bis=min2hm(hm2min(von)+durMin);
+              save();
+              toastUndo("Fahrstunde verschoben ✓",()=>{
+                const l2=DB.lessons.find(x=>x.id===lid);
+                if(l2){ l2.date=prevDate;l2.von=prevVon;l2.bis=prevBis; save(); }
+                routeKalender();
+              });
+            };
+            // P1.4a: am Ziel schon Schüler oder Fahrzeug belegt (z. B. bei einem anderen Fahrlehrer)? Erst fragen.
+            const kf=_kfFinde(Object.assign({},l,{date,von,bis:min2hm(hm2min(von)+durMin)}));
+            if(kf.length){ routeKalender(); _kfFrage(kf,()=>{ closeSheet(); verschieben(); routeKalender(); },()=>{ closeSheet(); }); return; }
+            verschieben();
           }
         }
         routeKalender();
@@ -15267,7 +15343,8 @@ function calEventChip(e,iso){
   // Urlaub/Blocker sind ganze Tage (00:00–23:59) und nicht ziehbar - beim Verschieben gingen sie kaputt.
   const draggable=_calZiehbar(e,iso);
   const dispName=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(_kachelName(e));
-  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}${zahlTag?' zahl-offen':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}><span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${zahlTag}${pruefLabel}</span>${flTag}</div>`;
+  const kf=e.kind==="lesson"&&_kfIdsAmTag(iso).has(e.id); // P1.4a: Warnzeichen bei Überschneidung
+  return `<div class="cw-ev${off?' off':''}${examSoon?' exam-soon':''}${draggable?' cw-draggable':''}${zahlTag?' zahl-offen':''}${kf?' kf-ueber':''}" style="border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"${draggable?` data-dragid="${esc(e.id)}"`:''}>${kf?'<span class="kf-zeichen kf-ecke" title="Überschneidung" aria-label="Überschneidung">⚠</span>':''}<span class="cw-evt">${esc(e.von)}</span><span class="cw-evn">${dispName}${sf}${stat}${fzTag}${zahlTag}${pruefLabel}</span>${flTag}</div>`;
 }
 // TAGESANSICHT
 function calDayHTML(){
@@ -15291,20 +15368,27 @@ function calDayHTML(){
   // Event-Blöcke
   let blocks="";
   items.sort((a,b)=>a.von-b.von);
-  items.forEach(it=>{
+  // P1.4b (W25): überlappende Termine nebeneinander (Spalten); ganze Blocktage (Urlaub) bleiben volle Breite dahinter
+  const spIds=new Map(); items.forEach((it,i)=>{ if(it.type==="ev"&&it.e.art!=="block")spIds.set("i"+i,it); });
+  const lay=!_kfDa()?new Map():KR.spaltenLayout([...spIds.entries()].map(([k,it])=>({id:k,von:min2hm(it.von),bis:min2hm(it.bis)})));
+  const kfIds=_kfIdsAmTag(iso);
+  items.forEach((it,i)=>{
     const top=(it.von-startH*60)*pxPerMin; const h=Math.max(34,(it.bis-it.von)*pxPerMin-3);
+    const sp=lay.get("i"+i), spStil=sp&&sp.spalten>1?`left:calc(${(sp.spalte*100/sp.spalten).toFixed(3)}% + 2px);right:auto;width:calc(${(100/sp.spalten).toFixed(3)}% - 4px);`:"";
     if(it.type==="ev"){ const e=it.e; const c=CAL_ARTEN[e.art]||CAL_ARTEN.fahrstunde;
+      const kf=e.kind==="lesson"&&kfIds.has(e.id), kfKl=kf?" kf-ueber":"", kfZ=kf?`<span class="kf-zeichen" title="Überschneidung" aria-label="Überschneidung">⚠</span>`:"";
       const flName=_fsFlVorname(e), tKl=flName?"ct-ev-t mit-fl":"ct-ev-t", flTxt=flName?`<span class="ct-fl"> · ${esc(flName)}</span>`:'';
       if(e.kind==="examDone"){
         const pass=e.result==="pass"; const col=pass?"#4caf72":"#d94f4f"; const icon=pass?"✓":"✕"; const lbl=pass?"bestanden":"nicht bestanden";
-        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${esc(e.pruefTime||min2hm(it.von))}${flTxt}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
+        blocks+=`<div class="ct-ev exam-done ${pass?'exam-pass':'exam-fail'}" style="top:${top}px;height:${h}px;${spStil}border-left-color:${col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${esc(e.pruefTime||min2hm(it.von))}${flTxt}</div><div class="ct-ev-n"><span class="exd-strike">${esc(e.name)}</span></div><div class="ct-ev-a" style="color:${col};font-weight:800">${icon} Prüfung ${lbl}</div></div>`;
         return;
       }
       const off=e.status&&e.status!=="geplant"; const stat=off?`<span class="cd-stat">${esc(e.status)}</span>`:"";
       const sf=c.sf?`<span class="ct-sf">${sfKuerzel(e)}</span>`:'';
       const examSoon=e.sid&&!!terminFor(e.sid);
-      const dispNameDay=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(e.name);
-      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}" style="top:${top}px;height:${h}px;border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${min2hm(it.von)}${flTxt}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
+      const sehrSchmal=sp&&sp.spalten>=3; // ab 3 Spalten: nur Zeit und Vorname, die Art-Zeile entfällt
+      const dispNameDay=(e.art==="theorie"&&e.lektion)?esc("Lektion "+e.lektion):esc(sehrSchmal?firstName(e.name):e.name);
+      blocks+=`<div class="ct-ev${off?' off':''}${examSoon?' exam-soon':''}${kfKl}${sp&&sp.spalten>1?' ct-schmal':''}${sehrSchmal?' ct-sehr-schmal':''}${e.art==='block'?' ct-blockhinten':''}" style="top:${top}px;height:${h}px;${spStil}border-left-color:${c.col}" data-evedit="${esc(e.kind)}|${esc(e.id)}|${esc(e.sid||'')}"><div class="${tKl}">${kfZ}${min2hm(it.von)}${flTxt}</div><div class="ct-ev-n">${dispNameDay}${sf}</div><div class="ct-ev-a">${c.lab}${stat}</div></div>`;
     } else if(it.type==="free"){ const s=it.s; const c=CAL_ARTEN[s.art]||CAL_ARTEN.fahrstunde;
       blocks+=`<button class="ct-free" style="top:${top}px;height:${h}px" data-freeslot="${esc(iso)}|${esc(s.von)}|${esc(s.bis)}|${esc(s.art)}"><span>${min2hm(it.von)} · frei</span><span class="ct-free-p">+ vergeben</span></button>`;
     } else { const c=CAL_ARTEN.theorie;

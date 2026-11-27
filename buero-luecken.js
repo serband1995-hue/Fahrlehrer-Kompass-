@@ -375,8 +375,9 @@ function luSerienDialog(sid) {
     const bis = plusMinuten(d.von, 90);
     if (KR.hm2min(bis) <= KR.hm2min(d.von)) { toast("Zu spät am Tag für 90 Minuten.", true); return false; }
     const tage = luSerienTage(d.start, Number(d.intervall) || 1, anzahl);
-    const belegt = tage.filter((t) => S.termine.some((y) => !y.geloescht && y.fahrlehrer_id === x.fahrlehrer_id && y.datum === t && y.von && y.bis && KR.hm2min(y.von) < KR.hm2min(bis) && KR.hm2min(y.bis) > KR.hm2min(d.von)));
-    if (belegt.length && !(await bestaetige("Zeit schon belegt", `${lehrerName(x.fahrlehrer_id)} hat an ${belegt.length === 1 ? "1 Tag" : belegt.length + " Tagen"} um diese Zeit schon einen Termin (${belegt.map(datumDE).join(", ")}). Trotzdem alle anlegen?`, "Trotzdem anlegen", "Abbrechen", true))) return false;
+    // P1.4a (W25): gemeinsamer Prüf-Baustein (gleicher Fahrlehrer oder Schüler zur gleichen Zeit); vorher fehlte hier „return false“ nach „Abbrechen“
+    const art = d.art === "sonder" ? "sonder" : "fahrstunde";
+    if (typeof kfFrage === "function" && !(await kfFrage(kfFinde(tage.map((t) => ({ id: null, datum: t, von: d.von, bis, art, fahrlehrer_id: x.fahrlehrer_id, schueler_id: sid })))))) return false;
     if (typeof vwUrlaubWarnen === "function" && !(await vwUrlaubWarnen(x.fahrlehrer_id, tage, "Trotzdem alle anlegen?", "Trotzdem anlegen"))) return false;
     const jetzt = new Date().toISOString();
     const zeilen = tage.map((t, i) => ({ id: "b" + Date.now().toString(36) + i + Math.random().toString(36).slice(2, 6), fahrschule_id: S.fsId, fahrlehrer_id: x.fahrlehrer_id, schueler_id: sid,
