@@ -55,7 +55,8 @@ async function oeffne({ breite, hoehe, ladefehler = false, person = ["Paula Must
                 daten: { format: 2, tabellen: { schueler: [{ name: "Muster" }] } } }); return null; },
               fahrschule_backup_vorschau: (a) => ({ ok: true, wiederherstellbar: true, darf_wiederherstellen: window.__FAKE.darf, modus: a.modus, code: "AB12CD",
                 einfuegen: 2, aendern: a.modus === "komplett" ? 1 : 0, loeschen: a.modus === "komplett" ? 1 : 0,
-                tabellen: [{ tabelle: "kalender_termine", einfuegen: 2, aendern: a.modus === "komplett" ? 1 : 0, loeschen: a.modus === "komplett" ? 1 : 0 }, { tabelle: "schueler", einfuegen: 0, aendern: 0, loeschen: 0 }] }),
+                bleibt_fest: a.modus === "komplett" ? 3 : 0,
+                tabellen: [{ tabelle: "zahlungsbelege", art: "anhaengen", gewaehlt: true, zuviel: 2, einfuegen: 0, aendern: 0, loeschen: 0 }, { tabelle: "kalender_termine", einfuegen: 2, aendern: a.modus === "komplett" ? 1 : 0, loeschen: a.modus === "komplett" ? 1 : 0 }, { tabelle: "schueler", einfuegen: 0, aendern: 0, loeschen: 0 }] }),
               fahrschule_backup_wiederherstellen: (a) => { window.__FAKE.zurueck.push(a); return a.bestaetigung === "AB12CD" ? { ok: true, vorher_backup_id: "bk-v" } : null; } },
       fehler: ladefehler ? { fahrschule_urlaub: "Testfehler" } : {} };
   }, [bauDaten(HEUTE), ladefehler]);
@@ -179,6 +180,7 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
   await page.check("dialog[open] input[name=modus][value=komplett]");
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
   inhalt.zahlen = /2 kommen dazu, 1 werden geändert, 1 fallen weg/.test(await page.textContent("dialog[open]")) && /AB12CD/.test(await page.textContent("dialog[open]"));
+  inhalt.belegeBleiben = /dazugekommen, bleibt erhalten: 2 Belege/.test(await page.textContent("dialog[open]")) && /3 gelaufene, unterschriebene oder stornierte Stunden bleiben/.test(await page.textContent("dialog[open]"));
   await page.fill("dialog[open] input[name=code]", "XXXXXX");
   await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
   inhalt.falsch = /Code stimmt nicht/.test(await page.textContent("dialog[open]")) && (await page.evaluate(() => window.__FAKE.zurueck.length)) === 0;
