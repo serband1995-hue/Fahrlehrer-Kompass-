@@ -166,6 +166,12 @@ jobs:
           npx -y playwright@1.63.0 install --with-deps chromium
       - name: "Zehn Fahrlehrer: Anlegen bis Alltag, Trennung, gleiches Handy, Büro/Leitung sehen alle (W18)"
         run: NODE_PATH=$(npm root -g) node scripts/fahrlehrer-team-test.mjs
+      - name: "W21 Prüfungsfenster: Serbands Fälle 1–10 über App und Büro mit einem Datenstand, gleichzeitiges Schreiben"
+        run: NODE_PATH=$(npm root -g) node scripts/w21-pruefungsfenster-test.mjs
+      - name: "W21 Prüfungsfenster: App (Handy, Tippen) und Büro (PC, Ziehen) einzeln"
+        run: |
+          NODE_PATH=$(npm root -g) node scripts/pruefungsfenster-app-test.mjs
+          NODE_PATH=$(npm root -g) node scripts/pruefungstage-buero-test.mjs
       - name: "W18 Live-Probe als Trockenlauf in PGlite (Rücknahme, Trennung, Migration Rolle im WITH CHECK)"
         run: |
           npm i --silent --no-save --prefix /tmp/w18-pg @electric-sql/pglite@0.2.17
@@ -176,6 +182,10 @@ jobs:
           # live ist Postgres 17 (Recht MAINTAIN): derselbe Test zusätzlich mit PGlite auf PG 17
           npm i --silent --no-save --prefix /tmp/w20-pg17 @electric-sql/pglite@0.3.14
           NODE_PATH=/tmp/w20-pg17/node_modules node scripts/w20-sql-test.mjs
+      - name: "W21 Prüfungstage (55-Min-Fenster): Migration, Doppelbelegung, Spiegel, Rückweg, Live-Probe als Trockenlauf in PGlite (PG 16 und 17)"
+        run: |
+          NODE_PATH=/tmp/w18-pg/node_modules node scripts/w21-sql-test.mjs
+          NODE_PATH=/tmp/w20-pg17/node_modules node scripts/w21-sql-test.mjs
 
   buero:
     # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.

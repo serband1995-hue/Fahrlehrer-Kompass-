@@ -216,7 +216,7 @@ nav{display:flex;flex-direction:column;gap:12px;}
 .warnzeile td{background:var(--rot-soft);}
 /* Prüfungs-Tabellen: gleiche Spalten über alle Tage */
 .ptabelle{table-layout:fixed;}
-.ptabelle .c-zeit{width:90px;} .ptabelle .c-zeit.breit{width:190px;} .ptabelle .c-art{width:140px;}
+.ptabelle .c-zeit{width:118px;} .ptabelle .c-zeit.breit{width:190px;} .ptabelle .c-art{width:140px;}
 .ptabelle .c-lehrer{width:22%;} .ptabelle .c-haken{width:170px;} .ptabelle .c-akt{width:182px;}
 .ptabelle td{overflow-wrap:break-word;}
 /* B7: feste Spalten erst ab 1441 px – darunter (z. B. 1366er Laptops) bricht sonst der Schülername Buchstabe für Buchstabe */
@@ -1177,3 +1177,70 @@ h3.es-abschnitt,.es-abschnitt{font-size:24px;margin:0 0 6px;padding:0;}
 .hinweis-kasten{background:#fff4d6;border:1px solid #e0b84a;border-left:5px solid #c9971f;color:#4a3800;border-radius:var(--r-klein);padding:10px 14px;font-weight:600;line-height:1.45;}
 @media (prefers-color-scheme:dark){.hinweis-kasten{background:#3a3010;border-color:#8a6d1c;color:#ffe9a8;}}
 .punkte-dialog .wahl,.es-inhalt .formular .wahl{min-height:44px;}
+
+/* W21: Prüfungstage mit festen 55-Minuten-Fenstern (buero-pruefungstage.js) */
+.pt-karte{margin-top:16px;}
+.pt-karte.heute{border-color:var(--akzent-line);}
+.pt-kopf{display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pt-kopf h3{margin:0;font-size:22px;}
+.pt-kopf-info{color:var(--muted);margin-top:2px;}
+.pt-zahl{color:var(--txt);}
+.pt-kopf .knopfreihe{display:flex;flex-wrap:wrap;gap:8px;}
+.pt-tabelle{table-layout:auto;}
+.pt-tabelle th:first-child,.pt-tabelle td:first-child{width:1%;white-space:nowrap;}
+.pt-tabelle select.pt-fl{min-height:40px;max-width:100%;padding:0 8px;border:1px solid var(--feld);border-radius:var(--r-klein);background:var(--bg);}
+.pt-zeile.pt-frei td{background:transparent;color:var(--faint);}
+.pt-zeile.pt-frei td.zeitspalte{font-weight:500;}
+.pt-zeile.pt-belegt{cursor:grab;}
+.pt-zeile.pt-belegt td{border-left:0;}
+.pt-zeile.pt-st-gelb td:first-child{box-shadow:inset 5px 0 0 var(--gelb);}
+.pt-zeile.pt-st-gruen td{background:var(--gruen-soft);} .pt-zeile.pt-st-gruen td:first-child{box-shadow:inset 5px 0 0 var(--gruen);}
+.pt-zeile.pt-st-rot td{background:var(--rot-soft);} .pt-zeile.pt-st-rot td:first-child{box-shadow:inset 5px 0 0 var(--rot);}
+.pt-zeile.pt-folge td{background:var(--surface-2);font-size:14px;}
+tr.pt-st-gruen td:first-child{box-shadow:inset 5px 0 0 var(--gruen);}
+tr.pt-st-rot td:first-child{box-shadow:inset 5px 0 0 var(--rot);}
+tr.pt-st-gelb td:first-child{box-shadow:inset 5px 0 0 var(--gelb);}
+.pt-zeile.zieht{opacity:.45;}
+.pt-zeile.pt-ziel td{background:var(--gelb-soft);outline:2px dashed var(--akzent-line);outline-offset:-2px;}
+.pt-griff{color:var(--faint);letter-spacing:-2px;cursor:grab;user-select:none;}
+.pt-status{white-space:nowrap;}
+.pt-status .marke-pill{white-space:nowrap;}
+.pt-erg{display:inline-flex;gap:6px;margin-left:8px;}
+.pt-erg .knopf,.pt-status .ergebnis-knoepfe .knopf{min-width:44px;}
+.pt-hinweis{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin:6px 0 10px;padding:10px 14px;border-radius:12px;background:var(--gelb-soft);}
+.pt-unterkopf{margin:16px 0 4px;color:var(--muted);font-size:17px;}
+.pt-tipp{margin:12px 0 0;}
+.pt-hinweis-karte{border-color:var(--gelb);margin-top:16px;}
+.pt-liste{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:8px;}
+.pt-liste li{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:space-between;align-items:center;}
+.pt-wahlliste{max-height:46vh;overflow:auto;margin:8px 0;border:1px solid var(--line-soft);border-radius:var(--r-klein);padding:6px 10px;}
+.pt-wahl{display:flex;gap:8px;align-items:center;padding:6px 0;}
+.pt-wahl[hidden]{display:none;}
+.pt-gruppe{font-weight:700;color:var(--muted);margin:10px 0 2px;font-size:15px;}
+.pt-suche{width:100%;}
+.pt-farben{margin-top:2px;}
+@media (max-width:900px){
+  .pt-tabelle thead{display:none;}
+  .pt-tabelle,.pt-tabelle tbody,.pt-tabelle tr,.pt-tabelle td{display:block;width:auto !important;}
+  .pt-tabelle tr.pt-zeile{border-bottom:1px solid var(--line-soft);padding:6px 0;}
+  .pt-tabelle td{border-bottom:0;padding:4px 10px;}
+  .pt-tabelle td.aktionen{width:auto;}
+  .pt-tabelle td[colspan]{display:block;}
+}
+/* W21 Feinschliff: Prüfungstag-Tabelle passt in die Karte (ab 1024 px) */
+.pt-tabelle td{padding:8px 6px;}
+.pt-tabelle th{padding:8px 6px;}
+.pt-tabelle td:nth-child(2){min-width:150px;}
+.pt-tabelle select.pt-fl{width:100%;min-width:120px;max-width:200px;}
+details.pt-hinweis-karte>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+details.pt-hinweis-karte>summary::-webkit-details-marker{display:none;}
+details.pt-hinweis-karte[open]>summary .knopf{display:none;}
+.pt-tabelle .aktionen-box{min-width:0;max-width:none;}
+.pt-tabelle .haken-reihe{gap:4px;}
+.pt-tabelle .pt-status{white-space:normal;} .pt-tabelle .pt-status .marke-pill{font-size:13px;padding:2px 8px;}
+.pt-tabelle .pt-erg{margin-left:4px;gap:4px;} .pt-tabelle .pt-erg .knopf{min-width:34px;padding:0 6px;}
+.pt-tabelle .knopf.klein{padding-left:8px;padding-right:8px;}
+.pt-griff{display:inline-block;}
+.pt-tabelle .wiederholung-hinweis{display:block;}
+.pt-tabelle.pt-uhrzeit th:first-child,.pt-tabelle.pt-uhrzeit td:first-child{white-space:normal;width:auto;min-width:110px;}
+details[data-ergapphinweis][open]>summary .knopf{display:inline-flex;}

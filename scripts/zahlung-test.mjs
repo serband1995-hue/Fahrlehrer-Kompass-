@@ -365,7 +365,10 @@ const dlgZahl = (page) => page.evaluate(() => window.__dlg);
   await pruefe("Z4n", "Büro: Praxisprüfung planen für Anna (frei) → gespeichert und im Kalender des Fahrlehrers", async () => {
     const f = [];
     if ((await pEin()).length !== 1) f.push("Prüfung nicht gespeichert: " + (await toastText()));
-    if ((await einfuegen()).length !== kEin + 1) f.push("Kalender-Eintrag fehlt");
+    // W21: den Kalender-Eintrag legt jetzt der Server an (Attrappe: Spiegel in pruefungstermine); der Browser schreibt keinen mehr
+    if ((await einfuegen()).length !== kEin) f.push("Browser hat selbst in den Kalender geschrieben");
+    const spiegel = await page.evaluate(() => { const p = window.__FAKE.tabellen.pruefungstermine.find((x) => x.schueler_id === "za" && !x.pruefungstag_id); return !!(p && window.__FAKE.tabellen.kalender_termine.some((t) => t.id === p.kalender_termin_id && t.fahrlehrer_id === "fl-1" && !t.geloescht)); });
+    if (!spiegel) f.push("Kalender-Eintrag fehlt");
     // W15c: bei neuer Prüfung zeigt die Zahlungs-Karte „Prüfung gespeichert“ statt des kurzen Hinweises
     const karteText = await page.evaluate(() => (document.getElementById("zmKarte") || {}).textContent || "");
     if (!/Prüfung gespeichert/.test((await toastText()) + " " + karteText)) f.push("Meldung: " + (await toastText()) + " | Karte: " + karteText);

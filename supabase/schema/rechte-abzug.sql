@@ -380,3 +380,33 @@ create policy "Einstellungen lesen Mitglieder" on public.fahrschule_einstellunge
   WHERE ((p.id = auth.uid()) AND COALESCE(p.aktiv, true)))) AND (is_super_admin(auth.uid()) OR (fahrschule_id = k5_meine_fahrschule()))), false));
 create policy "Einstellungen loeschen Buero Leitung" on public.fahrschule_einstellungen as PERMISSIVE for DELETE to authenticated
   using (zm_darf(fahrschule_id));
+
+-- ===== W21 (Migration 20261203_w21_01, aus der Datei nachgetragen, nicht live gezogen) =====
+-- Neue Tabelle pruefungstage (Prüfungstag = ein Prüfer, Fenster à 55 Min). Rechte nur authenticated (select/insert/update), nie anon, kein DELETE.
+create policy "Pruefungstage Buero Leitung" on public.pruefungstage as PERMISSIVE for ALL to authenticated
+  using (((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = my_fahrschule_id())))
+  with check (((is_buero(auth.uid()) OR is_fahrschule_admin(auth.uid())) AND (fahrschule_id = my_fahrschule_id())));
+create policy "Pruefungstage Super Admin" on public.pruefungstage as PERMISSIVE for ALL to authenticated
+  using (is_super_admin(auth.uid())) with check (is_super_admin(auth.uid()));
+create policy "Pruefungstage Fahrlehrer lesen" on public.pruefungstage as PERMISSIVE for SELECT to authenticated
+  using (((fahrschule_id = my_fahrschule_id()) AND (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.rolle = 'fahrlehrer' AND p.aktiv))));
+create policy "Pruefungstage Fahrlehrer anlegen" on public.pruefungstage as PERMISSIVE for INSERT to authenticated
+  with check (((fahrschule_id = my_fahrschule_id()) AND (erstellt_von = auth.uid()) AND (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.rolle = 'fahrlehrer' AND p.aktiv))));
+create policy "Pruefungstage Fahrlehrer eigene aendern" on public.pruefungstage as PERMISSIVE for UPDATE to authenticated
+  using (((erstellt_von = auth.uid()) AND (fahrschule_id = my_fahrschule_id())))
+  with check (((erstellt_von = auth.uid()) AND (fahrschule_id = my_fahrschule_id()) AND (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.rolle = 'fahrlehrer' AND p.aktiv))));
+-- pruefungstermine: Fahrlehrer dürfen eigene Prüfungen anlegen/ändern (vorher nur lesen). Haken/Notiz/quelle schützt der Auslöser pt_schutz.
+create policy "Pruefungstermine Fahrlehrer anlegen" on public.pruefungstermine as PERMISSIVE for INSERT to authenticated
+  with check (((fahrlehrer_id = auth.uid()) AND (fahrschule_id = my_fahrschule_id()) AND (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.rolle = 'fahrlehrer' AND p.aktiv))
+    AND (EXISTS (SELECT 1 FROM schueler s WHERE s.id::text = schueler_id::text AND s.fahrschule_id = my_fahrschule_id()))));
+create policy "Pruefungstermine Fahrlehrer eigene aendern" on public.pruefungstermine as PERMISSIVE for UPDATE to authenticated
+  using ((fahrlehrer_id = auth.uid()))
+  with check (((fahrlehrer_id = auth.uid()) AND (fahrschule_id = my_fahrschule_id()) AND (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.rolle = 'fahrlehrer' AND p.aktiv))
+    AND (EXISTS (SELECT 1 FROM schueler s WHERE s.id::text = schueler_id::text AND s.fahrschule_id = my_fahrschule_id()))));
+CREATE TRIGGER trg_pruefungstag_schutz BEFORE INSERT OR UPDATE ON public.pruefungstage FOR EACH ROW EXECUTE FUNCTION pruefungstag_schutz();
+CREATE TRIGGER trg_pruefungstag_nachziehen AFTER UPDATE ON public.pruefungstage FOR EACH ROW EXECUTE FUNCTION pruefungstag_nachziehen();
+CREATE TRIGGER trg_pt_schutz BEFORE INSERT OR UPDATE ON public.pruefungstermine FOR EACH ROW EXECUTE FUNCTION pt_schutz();   -- Fenster, Doppelbelegung, Zahlungssperre, Kalender-Spiegel
+CREATE TRIGGER trg_pt_ergebnis_spiegel AFTER INSERT OR UPDATE ON public.pruefungstermine FOR EACH ROW EXECUTE FUNCTION pt_ergebnis_spiegel();   -- Büro-Ergebnis → kalender_pruefungen
+CREATE TRIGGER trg_kp_ergebnis_spiegel AFTER INSERT OR UPDATE ON public.kalender_pruefungen FOR EACH ROW EXECUTE FUNCTION kp_ergebnis_spiegel();   -- App-Ergebnis → pruefungstermine.status
+CREATE TRIGGER trg_termin_a_pruefung_spiegel BEFORE UPDATE ON public.kalender_termine FOR EACH ROW EXECUTE FUNCTION kt_pruefung_spiegel();   -- Spiegelzeile: Tag/Zeit/Personen/gelöscht nur aus pruefungstermine
+-- RPCs (EXECUTE nur authenticated): pruefung_tauschen(a,b) security invoker; pruefungstage_belegung(von,bis) security definer (fremde Schüler nie sichtbar).

@@ -1,0 +1,407 @@
+// W21: Trockenlauf der Migration 20261203_w21_01 (Prüfungstage mit 55-Minuten-Fenstern), ihres Rückwegs und der Live-Probe
+// scripts/sql/w21-2-probe.sql in PGlite (echtes Postgres in Node, ohne Netz, ohne Live-Datenbank).
+//
+// Ehrlich: PGlite prüft eine ATTRAPPE. Tabellen sind aus dem Code nachgebaut (buero.js, index.html), nicht 1:1 live; die
+// Zahlungssperre (termin_zahlung_sperre) ist wörtlich aus 20261123_k8_01. Gleichzeitiges Schreiben aus zwei Verbindungen kann
+// PGlite nicht (eine Verbindung): belegt wird die Sperr-Logik nacheinander und der eindeutige Index als zweite Sicherung.
+//
+// Aufruf:  npm i --silent --no-save --prefix /tmp/w18-pg @electric-sql/pglite@0.2.17
+//          NODE_PATH=/tmp/w18-pg/node_modules node scripts/w21-sql-test.mjs
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+
+const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+const require = createRequire(import.meta.url);
+let PGlite;
+try { ({ PGlite } = require("@electric-sql/pglite")); } catch (e) {
+  console.error("PGlite fehlt: npm i --silent --no-save --prefix /tmp/w18-pg @electric-sql/pglite@0.2.17 und mit NODE_PATH=/tmp/w18-pg/node_modules starten.");
+  process.exit(1);
+}
+const lies = (p) => readFileSync(join(ROOT, p), "utf8");
+const M = lies("supabase/migrations/20261203_w21_01_pruefungstage.sql");
+const R = lies("supabase/rueckweg/20261203_w21_01_rueckweg.sql");
+const PROBE = lies("scripts/sql/w21-2-probe.sql");
+const LESEN = lies("scripts/sql/w21-1-lesen.sql");
+const LIVE = lies("scripts/sql/w21-live-ausloeser.sql");
+
+let faelle = 0, fehler = 0;
+function ok(name, bedingung, detail) {
+  faelle++;
+  if (bedingung) console.log("ok   " + name);
+  else { fehler++; console.log("FEHLER " + name + (detail !== undefined ? "\n       " + (typeof detail === "string" ? detail : JSON.stringify(detail)) : "")); }
+}
+
+// ---------- 0. Textprüfung ----------
+const ohneKomm = (t) => t.replace(/^\s*--.*$/gm, "");
+ok("Probe: genau ein DO-Block, endet mit raise W21_ERGEBNIS", (PROBE.match(/^do \$w21p\$/gm) || []).length === 1 && /raise exception 'W21_ERGEBNIS %'/.test(PROBE));
+ok("Probe: kein drop/alter/grant/revoke/create", !/\b(drop|alter|grant|revoke|create)\b/i.test(ohneKomm(PROBE)));
+ok("Probe: E-Mails nur @example.invalid", !/@(?!example\.invalid)[a-z0-9-]+\.[a-z]+/i.test(ohneKomm(PROBE)));
+for (const [n, t] of [["Probe", PROBE], ["Lesen", LESEN], ["Migration", M], ["Rückweg", R]]) ok(n + ": nennt nie das Akademie-Projekt", !t.includes("fxgljvhpikjcejhghgbp"));
+const lesenOhne = ohneKomm(LESEN).replace(/'[^']*'/g, "''");
+ok("Lesen: keine Schreib-/Struktur-Befehle", !/\b(insert|update|delete|drop|alter|truncate|create|grant|revoke|vacuum|call|perform)\b/i.test(lesenOhne));
+ok("Lesen: genau eine Anweisung, beginnt mit select", lesenOhne.split(";").map((x) => x.trim()).filter(Boolean).length === 1 && /^select\b/i.test(lesenOhne.trim()));
+ok("Migration: nie Rechte für anon", !/grant[^;]*\banon\b/i.test(ohneKomm(M)));
+ok("Migration: jede neue Schreibregel hat ein WITH CHECK mit Rolle", (() => {
+  const regeln = ohneKomm(M).split(/create policy /i).slice(1);
+  return regeln.every((r) => /for select/i.test(r) || (/with check/i.test(r) && /(is_buero|is_fahrschule_admin|is_super_admin|rolle = 'fahrlehrer')/.test(r.split(/with check/i)[1] || "")));
+})());
+
+// ---------- 1. Attrappe ----------
+const SR = ["service", "role"].join("_");
+const FS = "11111111-1111-1111-1111-111111111111", FS2 = "22222222-2222-2222-2222-222222222222";
+const U = { buero: "a0000000-0000-0000-0000-000000000001", fl1: "a0000000-0000-0000-0000-000000000002", fl2: "a0000000-0000-0000-0000-000000000003",
+  leitung: "a0000000-0000-0000-0000-000000000004", fremd: "a0000000-0000-0000-0000-000000000005" };
+
+async function baueDb() {
+  const db = new PGlite();
+  await db.exec(`
+    create role anon; create role authenticated; create role ${SR} bypassrls;
+    create schema auth;
+    create function auth.uid() returns uuid language sql stable as $$
+      select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+    grant usage on schema auth to anon, authenticated;
+    create table auth.users (instance_id uuid, id uuid primary key, aud text, role text, email text unique, encrypted_password text,
+      email_confirmed_at timestamptz, raw_app_meta_data jsonb, raw_user_meta_data jsonb, created_at timestamptz, updated_at timestamptz);
+    create table public.fahrschulen (id uuid primary key, name text, slug text not null unique);
+    insert into public.fahrschulen values ('${FS}', 'Test', 'test'), ('${FS2}', 'Andere', 'andere');
+    create table public.profiles (id uuid primary key, email text, name text, rolle text not null default 'fahrlehrer', fahrschule_id uuid, aktiv boolean not null default true, faehrt_selbst boolean default false);
+    create function public.handle_new_user() returns trigger language plpgsql security definer set search_path to 'public' as $$
+      begin insert into public.profiles (id, email, rolle, aktiv) values (new.id, new.email, 'fahrlehrer', true); return new; end $$;
+    create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
+    insert into public.profiles (id, rolle, fahrschule_id, aktiv, faehrt_selbst) values ('${U.buero}', 'buero', '${FS}', true, false), ('${U.fl1}', 'fahrlehrer', '${FS}', true, false),
+      ('${U.fl2}', 'fahrlehrer', '${FS}', true, false), ('${U.leitung}', 'fahrschule_admin', '${FS}', true, true), ('${U.fremd}', 'fahrlehrer', '${FS2}', true, false);
+    create function public.is_super_admin(u uuid) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists (select 1 from public.profiles where id = u and rolle = 'super_admin' and aktiv) $$;
+    create function public.is_buero(u uuid) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists (select 1 from public.profiles where id = u and rolle = 'buero' and aktiv) $$;
+    create function public.is_fahrschule_admin(u uuid) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists (select 1 from public.profiles where id = u and rolle = 'fahrschule_admin' and aktiv) $$;
+    create function public.my_fahrschule_id() returns uuid language sql stable security definer set search_path to 'public' as $$ select fahrschule_id from public.profiles where id = auth.uid() $$;
+    alter table public.profiles enable row level security;
+    grant select on public.profiles to authenticated;
+    create policy "Eigenes Profil lesen" on public.profiles for select using (auth.uid() = id);
+    create table public.schueler (id text primary key, fahrschule_id uuid, fahrlehrer_id uuid, name text, zahlung_gesperrt_seit timestamptz, zahlung_gesperrt_grund text);
+    create function public.schueler_reakt_gesperrt(s public.schueler) returns boolean language sql stable as $$ select false $$;
+    -- Tabellen wie LIVE (Lese-SQL w21-1-lesen, 27.11.2026): Uhrzeiten als Text 'HH:MM' mit CHECK, Pflichtspalten, ID-Format
+    create table public.kalender_termine (id text primary key check (id ~ '^[A-Za-z0-9_-]{1,64}$'), fahrschule_id uuid not null, fahrlehrer_id uuid not null,
+      schueler_id text check (schueler_id is null or schueler_id ~ '^[A-Za-z0-9_-]{1,64}$'), datum date not null, von text, bis text,
+      art text, fahrzeug text, status text, geloescht boolean not null default false, payload jsonb default '{}', erstellt_von uuid, aktualisiert_am timestamptz default now(),
+      buero_fc_status text default 'offen', buero_fc_nachgereicht_am date, theorie_bestanden boolean, theorie_gesperrt_bis date, interessent_name text,
+      interessent_telefon text, kurs_bezahlt boolean default false, admin_entfernt_am timestamptz, geloescht_am timestamptz,
+      buero_fc_anzahl smallint check (buero_fc_anzahl is null or buero_fc_anzahl between 0 and 20),
+      constraint kalender_termine_zeit_format check ((von is null or von ~ '^[0-9]{1,2}:[0-5][0-9]$') and (bis is null or bis ~ '^[0-9]{1,2}:[0-5][0-9]$')));
+    create table public.kalender_pruefungen (id text primary key check (id ~ '^[A-Za-z0-9_-]{1,64}$'), fahrschule_id uuid not null, fahrlehrer_id uuid not null,
+      schueler_id text check (schueler_id is null or schueler_id ~ '^[A-Za-z0-9_-]{1,64}$'), datum date, result text, pruefer text,
+      attempt int, geloescht boolean not null default false, payload jsonb default '{}', erstellt_von uuid, aktualisiert_am timestamptz default now());
+    create table public.pruefungstermine (id uuid primary key default gen_random_uuid(), fahrschule_id uuid not null references public.fahrschulen(id) on delete cascade,
+      schueler_id text not null, fahrlehrer_id uuid references public.profiles(id) on delete set null, art text not null check (art in ('theorie', 'praxis')), klasse text,
+      datum date not null, von text check (von is null or von ~ '^[0-9]{1,2}:[0-5][0-9]$'), pruefer text,
+      status text not null default 'geplant' check (status in ('geplant', 'bestanden', 'nicht_bestanden', 'abgesagt')),
+      entgelt_bezahlt boolean not null default false, tuev_gutschein boolean not null default false, as_portal boolean not null default false,
+      kalender_termin_id text, notiz text, erstellt_von uuid default auth.uid(), erstellt_am timestamptz not null default now(), aktualisiert_am timestamptz not null default now());
+    create table public.aenderungsprotokoll (id bigserial primary key, fahrschule_id uuid, tabelle text, datensatz_id text, feld text, alt text, neu text,
+      geaendert_von uuid, bearbeiter text, grund text, erstellt_am timestamptz default now());
+    create function public.termin_ist_nachweis(t public.kalender_termine) returns boolean language sql stable as $$ select false $$;
+    create function public.buero_bearbeiter() returns text language sql stable as $$ select null::text $$;
+    alter table public.kalender_termine enable row level security;
+    alter table public.kalender_pruefungen enable row level security;
+    alter table public.pruefungstermine enable row level security;
+    alter table public.schueler enable row level security;
+    grant select, insert, update, delete on public.kalender_termine, public.kalender_pruefungen, public.pruefungstermine, public.schueler to authenticated;
+    create policy "Pruefungstermine Buero Admin" on public.pruefungstermine as permissive for all to authenticated
+      using (((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and (fahrschule_id = my_fahrschule_id())))
+      with check (((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and (fahrschule_id = my_fahrschule_id())));
+    create policy "Pruefungstermine Fahrlehrer lesen" on public.pruefungstermine as permissive for select to authenticated using ((fahrlehrer_id = auth.uid()));
+    create policy "Buero alle Termine" on public.kalender_termine for all to authenticated using ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id())
+      with check ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id());
+    create policy "Fahrlehrer eigene Termine" on public.kalender_termine for all to authenticated using (fahrlehrer_id = auth.uid()) with check (fahrlehrer_id = auth.uid());
+    create policy "Buero alle Pruefungen" on public.kalender_pruefungen for all to authenticated using ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id())
+      with check ((is_buero(auth.uid()) or is_fahrschule_admin(auth.uid())) and fahrschule_id = my_fahrschule_id());
+    create policy "Fahrlehrer eigene Pruefungen" on public.kalender_pruefungen for all to authenticated using (fahrlehrer_id = auth.uid()) with check (fahrlehrer_id = auth.uid());
+    create policy "Schueler lesen" on public.schueler for select to authenticated using (fahrschule_id = my_fahrschule_id());
+    insert into public.schueler (id, fahrschule_id, fahrlehrer_id, name) select 's' || g, '${FS}', case when g <= 6 then '${U.fl1}'::uuid else '${U.fl2}'::uuid end, 'Schüler ' || g from generate_series(1, 14) g;
+    insert into public.schueler (id, fahrschule_id, fahrlehrer_id, name, zahlung_gesperrt_seit, zahlung_gesperrt_grund) values ('sg', '${FS}', '${U.fl1}', 'Gesperrt', now(), 'Rechnung offen');
+    insert into public.schueler (id, fahrschule_id, fahrlehrer_id, name) values ('sx', '${FS2}', '${U.fremd}', 'Fremd');
+  `);
+  await db.exec(`create function public.schueler_buchung_gesperrt(sid text) returns text language sql stable security definer set search_path to 'public' as $$
+    select case when s.zahlung_gesperrt_seit is not null then coalesce(nullif(btrim(s.zahlung_gesperrt_grund), ''), 'Zahlung ausstehend') end from public.schueler s where s.id::text = sid $$;`);
+  // Auslöser auf kalender_termine/kalender_pruefungen wörtlich wie live (Lese-Ergebnis 27.11.2026)
+  await db.exec(LIVE);
+  // Altbestand vor der Migration: eine Büro-Prüfung mit freier Uhrzeit und Kalender-Spiegel (wie abgleichKalender)
+  await db.exec(`insert into public.pruefungstermine (id, fahrschule_id, schueler_id, art, klasse, datum, von, fahrlehrer_id, status, kalender_termin_id)
+      values ('00000000-0000-0000-0000-0000000000a1', '${FS}', 's14', 'praxis', 'B', current_date + 20, '10:30', '${U.fl2}', 'geplant', 'ptalt00000000000000001');
+    insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, status, geloescht, payload)
+      values ('ptalt00000000000000001', '${FS}', '${U.fl2}', 's14', current_date + 20, '10:30', '12:00', 'pruefung', 'geplant', false, '{"note":"Praxisprüfung (vom Büro geplant)"}');`);
+  return db;
+}
+
+// Als Person ausführen (eigene Transaktion, Fehler → {fehler})
+async function als(db, uid, sql, params) {
+  try {
+    await db.exec("begin");
+    await db.query("select set_config('request.jwt.claim.sub', $1, true)", [uid || ""]);
+    await db.exec(uid === null ? "set local role anon" : "set local role authenticated");
+    const r = await db.query(sql, params || []);
+    await db.exec("commit");
+    return { rows: r.rows, n: r.affectedRows };
+  } catch (e) {
+    try { await db.exec("rollback"); } catch (e2) {}
+    return { fehler: String(e.message || e) };
+  }
+}
+const eins = async (db, sql, p) => (await db.query(sql, p || [])).rows[0];
+const alle = async (db, sql, p) => (await db.query(sql, p || [])).rows;
+
+async function probe(db) {
+  try { await db.exec(PROBE); return { text: "keine Ausnahme" }; } catch (e) {
+    const t = String(e.message || e); const m = t.match(/W21_ERGEBNIS (\{.*\})/s);
+    return { text: t, erg: m ? JSON.parse(m[1]) : null };
+  }
+}
+
+process.on('unhandledRejection', (e) => { console.error('ABBRUCH: ' + (e && e.message)); process.exit(1); });
+const db = await baueDb();
+const vorher = await eins(db, "select count(*)::int n from public.pruefungstermine");
+
+// ---------- 2. Migration ----------
+let f = ""; try { await db.exec(M); } catch (e) { f = String(e.message); }
+ok("Migration läuft durch", f === "", f);
+f = ""; try { await db.exec(M); } catch (e) { f = String(e.message); }
+ok("Zweites Einspielen bricht sauber ab (W21_ABBRUCH)", /W21_ABBRUCH/.test(f), f);
+const alt = await eins(db, "select * from public.pruefungstermine where id = '00000000-0000-0000-0000-0000000000a1'");
+ok("Altbestand unverändert (freie Uhrzeit, gleiches Datum/Uhrzeit/Kalender)", alt.pruefungstag_id === null && String(alt.von).startsWith("10:30") && alt.kalender_termin_id === "ptalt00000000000000001" && alt.quelle === "buero");
+
+// ---------- 3. Fall 1: Prüfungstag anlegen, 9 Prüfungen hintereinander ----------
+let r = await als(db, U.buero, `insert into public.pruefungstage (fahrschule_id, datum, pruefer) values ($1, current_date + 7, 'AB') returning *`, [FS]);
+ok("Büro legt Prüfungstag an (Start 08:00, 9 Fenster)", !r.fehler && r.rows[0].fenster_zahl === 9 && String(r.rows[0].start).startsWith("08:00"), r);
+const TAG = r.rows[0].id;
+const ins9 = Array.from({ length: 9 }, (_, i) => `('${FS}', 's${i + 1}', 'praxis', 'B', '${TAG}', ${i}, '${i < 6 ? U.fl1 : U.fl2}')`).join(",");
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, klasse, pruefungstag_id, fenster, fahrlehrer_id) values ${ins9} returning fenster, von, datum, kalender_termin_id`);
+const vons = r.rows ? r.rows.sort((a, b) => a.fenster - b.fenster).map((x) => x.von) : [];
+ok("Fall 1: 9 Prüfungen auf einmal, Zeiten 08:00 … 15:20", !r.fehler && vons.join(",") === "08:00,08:55,09:50,10:45,11:40,12:35,13:30,14:25,15:20", r.fehler || vons);
+const kal = await alle(db, "select k.* from public.kalender_termine k join public.pruefungstermine p on p.kalender_termin_id = k.id where p.pruefungstag_id = $1", [TAG]);
+ok("Server-Spiegel: 9 Kalender-Einträge, 55 Min, ID-Muster 'pt'+20", kal.length === 9 && kal.every((k) => /^pt[0-9a-f]{20}$/.test(k.id) && k.art === "pruefung" && !k.geloescht)
+  && kal.some((k) => String(k.von).startsWith("15:20") && String(k.bis).startsWith("16:15")));
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's10', 'praxis', $2, 9, $3)`, [FS, TAG, U.fl2]);
+ok("Fenster 10 gibt es nicht", /W21:fenster_ungueltig/.test(r.fehler || ""), r);
+
+// ---------- 4. Fall 2 + Doppelbelegung ----------
+const TAG2 = (await als(db, U.buero, `insert into public.pruefungstage (fahrschule_id, datum, pruefer, start) values ($1, current_date + 7, 'CD', '09:00') returning id`, [FS])).rows[0].id;
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's10', 'praxis', $2, 3, $3)`, [FS, TAG, U.fl2]);
+ok("Doppelbelegung verweigert (Fenster belegt)", /W21:fenster_belegt/.test(r.fehler || ""), r);
+r = await als(db, U.fl2, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's10', 'praxis', $2, 3, $3)`, [FS, TAG, U.fl2]);
+ok("Doppelbelegung auch aus der App (Fahrlehrer) verweigert", /W21:fenster_belegt/.test(r.fehler || ""), r);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's10', 'praxis', $2, 0, $3) returning von`, [FS, TAG2, U.fl2]);
+ok("Fall 2: zweiter Prüfer am selben Datum = eigener Tag, Fenster 1 = 09:00", !r.fehler && r.rows[0].von === "09:00", r);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's1', 'praxis', $2, 1, $3)`, [FS, TAG2, U.fl1]);
+ok("Schüler nie zweimal am selben Tag (anderer Prüfer)", /W21:schueler_doppelt/.test(r.fehler || ""), r);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, datum, von, fahrlehrer_id) values ($1, 's1', 'praxis', current_date + 7, '17:00', $2)`, [FS, U.fl1]);
+ok("… auch nicht mit freier Uhrzeit (alter Büro-Weg)", /W21:schueler_doppelt/.test(r.fehler || ""), r);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, datum, von) values ($1, 's1', 'theorie', current_date + 7, '17:00')`, [FS]);
+ok("Theorieprüfung am selben Tag bleibt erlaubt", !r.fehler, r);
+// Zweite Sicherung: eindeutiger Index (auch ohne Auslöser-Sperre)
+f = ""; try { await db.exec(`set session_replication_role = replica; insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, datum, status) values ('${FS}', 's12', 'praxis', '${TAG}', 4, current_date + 7, 'geplant');`); } catch (e) { f = String(e.message); }
+await db.exec("set session_replication_role = origin");
+ok("Eindeutiger Index hält ein Fenster auch ohne Auslöser frei", /pruefungstermine_fenster_frei|duplicate key/.test(f), f);
+
+// ---------- 5. Fall 3: verschieben ----------
+const p = async (sid) => eins(db, "select * from public.pruefungstermine where schueler_id = $1 and art = 'praxis' and status <> 'abgesagt' order by datum desc limit 1", [sid]);
+const p9 = await p("s9");
+r = await als(db, U.buero, `update public.pruefungstermine set pruefungstag_id = $2, fenster = 5 where id = $1 returning von`, [p9.id, TAG2]);
+const k9 = await eins(db, "select * from public.kalender_termine where id = $1", [p9.kalender_termin_id]);
+ok("Fall 3: in anderes Fenster (anderer Tag) verschoben, Kalender zieht mit", !r.fehler && r.rows[0].von === "13:35" && String(k9.von).startsWith("13:35"), r.fehler || [r.rows, k9.von]);
+r = await als(db, U.buero, `update public.pruefungstermine set fenster = 0 where id = $1`, [p9.id]);
+ok("Verschieben auf belegtes Fenster verweigert", /W21:fenster_belegt/.test(r.fehler || ""), r);
+
+// ---------- 6. Fall 4: tauschen ----------
+const a = await p("s1"), b = await p("s2");
+r = await als(db, U.buero, `select public.pruefung_tauschen($1, $2)`, [a.id, b.id]);
+const a2 = await p("s1"), b2 = await p("s2");
+ok("Fall 4: zwei Schüler getauscht", !r.fehler && a2.fenster === 1 && b2.fenster === 0 && String(a2.von).startsWith("08:55"), r.fehler || [a2.fenster, b2.fenster]);
+r = await als(db, U.buero, `select public.pruefung_tauschen($1, $2)`, [a.id, p9.id]);
+const a3 = await p("s1"), n9 = await p("s9");
+ok("Tauschen über zwei Tage", !r.fehler && a3.pruefungstag_id === TAG2 && a3.fenster === 5 && n9.pruefungstag_id === TAG && n9.fenster === 1, r.fehler);
+r = await als(db, U.fl1, `select public.pruefung_tauschen($1, $2)`, [(await p("s3")).id, (await p("s8")).id]);
+ok("Fahrlehrer kann keinen fremden Schüler tauschen", /W21:(nicht_gefunden|keine_berechtigung)/.test(r.fehler || ""), r);
+
+// Lkw an einem B-Tag: zwei Fenster
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, klasse, pruefungstag_id, fenster, fenster_anzahl, fahrlehrer_id) values ($1, 's11', 'praxis', 'CE', $2, 6, 2, $3) returning kalender_termin_id`, [FS, TAG2, U.fl2]);
+const kl = r.rows ? await eins(db, "select bis from public.kalender_termine where id = $1", [r.rows[0].kalender_termin_id]) : {};
+ok("Lkw belegt zwei Fenster (14:30, 85 Min im Kalender)", !r.fehler && kl.bis === "15:55", r.fehler || kl);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's12', 'praxis', $2, 7, $3)`, [FS, TAG2, U.fl2]);
+ok("Zweites Lkw-Fenster gilt als belegt", /W21:fenster_belegt/.test(r.fehler || ""), r);
+
+r = await als(db, U.buero, `select public.pruefung_tauschen($1, $2)`, [(await p("s11")).id, (await p("s1")).id]);
+ok("Tauschen Lkw (2 Fenster) gegen B auf zu engen Platz: eigene Meldung, nichts verändert", /W21:tausch_passt_nicht/.test(r.fehler || "") && (await p("s11")).fenster === 6, r);
+r = await als(db, U.buero, `update public.pruefungstage set start = '16:00' where id = $1`, [TAG2]);
+ok("Startzeit so spät, dass Fenster über Mitternacht liefen: verweigert", /W21:start_zu_spaet/.test(r.fehler || ""), r);
+
+// ---------- 7. Fall 5: Fahrlehrer nachträglich ändern ----------
+const p3 = await p("s3");
+r = await als(db, U.buero, `update public.pruefungstermine set fahrlehrer_id = $2 where id = $1`, [p3.id, U.fl2]);
+const k3 = await eins(db, "select fahrlehrer_id from public.kalender_termine where id = $1", [p3.kalender_termin_id]);
+ok("Fall 5: Fahrlehrer geändert, Kalender-Eintrag wandert mit", !r.fehler && k3.fahrlehrer_id === U.fl2, r.fehler || k3);
+r = await als(db, U.fl1, `update public.pruefungstermine set fahrlehrer_id = $2 where id = $1`, [(await p("s4")).id, U.fl2]);
+ok("Fahrlehrer kann eigene Prüfung nicht an Kollegen geben", !!r.fehler || r.n === 0, r);
+
+// ---------- 9. Startzeit ändern ----------
+r = await als(db, U.buero, `update public.pruefungstage set start = '09:00' where id = $1 returning start_geaendert_am`, [TAG]);
+const vons2 = (await alle(db, "select fenster, von from public.pruefungstermine where pruefungstag_id = $1 and status <> 'abgesagt' order by fenster", [TAG])).map((x) => x.von);
+const k1 = await eins(db, "select k.von von from public.kalender_termine k join public.pruefungstermine p on p.kalender_termin_id = k.id where p.pruefungstag_id = $1 and p.fenster = 0", [TAG]);
+ok("Startzeit 09:00: alle Fenster rücken mit, Kalender auch, Merker gesetzt", !r.fehler && vons2[0] === "09:00" && vons2[1] === "09:55" && k1.von === "09:00" && !!r.rows[0].start_geaendert_am, r.fehler || [vons2, k1]);
+
+// ---------- 8. Fall 6: bestanden / nicht bestanden, beide Richtungen ----------
+const p5 = await p("s5");
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'bestanden' where id = $1`, [p5.id]);
+let kp = await eins(db, "select * from public.kalender_pruefungen where id = $1", ["pt-" + p5.id]);
+ok("Fall 6: Büro „bestanden“ → kalender_pruefungen pass (für die App)", !r.fehler && kp && kp.result === "pass" && kp.fahrlehrer_id === U.fl1 && !kp.geloescht, r.fehler || kp);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'geplant' where id = $1`, [p5.id]);
+kp = await eins(db, "select * from public.kalender_pruefungen where id = $1", ["pt-" + p5.id]);
+ok("Büro „Rückgängig“ → Spiegel-Ergebnis gelöscht markiert", !r.fehler && kp.geloescht === true, r.fehler || kp);
+const p6 = await p("s6");
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-6', $1, $2, 's6', $3, 'fail', '{"faults":["Vorfahrt"]}')`, [FS, U.fl1, p6.datum]);
+ok("App-Ergebnis: Büro muss es noch in die Akte übernehmen (ergebnis_uebernommen = false)", (await p("s6")).ergebnis_uebernommen === false);
+ok("Fall 6: App „nicht bestanden“ → Prüfungstafel nicht_bestanden", !r.fehler && (await p("s6")).status === "nicht_bestanden", r.fehler || (await p("s6")).status);
+ok("… und kein zweiter Ergebnis-Eintrag", (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's6' and not geloescht")).n === 1);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'bestanden' where id = $1`, [p6.id]);
+kp = await eins(db, "select * from public.kalender_pruefungen where id = 'app-ex-6'");
+ok("Büro-Ergebnis gilt als übernommen", (await p("s6")).ergebnis_uebernommen === true);
+ok("Büro-Korrektur ändert die App-Zeile (Fehlerpunkte bleiben)", kp.result === "pass" && kp.payload.faults[0] === "Vorfahrt" && !!kp.payload.buero_korrektur_am, kp);
+r = await als(db, U.fl1, `update public.pruefungstermine set status = 'nicht_bestanden' where id = $1`, [(await p("s4")).id]);
+ok("App setzt Ergebnis an eigener Prüfung direkt", !r.fehler && r.n === 1 && (await p("s4")).status === "nicht_bestanden", r);
+ok("… ohne zweite Ergebnis-Zeile (Fahrlehrer schreiben ihr Ergebnis selbst nach kalender_pruefungen)", (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's4'")).n === 0);
+r = await als(db, U.fl1, `update public.kalender_pruefungen set geloescht = true where id = 'app-ex-6'`);
+ok("App „Rückgängig“ nach Büro-Korrektur: Büro-Ergebnis bleibt", !r.fehler && (await p("s6")).status === "bestanden", (await p("s6")).status);
+
+r = await als(db, U.buero, `update public.pruefungstage set start = '10:00' where id = $1`, [TAG]);
+ok("Tag mit Ergebnissen: Startzeit bleibt (abgeschlossene Prüfungen verrutschen nicht)", /W21:tag_hat_ergebnisse/.test(r.fehler || ""), r);
+
+r = await als(db, U.buero, `update public.pruefungstage set pruefer = 'XY' where id = $1`, [TAG2]);
+ok("Prüfer des Tages geändert → ausstehende Prüfungen tragen das neue Kürzel", !r.fehler && (await alle(db, "select pruefer from public.pruefungstermine where pruefungstag_id = $1 and status = 'geplant'", [TAG2])).every((x) => x.pruefer === "XY"), r);
+
+// ---------- 10. Fahrlehrer in der App ----------
+r = await als(db, U.fl1, `insert into public.pruefungstage (fahrschule_id, datum, erstellt_von) values ($1, current_date + 14, $2) returning id`, [FS, U.fl1]);
+ok("Fahrlehrer legt Prüfungstag an", !r.fehler, r);
+const TAG3 = r.rows && r.rows[0].id;
+r = await als(db, U.fl1, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, klasse, pruefungstag_id, fenster, fahrlehrer_id, entgelt_bezahlt, quelle) values ($1, 's5', 'praxis', 'B', $2, 0, $3, true, 'app') returning *`, [FS, TAG3, U.fl1]);
+ok("Fahrlehrer plant eigenen Schüler (Haken bleiben Büro-Sache, quelle app)", !r.fehler && r.rows[0].entgelt_bezahlt === false && r.rows[0].quelle === "app" && !!r.rows[0].kalender_termin_id, r);
+r = await als(db, U.fl1, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's7', 'praxis', $2, 1, $3)`, [FS, TAG3, U.fl2]);
+ok("Fahrlehrer kann nicht für Kollegen anlegen", !!r.fehler, r);
+r = await als(db, U.fl1, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 'sx', 'praxis', $2, 1, $3)`, [FS, TAG3, U.fl1]);
+ok("… und nicht mit Schüler einer anderen Fahrschule", !!r.fehler, r);
+r = await als(db, U.fl2, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's12', 'praxis', $2, 1, $3)`, [FS, TAG3, U.fl2]);
+ok("Kollege plant auf demselben Tag ein freies Fenster", !r.fehler, r);
+r = await als(db, U.fl1, `select public.pruefungstage_belegung(current_date, current_date + 30) b`);
+const t3 = r.rows ? r.rows[0].b.find((t) => t.id === TAG3) : null;
+const fremdF = t3 && t3.belegt.find((x) => x.fenster === 1), eigenF = t3 && t3.belegt.find((x) => x.fenster === 0);
+ok("Belegung: fremdes Fenster belegt, aber ohne Schüler; eigenes mit Schüler", !!fremdF && fremdF.schueler_id === null && fremdF.eigen === false && eigenF.schueler_id === "s5", r.fehler || t3);
+r = await als(db, U.fl1, `update public.pruefungstage set start = '10:00' where id = $1`, [TAG3]);
+ok("Fahrlehrer ändert Startzeit nicht, wenn Kollegen-Schüler drin sind", /W21:tag_fremde_pruefungen/.test(r.fehler || ""), r);
+r = await als(db, U.fremd, `select public.pruefungstage_belegung(current_date, current_date + 30) b`);
+ok("Andere Fahrschule sieht keine Tage", !r.fehler && r.rows[0].b.length === 0, r);
+r = await als(db, U.buero, `update public.pruefungstage set geloescht = true where id = $1`, [TAG3]);
+ok("Tag mit Prüfungen lässt sich nicht löschen", /W21:tag_nicht_leer/.test(r.fehler || ""), r);
+r = await als(db, null, `select count(*) from public.pruefungstage`);
+ok("anon hat keine Rechte an pruefungstage", !!r.fehler, r);
+
+// ---------- 11. Übergang: alte Stände ----------
+const p7 = await p("s7");
+r = await als(db, U.buero, `update public.kalender_termine set bis = '10:20', status = 'geplant', payload = '{"note":"Praxisprüfung (vom Büro geplant)"}' where id = $1`, [p7.kalender_termin_id]);
+ok("Alter Büro-Stand trifft dieselbe Kalender-Zeile (kein Doppel)", !r.fehler && (await eins(db, "select count(*)::int n from public.kalender_termine where schueler_id = 's7' and not geloescht")).n === 1, r);
+r = await als(db, U.fl2, `update public.kalender_termine set datum = datum + 1, von = '18:00' where id = $1`, [p7.kalender_termin_id]);
+const k7 = await eins(db, "select datum, von from public.kalender_termine where id = $1", [p7.kalender_termin_id]);
+ok("Altes App-Ziehen verschiebt die Spiegel-Zeile nicht", !r.fehler && k7.von === String(p7.von).slice(0, 5) && String(k7.datum) === String(p7.datum), [r, k7, p7.von]);
+r = await als(db, U.fl2, `update public.kalender_termine set geloescht = true where id = $1`, [p7.kalender_termin_id]);
+ok("Altes App-Löschen löscht die Spiegel-Zeile nicht", (await eins(db, "select geloescht from public.kalender_termine where id = $1", [p7.kalender_termin_id])).geloescht === false, r);
+r = await als(db, U.buero, `update public.pruefungstermine set datum = datum + 1, von = '17:00' where id = $1 returning pruefungstag_id, fenster, von`, [p7.id]);
+ok("Alter Büro-Dialog (Datum/Uhrzeit von Hand) macht freie Uhrzeit, kein Fehler", !r.fehler && r.rows[0].pruefungstag_id === null && r.rows[0].von === "17:00", r);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'abgesagt' where id = $1`, [p7.id]);
+ok("Absagen: Kalender-Zeile gelöscht markiert", !r.fehler && (await eins(db, "select geloescht from public.kalender_termine where id = $1", [p7.kalender_termin_id])).geloescht === true, r);
+r = await als(db, U.buero, `update public.pruefungstermine set notiz = 'x' where id = '00000000-0000-0000-0000-0000000000a1'`);
+ok("Altbestand ändern geht weiter (gleiche Kalender-Zeile)", !r.fehler && (await eins(db, "select count(*)::int n from public.kalender_termine where schueler_id = 's14'")).n === 1, r);
+
+// ---------- 12. Zahlungssperre, Spiegel-Fehler ----------
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 'sg', 'praxis', $2, 3, $3)`, [FS, TAG3, U.fl1]);
+ok("Gesperrter Schüler: keine neue Prüfung im Kalender (wie im Büro)", /Zahlung ausstehend/.test(r.fehler || ""), r);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, datum) values ($1, 'sg', 'praxis', current_date + 9)`, [FS]);
+ok("Gesperrter Schüler ohne Fahrlehrer/Uhrzeit: speichern geht (wie bisher)", !r.fehler, r);
+await db.exec(`create function public.stoerung() returns trigger language plpgsql as $$ begin if new.schueler_id = 's13' then raise exception 'Kalender kaputt'; end if; return new; end $$;
+  create trigger trg_test_stoerung before insert on public.kalender_termine for each row execute function public.stoerung();`);
+r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's13', 'praxis', $2, 4, $3) returning kalender_fehler`, [FS, TAG3, U.fl2]);
+ok("Kalender-Fehler bricht das Speichern nicht ab (steht in kalender_fehler)", !r.fehler && /Kalender kaputt/.test(r.rows[0].kalender_fehler || ""), r);
+await db.exec(`drop trigger trg_test_stoerung on public.kalender_termine; drop function public.stoerung();`);
+
+// Altzeile ohne Kalender-Eintrag, Schüler gesperrt: Haken/Ergebnis speichern geht (nur kein neuer Kalender-Eintrag)
+await db.exec(`set session_replication_role = replica; insert into public.pruefungstermine (id, fahrschule_id, schueler_id, art, datum, von, fahrlehrer_id, status) values ('00000000-0000-0000-0000-0000000000b2', '${FS}', 'sg', 'praxis', current_date + 11, '09:00', '${U.fl1}', 'geplant'); set session_replication_role = origin;`);
+r = await als(db, U.buero, `update public.pruefungstermine set tuev_gutschein = true where id = '00000000-0000-0000-0000-0000000000b2' returning kalender_termin_id`);
+ok("Gesperrter Schüler, alte Zeile ohne Kalender: Haken speichern geht, kein neuer Kalender-Eintrag", !r.fehler && r.rows[0].kalender_termin_id === null, r);
+// Super-Admin wählt eine Fahrschule (Büro-Seite)
+await db.exec(`insert into public.profiles (id, rolle, fahrschule_id) values ('a0000000-0000-0000-0000-000000000009', 'super_admin', '${FS2}')`);
+r = await als(db, "a0000000-0000-0000-0000-000000000009", `select public.pruefungstage_belegung(current_date, current_date + 30, $1) b`, [FS]);
+ok("Super-Admin sieht die Tage der gewählten Fahrschule", !r.fehler && r.rows[0].b.length >= 2, r);
+r = await als(db, U.buero, `select public.pruefungstage_belegung(current_date, current_date + 30, $1) b`, [FS2]);
+ok("Büro kann keine fremde Fahrschule wählen (bekommt die eigene)", !r.fehler && r.rows[0].b.every((t) => t.id !== null) && r.rows[0].b.length >= 2, r);
+
+// Daten-Prüfer W21: einfaches App-Rückgängig, B197, Datum abweichend, doppelte Ergebniszeile
+const p5b = await eins(db, "select * from public.pruefungstermine where schueler_id = 's5' and pruefungstag_id = $1", [TAG3]);
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-5', $1, $2, 's5', $3, 'fail', '{}')`, [FS, U.fl1, p5b.datum]);
+ok("App-Ergebnis an Tag 3 → Tafel nicht bestanden", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "nicht_bestanden");
+r = await als(db, U.fl1, `update public.kalender_pruefungen set geloescht = true where id = 'app-ex-5'`);
+ok("App „Rückgängig“ (ohne Büro-Korrektur) → Tafel wieder geplant", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "geplant");
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-b197-5', $1, $2, 's5', $3, 'pass', '{"b197":true}')`, [FS, U.fl1, p5b.datum]);
+ok("B197-Schaltkompetenz ändert die Tafel nicht", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "geplant");
+r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-5b', $1, $2, 's5', $3::date + 1, 'pass', '{}')`, [FS, U.fl1, p5b.datum]);
+ok("Ergebnis einen Tag daneben trifft die einzige offene Prüfung", !r.fehler && (await eins(db, "select status from public.pruefungstermine where id = $1", [p5b.id])).status === "bestanden");
+const p12 = await eins(db, "select * from public.pruefungstermine where schueler_id = 's12' and pruefungstag_id = $1", [TAG3]);
+await als(db, U.buero, `update public.pruefungstermine set status = 'bestanden' where id = $1`, [p12.id]);
+r = await als(db, U.fl2, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-12', $1, $2, 's12', $3, 'pass', '{}')`, [FS, U.fl2, p12.datum]);
+ok("Büro zuerst, dann App: nur EINE aktive Ergebniszeile", !r.fehler && (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's12' and not geloescht")).n === 1);
+// Zahlungssperre kommt nach der Planung: Fahrlehrer wechseln und Absage kurz danach zurücknehmen gehen weiter
+await db.exec(`update public.schueler set zahlung_gesperrt_seit = now(), zahlung_gesperrt_grund = 'Test' where id = 's13'`);
+const p7n = await eins(db, "select * from public.pruefungstermine where schueler_id = 's13' and status = 'geplant'");
+r = await als(db, U.buero, `update public.pruefungstermine set fahrlehrer_id = $2 where id = $1`, [p7n.id, U.fl1]);
+ok("Gesperrter Schüler: Fahrlehrer wechseln geht weiter (wie K8)", !!p7n && !r.fehler && r.n === 1, r);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'abgesagt' where id = $1`, [p7n.id]);
+const r2 = await als(db, U.buero, `update public.pruefungstermine set status = 'geplant' where id = $1`, [p7n.id]);
+ok("Gesperrter Schüler: Absage gleich wieder zurücknehmen geht (Versehen, wie K8)", !r.fehler && !r2.fehler, [r, r2]);
+await db.exec(`update public.schueler set zahlung_gesperrt_seit = null where id = 's13'`);
+
+// Richter W21 B1: fremde Kalenderzeile nie überschreiben, fremde Fahrschule kippt nichts
+await db.exec(`insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, status, geloescht) values ('fremd-fahrstunde', '${FS}', '${U.fl2}', 's9', current_date + 4, '10:00', '11:30', 'fahrstunde', 'geplant', false)`);
+r = await als(db, U.fl1, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, datum, von, fahrlehrer_id, kalender_termin_id) values ($1, 's2', 'praxis', current_date + 40, '09:00', $2, 'fremd-fahrstunde') returning kalender_termin_id`, [FS, U.fl1]);
+const kf = await eins(db, "select * from public.kalender_termine where id = 'fremd-fahrstunde'");
+ok("B1: Fahrlehrer kann keine fremde Kalenderzeile als Spiegel angeben", !r.fehler && r.rows[0].kalender_termin_id !== "fremd-fahrstunde" && kf.art === "fahrstunde" && kf.fahrlehrer_id === U.fl2 && kf.schueler_id === "s9", [r, kf]);
+const p2neu = r.rows && r.rows[0];
+r = await als(db, U.fl1, `update public.pruefungstermine set kalender_termin_id = 'fremd-fahrstunde' where schueler_id = 's2' and datum = current_date + 40`);
+ok("B1: … auch nicht beim Ändern", (await eins(db, "select art, fahrlehrer_id from public.kalender_termine where id = 'fremd-fahrstunde'")).art === "fahrstunde");
+const p3s = await p("s3");
+r = await als(db, U.fremd, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('fremd-ex', $1, $2, 's3', $3, 'pass', '{}')`, [FS2, U.fremd, p3s.datum]);
+ok("B1: Ergebnis einer anderen Fahrschule ändert die Tafel hier nicht", (await p("s3")).status === p3s.status, r);
+// Richter W21 B2: Schülerwechsel mit „Termine mitnehmen“ nimmt die ausstehende Prüfung mit
+const p8 = await p("s8");
+r = await als(db, U.buero, `update public.kalender_termine set fahrlehrer_id = $2 where id = $1`, [p8.kalender_termin_id, U.fl1]);
+ok("B2: Kalender-Spiegel zu neuem Fahrlehrer → Prüfung wandert mit", !r.fehler && (await p("s8")).fahrlehrer_id === U.fl1 && (await eins(db, "select fahrlehrer_id from public.kalender_termine where id = $1", [p8.kalender_termin_id])).fahrlehrer_id === U.fl1, r);
+// Richter W21 B3: Büro-Ergebnis nie in die B197-Zeile
+const p9b = await p("s9");
+await db.query(`insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('b197-s9', $1, $2, 's9', $3, 'pass', '{"b197":true}')`, [FS, U.fl2, p9b.datum]);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'nicht_bestanden' where id = $1`, [p9b.id]);
+ok("B3: Büro-Ergebnis landet in eigener Zeile, B197-Zeile bleibt", !r.fehler && (await eins(db, "select result from public.kalender_pruefungen where id = 'b197-s9'")).result === "pass"
+  && (await eins(db, "select result from public.kalender_pruefungen where id = $1", ["pt-" + p9b.id])).result === "fail", r);
+
+// ---------- 13. Fall 10: Probe ----------
+let pr = await probe(db);
+ok("Probe ist grün", pr.erg && pr.erg.alle_ok === true, pr.erg || pr.text.slice(0, 400));
+ok("Probe hinterlässt nichts", (await eins(db, "select count(*)::int n from public.pruefungstermine where schueler_id like 'w21probe%'")).n === 0);
+
+// ---------- 14. Rückweg ----------
+const anzahl = (await eins(db, "select count(*)::int n from public.pruefungstermine")).n;
+f = ""; try { await db.exec(R); } catch (e) { f = String(e.message); }
+ok("Rückweg läuft", f === "", f);
+ok("Rückweg: keine Prüfung verloren, Spalten weg", (await eins(db, "select count(*)::int n from public.pruefungstermine")).n === anzahl && !(await eins(db, "select to_regclass('public.pruefungstage') t")).t);
+pr = await probe(db);
+ok("Probe schlägt nach Rückweg an (Gegenprobe)", !pr.erg || pr.erg.alle_ok === false, pr.text.slice(0, 200));
+f = ""; try { await db.exec(M); } catch (e) { f = String(e.message); }
+ok("Nach Rückweg erneut einspielbar", f === "", f);
+ok("Vorher-Bestand erhalten", anzahl >= vorher.n);
+
+console.log(`\n${faelle - fehler}/${faelle} ok` + (fehler ? `, ${fehler} FEHLER` : ""));
+process.exit(fehler ? 1 : 0);
