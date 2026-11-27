@@ -28,6 +28,9 @@ const M2 = lies("supabase/migrations/20261201_w20_02_buero_mehrere_pcs.sql");
 const R1 = lies("supabase/rueckweg/20261201_w20_01_rueckweg.sql");
 const R2 = lies("supabase/rueckweg/20261201_w20_02_rueckweg.sql");
 const PROBE = lies("scripts/sql/w20-2-probe.sql");
+const M3 = lies("supabase/migrations/20261201_w20_03_buero_verschiebungen_lesen.sql");
+const R3 = lies("supabase/rueckweg/20261201_w20_03_rueckweg.sql");
+const PROBE3 = lies("scripts/sql/w20-3-probe.sql");
 const LESEN = lies("scripts/sql/w20-1-lesen.sql");
 
 let faelle = 0, fehler = 0;
@@ -306,6 +309,7 @@ async function baueDb() {
       fahrschule_id uuid not null, user_id uuid not null, nur_pin_aendern boolean not null default false, laeuft_ab timestamptz not null,
       erstellt_am timestamptz not null default now());
     create view public.v_schueler_namen as select id, name, fahrschule_id from public.schueler;
+    create view public.v_nicht_aenderbar as select fahrschule_id, count(*) n from public.schueler group by fahrschule_id; -- wie live v_akademie_*: Schreiben gibt 55000
     do $x$ declare t text; begin
       foreach t in array array['fahrschulen','profiles','schueler','snapshots','push_subscriptions','public_bookings','trinkgeld_privat',
                                'aenderungsprotokoll','buero_personen','buero_sitzungen','v_schueler_namen'] loop
@@ -432,6 +436,52 @@ f = await fehlerVon(db, M1) || await fehlerVon(db, M2);
 ok("Nach Rückweg erneut einspielbar", f === "", f);
 p = await probe(db);
 ok("Probe danach wieder grün", p.erg && p.erg.alle_ok === true, p.erg ? p.erg.pflicht_fehler : p.text.slice(0, 300));
+
+// ---------- 7. Migration 3: Büro liest schueler_verschiebungen (Regeln wie live 1c) ----------
+ok("Probe 3: genau ein DO-Block, endet mit W20V_ERGEBNIS, kein drop/alter/grant/revoke", (PROBE3.match(/^do \$w20v\$/gm) || []).length === 1 && /raise exception 'W20V_ERGEBNIS %'/.test(PROBE3) && !/\b(drop|alter|grant|revoke)\b/i.test(PROBE3));
+ok("Probe 3: E-Mails nur @example.invalid, nie Akademie", !/@(?!example\.invalid)[a-z0-9-]+\.[a-z]+/i.test(PROBE3.replace(/^--.*$/gm, "")) && !PROBE3.includes("fxgljvhpikjcejhghgbp") && !M3.includes("fxgljvhpikjcejhghgbp"));
+ok("Migration 3: nur SELECT (kein WITH CHECK nötig)", /for select to authenticated/.test(M3) && !/with check/i.test(M3.replace(/^--.*$/gm, "")));
+await db.exec(`
+  create function public.is_super_admin(u uuid) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists (select 1 from public.profiles where id = u and rolle = 'super_admin' and aktiv) $$;
+  create function public.is_buero(u uuid) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists (select 1 from public.profiles where id = u and rolle = 'buero' and aktiv) $$;
+  create function public.is_fahrschule_admin(u uuid) returns boolean language sql stable security definer set search_path to 'public' as $$ select exists (select 1 from public.profiles where id = u and rolle = 'fahrschule_admin' and aktiv) $$;
+  create function public.my_fahrschule_id() returns uuid language sql stable security definer set search_path to 'public' as $$ select fahrschule_id from public.profiles where id = auth.uid() $$;
+  create table public.schueler_verschiebungen (id uuid primary key default gen_random_uuid(), schueler_id text, fahrschule_id uuid, von_fahrlehrer_id uuid,
+    zu_fahrlehrer_id uuid, verschoben_von uuid, gesehen_von_alt boolean not null default false, gesehen_von_neu boolean not null default false, erstellt_am timestamptz not null default now());
+  alter table public.schueler_verschiebungen enable row level security;
+  grant select, insert, update, delete on public.schueler_verschiebungen to authenticated;
+  create policy "Fahrlehrer quittiert eigene Benachrichtigung" on public.schueler_verschiebungen for update using ((von_fahrlehrer_id = auth.uid()) or (zu_fahrlehrer_id = auth.uid()));
+  create policy "Fahrlehrer sieht eigene Benachrichtigungen" on public.schueler_verschiebungen for select using ((von_fahrlehrer_id = auth.uid()) or (zu_fahrlehrer_id = auth.uid()));
+  create policy "Fahrschule-Admin sieht eigene Verschiebungen" on public.schueler_verschiebungen for all using (is_fahrschule_admin(auth.uid()) and fahrschule_id = my_fahrschule_id())
+    with check ((is_fahrschule_admin(auth.uid()) or is_buero(auth.uid())) and fahrschule_id = my_fahrschule_id());
+  create policy "Super Admin alles - Verschiebungen" on public.schueler_verschiebungen for all using (is_super_admin(auth.uid()));
+  grant usage on schema public to authenticated;
+  grant select on public.profiles to authenticated;
+`);
+async function probe3() {
+  try { await db.exec(PROBE3); return { text: "(keine Meldung)" }; }
+  catch (e) { const m = String(e.message || e); return m.startsWith("W20V_ERGEBNIS ") ? { text: m, erg: JSON.parse(m.slice(14)) } : { text: m }; }
+}
+let p3 = await probe3();
+ok("Probe 3 vor Migration 3: W20V_ABBRUCH", p3.text.startsWith("W20V_ABBRUCH"), p3.text.slice(0, 300));
+f = await fehlerVon(db, M3);
+ok("Migration 3 läuft", f === "", f);
+f = await fehlerVon(db, M3);
+ok("Migration 3 doppelt: W20_ABBRUCH", f.includes("W20_ABBRUCH"), f);
+const z3 = JSON.stringify((await db.query(ZAHLEN)).rows[0]);
+p3 = await probe3();
+ok("Probe 3 nach Migration: alle_ok", p3.erg && p3.erg.alle_ok === true, p3.erg ? p3.erg.pruefungen.filter((x) => !x.ok) : p3.text.slice(0, 600));
+ok("Probe 3 hinterlässt nichts", JSON.stringify((await db.query(ZAHLEN)).rows[0]) === z3 && Number((await db.query("select count(*) n from public.schueler_verschiebungen")).rows[0].n) === 0);
+// Gegenprobe: Regel ohne Fahrschul-Prüfung → P2 rot
+await db.exec(`drop policy "Buero sieht Verschiebungen der Fahrschule" on public.schueler_verschiebungen;
+  create policy "Buero sieht Verschiebungen der Fahrschule" on public.schueler_verschiebungen as permissive for select to authenticated using (is_buero(auth.uid()));`);
+p3 = await probe3();
+ok("Gegenprobe Regel ohne Fahrschule → P2 rot", p3.erg && p3.erg.pflicht_fehler.some((x) => x.startsWith("P2 ")), p3.erg ? p3.erg.pflicht_fehler : p3.text.slice(0, 300));
+f = await fehlerVon(db, R3);
+ok("Rückweg 3 läuft, Regel weg", f === "" && (await db.query("select count(*) n from pg_policies where policyname = 'Buero sieht Verschiebungen der Fahrschule'")).rows[0].n == 0, f);
+await db.exec(M3);
+p3 = await probe3();
+ok("Migration 3 nach Rückweg wieder grün", p3.erg && p3.erg.alle_ok === true, p3.erg ? p3.erg.pflicht_fehler : p3.text.slice(0, 300));
 
 console.log(`\n${faelle - fehler}/${faelle} ok`);
 process.exit(fehler ? 1 : 0);

@@ -1,6 +1,6 @@
 ---
 name: video-overlay
-description: Video tools for Serban's projects, usable by any skill or session that needs to animate, caption or edit video: cut pauses and ähm, big word captions, pictures, animated Lernszenen clips (22 traffic scenes recorded as video), lower third, end card with logo, cinematic look, subtitles (SRT/VTT), chapters, text check against his rules, quality check. Use for Reel, Online-Kurs-Lektion, Akademie- or Webseiten-Video, and whenever Serban asks for Schnitt, Einblendungen, Animation, animieren, Untertitel, Kapitel, Bilder im Video, Kino-Look or Video-Prüfung.
+description: Video tools for Serban's projects, usable by any skill or session that needs to animate, caption or edit video: cut pauses and ähm, big word captions, pictures, animated Lernszenen clips (22 traffic scenes recorded as video), lower third, end card with logo, cinematic look, subtitles (SRT/VTT), chapters, text check against his rules, quality check. Use for Reel, Online-Kurs-Lektion, Akademie- or Webseiten-Video, and whenever Serban asks for Schnitt, Einblendungen, Animation, animieren, Untertitel, Kapitel, Bilder im Video, Kino-Look, Video-Prüfung, Soundeffekte, SFX, Geräusche or Vertonung.
 allowed-tools: Read, Write, Bash(python3 *), Bash(ffmpeg *), Bash(ffprobe *), Bash(node *), Bash(ls *), mcp__Dropbox__download_link, mcp__Dropbox__list_folder
 ---
 Werkzeuge in `scripts/video-overlay/` (Details, Formate, Veröffentlichen: `REFERENZ.md` neben dieser Datei lesen, wenn nötig). Einrichten in jeder frischen Sitzung (ca. 1 Min.): `source scripts/video-overlay/setup.sh` (setzt `$VO_PY`, Python mit allen Paketen; danach `$VO_PY scripts/video-overlay/…py` statt `python3`). Nötig: `ffmpeg` mit libass, für Lernszenen Playwright.
@@ -15,12 +15,20 @@ Werkzeuge in `scripts/video-overlay/` (Details, Formate, Veröffentlichen: `REFE
 7. **Rendern:**
    - Reel: `render.py geschnitten.mp4 --words … --broll plan.json --out fertig.mp4 --look cinematic --audio-clean --endcard`
    - Kurs-Lektion quer: `render.py … --preset kurs --lower-third "Lektion 1 · Persönliche Voraussetzungen" --endcard`
+7b. **Soundeffekte (nur wenn sie dem Video helfen, sparsam):**
+   - **Einrichten:** `source scripts/video-overlay/sfx_setup.sh` (earshot ohne PyTorch, uisfx 0.4.0). Variablen überleben den Bash-Aufruf nicht: jeden Befehl als `cd "$(git rev-parse --show-toplevel)" && source scripts/video-overlay/sfx_setup.sh >/dev/null && cd "$REAL_SFX" && python3 scripts/…` schreiben. Die Bibliothek (`~/sfx-bibliothek/openverse`) und ihr Index liegen auf dem Gerät, nie im Repo; nach neuen Klängen `build_index.py` laufen lassen.
+   - **Echte Aufnahmen zuerst:** fehlende Geräusche mit `python3 -I scripts/video-overlay/sfx_openverse.py "car door" whoosh --anzahl 5 --max-sek 8 --index` holen (nur CC0, Herkunft in `~/sfx-bibliothek/openverse/herkunft.csv`). Treffer sind unscharf: jede Wahl im Cue-Bericht prüfen.
+   - **Setzen mit real-sfx** (Anleitung `.claude/skills/real-sfx/SKILL.md`): Ereignisliste aus den Bildern (`look.py`, `find_moments.py`), dann `from_cues.py … --ui library`, `mix.py cues.json --out ergebnis.mp4 --voice-safe`, danach `critique.py`. Ergebnis: neue MP4 + eigene WAV-Spur + Cue-Bericht. Beispiel mit allen Dateien: `scripts/video-overlay/kontrolle-bilder/` (Gefahrbremsung).
+   - **earshot nur, wenn keine echte Aufnahme passt:** `earshot make "a car door closing" -o ~/sfx-bibliothek/openverse/earshot/tuer.wav` (Befehle `/earshot-make`, `/earshot-make-set`), dann `build_index.py` und die Datei mit Befehl und Datum in `~/sfx-bibliothek/openverse/earshot/herkunft_earshot.csv` eintragen (nicht in `herkunft.csv`, die wird neu geschrieben). real-sound (Skill) nur mit CC0-Quellen oder eigenen Aufnahmen.
+   - **Wann was:** echte Geräusche im Bild (Tür, Blinker, Bremse, Hupe) → Openverse + real-sfx. Übergänge, Einblendungen → real-sfx (`whoosh`, `pop`, `click` aus der Bibliothek). Nichts Passendes → earshot. Claude hört nicht, nur Zahlen (LUFS, Spitzen, Zeitpunkte): Serban hört am Handy gegen.
+   - **Nur mit Serbans Ja:** `listen.py install` (yamnet, 45 MB) und `hear.py install` (3,1 GB, PyTorch). Nie `setup.py init --uisfx` (ohne feste Version, das Setup macht es richtig).
 8. **Prüfen (Pflicht):** `check.py fertig.mp4 --vertical|--landscape --sheet bogen.png`, Vorschaubogen ansehen: Gesicht frei, Schrift lesbar, Karte nur zur geplanten Zeit, Endkarte sauber. Bei FEHLER nicht senden.
 9. **Untertitel/Kapitel** bei Kursvideos: `subtitles.py`, `chapters.py` (siehe REFERENZ).
 10. **Senden** (`SendUserFile`) mit zwei Sätzen, was er prüfen soll. **Nie selbst veröffentlichen.** Freigabe durch Serban am Handy, erst danach planen/posten (REFERENZ).
 
 ## Harte Regeln (aus Serbans Vault, nicht verhandelbar)
 - Keine Fahrschul-Preise im Video (§ 19 FahrlG). Kein Eigenlob, keine Bestehensquote, kein Verkaufsdruck.
+- **Soundeffekte:** nur eigene Aufnahmen, CC0-Aufnahmen oder als letzte Wahl mit earshot selbst erzeugte Klänge bzw. uisfx (CC0, synthetisch, nur für Bedien-Geräusche). Herkunftsliste mitgeben. Keine Mixkit-, Pixabay-, Sonniss- oder CC-BY-Klänge, keine Musik aus earshot oder real-sound. Keine externen Hör-Dienste (Gemini, Claudio, Qwen), kein `earshot mcp`, keinen Platzhalter-Schlüssel setzen (der Proxy macht ihn echt). Serbans Stimme hat immer Vorrang (`mix.py --voice-safe`). **Originalprüfungen bekommen NIE Ton oder Effekte** (immer ohne Ton). `earshot llm` / `--yes-upload` nie benutzen (lädt Ton zu Google hoch), `listen_page.py --lan` nie. Kein PyTorch-Modell (`hear.py install`) ohne Serbans Ja.
 - Keine fremde Musik, keine Trend-Sounds (GEMA). Keine KI-Stimme. Keine Ausschnitte aus Filmen, Serien, fremden Videos.
 - Keine Fahrschüler im Bild ohne schriftliche Einwilligung (Eltern bei Minderjährigen), keine Schülerdaten, keine echten Kennzeichen.
 - Verkehrszeichen nur als echte amtliche Bilder, nie von KI gezeichnet. Boost- oder eigenes Logo nie von KI gemalt.
@@ -36,4 +44,5 @@ Werkzeuge in `scripts/video-overlay/` (Details, Formate, Veröffentlichen: `REFE
 - Ergebnisse gehen nur an Serban zur Freigabe, nie direkt veröffentlichen, nichts zu Bunny oder in die Akademie-Datenbank schreiben.
 
 ## Stand
+26.11.2026: Schritt Soundeffekte eingebaut (real-sfx, earshot, real-sound, Openverse-CC0), an der Lernszene „Gefahrbremsung“ getestet (`scripts/video-overlay/kontrolle-bilder/`), nur gemessen, nicht gehört.
 07./08.10.2026: alle Werkzeuge mit künstlichem Testmaterial geprüft, mit Gegenproben. **Noch kein echter Clip von Serban.** Position der Karte und Schriftgröße nach dem ersten echten Clip nachstellen. TikTok-Sicherheitsränder aus Screenshots geschätzt.

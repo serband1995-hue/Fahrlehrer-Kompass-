@@ -187,6 +187,9 @@ const BEREICHE = [
   { id: "zahlungen", titel: "Zahlungen", render: () => { const r = zahlungenReiter(); return r === "verkaeufe" ? zahlungsReiter("verkaeufe") + renderVerkaeufe() : zahlungsReiter(r) + renderPreisSeite(); }, nachher: (...a) => zahlungenReiter() === "verkaeufe" ? bindeVerkaeufe(...a) : bindePreisSeite(...a), zahl: () => offeneVerkaeufe() || "" },
   { id: "fahrchecks", titel: "Fahrcheck", render: renderFahrchecks, nachher: bindeFahrchecks, zahl: () => fcOffeneAbgaben().length || "" },
   { id: "zahlen", titel: "Statistik", render: renderZahlen, nachher: bindeZahlen },
+  // W20 Teil 4 (buero-auswertung.js): Durchfallgründe und Verschiebungs-Verlauf als Unterseiten der Statistik
+  { id: "fehler", titel: "Durchfallgründe", leiste: false, eltern: "zahlen", wenn: () => typeof renderFehler === "function" && typeof vwLaden === "function", render: (...a) => renderFehler(...a), nachher: (...a) => bindeFehler(...a) },
+  { id: "verlauf", titel: "Verschiebungen", leiste: false, eltern: "zahlen", wenn: () => typeof renderVerlauf === "function" && typeof vwLaden === "function", render: (...a) => renderVerlauf(...a), nachher: (...a) => bindeVerlauf(...a) },
   { id: "team", titel: "Fahrlehrer & Büro", neben: true, render: renderTeam, nachher: bindeTeam },
   { id: "flotte", titel: "Fahrzeuge", neben: true, render: renderFlotte, nachher: bindeFlotte, zahl: () => fahrzeugKonflikte().length || "" },
   // Werkstatt 16 liefert buero-verwaltung.js: die drei Punkte erscheinen nur, wenn die Funktionen da sind (sonst fällt die Adresse auf Heute zurück)
@@ -3938,6 +3941,7 @@ function renderZahlen() {
         <tr><td><a href="#verkaeufe">Akademie & Simulator verkauft im ${esc(monatKurz(dieser))}</a></td><td class="zahlspalte">${verkaufMonat.length} · ${euro(verkaufMonat.reduce((a, v) => a + Number(v.betrag || 0), 0))}</td></tr>
       </tbody></table></div>
   ${typeof luZahlenZusatz === "function" ? luZahlenZusatz(f, monate) : ""}
+  ${typeof awStatistikKarte === "function" ? awStatistikKarte() : ""}
   <div id="tip" class="tip" hidden></div>`;
 }
 // Detailseite hinter einem Balken oder einer Kachel
@@ -4810,7 +4814,8 @@ async function ladeDaten() {
       supa.from("profiles").select("*").eq("fahrschule_id", fsId).in("rolle", ["fahrlehrer", "super_admin", "fahrschule_admin"]).order("name"),
       supa.from("schueler").select("*").eq("fahrschule_id", fsId).neq("status", "geloescht").order("name"),
       alleSeiten(() => supa.from("kalender_termine").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("id")),
-      supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false),
+      // seitenweise (sonst schneidet die Datenbank bei 1000 Zeilen still ab – Durchfallgründe/Statistik würden fehlen)
+      alleSeiten(() => supa.from("kalender_pruefungen").select("*").eq("fahrschule_id", fsId).eq("geloescht", false).order("id")),
       supa.from("fahrschule_fahrzeuge").select("*").eq("fahrschule_id", fsId).eq("aktiv", true).order("erstellt_am"),
       supa.from("fahrschule_pakete").select("*").eq("fahrschule_id", fsId),
       supa.from("pruefungstermine").select("*").eq("fahrschule_id", fsId).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("von"),
@@ -5066,7 +5071,7 @@ async function pinFertig(pin) {
       }
       pinBeschaeftigt(false);
       werZeigen(false); letzteAktion = Date.now();
-      toast("Deine neue PIN ist gespeichert ✓");
+      toast("Deine neue PIN ist gespeichert ✓ An anderen PCs musst du dich neu anmelden.");
       return;
     }
     // anmelden oder erste PIN festlegen (die Datenbank speichert sie beim ersten Mal)
@@ -5095,8 +5100,9 @@ async function pinFertig(pin) {
       pinWackeln("Anmelden ging nicht. Bitte die Seite neu laden.");
       return;
     }
-    // Wechsel: die alte Sitzung (andere Person) beenden, bevor die neue gilt
-    if (alt && alt.id !== data.id) { try { await supa.rpc("buero_sitzung_beenden"); } catch (e) { /* egal */ } }
+    // Die alte Sitzung dieses Tabs beenden, bevor die neue gilt – auch bei derselben Person (W20: bis zu 5 Sitzungen je Person;
+    // eine liegengebliebene würde sonst 12 Stunden einen Platz belegen). S.sitzung ist hier noch die alte → richtiger Schlüssel.
+    if (alt) { try { await supa.rpc("buero_sitzung_beenden"); } catch (e) { /* egal */ } }
     setzeSitzung(data);
     if (data.erste_pin) { PIN.person.hat_pin = true; toast("Deine PIN ist gespeichert ✓ Ab jetzt meldest du dich damit an."); }
     if (data.pin_neu_noetig) { PIN.abbrechbar = false; zeigePin("aendern1"); return; }
@@ -5137,7 +5143,9 @@ async function starteWer() {
       return;
     }
   }
-  vergissSitzung();
+  // W20: einen verworfenen Schlüssel (Leerlauf abgelaufen) auch in der Datenbank beenden – sonst belegt er bis zu 12 Stunden
+  // einen der 5 Plätze der Person. beendeSitzung vergisst ihn hier sofort und meldet ihn mit seinem Schlüssel ab.
+  if (alt && alt.token) { S.sitzung = alt; beendeSitzung(); } else vergissSitzung();
   zeigeWer();
 }
 $("werListe").addEventListener("click", (e) => {
@@ -5158,12 +5166,17 @@ $("werListe").addEventListener("click", (e) => {
 });
 async function pruefeSitzungNoch() {
   if (!werNoetig() || !S.sitzung || (!$("wer").hidden && !PIN.abbrechbar)) return;
+  const tok = S.sitzung.token; // nur auf die Antwort zu DIESEM Schlüssel hören (inzwischen neu angemeldet → Antwort veraltet)
   try {
     const { data, error } = await supa.rpc("buero_sitzung_pruefen");
-    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Bitte neu mit deiner PIN anmelden.", true); }
+    if (!S.sitzung || S.sitzung.token !== tok) return;
+    if (!error && data && data.gueltig === false) { vergissSitzung(); zeigeWer(); toast("Du bist hier abgemeldet (z. B. neue PIN oder Anmeldung an zu vielen PCs). Bitte neu mit deiner PIN anmelden.", true); }
   } catch (e) { /* ohne Verbindung: später erneut */ }
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pruefeSitzungNoch(); });
+// W20: Eine Person kann an mehreren PCs angemeldet sein. Ändert sie an einem PC die PIN, endet sie an den anderen –
+// das soll ein offen stehender PC bald merken, nicht erst beim nächsten Tab-Wechsel (nur, solange der Tab sichtbar ist).
+setInterval(() => { if (!document.hidden) pruefeSitzungNoch(); }, 60000);
 $("pinFeld").addEventListener("click", (e) => { const b = e.target.closest("[data-ziffer]"); if (b && Date.now() >= (PIN.ab || 0)) pinZiffer(b.dataset.ziffer); });
 $("pinLoeschen").addEventListener("click", () => { if (PIN.beschaeftigt) return; PIN.eingabe = PIN.eingabe.slice(0, -1); zeichnePunkte(); });
 $("pinZurueck").addEventListener("click", pinZurueck);

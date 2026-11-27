@@ -1,0 +1,11 @@
+# lokal pro Gerät, nie einchecken
+vendor/node_modules/
+vendor/venv/
+vendor/models/
+library_index.json
+taste.json
+ambience_steady.json
+styles/
+work/
+result/
+vendor/package-lock.json

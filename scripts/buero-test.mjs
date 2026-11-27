@@ -186,7 +186,7 @@ for (const [nutzer, erwartet] of [["gesperrt-1", "Zugang gesperrt"], ["agb-1", "
 }
 
 // 3) Jeder Bereich bei drei Breiten, hell und dunkel
-const bereiche = ["heute", "pruefungen", "fahrchecks", "fristen", "kalender", "schueler", "verkaeufe", "zahlen", "team", "flotte"];
+const bereiche = ["heute", "pruefungen", "fahrchecks", "fristen", "kalender", "schueler", "verkaeufe", "zahlen", "fehler", "verlauf", "team", "flotte"];
 for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   for (const b of bereiche) {
     const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", breite, hoehe, hash: "#" + b, dunkel: breite === 1024 });
@@ -308,7 +308,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   await page.selectOption("dialog select[name=fahrlehrer_id]", "fl-1");
   await page.click("dialog button[value=ok]");
   await page.waitForTimeout(400);
-  const v = await page.evaluate(() => (window.__FAKE.tabellen.schueler_verschiebungen || []).length);
+  const v = await page.evaluate(() => (window.__FAKE.tabellen.schueler_verschiebungen || []).length) - 4; // 4 Vorführ-Einträge (W20 Teil 4)
   if (v !== 1) fehler("Schüler verschieben: kein Übergabe-Eintrag");
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "schueler.png") });
   if (konsole.length) fehler("Schüler: Konsole: " + konsole.join(" | "));

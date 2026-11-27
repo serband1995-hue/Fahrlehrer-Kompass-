@@ -101,6 +101,8 @@ begin
           if v_msg = 'W20_ERLAUBT' then v_state := 'erlaubt'; end if;
       end;
       perform set_config('role', v_start, true);
+      -- Nicht änderbare Sicht (HS7 live 26.11.: v_akademie_*): Schreiben scheitert mit 55000 statt 42501 – das ist auch dicht
+      if not v_ok and v_state = '55000' and rec.relkind = 'v' and v_r in ('insert', 'update', 'delete') then v_ok := true; end if;
       -- Quiz: Lesen MUSS klappen (Rest muss verboten sein)
       if rec.relname = any (v_quiz) and v_r = 'select' then v_ok := (v_state = 'erlaubt'); end if;
       if not v_ok then
