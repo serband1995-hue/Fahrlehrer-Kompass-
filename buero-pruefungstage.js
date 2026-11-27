@@ -25,11 +25,11 @@ function ptStatusKlasse(p) { return " pt-st-" + PT.statusInfo(p.status).farbe; }
 
 /* ---------- Laden ---------- */
 // Wirft nie: null = Migration fehlt oder Ladefehler (dann alte Tafel)
-async function ptLaden() {
+async function ptLaden(fsId) {
   try {
     if (typeof PT === "undefined") return null;
     const heute = KR.todayISO();
-    return await PT.ladeBelegung(supa, KR.addDaysISO(heute, -60), KR.addDaysISO(heute, 400));
+    return await PT.ladeBelegung(supa, KR.addDaysISO(heute, -DATEN_TAGE), KR.addDaysISO(heute, 400), fsId || S.fsId);
   } catch (e) { console.warn("Prüfungstage nicht geladen:", e && e.message); return null; }
 }
 // Nach jedem Schreiben: Prüfungen und Tage frisch holen (der Server rechnet Datum/Uhrzeit und Kalender) und zeichnen
@@ -37,7 +37,7 @@ async function ptNeuLaden(ohneZeichnen) {
   const fs = S.fsId;
   try {
     const [tage, pt] = await Promise.all([
-      ptLaden(),
+      ptLaden(fs),
       supa.from("pruefungstermine").select("*").eq("fahrschule_id", fs).gte("datum", KR.addDaysISO(KR.todayISO(), -DATEN_TAGE)).order("datum").order("von"),
     ]);
     if (fs !== S.fsId) return;
@@ -76,7 +76,7 @@ function ptBelegtZeile(tag, p, f) {
   const offenPast = p.status === "geplant" && p.datum <= heute;
   const erg = p.status === "geplant"
     ? `<span class="marke-pill gelb">${p.datum < heute ? "Ergebnis fehlt" : info.text}</span>${offenPast ? `<span class="ergebnis-knoepfe pt-erg"><button class="knopf klein ergebnis-ja" data-eja="${esc(p.id)}" type="button" aria-label="Bestanden" title="Bestanden">✓</button><button class="knopf klein ergebnis-nein" data-enein="${esc(p.id)}" type="button" aria-label="Nicht bestanden" title="Nicht bestanden">✗</button></span>` : ""}`
-    : `<span class="marke-pill ${info.farbe}">${esc(info.text)}</span>${wiederholungHinweis(p)}${rueck ? `<span class="ergebnis-knoepfe"><button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button></span>` : ""}`;
+    : `<span class="marke-pill ${info.farbe}">${esc(info.text)}</span>${ergAppOffen(p) ? ' <span class="leise klein">aus der App</span>' : ""}${wiederholungHinweis(p)}${rueck ? `<span class="ergebnis-knoepfe"><button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button></span>` : ""}`;
   const lkw = PT.istLkwKlasse(p.klasse);
   return `<tr class="pt-zeile pt-belegt${ptStatusKlasse(p)}" draggable="true" data-pttag="${esc(tag.id)}" data-ptfenster="${f.i}" data-ptid="${esc(p.id)}">
     <td class="zeitspalte">${esc(ptZeitText(p))}</td>
@@ -104,7 +104,7 @@ function ptFreieUhrzeitZeile(p) {
   const heute = KR.todayISO();
   const erg = p.status === "geplant"
     ? `<span class="marke-pill gelb">${p.datum < heute ? "Ergebnis fehlt" : info.text}</span>${p.datum <= heute ? `<span class="ergebnis-knoepfe pt-erg"><button class="knopf klein ergebnis-ja" data-eja="${esc(p.id)}" type="button" aria-label="Bestanden" title="Bestanden">✓</button><button class="knopf klein ergebnis-nein" data-enein="${esc(p.id)}" type="button" aria-label="Nicht bestanden" title="Nicht bestanden">✗</button></span>` : ""}`
-    : `<span class="marke-pill ${info.farbe}">${esc(info.text)}</span>${ERGEBNIS_RUECK[p.id] ? `<span class="ergebnis-knoepfe"><button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button></span>` : ""}`;
+    : `<span class="marke-pill ${info.farbe}">${esc(info.text)}</span>${ergAppOffen(p) ? ' <span class="leise klein">aus der App</span>' : ""}${ERGEBNIS_RUECK[p.id] ? `<span class="ergebnis-knoepfe"><button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button></span>` : ""}`;
   const frei = p.pruefungstag_id ? "" : ` draggable="true" data-ptid="${esc(p.id)}"`;
   return `<tr class="pt-zeile pt-belegt${ptStatusKlasse(p)}"${frei}>
     <td class="zeitspalte">${esc(p.von ? PT.hm(p.von) : "–")}</td>
@@ -171,7 +171,7 @@ function ptTageHTML(frueher) {
   const tage = (S.pruefungstage || []).filter((t) => t.datum >= ab).slice().sort((a, b) => (a.datum + PT.tagStart(a)).localeCompare(b.datum + PT.tagStart(b)));
   // Freie Uhrzeit: am Datum eines Tages unter der Karte, sonst in einer eigenen Karte
   const datumMitTag = new Set(tage.map((t) => t.datum));
-  const frei = S.pruefungstermine.filter((p) => !p.pruefungstag_id && p.status !== "abgesagt" && p.art === "praxis" && p.datum >= ab);
+  const frei = S.pruefungstermine.filter((p) => !p.pruefungstag_id && p.status !== "abgesagt" && p.datum >= ab); // F7: alle Arten mit freier Uhrzeit (Theorie zeigt die blaue Art-Marke)
   const naheTag = (p) => tage.find((t) => t.datum === p.datum);
   const karten = tage.map((t) => ptTagKarte(t, frei.filter((p) => naheTag(p) === t)));
   const ohneTag = frei.filter((p) => !datumMitTag.has(p.datum)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
@@ -420,7 +420,9 @@ function ptZeitFeldHTML(p, id) {
   const hatTag = !!(p && p.pruefungstag_id);
   const tage = S.pruefungstage.filter((t) => t.datum >= heute || t.id === (p && p.pruefungstag_id));
   const start = hatTag || (!id && tage.length) ? "fenster" : "frei";
-  const tagOpt = tage.length
+  // F8: Der Tag dieser Prüfung ist nicht geladen: nichts vorwählen (sonst würde beim Speichern still auf einen anderen Tag verschoben)
+  const tagFehlt = hatTag && !S.pruefungstage.some((t) => t.id === p.pruefungstag_id);
+  const tagOpt = tagFehlt ? `<option value="" selected>– bisheriger Tag (bleibt, wenn nichts gewählt) –</option>` + tage.map((t) => `<option value="${esc(t.id)}">${esc(ptTagTitel(t))}${t.pruefer ? " · " + esc(t.pruefer) : ""} · ${esc(PT.zaehlText(t, ptTagTermine(t)))}</option>`).join("") : tage.length
     ? tage.map((t) => `<option value="${esc(t.id)}"${t.id === (p && p.pruefungstag_id) ? " selected" : ""}>${esc(ptTagTitel(t))}${t.pruefer ? " · " + esc(t.pruefer) : ""} · ${esc(PT.zaehlText(t, ptTagTermine(t)))}</option>`).join("")
     : `<option value="">– noch kein Prüfungstag –</option>`;
   // Tauschen ohne Maus: mit einer anderen ausstehenden Prüfung auf einem Tag
@@ -467,6 +469,7 @@ function ptZeitFeldBinden(dlg, p, id) {
 function ptZeitFeldAuswerten(d, p, id) {
   if (!ptAktiv() || d.zeitart !== "fenster" || d.art !== "praxis") return null;
   if (d.tauschen_mit) return { tauschen: d.tauschen_mit };
+  if (id && p && p.pruefungstag_id && !d.tag_id && !ptTag(p.pruefungstag_id)) return { unveraendert: true }; // F8: Tag nicht geladen, nichts gewählt: nichts verschieben
   const tag = ptTag(d.tag_id);
   if (!tag) return { fehler: "Bitte einen Prüfungstag wählen (oder „Freie Uhrzeit“)." };
   if (d.fenster === "" || d.fenster == null) return { fehler: "An diesem Tag ist kein Fenster frei. Bitte einen anderen Tag wählen." };
@@ -482,6 +485,7 @@ function ptZeitWerte(pz, p, id) {
     return gleich ? { weg: ["datum", "von"] } : { weg: ["datum", "von"], setze: { pruefungstag_id: pz.tag.id, fenster: pz.fenster, fenster_anzahl: pz.anzahl }, neu: !id };
   }
   if (pz && pz.tauschen) return { weg: ["datum", "von"] };
+  if (pz && pz.unveraendert) return { weg: ["datum", "von", "pruefungstag_id", "fenster", "fenster_anzahl"] };
   // freie Uhrzeit: eine Prüfung, die im Fenster war, löst sich davon
   if (id && p.pruefungstag_id) return { setze: { pruefungstag_id: null, fenster: null, fenster_anzahl: 1 } };
   return null;

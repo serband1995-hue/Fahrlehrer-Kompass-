@@ -1243,3 +1243,4 @@ details.pt-hinweis-karte[open]>summary .knopf{display:none;}
 .pt-griff{display:inline-block;}
 .pt-tabelle .wiederholung-hinweis{display:block;}
 .pt-tabelle.pt-uhrzeit th:first-child,.pt-tabelle.pt-uhrzeit td:first-child{white-space:normal;width:auto;min-width:110px;}
+details[data-ergapphinweis][open]>summary .knopf{display:inline-flex;}

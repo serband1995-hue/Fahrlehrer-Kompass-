@@ -31,9 +31,9 @@ const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePa
 let ok = 0, schlecht = 0;
 function pruefe(name, bed, info) { if (bed) { ok++; console.log("ok  " + name); } else { schlecht++; console.log("FEHLER  " + name + (info ? " · " + info : "")); } }
 
-async function oeffne({ breite = 1280, hoehe = 900, hash = "#pruefungen", vorbereiten, daten }) {
+async function oeffne({ breite = 1280, hoehe = 900, hash = "#pruefungen", vorbereiten, daten, nutzer }) {
   const d = daten || bauDaten(HEUTE);
-  const session = { user: { id: "ad-1", email: "leitung@example.org" } };
+  const session = { user: { id: nutzer || "ad-1", email: "leitung@example.org" } };
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
   const page = await ctx.newPage();
   const konsole = [];
@@ -274,6 +274,110 @@ async function tagAnlegen(page, datum, pruefer, start) {
     pruefe(`L${b} keine JS-Fehler`, konsole.length === 0, konsole.join(" | ").slice(0, 300));
     await ctx.close();
   }
+}
+
+
+// ---- Prüf-Team-Funde F1/F2/F3/F7/F8 (Ergebnis aus der App, Spiegelzeilen, Super-Admin, Ansicht „Tage“, Rückschau)
+{
+  const vor = VOR + `
+    const heute = ${JSON.stringify(HEUTE)};
+    const K = (n) => { const d = new Date(heute + "T12:00:00"); d.setDate(d.getDate() + n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+    F.tabellen.pruefungstage = [
+      { id: "tg-a", fahrschule_id: "fs-test-1", datum: K(10), start: "08:00", fenster_zahl: 9, pruefer: "AA", geloescht: false, erstellt_von: "ad-1" },
+      { id: "tg-old", fahrschule_id: "fs-test-1", datum: K(-200), start: "08:00", fenster_zahl: 9, pruefer: "OO", geloescht: false, erstellt_von: "ad-1" }];
+    const mk = (id, sid, fl, extra) => Object.assign({ id, fahrschule_id: "fs-test-1", schueler_id: sid, fahrlehrer_id: fl, art: "praxis", klasse: "B", status: "geplant", pruefungstag_id: null, fenster: null, fenster_anzahl: 1, quelle: "buero", ergebnis_uebernommen: true, entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false }, extra);
+    F.tabellen.pruefungstermine = [
+      mk("r1", "s1", "fl-1", { status: "bestanden", ergebnis_uebernommen: false, quelle: "app", datum: K(-1), von: "09:00:00" }),
+      mk("r2", "s2", "fl-2", { status: "nicht_bestanden", ergebnis_uebernommen: false, quelle: "app", datum: K(-1), von: "10:00:00" }),
+      mk("r3", "s8", "fl-1", { art: "theorie", klasse: "CE", status: "bestanden", ergebnis_uebernommen: false, quelle: "app", datum: K(-2), von: "08:00:00" }),
+      mk("th1", "s3", null, { art: "theorie", datum: K(2), von: "10:00:00" }),
+      mk("pr1", "s4", "fl-1", { datum: K(-3), von: "09:00:00" }),
+      mk("ap1", "s9", "fl-3", { quelle: "app", datum: K(4), von: "11:00:00" }),
+      mk("alt1", "s5", "fl-3", { quelle: "app_alt", datum: K(3), von: "12:00:00" }),
+      mk("sp1", "s7", "fl-2", { datum: K(6), von: "14:00:00", kalender_termin_id: "kt-sp1" }),
+      mk("p-old", "s6", "fl-1", { status: "bestanden", pruefungstag_id: "tg-old", fenster: 3, datum: K(-200), von: "10:45:00" })];
+    F.tabellen.kalender_termine.push({ id: "kt-sp1", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-2", schueler_id: "s7", datum: K(6), von: "14:00", bis: "15:30", art: "pruefung", fahrzeug: null, status: "geplant", geloescht: false, payload: { pruefungstermin_id: "sp1" } });
+  `;
+  const { page, ctx, konsole } = await oeffne({ vorbereiten: vor, hoehe: 1600 });
+  const name = (sid) => page.evaluate((x) => S.schueler.find((s) => s.id === x).name, sid);
+  const txt0 = await page.locator("#ansicht").innerText();
+  // F7: „Tage“ zeigt auch Theorie (blaue Marke) und die Warnkarte „ohne Ergebnis“
+  const uhr = await page.locator(".pt-uhrzeit").first().innerText().catch(() => "");
+  pruefe("F7a Ansicht „Tage“ zeigt die Theorieprüfung mit freier Uhrzeit", (await page.locator(".pt-uhrzeit").evaluateAll((l) => l.map((x) => x.innerText).join(" "))).includes(await name("s3")) && (await page.locator(".pt-uhrzeit .marke-pill.blau").count()) >= 1, uhr.slice(0, 200));
+  pruefe("F7b Ansicht „Tage“ zeigt die Warnkarte „Prüfung ohne Ergebnis“", /1 Prüfung ohne Ergebnis/.test(txt0), txt0.slice(0, 300));
+  // Hinweis D: nur quelle „app“, nicht „app_alt“
+  const hd = await page.locator("[data-pthinweisd]").innerText().catch(() => "");
+  pruefe("D3 Hinweis D zählt nur „app“ (1 Prüfung), „app_alt“ nicht", /1 neue Prüfung aus der App/.test(hd) && (await page.locator("[data-ptzm]").count()) === 1, hd.slice(0, 120));
+  // F1: Hinweiszeile, Kennzeichnung, Zähler
+  const hz = page.locator("[data-ergapphinweis]");
+  pruefe("F1a eine Hinweiszeile „3 Ergebnisse aus der App – in die Akte übernehmen“ mit „Alle übernehmen“", (await hz.count()) === 1 && /3 Ergebnisse aus der App – in die Akte übernehmen/.test(await hz.innerText()) && (await hz.locator("[data-eueball]").count()) === 1, await hz.innerText().catch(() => "keine"));
+  const hh = await hz.evaluate((e) => [e.open, Math.round(e.getBoundingClientRect().height)]); const zh = await page.locator("[data-pthinweisd]").evaluate((e) => Math.round(e.getBoundingClientRect().height));
+  pruefe("F1b Hinweiszeile ist eingeklappt und nicht höher als die Zahlungs-Hinweiszeile", !hh[0] && hh[1] <= zh + 4, JSON.stringify(hh) + " Zahlung " + zh);
+  pruefe("F1c Tage-Karte kennzeichnet die Zeile mit „aus der App“", /aus der App/.test(await page.locator(".pt-uhrzeit").first().innerText().catch(() => "")) || /aus der App/.test(await page.locator("#ansicht").innerText()));
+  const tabTxt = await page.locator(".tabs .tab").allInnerTexts();
+  pruefe("F1d Reiter „Ergebnisse eintragen (4)“ zählt App-Ergebnisse und offene Prüfung mit", tabTxt.some((t) => /Ergebnisse eintragen \(4\)/.test(t)), tabTxt.join(","));
+  // F1: Reiter „Ergebnisse eintragen“, einzeln übernehmen (Theorie)
+  await page.goto(page.url().split("#")[0] + "#pruefungen?ansicht=ergebnis"); await fertig(page);
+  const et = await page.locator("#ansicht").innerText();
+  pruefe("F1e Reiter zeigt „Ergebnis aus der App“ mit Knopf „In die Akte übernehmen“ (3 Zeilen)", /Ergebnis aus der App/.test(et) && (await page.locator(".ergebnis-tabelle [data-eueb]").count()) === 3, et.slice(0, 300));
+  await page.locator('.ergebnis-tabelle [data-eueb="r3"]').click(); await fertig(page);
+  let ak = await db(page, () => ({ th: S.schueler.find((x) => x.id === "s8").theorie_bestanden_am, flag: window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "r3").ergebnis_uebernommen }));
+  pruefe("F1f einzeln übernommen: Theorie-Datum in der Akte, Merker gesetzt", !!ak.th && ak.flag === true, JSON.stringify(ak));
+  await page.goto(page.url().split("#")[0] + "#pruefungen"); await fertig(page);
+  pruefe("F1g Hinweiszeile zählt jetzt „2 Ergebnisse“", /2 Ergebnisse aus der App/.test(await page.locator("[data-ergapphinweis]").innerText()));
+  // F1: Alle übernehmen (Praxis bestanden + nicht bestanden)
+  await page.locator("[data-eueball]").click(); await page.waitForTimeout(700);
+  ak = await db(page, () => ({
+    s1: S.schueler.find((x) => x.id === "s1").praxis_bestanden_am, reakt: S.schueler.find((x) => x.id === "s1").reakt_status,
+    aufg: S.aufgaben.some((a) => a.schueler_id === "s2" && /Neuen Termin/.test(a.text)),
+    flags: window.__FAKE.tabellen.pruefungstermine.filter((p) => ["r1", "r2", "r3"].includes(p.id)).map((p) => p.ergebnis_uebernommen).join(),
+  }));
+  pruefe("F1h „Alle übernehmen“: Akte (bestanden am, befreit), Aufgabe „Neuen Termin planen“, Merker gesetzt", !!ak.s1 && ak.reakt === "befreit" && ak.aufg && ak.flags === "true,true,true", JSON.stringify(ak));
+  pruefe("F1i bei bestandener Praxis kommt die Archiv-Frage wie heute", (await page.locator("dialog[open]").count()) >= 1 && /Archiv/.test(await dlg(page).innerText()));
+  await page.keyboard.press("Escape"); await page.waitForTimeout(300);
+  while ((await page.locator("dialog[open]").count()) > 0) { await page.keyboard.press("Escape"); await page.waitForTimeout(200); }
+  pruefe("F1j Hinweiszeile ist weg", (await page.locator("[data-ergapphinweis]").count()) === 0);
+
+  // F2: Spiegelzeile im Kalender
+  await page.evaluate(() => terminDialog("kt-sp1")); await page.waitForTimeout(200);
+  const td = dlg(page);
+  pruefe("F2a Spiegelzeile: Hinweis „bitte unter Prüfungen ändern“, Datum gesperrt, kein „Termin absagen“", /unter „Prüfungen“ ändern/.test(await td.innerText()) && await td.locator('input[name="datum"]').isDisabled() && (await td.locator('input[name="absagen"]').count()) === 0);
+  await td.locator("[data-zurtafel]").click(); await page.waitForTimeout(300);
+  pruefe("F2b Knopf führt zur Prüfungstafel", /#pruefungen/.test(await page.evaluate(() => location.hash)) && (await page.locator("dialog[open]").count()) === 0);
+  // Archiv-Frage: sagt die Prüfung ab, nicht die Kalenderzeile
+  const fr = page.evaluate(async () => { const x = S.schueler.find((s) => s.id === "s7"); const l = await frageKuenftigeTermine(x); if (l === null) return null; await sageTermineAb(l, "Test abgesagt"); return l.map((t) => (t._pruefung ? "P:" : "T:") + t.id); });
+  await page.waitForSelector("dialog[open]");
+  const ft = await dlg(page).innerText();
+  await dlg(page).locator("footer button.haupt, footer button[value=ok]").first().click().catch(async () => { await dlg(page).locator("button:has-text('Ja')").first().click(); });
+  const lst = await fr; await fertig(page);
+  const sp = await db(page, () => ({ p: window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "sp1").status, k: window.__FAKE.tabellen.kalender_termine.find((t) => t.id === "kt-sp1").geloescht }));
+  pruefe("F2c Archiv-Frage nennt die Prüfung und sagt über die Prüfung ab (Kalender zieht der Server nach)", /Prüfung/.test(ft) && (lst || []).some((x) => x === "P:sp1") && !(lst || []).includes("T:kt-sp1") && sp.p === "abgesagt" && sp.k === true, ft.slice(0, 120) + " | " + JSON.stringify(lst) + JSON.stringify(sp));
+  await page.evaluate(() => { location.hash = "#pruefungen"; }); await fertig(page);
+
+  // F8: Rückschau und fehlender Tag
+  pruefe("F8a Rückschau: ein 200 Tage alter Prüfungstag wird geladen", await page.evaluate(() => S.pruefungstage.some((t) => t.id === "tg-old")));
+  await page.evaluate(() => { S.pruefungstage = S.pruefungstage.filter((t) => t.id !== "tg-old"); });
+  await page.evaluate(() => pruefungDialog("p-old")); await page.waitForTimeout(200);
+  const d8 = dlg(page);
+  pruefe("F8b Tag fehlt: Auswahl „Prüfungstag“ ist leer, es wird kein anderer vorgewählt", (await d8.locator('select[name="tag_id"]').inputValue()) === "");
+  await d8.locator('input[name="notiz"]').fill("nur Notiz");
+  await d8.locator("footer button[value=ok]").click(); await fertig(page);
+  const po = await db(page, () => window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "p-old"));
+  pruefe("F8c Speichern verschiebt nichts (Tag, Fenster, Datum, Uhrzeit gleich), Notiz gespeichert", po.notiz === "nur Notiz" && po.pruefungstag_id === "tg-old" && po.fenster === 3 && String(po.von).slice(0, 5) === "10:45", JSON.stringify(po));
+  pruefe("F8d keine JS-Fehler", konsole.length === 0, konsole.join(" | ").slice(0, 300));
+  await ctx.close();
+}
+// F3: Super-Admin wählt eine andere Fahrschule: deren Prüfungstage kommen (RPC mit Fahrschule)
+{
+  const vor = VOR + `
+    F.tabellen.pruefungstage = [{ id: "tg-z2", fahrschule_id: "fs-test-2", datum: "${KRtag(5)}", start: "08:00", fenster_zahl: 9, pruefer: "ZZ", geloescht: false, erstellt_von: "sa-1" }];
+  `;
+  const { page, ctx, konsole } = await oeffne({ vorbereiten: vor, nutzer: "sa-1" });
+  await page.selectOption("#schulWahl", "fs-test-2"); await page.waitForTimeout(1200);
+  const r = await page.evaluate(() => ({ fs: S.fsId, tage: S.pruefungstage.map((t) => t.id) }));
+  pruefe("F3 Super-Admin: Prüfungstage der gewählten Fahrschule geladen", r.fs === "fs-test-2" && r.tage.includes("tg-z2"), JSON.stringify(r));
+  pruefe("F3b keine JS-Fehler", konsole.length === 0, konsole.join(" | ").slice(0, 300));
+  await ctx.close();
 }
 
 // ---- Alte Datenbank ohne Migration: alte Tafel wie bisher

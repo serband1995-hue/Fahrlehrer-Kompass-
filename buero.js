@@ -507,6 +507,7 @@ function renderHeute() {
   if (f.theorie) aufgaben.push(`<a class="aufgabe gelb" href="#fristen?ansicht=theorie"><b>${f.theorie}</b> Theorie läuft in ${fristWerte().theorie.vorwarn_tage} Tagen ab oder ist abgelaufen</a>`);
   const pz = zaehlePruefungen();
   if (pz.ohneErgebnis) aufgaben.push(`<a class="aufgabe rot" href="#pruefungen?ansicht=ergebnis"><b>${pz.ohneErgebnis}</b> Prüfung${pz.ohneErgebnis === 1 ? "" : "en"} ohne Ergebnis eingetragen</a>`);
+  if (pz.appNeu) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen?ansicht=ergebnis"><b>${pz.appNeu}</b> Prüfungsergebnis${pz.appNeu === 1 ? "" : "se"} aus der App: in die Akte übernehmen</a>`);
   if (pz.offeneHaken) aufgaben.push(`<a class="aufgabe gelb" href="#pruefungen"><b>${pz.offeneHaken}</b> Prüfung${pz.offeneHaken === 1 ? "" : "en"} in den nächsten 14 Tagen mit offenen Haken (Entgelt, TÜV, AS-Portal)</a>`);
   const fcOffen = fcOffeneAbgaben();
   if (fcOffen.length) aufgaben.push(`<a class="aufgabe gelb" href="#fahrchecks?z=vor"><b>${fcOffen.length}</b> Fahrcheck-Abgabe${fcOffen.length === 1 ? "" : "n"} für ${esc(datumDE(fcOffen[0].von))}–${esc(datumDE(fcOffen[0].bis))} noch nicht bestätigt</a>`);
@@ -1254,16 +1255,19 @@ const HAKEN = [
   ["tuev_gutschein", "rot", "TÜV-Gutschein gekauft"],
   ["as_portal", "gruen", "Letzte Stunde im AS-Portal eingetragen"],
 ];
+// W21: Ergebnis kam aus der App, die Akte im Büro ist noch nicht nachgezogen (Server: ergebnis_uebernommen = false)
+function ergAppOffen(p) { return (p.status === "bestanden" || p.status === "nicht_bestanden") && p.ergebnis_uebernommen === false; }
 function zaehlePruefungen() {
   const heute = KR.todayISO(), bis14 = KR.addDaysISO(heute, 14);
-  const z = { ohneErgebnis: 0, offeneHaken: 0, woche: 0, handeln: 0 };
+  const z = { ohneErgebnis: 0, offeneHaken: 0, woche: 0, handeln: 0, appNeu: 0 };
   for (const p of S.pruefungstermine) {
+    if (ergAppOffen(p)) z.appNeu++;
     if (p.status !== "geplant") continue;
     if (p.datum < heute) z.ohneErgebnis++;
     else if (p.datum <= bis14 && HAKEN.some(([k]) => !p[k])) z.offeneHaken++;
     if (p.datum >= heute && p.datum <= KR.addDaysISO(heute, 6)) z.woche++;
   }
-  z.handeln = z.ohneErgebnis + z.offeneHaken;
+  z.handeln = z.ohneErgebnis + z.offeneHaken + z.appNeu;
   return z;
 }
 function wochentag(iso) { return KR.parseISO(iso).toLocaleDateString("de-DE", { weekday: "long" }); }
@@ -1281,7 +1285,7 @@ function appErgebnis(sid, datum) {
 }
 function ergebnisOffen() {
   const heute = KR.todayISO();
-  return S.pruefungstermine.filter((p) => p.datum <= heute && (p.status === "geplant" || ERGEBNIS_RUECK[p.id]));
+  return S.pruefungstermine.filter((p) => ergAppOffen(p) || (p.datum <= heute && (p.status === "geplant" || ERGEBNIS_RUECK[p.id])));
 }
 function renderErgebnisListe(art, suche) {
   let l = ergebnisOffen();
@@ -1295,7 +1299,9 @@ function renderErgebnisListe(art, suche) {
     const s = S.schueler.find((x) => x.id === p.schueler_id) || {};
     const r = ERGEBNIS_RUECK[p.id];
     const ausApp = p.status === "geplant" && p.art === "praxis" ? appErgebnis(p.schueler_id, p.datum) : "";
-    const ergebnis = p.status === "geplant"
+    const ergebnis = ergAppOffen(p)
+      ? `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span> <span class="leise klein">Ergebnis aus der App</span><button class="knopf klein haupt" data-eueb="${esc(p.id)}" type="button">In die Akte übernehmen</button>`
+      : p.status === "geplant"
       ? `${ausApp ? `<span class="leise klein">In der App: ${ausApp === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span> ` : ""}<button class="knopf ergebnis-ja" data-eja="${esc(p.id)}" type="button">✓ Bestanden</button><button class="knopf ergebnis-nein" data-enein="${esc(p.id)}" type="button">✗ Nicht bestanden</button>`
       : `<span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "✓ bestanden" : "✗ nicht bestanden"}</span>${wiederholungHinweis(p)}${r ? `<button class="knopf klein" data-erueck="${esc(p.id)}" type="button">Rückgängig</button>` : ""}${p.status === "bestanden" && p.art === "praxis" && istAktiv(s) ? `<button class="knopf klein" data-earchiv="${esc(s.id)}" type="button">Ins Archiv</button>` : ""}`;
     return `<tr class="${ptStatusKlasse(p).trim()}"><td class="zeitspalte">${esc(ptZeitText(p))}</td>
@@ -1315,6 +1321,36 @@ function pLink(aender) {
   for (const [k, v] of Object.entries(aender)) { if (v) p.set(k, v); else p.delete(k); }
   const q = p.toString();
   return "#pruefungen" + (q ? "?" + q : "");
+}
+// Eine Zeile oben in der Prüfungstafel: Ergebnisse aus der App, die noch in die Akte müssen
+function ergAppHinweisHTML() {
+  const l = S.pruefungstermine.filter(ergAppOffen).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+  if (!l.length) return "";
+  return `<details class="karte pt-hinweis-karte" data-ergapphinweis><summary class="karte-kopf"><h2>${l.length} Ergebnis${l.length === 1 ? "" : "se"} aus der App – in die Akte übernehmen</h2><button class="knopf klein haupt" data-eueball type="button">Alle übernehmen</button></summary>
+    <ul class="pt-liste">${l.map((p) => { const s = S.schueler.find((x) => x.id === p.schueler_id) || {}; return `<li><span><b>${esc(s.name || "(Schüler gelöscht)")}</b> · ${esc(datumDE(p.datum))} · ${p.art === "praxis" ? "Praxis" : "Theorie"} <span class="marke-pill ${p.status === "bestanden" ? "gruen" : "rot"}">${p.status === "bestanden" ? "bestanden" : "nicht bestanden"}</span></span><button class="knopf klein" data-eueb="${esc(p.id)}" type="button">In die Akte übernehmen</button></li>`; }).join("")}</ul></details>`;
+}
+// Ergebnis aus der App in die Akte übernehmen (Datum bestanden, Reaktivierung befreit, Aufgabe „Neuen Termin planen“) und merken
+async function uebernimmAppErgebnis(id) {
+  const p = S.pruefungstermine.find((x) => x.id === id);
+  if (!p || !ergAppOffen(p)) return null;
+  await uebertrageErgebnis(p, p.status, "geplant");
+  const g = await speicherePruefung(id, { ergebnis_uebernommen: true });
+  return g || null;
+}
+async function uebernimmAppErgebnisse(ids, einzeln) {
+  const archiv = [];
+  let n = 0;
+  for (const id of ids) {
+    const p = S.pruefungstermine.find((x) => x.id === id);
+    const g = await uebernimmAppErgebnis(id);
+    if (!g) continue;
+    n++;
+    const s = p && S.schueler.find((x) => x.id === p.schueler_id);
+    if (p && s && g.status === "bestanden" && g.art === "praxis" && istAktiv(s)) archiv.push(s.id);
+  }
+  if (n) toast(n === 1 ? "Ergebnis in die Akte übernommen" : `${n} Ergebnisse in die Akte übernommen`);
+  zeichne();
+  for (const sid of archiv) await insArchiv(sid); // wie beim Eintragen im Büro: bei bestandener Praxis nach dem Archiv fragen
 }
 function renderPruefungen() {
   const heute = KR.todayISO();
@@ -1371,7 +1407,7 @@ function renderPruefungen() {
     return `<div class="kiosk-kopf"><h2>Prüfungen der nächsten 14 Tage</h2><a class="knopf" href="#pruefungen">Großansicht beenden</a></div>${legende}
       ${tabellen || `<p class="leer">Keine Prüfungen in den nächsten 14 Tagen.</p>`}`;
   }
-  const nErg = ergebnisOffen().filter((p) => p.status === "geplant").length;
+  const nErg = ergebnisOffen().filter((p) => p.status === "geplant" || ergAppOffen(p)).length;
   const tabs = ansichten.map(([id, n]) => `<a class="tab" href="${pLink({ ansicht: id === standardAnsicht ? "" : id, frueher: "" })}"${id === ansicht ? ' aria-current="page"' : ""}>${n}${id === "ergebnis" && nErg ? ` (${nErg})` : ""}</a>`).join("");
   const arten = [["alle", "Alle"], ["praxis", "Praxis"], ["theorie", "Theorie"]].map(([id, n]) => `<a class="tab" href="${pLink({ art: id === "alle" ? "" : id })}"${id === art ? ' aria-current="page"' : ""}>${n}</a>`).join("");
   const filterAktiv = suche || vonF || bisF;
@@ -1382,15 +1418,16 @@ function renderPruefungen() {
       <select class="suche" id="pSort" aria-label="Sortierung"><option value="auf"${sortierung === "auf" ? " selected" : ""}>Datum: älteste zuerst</option><option value="ab"${sortierung === "ab" ? " selected" : ""}>Datum: neueste zuerst</option></select>
       ${filterAktiv ? `<a class="knopf klein" href="${pLink({ suche: "", von: "", bis: "" })}">Filter löschen</a>` : ""}
     </div>`;
-  const warn = offen.length && ansicht === "kommend" && !filterAktiv
+  const warn = offen.length && (ansicht === "kommend" || ansicht === "tage") && !filterAktiv
     ? `<div class="karte warnkarte"><div class="karte-kopf"><h2>${offen.length} Prüfung${offen.length === 1 ? "" : "en"} ohne Ergebnis</h2><a class="knopf haupt" href="#pruefungen?ansicht=ergebnis">Ergebnisse eintragen</a></div><table class="tabelle ptabelle"><colgroup><col class="c-zeit breit"><col class="c-art"><col><col class="c-lehrer"><col class="c-haken"><col class="c-akt"></colgroup><tbody>${offen.map((p) => zeile(p).replace("<td class=\"zeitspalte\">", `<td class="zeitspalte">${esc(datumDE(p.datum))} `)).join("")}</tbody></table></div>` : "";
   const tageAnsicht = ansicht === "tage";
+  const appHinweis = ansicht !== "ergebnis" ? ergAppHinweisHTML() : "";
   const zahlHinweis = ptAktiv() && !filterAktiv && typeof ptZahlungsHinweisHTML === "function" ? ptZahlungsHinweisHTML() : ""; // W21 Hinweis D
   return `<div class="kacheln">
       <div class="kachel"><div class="wert">${z.woche}</div><div class="name">Prüfungen in den nächsten 7 Tagen</div></div>
       <div class="kachel${z.offeneHaken ? " gold" : ""}"><div class="wert">${z.offeneHaken}</div><div class="name">mit offenen Haken (14 Tage)</div></div>
       <div class="kachel${z.ohneErgebnis ? " rot" : ""}"><div class="wert">${z.ohneErgebnis}</div><div class="name">ohne Ergebnis</div></div>
-    </div>${zahlHinweis}${tageAnsicht ? "" : warn}
+    </div>${appHinweis}${zahlHinweis}${warn}
     <div class="karte">
       <div class="karte-kopf"><div class="tabs">${tabs}${tageAnsicht ? "" : `<span class="trenner"></span>${arten}`}</div>
         <div class="knopfreihe"><a class="knopf" href="#pruefungen?gross=1">Großansicht für die Küche</a>${ptAktiv() ? `<button class="knopf" id="ptNeu" type="button">+ Prüfungstag</button>` : ""}<button class="knopf haupt" id="pNeu" type="button">+ Prüfung planen</button></div></div>
@@ -1427,6 +1464,8 @@ function bindePruefungen(ziel) {
   };
   ziel.querySelectorAll("[data-eja]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.eja, "bestanden")));
   ziel.querySelectorAll("[data-enein]").forEach((b) => b.addEventListener("click", () => tippe(b, b.dataset.enein, "nicht_bestanden")));
+  ziel.querySelectorAll("[data-eueb]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; uebernimmAppErgebnisse([b.dataset.eueb]); }));
+  ziel.querySelectorAll("[data-eueball]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); b.disabled = true; uebernimmAppErgebnisse(S.pruefungstermine.filter(ergAppOffen).map((p) => p.id)); }));
   ziel.querySelectorAll("[data-erueck]").forEach((b) => b.addEventListener("click", () => { b.disabled = true; ergebnisRueckgaengig(b.dataset.erueck); }));
   ziel.querySelectorAll("[data-earchiv]").forEach((b) => b.addEventListener("click", () => insArchiv(b.dataset.earchiv)));
   if (typeof ptBinde === "function") ptBinde(ziel); // W21: Prüfungstage (Ziehen, Fenster, Mehrere einplanen …)
@@ -1535,7 +1574,7 @@ function pruefungDialog(id) {
     const pz = ptZeitFeldAuswerten(d, p, id);
     if (pz && pz.fehler) { toast(pz.fehler, true); return false; }
     if (pz && pz.tag) { d.datum = pz.datum; d.von = pz.von; }
-    if (pz && pz.tauschen) { d.datum = p.datum; d.von = p.von ? PT.hm(p.von) : ""; }
+    if (pz && (pz.tauschen || pz.unveraendert)) { d.datum = p.datum; d.von = p.von ? PT.hm(p.von) : ""; }
     if (!d.datum) { toast("Bitte ein Datum eintragen.", true); return false; }
     { // K8: Zahlung ausstehend – keine neue künftige Praxisprüfung im Kalender des Fahrlehrers
       const sx = S.schueler.find((x) => x.id === d.schueler_id);
@@ -2974,11 +3013,20 @@ function plusMinuten(hm, n) { const m = Math.min(KR.hm2min(hm) + n, 23 * 60 + 59
 function schuelerSpalteDa(k) { return !S.schueler.length || S.schueler.some((x) => x && k in x); }
 // Hat die Datenbank diese Spalte? (steht in mindestens einem geladenen Termin; select("*") liefert alle Spalten)
 function terminSpalteDa(k) { return !S.termine.length || S.termine.some((x) => x && k in x); }
+// W21: Kalenderzeile, die der Server aus einer Prüfung spiegelt (Datum, Zeit, Personen und „gelöscht“ bestimmt nur die Prüfung)
+function pruefungZuSpiegel(t) {
+  if (!t || t.art !== "pruefung") return null;
+  const pid = t.payload && t.payload.pruefungstermin_id;
+  const p = S.pruefungstermine.find((x) => (pid && x.id === pid) || x.kalender_termin_id === t.id);
+  return p || (pid ? { id: pid } : null);
+}
 function terminDialog(id, vorgabe) {
   const t = id ? S.termine.find((x) => x.id === id) : Object.assign({ art: "fahrstunde" }, vorgabe, { bis: plusMinuten(vorgabe.von, 90) });
   if (!t) return;
   const fahrzeuge = S.fahrzeuge.map((f) => f.bezeichnung || f.name || "").filter(Boolean);
+  const spiegel = id && pruefungZuSpiegel(t);
   const body = `<div class="formular">
+      ${spiegel ? `<p class="voll fl-warnung bald" id="spiegelHinweis">Diese Prüfung bitte unter „Prüfungen“ ändern. Datum, Uhrzeit, Personen und Absagen kommen von dort. <button class="knopf klein" type="button" data-zurtafel>Zur Prüfungstafel</button></p>` : ""}
       <label class="voll">Schüler<select name="schueler_id"><option value="">– ohne Schüler –</option>${schuelerOptionen(t.schueler_id)}</select></label>
       <label>Art<select name="art">${Object.entries(ARTEN).map(([k, v]) => `<option value="${k}"${t.art === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
       <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(t.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
@@ -2999,11 +3047,18 @@ function terminDialog(id, vorgabe) {
       </div>
       ${id && (t.payload || {}).signed ? `<p class="voll fl-warnung bald">Diese Stunde ist vom Schüler unterschrieben. Ändern Sie Datum, Uhrzeit, Art oder Schüler, muss er neu unterschreiben. Korrekturen mit Grund: Schüler öffnen → „Ausbildungsnachweis“.</p>` : ""}
       <p class="voll fl-warnung abgelaufen" id="zahlHinweis" hidden>${ZAHLUNG_MELDUNG}</p>
-      ${id ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
+      ${id && !spiegel ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
     <p class="leise klein" id="appHinweis">Der Fahrlehrer sieht die Änderung innerhalb einer Minute in seiner App.${id && t.payload && t.payload.onlineBookingId ? " Online gebuchte Termine: Der Schüler bekommt eine E-Mail." : ""}</p>`;
   const tdlg = oeffneDialog(id ? "Termin bearbeiten" : "Termin anlegen", body, async (form) => {
+    if (spiegel) { // nur das Fahrzeug gehört dem Kalender; alles andere lässt der Server nicht zu
+      const fz = form.querySelector("select[name=fahrzeug]").value || null;
+      if ((t.fahrzeug || null) === fz) return true;
+      const r = await supa.from("kalender_termine").update({ fahrzeug: fz, aktualisiert_am: new Date().toISOString() }).eq("id", id).select("*");
+      if (r.error || !r.data || !r.data.length) { toast("Nicht gespeichert: " + (r.error ? dbFehlerText(r.error) : "keine Berechtigung"), true); return false; }
+      Object.assign(t, r.data[0]); toast("Fahrzeug gespeichert"); zeichne(); return true;
+    }
     const d = Object.fromEntries(new FormData(form).entries());
     if (!d.fahrlehrer_id || !d.datum || !d.von || !d.bis) { toast("Bitte Fahrlehrer, Datum und Uhrzeit eintragen.", true); return false; }
     if (KR.hm2min(d.bis) <= KR.hm2min(d.von)) { toast("„Bis“ muss nach „Von“ liegen.", true); return false; }
@@ -3060,6 +3115,10 @@ function terminDialog(id, vorgabe) {
     }
     toast("Termin gespeichert"); zeichne(); return true;
   });
+  if (spiegel) {
+    tdlg.querySelectorAll("select,input").forEach((el) => { if (el.name !== "fahrzeug") el.disabled = true; });
+    tdlg.querySelector("[data-zurtafel]").addEventListener("click", () => { tdlg.close(); location.hash = "#pruefungen"; });
+  }
   // Felder für Fahrlehrer ohne App ein- und ausblenden
   const ohneAppNeu = () => {
     const fl = teamPerson(tdlg.querySelector("select[name=fahrlehrer_id]").value) || {};
@@ -3099,6 +3158,18 @@ function terminDialog(id, vorgabe) {
 }
 // Termine absagen (geloescht: true). 6 Sekunden „Rückgängig“; die Absage-Mail an Online-Buchende geht erst nach Ablauf raus
 async function sageTermineAb(termine, text) {
+  // W21: Spiegelzeilen (und Prüfungen aus der Archiv-Frage) sagt man über die Prüfung ab; der Server zieht den Kalender nach
+  const prf = {};
+  for (const t of termine) { if (t._pruefung) prf[t.id] = t; else { const sp = pruefungZuSpiegel(t); if (sp) prf[sp.id] = sp; } }
+  termine = termine.filter((t) => !t._pruefung && !pruefungZuSpiegel(t));
+  let nPr = 0;
+  for (const id of Object.keys(prf)) {
+    const g = await speicherePruefung(id, { status: "abgesagt" });
+    if (!g) continue;
+    nPr++;
+    if (g.kalender_termin_id) S.termine = S.termine.filter((x) => x.id !== g.kalender_termin_id);
+  }
+  if (!termine.length) { if (nPr) { zeichne(); toast(text); } return nPr > 0; }
   const res = await supa.from("kalender_termine").update({ geloescht: true, aktualisiert_am: new Date().toISOString() }).in("id", termine.map((t) => t.id)).select("id");
   if (res.error || !res.data || !res.data.length) { toast("Nicht abgesagt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
   const weg = new Set(res.data.map((r) => r.id));
@@ -3139,14 +3210,23 @@ function holeAbsagenNach() {
 // Künftige Termine eines Schülers (heute noch nicht vorbei oder später), ohne Sperrzeiten
 function kuenftigeTermineVon(sid) {
   const heute = KR.todayISO(), jetzt = KR.pad2(new Date().getHours()) + ":" + KR.pad2(new Date().getMinutes());
-  return S.termine.filter((t) => t.schueler_id === sid && t.art !== "block" && (t.datum > heute || (t.datum === heute && (!t.bis || t.bis > jetzt))));
+  return S.termine.filter((t) => t.schueler_id === sid && t.art !== "block" && !pruefungZuSpiegel(t) && (t.datum > heute || (t.datum === heute && (!t.bis || t.bis > jetzt))));
 }
 // Schüler wird archiviert: künftige Termine auch absagen? Ergebnis: null = abgebrochen, sonst die abzusagenden Termine (leer = keine)
+// Künftige, noch nicht gelaufene Prüfungen eines Schülers (sie ersetzen ihre Spiegelzeilen im Kalender)
+function kuenftigePruefungenVon(sid) {
+  const heute = KR.todayISO(), jetzt = KR.pad2(new Date().getHours()) + ":" + KR.pad2(new Date().getMinutes());
+  return S.pruefungstermine.filter((p) => p.schueler_id === sid && p.status === "geplant" && (p.datum > heute || (p.datum === heute && (!p.von || String(p.von).slice(0, 5) > jetzt))))
+    .map((p) => Object.assign({}, p, { _pruefung: true }));
+}
 async function frageKuenftigeTermine(x) {
-  const l = kuenftigeTermineVon(x.id);
+  const pr = kuenftigePruefungenVon(x.id);
+  const l = kuenftigeTermineVon(x.id).concat(pr);
   if (!l.length) return [];
-  const w = await frageDrei(`${l.length === 1 ? "1 künftigen Termin" : l.length + " künftige Termine"} auch absagen?`,
-    `${x.name} hat noch ${l.length === 1 ? "1 künftigen Termin" : l.length + " künftige Termine"} im Kalender (der nächste am ${datumDE(l.map((t) => t.datum).sort()[0])}). Wenn du sie absagst, verschwinden sie beim Fahrlehrer, und online gebuchte Schüler bekommen eine E-Mail. Du kannst die Absage 6 Sekunden lang rückgängig machen.`,
+  const nT = l.length - pr.length;
+  const zahlText = (nT ? (nT === 1 ? "1 künftigen Termin" : nT + " künftige Termine") : "") + (nT && pr.length ? " und " : "") + (pr.length ? (pr.length === 1 ? "1 Prüfung" : pr.length + " Prüfungen") : "");
+  const w = await frageDrei(`${zahlText} auch absagen?`,
+    `${x.name} hat noch ${zahlText} (der nächste am ${datumDE(l.map((t) => t.datum).sort()[0])}). Wenn du sie absagst, verschwinden sie beim Fahrlehrer, und online gebuchte Schüler bekommen eine E-Mail. Du kannst die Absage 6 Sekunden lang rückgängig machen.`,
     l.length === 1 ? "Ja, Termin absagen" : "Ja, alle absagen", "Nein, nur archivieren", "Abbrechen");
   if (w === null) return null;
   return w === "ja" ? l : [];
@@ -4869,7 +4949,7 @@ async function ladeDaten() {
       supa.from("schueler_eltern").select("*").eq("fahrschule_id", fsId),   // W14 Eltern-Mail; fehlt die Tabelle → kein Eltern-Feld
       supa.from("erinnerungs_mails").select("*").eq("fahrschule_id", fsId).order("angelegt_am", { ascending: false }).limit(2000),   // W15 S5; fehlt die Tabelle → keine Erinnerungs-Knöpfe
       holeReaktRegel(fsId),   // W15: Regel der Reaktivierung (entfällt, Monate); fehlt die Funktion → alte Regel
-      typeof ptLaden === "function" ? ptLaden() : null,   // W21: Prüfungstage (Fenster); null = Migration fehlt → alte Tafel
+      typeof ptLaden === "function" ? ptLaden(fsId) : null,   // W21: Prüfungstage (Fenster); null = Migration fehlt → alte Tafel
     ]);
     if (nr !== S.ladeNr) return; // inzwischen wurde neu geladen oder die Fahrschule gewechselt
     S.fs = pruefe(fs, "Fahrschule");
