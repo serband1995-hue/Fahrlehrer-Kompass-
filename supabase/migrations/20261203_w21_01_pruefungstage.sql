@@ -31,8 +31,11 @@
 --  7. Rechte: Fahrlehrer dürfen eigene Prüfungen anlegen/ändern (fahrlehrer_id = ich, Schüler der eigenen Fahrschule).
 --     Nie für anon. WITH CHECK prüft die Rolle (Lehre W18).
 -- Rückweg: supabase/rueckweg/20261203_w21_01_rueckweg.sql
--- Nach dem Lese-Ergebnis (scripts/sql/w21-1-lesen.sql) anzupassen: Spaltentypen von pruefungstermine (von = time angenommen,
--- schueler_id = text angenommen) und die Auslöser auf kalender_termine (Spiegel-Schreiben ist in eigener Funktion pt_kalender_spiegel).
+-- Live-Stand (Lese-SQL w21-1-lesen, 27.11.2026 05:55 UTC): pruefungstermine.von und kalender_termine.von/bis sind TEXT mit CHECK
+-- '^[0-9]{1,2}:[0-5][0-9]$' (deshalb immer to_char(…, 'HH24:MI')), schueler_id text, kalender_termin_id text ohne FK,
+-- kalender_termine/kalender_pruefungen.fahrlehrer_id NOT NULL, keine Auslöser auf pruefungstermine, btree_gist wird nicht gebraucht.
+-- Auslöser auf kalender_termine (BEFORE UPDATE, Reihenfolge): trg_termin_a_pruefung_spiegel (neu) → c_fc_haken → entfernt_schutz →
+-- verschiebung_schutz → zx_zahlung → zy_papierkorb → zz_nachweis_spur; AFTER: trg_termin_b_pruefung_fahrlehrer (neu), zz_nachweis_angelegt.
 
 do $w21$
 begin
@@ -149,13 +152,13 @@ create or replace function public.pt_kalender_spiegel(p public.pruefungstermine,
  returns text language plpgsql security definer set search_path to 'public'
 as $function$
 declare
+  v_bis text;
   v_lang int := case when p.fenster_anzahl = 2 or upper(coalesce(p.klasse, '')) in ('C', 'CE', 'C1', 'C1E') then 85 else 55 end;
-  v_bis time;
 begin
   perform set_config('kompass.w21_spiegel', '1', true);
   begin
     if soll then
-      v_bis := least(p.von + make_interval(mins => v_lang), time '23:59');
+      v_bis := to_char(least(p.von::time + make_interval(mins => v_lang), time '23:59'), 'HH24:MI');
       update public.kalender_termine set fahrlehrer_id = p.fahrlehrer_id, schueler_id = p.schueler_id, datum = p.datum, von = p.von, bis = v_bis,
              art = 'pruefung', geloescht = false, aktualisiert_am = now()
        where id = p.kalender_termin_id and fahrschule_id = p.fahrschule_id and art = 'pruefung';   -- nie eine fremde Zeile (Richter W21 B1)
@@ -230,7 +233,7 @@ begin
       raise exception 'W21:fenster_ungueltig' using errcode = 'P0001', hint = 'Dieses Zeitfenster gibt es an dem Tag nicht.';
     end if;
     new.datum := t.datum;
-    new.von := t.start + make_interval(mins => 55 * new.fenster);
+    new.von := to_char(t.start + make_interval(mins => 55 * new.fenster), 'HH24:MI');   -- live: von ist Text 'HH:MM'
     if new.status <> 'abgesagt' and exists (
          select 1 from public.pruefungstermine q
           where q.pruefungstag_id = new.pruefungstag_id and q.id <> new.id and q.status <> 'abgesagt' and q.fenster is not null
@@ -396,7 +399,7 @@ begin
         update public.kalender_pruefungen set result = v_result,
                payload = coalesce(payload, '{}'::jsonb) || jsonb_build_object('buero_korrektur_am', now()), aktualisiert_am = now()
          where id = v_id and result is distinct from v_result;
-      else
+      elsif new.fahrlehrer_id is not null then   -- kalender_pruefungen.fahrlehrer_id ist NOT NULL; ohne Fahrlehrer gibt es kein App-Ergebnis
         insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, pruefer, geloescht, payload, aktualisiert_am)
         values ('pt-' || new.id::text, new.fahrschule_id, new.fahrlehrer_id, new.schueler_id, new.datum, v_result, new.pruefer, false,
                 jsonb_build_object('quelle', 'buero', 'pruefungstermin_id', new.id), now())

@@ -83,7 +83,7 @@ begin
   insert into public.pruefungstage (fahrschule_id, datum, pruefer) values (v_fs, current_date + 30, 'PR') returning id into v_tag;
   insert into public.pruefungstermine (fahrschule_id, schueler_id, art, klasse, pruefungstag_id, fenster, fahrlehrer_id)
   select v_fs, 'w21probe' || v_lauf || (g + 1), 'praxis', 'B', v_tag, g, case when g < 6 then v_f1 else v_f2 end from generate_series(0, 8) g;
-  select string_agg(to_char(von, 'HH24:MI'), ',' order by fenster) into v_t from public.pruefungstermine where pruefungstag_id = v_tag;
+  select string_agg(von, ',' order by fenster) into v_t from public.pruefungstermine where pruefungstag_id = v_tag;
   v_pr := v_pr || jsonb_build_object('name', 'Fall 1: 9 Prüfungen, Zeiten 08:00..15:20', 'kat', 'pflicht',
     'ok', v_t = '08:00,08:55,09:50,10:45,11:40,12:35,13:30,14:25,15:20', 'ist', v_t);
   perform set_config('role', v_start, true);
@@ -113,7 +113,7 @@ begin
   v_schritt := '4 Verschieben/Tauschen';
   select id into v_id from public.pruefungstermine where schueler_id = 'w21probe' || v_lauf || '9';
   update public.pruefungstermine set pruefungstag_id = v_tag2, fenster = 2 where id = v_id;
-  select to_char(von, 'HH24:MI') into v_t from public.pruefungstermine where id = v_id;
+  select von into v_t from public.pruefungstermine where id = v_id;
   v_pr := v_pr || jsonb_build_object('name', 'Fall 3: verschoben auf T2 Fenster 3 = 10:50', 'kat', 'pflicht', 'ok', v_t = '10:50', 'ist', v_t);
   select id into v_id from public.pruefungstermine where schueler_id = 'w21probe' || v_lauf || '1';
   select id into v_id2 from public.pruefungstermine where schueler_id = 'w21probe' || v_lauf || '2';
@@ -133,7 +133,7 @@ begin
   v_schritt := '7 Startzeit';
   perform set_config('role', 'authenticated', true);
   update public.pruefungstage set start = '09:00' where id = v_tag;
-  select to_char(von, 'HH24:MI') into v_t from public.pruefungstermine where pruefungstag_id = v_tag and fenster = 0;
+  select von into v_t from public.pruefungstermine where pruefungstag_id = v_tag and fenster = 0;
   v_pr := v_pr || jsonb_build_object('name', 'Startzeit 09:00: Fenster 1 = 09:00', 'kat', 'pflicht', 'ok', v_t = '09:00', 'ist', v_t);
 
   v_schritt := '6 Ergebnis Büro → App';
