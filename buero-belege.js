@@ -214,26 +214,26 @@ function belegHTML(b, opt) {
   .absender .name{font-size:13pt;font-weight:600;letter-spacing:.2pt;margin-bottom:1.5mm}
   .absender .zeile{font-size:9pt;color:#555;line-height:1.45}
   .logo{flex:none;max-width:48mm;max-height:24mm;width:auto;height:auto;object-fit:contain}
-  h1{font-size:24pt;font-weight:300;letter-spacing:1.2pt;margin:14mm 0 0}
+  h1{font-size:24pt;font-weight:300;letter-spacing:1.2pt;margin:10mm 0 0}
   .stempel{display:inline-block;margin:3mm 0 0;padding:1mm 3.5mm;border:.75pt solid #7a1f1f;color:#7a1f1f;font-size:10pt;font-weight:600;letter-spacing:1.5pt}
-  .meta{display:flex;flex-wrap:wrap;gap:3mm 8mm;margin:7mm 0 0;padding:4mm 0;border-top:.5pt solid #cfcfcf;border-bottom:.5pt solid #cfcfcf}
+  .meta{display:flex;flex-wrap:wrap;gap:3mm 8mm;margin:6mm 0 0;padding:4mm 0;border-top:.5pt solid #cfcfcf;border-bottom:.5pt solid #cfcfcf}
   .meta div{min-width:30mm}
   .label{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.8pt;color:#777;margin-bottom:.8mm}
   .meta b{font-weight:600;font-size:10.5pt}
-  .empf{margin:9mm 0 0}
+  .empf{margin:7mm 0 0}
   .empf .wer{font-size:11.5pt;font-weight:600}
   .empf .zeile{color:#333}
-  table{width:100%;border-collapse:collapse;margin-top:11mm}
+  table{width:100%;border-collapse:collapse;margin-top:8mm}
   th{font-size:7.5pt;text-transform:uppercase;letter-spacing:.8pt;color:#777;font-weight:500;text-align:left;padding:0 0 2mm;border-bottom:.6pt solid #9a9a9a}
   td{padding:3.2mm 0;vertical-align:top;border-bottom:.5pt solid #dcdcdc}
   th.r,td.r{text-align:right;white-space:nowrap}
   tr.neben td{padding:1.8mm 0;font-size:9pt;color:#555;border-bottom:0}
   tr.summe td{padding:4.5mm 0 2mm;border-bottom:0;border-top:.75pt solid #1c1c1c;font-size:15pt;font-weight:600}
   tr.summe td:first-child{font-size:10pt;font-weight:500;letter-spacing:.8pt;text-transform:uppercase;color:#555;vertical-align:bottom}
-  .dank{margin:9mm 0 0;font-size:10.5pt}
+  .dank{margin:7mm 0 0;font-size:10.5pt}
   .hinweis{margin:5mm 0 0;font-size:8.5pt;color:#555}
-  .aussteller{margin:9mm 0 0;font-size:9pt;color:#444}
-  .unterschrift{display:flex;gap:14mm;margin-top:22mm;break-inside:avoid}
+  .aussteller{margin:6mm 0 0;font-size:9pt;color:#444}
+  .unterschrift{display:flex;gap:14mm;margin-top:16mm;break-inside:avoid}
   .unterschrift div{flex:1;border-top:.6pt solid #666;padding-top:1.6mm;font-size:8pt;color:#666}
   .logo,.kopf,table,.meta{break-inside:avoid}
   @media screen{body{max-width:170mm;margin:0 auto;padding:12mm 8mm}}

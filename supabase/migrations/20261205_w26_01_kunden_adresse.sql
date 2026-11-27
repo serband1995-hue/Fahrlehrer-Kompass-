@@ -50,7 +50,8 @@ begin
   if exists (select 1 from public.schueler where kundennummer is null and fahrschule_id is not null) then
     with liste as (
       select s.id,
-             coalesce((select max(x.kundennummer) from public.schueler x where x.fahrschule_id = s.fahrschule_id), 0)
+             greatest(coalesce((select max(x.kundennummer) from public.schueler x where x.fahrschule_id = s.fahrschule_id), 0),
+                      coalesce((select z.letzte from public.kunden_zaehler z where z.fahrschule_id = s.fahrschule_id), 0))
              + row_number() over (partition by s.fahrschule_id order by s.erstellt_am nulls last, s.id) as nr
         from public.schueler s
        where s.kundennummer is null and s.fahrschule_id is not null
