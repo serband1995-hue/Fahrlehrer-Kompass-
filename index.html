@@ -2030,6 +2030,41 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 .hc-item .hc-time{font-weight:800;color:var(--brand-accent);min-width:44px;}
 .hc-item .hc-name{color:var(--txt);font-weight:600;}
 
+/* W23: Sync-Punkt oben rechts (kompass-sync.js). 44×44 Tippfläche, Punkt mit Form je Zustand (nicht nur Farbe):
+   grün = voller Punkt, gelb = Ring (wartet), rot = Punkt mit „!“. Hell: dunklere Töne (Kontrast ≥ 3:1 auf Weiß). */
+:root{--sync-gruen:#4caf72;--sync-gelb:#e0a73e;--sync-rot:#e2604c;}
+body.light{--sync-gruen:#2e8a4f;--sync-gelb:#a8700e;--sync-rot:#c0392b;}
+.sync-btn{width:44px;height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:center;padding:0;margin:0 -3px;background:none;border:0;border-radius:12px;color:inherit;cursor:pointer;}
+.sync-btn[hidden]{display:none;}
+.sync-btn:active{transform:scale(.9);}
+.sync-punkt,.sync-mini{display:inline-grid;place-items:center;border-radius:50%;background:var(--sync-gruen);flex:0 0 auto;}
+.sync-punkt{width:16px;height:16px;box-shadow:0 0 0 2px var(--bg);}
+.sync-mini{width:12px;height:12px;}
+[data-sync="gelb"] .sync-punkt,[data-sync="gelb"]>.sync-mini{background:transparent;box-shadow:inset 0 0 0 3.5px var(--sync-gelb),0 0 0 2px var(--bg);}
+[data-sync="gelb"]>.sync-mini{box-shadow:inset 0 0 0 3px var(--sync-gelb);}
+[data-sync="rot"] .sync-punkt{width:18px;height:18px;background:var(--sync-rot);}
+[data-sync="rot"] .sync-punkt::after,[data-sync="rot"]>.sync-mini::after{content:"!";color:#fff;font:900 12px/1 system-ui,sans-serif;}
+[data-sync="rot"]>.sync-mini{width:16px;height:16px;background:var(--sync-rot);}
+[data-sync="rot"]>.sync-mini::after{font-size:11px;}
+@media (prefers-reduced-motion:no-preference){[data-sync="gelb"] .sync-punkt{animation:syncPuls 1.6s ease-in-out infinite;}}
+@keyframes syncPuls{50%{opacity:.7;}}
+body:has(#view .fahrmodus) .sync-btn{--sync-gelb:#e0a73e;--sync-gruen:#4caf72;--sync-rot:#e2604c;--bg:#161a21;} /* Fahrmodus-Kopf ist immer dunkel */
+#syncFenster .btn-row{position:sticky;bottom:calc(-26px - env(safe-area-inset-bottom));margin:14px calc(-1 * var(--pad)) calc(-26px - env(safe-area-inset-bottom));padding:12px var(--pad) calc(14px + env(safe-area-inset-bottom));background:var(--surface,var(--bg-soft));border-top:1px solid var(--line-soft);z-index:1;}
+.sync-einst{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin-top:6px;padding:8px 10px;border-radius:12px;background:none;border:1px solid var(--line-soft);color:var(--txt);font-size:13px;text-align:left;cursor:pointer;}
+#syncFenster .sync-kopf{display:flex;align-items:center;gap:10px;font-size:16px;margin:0 0 10px;}
+#syncFenster ul{list-style:none;margin:0;padding:0;}
+.sync-kanal{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);}
+.sync-kanal .sync-mini{margin-top:4px;}
+.sync-kanal small,.sync-nicht small{color:var(--muted);font-size:13px;line-height:1.45;}
+.sync-abschnitt{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft);}
+.sync-liste{margin-top:6px !important;}
+.sync-nicht{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:9px 10px;margin-top:6px;border-radius:12px;border:1px solid var(--sync-rot);background:rgba(207,90,72,.08);}
+.sync-nicht>div{min-width:0;overflow-wrap:anywhere;}
+.sync-aus{flex:0 0 auto;min-height:44px;padding:8px 12px !important;font-size:13px !important;}
+.sync-klein{font-size:12.5px !important;margin-top:8px;}
+.sync-warn{margin-top:14px;padding:10px 12px;border-radius:12px;border:2px solid var(--sync-rot);font-size:13.5px;line-height:1.5;}
+.sync-warn[data-sync="gelb"]{border-color:var(--sync-gelb);}
+.sync-warn p{margin:4px 0 0;}
 </style>
 <!-- Supabase Client -->
 <script src="vendor/supabase-js-2.119.2.js"></script>
@@ -2038,6 +2073,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <script src="kompass-sicherung.js"></script>
 <script src="kompass-pruefungstage.js"></script>
 <script src="kompass-fehler.js"></script>
+<script src="kompass-sync.js"></script>
 <script src="neuigkeiten.js"></script>
 <script src="startseite.js"></script>
 <script src="lernszenen.js" defer></script>
@@ -2954,6 +2990,8 @@ if(_tok&&!_bio){ document.getElementById("loginOverlay").classList.add("hidden")
       </button>
     </div>
     <div class="tb-side tb-right">
+      <!-- W23: Sync-Punkt – grün = alles angekommen, gelb = wird gesendet/wartet, rot = etwas ist nicht angekommen (kompass-sync.js) -->
+      <button class="sync-btn" id="syncBtn" type="button" aria-label="Datensicherung" data-sync="gruen" hidden><span class="sync-punkt" aria-hidden="true"></span></button>
       <button class="icon-btn bell-btn" id="bellBtn" aria-label="Erinnerungen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span class="bell-dot" id="bellDot"></span>
@@ -4327,7 +4365,7 @@ function _lokalerDatenEigentuemer() {
 // Entfernt alle personenbezogenen App-Daten vom Gerät (nicht die App-Version und Geräte-Einstellungen).
 function _lokaleNutzerdatenLoeschen() {
   ["serband-app-v1", "serband-sync-stamp", "serband-restore-stamp", "serband-session-cache", "serband-backup-stamp",
-   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", "kompass-profil-cache", "kompass-buerofc-v1", OWNER_KEY].forEach(k => {
+   "serband-weather-cache", "serband-weather-forecast-cache", "serband-wetter-ort", "kompass-bq-typ", "serband-abgleich-v1", "kompass-storno-offen", "kompass-absage-offen", "kompass-theorie-offen", "serband-db-defekt", "serband-vor-import", "serband-snapbasis-v1", "serband-gefeiert", "kompass-fahrstunde", "kompass-profil-cache", "kompass-buerofc-v1", "kompass-sync-v1", OWNER_KEY].forEach(k => {
     try { localStorage.removeItem(k); } catch (e) {}
   });
   try { sessionStorage.removeItem("vd_unlocked"); } catch (e) {}
@@ -4335,6 +4373,7 @@ function _lokaleNutzerdatenLoeschen() {
   try { if (window.PW) PW.vergessen(); } catch (e) {} // K5: gemeinsames Prüfer-Wissen dieses Kontos
   try { localStorage.removeItem("kompass-su-v1"); } catch (e) {} // K6: Merker Schüler-Überblick
   try { localStorage.removeItem("kompass-su-sort-v1"); } catch (e) {} // W18: Sortierung/Filter (Fahrlehrer-Name) des Schüler-Überblicks
+  try { if (window.SYNC) SYNC.vergessen(); } catch (e) {} // W23: Sync-Punkt dieses Kontos
 }
 // Hat das Gerät überhaupt eigene Einträge, die beim Abmelden verloren gehen könnten?
 function _lokaleDatenVorhanden() {
@@ -4847,10 +4886,12 @@ async function _alleSeiten(bau) {
 // meldet Netzfehler ebenfalls hier (Rechte-Fehler nicht: die gingen auch beim nächsten Versuch nicht, sonst käme man nie weg).
 const _brueckenLauf = new Set();
 let _brueckenOk = true;
-function _brueckeLauf(fn) {
-  const p = (async () => { try { return await fn(); } catch (e) { return false; } })();
+// W23: kanal ("schueler" | "termine" | "pruefungen") meldet Start und Ergebnis an den Sync-Punkt (kompass-sync.js).
+function _brueckeLauf(fn, kanal) {
+  if (kanal && window.SYNC) SYNC.start(kanal);
+  const p = (async () => { try { return await fn(); } catch (e) { if (kanal && window.SYNC) SYNC.fehlerMerken(kanal, e); return false; } })();
   _brueckenLauf.add(p);
-  p.then(r => { _brueckenLauf.delete(p); if (r === false) _brueckenOk = false; });
+  p.then(r => { _brueckenLauf.delete(p); if (r === false) _brueckenOk = false; if (kanal && window.SYNC) SYNC.ende(kanal, r !== false); });
   return p;
 }
 async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
@@ -4913,14 +4954,14 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
   return geschrieben;
 }
 // Speichert DB lokal, ohne die Brücken erneut auszulösen (für Merker wie _syncedAt).
-function _lokalAblegen() { if (_fsAgg || _lokalerSpeicherGehoertAnderem()) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch (e) {} }
+function _lokalAblegen() { if (_fsAgg || _lokalerSpeicherGehoertAnderem()) return; try { const j = JSON.stringify(DB); localStorage.setItem(STORE_KEY, j); if (window.SYNC) SYNC.speicherOk(j.length); } catch (e) { if (window.SYNC) SYNC.speicherVoll(); } }
 /* W14c: Aktueller Name und aktuelles Telefon dieser Schüler auf dem Server (eine Abfrage je 150). Liefert {id:{name,telefon}}
    (fehlt ein Schüler, gibt es die Zeile nicht oder sie gehört einem anderen) oder null bei einem Lesefehler. */
 async function _schuelerNameTelVomServer(ids) {
   const supa = getSupa(); const out = {};
   for (let i = 0; i < ids.length; i += 150) {
     const { data, error } = await supa.from("schueler").select("id,name,telefon").in("id", ids.slice(i, i + 150));
-    if (error) { console.warn("[Kompass] Name/Telefon vom Server nicht gelesen:", error.message); return null; }
+    if (error) { console.warn("[Kompass] Name/Telefon vom Server nicht gelesen:", error.message); if (window.SYNC) SYNC.fehlerMerken("schueler", error); return null; } // W23: Schüler bleibt liegen – nicht grün
     (data || []).forEach(r => { out[r.id] = { name: r.name, telefon: r.telefon }; });
   }
   return out;
@@ -4929,7 +4970,8 @@ async function _schuelerNameTelVomServer(ids) {
    einem anderen Fahrlehrer (Umverteilung durchs Büro), lehnt die Datenbank genau diese Zeile ab - die
    übrigen werden trotzdem geschrieben. Liefert die IDs der erfolgreich geschriebenen Zeilen. */
 async function _upsertRobust(tabelle, rows, konflikt) {
-  const supa = getSupa(); const ok = [];
+  const supa = getSupa(); const ok = []; const abgelehnt = []; // W23: abgelehnte Zeilen bleiben im Sync-Fenster markiert
+  const kanal = window.SYNC ? SYNC.kanalVon(tabelle) : null;
   for (let i = 0; i < rows.length; i += 200) {
     const block = rows.slice(i, i + 200);
     const { error } = await supa.from(tabelle).upsert(block, { onConflict: konflikt });
@@ -4938,11 +4980,14 @@ async function _upsertRobust(tabelle, rows, konflikt) {
     // Netzfehler: ganzer Block später. Andere Fehler (Rechte, ungültige Zeile): einzeln weiter, damit eine
     // fehlerhafte Zeile nicht die übrigen blockiert.
     const netzFehler = !error.code || /^PGRST|^5\d\d$/.test(String(error.code)) || /fetch|network|timeout/i.test(error.message || "");
-    if (netzFehler && !rechteFehler) { _brueckenOk = false; console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); continue; }
+    if (netzFehler && !rechteFehler) { _brueckenOk = false; console.warn("[Kompass] " + tabelle + " nicht gespeichert:", error.message); if (kanal) SYNC.fehlerMerken(kanal, error); continue; }
     for (const r of block) {
       const { error: e1 } = await supa.from(tabelle).upsert([r], { onConflict: konflikt });
       if (!e1) ok.push(r[konflikt]); else {
         console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
+        abgelehnt.push({ id: r[konflikt], row: r, error: e1 });
+        // W23 (Daten-Prüfer): Netz fällt erst im Einzelversuch aus → nicht angekommen, Kanal wartet (nicht grün)
+        if (!e1.code || /^PGRST|^5\d\d$/.test(String(e1.code)) || /fetch|network|timeout/i.test(e1.message || "")) { _brueckenOk = false; if (kanal) SYNC.fehlerMerken(kanal, e1); }
         // K8: Server sperrt (App hatte die Sperre noch nicht) – einmal je Termin sichtbar melden
         if (e1.code === "P0001" && /Zahlung ausstehend/.test(e1.message || "") && !_zahlungAbgelehntGemeldet.has(r[konflikt])) {
           _zahlungAbgelehntGemeldet.add(r[konflikt]); toast("Termin nicht gespeichert: Zahlung ausstehend – bitte ans Büro");
@@ -4950,6 +4995,7 @@ async function _upsertRobust(tabelle, rows, konflikt) {
       }
     }
   }
+  if (window.SYNC) SYNC.ergebnis(tabelle, ok, abgelehnt);
   return ok;
 }
 /* ===== Zwei Geräte (Handy + Tablet): Zusammenführen statt Überschreiben =====
@@ -5185,21 +5231,41 @@ async function pushToCloud() {
   // Zeitlimit: Hängt eine Anfrage (schlechtes Netz), wird die Sperre nach 25 s freigegeben -
   // sonst würde nie wieder gesichert und Abmelden hinge.
   // Jeder Lauf bekommt eine Nummer: ein Lauf, der nach dem Zeitlimit doch noch weiterläuft, fasst nichts mehr an.
-  const mitZeitlimit = () => { const gen = ++_pushGen; return Promise.race([_pushToCloudJetzt(gen).then(ok => { if (!ok) _snapGeaendert = true; return ok; }), new Promise(ok => setTimeout(() => { console.warn("[Kompass] Push: Zeitlimit"); _snapGeaendert = true; ok(false); }, 25000))]); };
+  // W23: fertig = der Lauf kam vor dem Zeitlimit zurück – dann meldet das (immer noch ablaufende) Zeitlimit dem Sync-Punkt nichts mehr.
+  const mitZeitlimit = () => { const gen = ++_pushGen; let fertig = false; return Promise.race([_pushToCloudJetzt(gen).then(ok => { fertig = true; if (!ok) _snapGeaendert = true; return ok; }), new Promise(ok => setTimeout(() => { if (!fertig) _pushNicht("Push: Zeitlimit", null, "netz"); _snapGeaendert = true; ok(false); }, 25000))]); };
+  // W23: Sync-Punkt (Kanal "snap" = ganzer Handy-Stand) – vor dem Lauf melden: _pushToCloudJetzt kann schon synchron abbrechen
+  // (Grund aus _pushNicht() muss in diesem Lauf landen).
+  const sync = window.SYNC && _authUser && !_ohneEigenenStand();
+  if (sync) SYNC.start("snap");
   _pushLaeuft = (async () => {
     let ok = false, runden = 0;
     do { _pushNochmal = false; ok = await mitZeitlimit(); } while (_pushNochmal && ++runden < 3);
     return ok;
   })();
-  try { return await _pushLaeuft; } finally { _pushLaeuft = null; }
+  let erg = false;
+  try { erg = await _pushLaeuft; return erg; } finally { _pushLaeuft = null; if (sync) SYNC.ende("snap", erg === true); }
 }
+// W23: warum der Handy-Stand gerade nicht hochging – für den Sync-Punkt (Log ohne Schülerdaten wie bisher)
+function _pushNicht(text, e, art) {
+  if (e) console.warn("[Kompass] " + text, e.message || e); else console.warn("[Kompass] " + text);
+  if (window.SYNC) SYNC.fehlerMerken("snap", e, e ? null : { art: art || "wartet", text: art === "netz" ? "Verbindung zu langsam – wird gleich erneut versucht" : _PUSH_GRUND[text] || "Noch nicht gesendet – wird erneut versucht" });
+  return false;
+}
+const _PUSH_GRUND = {
+  "Push übersprungen: Cloud-Stand noch nicht gelesen.": "Wartet auf die Verbindung zur Cloud",
+  "Push übersprungen: persönlicher Stand nicht verfügbar.": "Wartet – bitte die App einmal neu öffnen",
+  "Push übersprungen: anderer Tab hat das Konto gewechselt.": "In einem anderen Fenster ist ein anderes Konto angemeldet",
+  "Push übersprungen: leerer Stand, Cloud hat Daten.": "Nicht gesendet: auf dem Handy ist nichts, in der Cloud schon (Schutz vor Datenverlust)",
+  "Push verschoben: anderes Gerät hat gespeichert, Zusammenführen nach der Gesamtansicht.": "Wartet, bis du die Fahrschul-Ansicht verlässt",
+  "Push: nach 3 Runden noch Konflikt - nächster Versuch beim nächsten Speichern.": "Ein anderes Gerät speichert gerade – wird gleich erneut versucht",
+};
 // Nach erfolgreichem Schreiben: gemeinsamen Stand und Zeitstempel merken.
 function _pushFertig(d, gespeichert) {
   // Gemeinsamen Stand nur merken, wenn der Gerätespeicher aktuell ist - sonst hielte das Gerät nach einem
   // Neustart seinen alten gespeicherten Stand für "hier geändert" und überschriebe die Cloud.
   let lokalOk = true;
   // In der Gesamtansicht ist d der eigene Stand (DB enthält dort alle Fahrlehrer).
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(_fsAgg ? d : DB)); } catch (e) { lokalOk = false; }
+  try { const j = JSON.stringify(_fsAgg ? d : DB); localStorage.setItem(STORE_KEY, j); if (window.SYNC) SYNC.speicherOk(j.length); } catch (e) { lokalOk = false; if (window.SYNC) SYNC.speicherVoll(); }
   if (lokalOk) _snapBasisSetzen(d, gespeichert); else try { localStorage.removeItem(_BASIS_KEY); } catch (e) {}
   _cloudHatteDaten = !(!(d.students && d.students.length) && !(d.lessons && d.lessons.length));
   const serverStamp = gespeichert ? new Date(gespeichert).getTime() : NaN;
@@ -5214,15 +5280,15 @@ async function _pushToCloudJetzt(gen) {
   // Büro und reine Leitung arbeiten nur auf den Fahrschul-Tabellen, einen persönlichen Snapshot gibt es nicht.
   // Die Leitung, die selbst fährt, hat wie jeder Fahrlehrer einen eigenen Stand.
   if (_ohneEigenenStand()) return true;
-  if (!_pullOk) { console.warn("[Kompass] Push übersprungen: Cloud-Stand noch nicht gelesen."); return false; }
+  if (!_pullOk) return _pushNicht("Push übersprungen: Cloud-Stand noch nicht gelesen.");
   const daten = _persoenlicheDaten();
-  if (!daten) { console.warn("[Kompass] Push übersprungen: persönlicher Stand nicht verfügbar."); return false; }
-  if (_lokalerSpeicherGehoertAnderem()) { console.warn("[Kompass] Push übersprungen: anderer Tab hat das Konto gewechselt."); return false; }
+  if (!daten) return _pushNicht("Push übersprungen: persönlicher Stand nicht verfügbar.");
+  if (_lokalerSpeicherGehoertAnderem()) return _pushNicht("Push übersprungen: anderer Tab hat das Konto gewechselt.");
   // Ein leerer Stand überschreibt nie eine Cloud mit Daten (z.B. nach beschädigtem Gerätespeicher).
   const leer = !(daten.students && daten.students.length) && !(daten.lessons && daten.lessons.length);
   if (!leer) _sitzungHatteDaten = true;
   // Wer bewusst alles gelöscht hat, hatte vorher Daten - das darf hoch. Gesperrt ist nur ein Gerät, das leer startete.
-  if (leer && !_sitzungHatteDaten && (_cloudHatteDaten || _lokalDefekt)) { console.warn("[Kompass] Push übersprungen: leerer Stand, Cloud hat Daten."); return false; }
+  if (leer && !_sitzungHatteDaten && (_cloudHatteDaten || _lokalDefekt)) return _pushNicht("Push übersprungen: leerer Stand, Cloud hat Daten.");
   const geaendert = _snapGeaendert; _snapGeaendert = false;
   const veraltet = () => gen !== undefined && gen !== _pushGen;
   try {
@@ -5265,7 +5331,7 @@ async function _pushToCloudJetzt(gen) {
         // Ein anderes Gerät hat inzwischen gespeichert (oder dieses Gerät kennt den gemeinsamen Stand nicht):
         // erst zusammenführen, nie blind überschreiben. In der Gesamtansicht steht in DB der Bestand aller
         // Fahrlehrer - dort wird nicht zusammengeführt, sondern nach dem Verlassen.
-        if (_fsAgg) { console.warn("[Kompass] Push verschoben: anderes Gerät hat gespeichert, Zusammenführen nach der Gesamtansicht."); return false; }
+        if (_fsAgg) return _pushNicht("Push verschoben: anderes Gerät hat gespeichert, Zusammenführen nach der Gesamtansicht.");
         roh = await _snapHolenUndZusammenfuehren(supa, "lokal", null, gen);
         basis = _snapBasisLaden();
         zusammengefuehrt = true;
@@ -5300,14 +5366,13 @@ async function _pushToCloudJetzt(gen) {
         if (veraltet()) return false;
         const { data: saved, error } = await supa.from("snapshots").upsert({ user_id: _authUser.id, data: d, updated_at: now }, { onConflict: "user_id" }).select("updated_at").single();
         if (veraltet()) return false;
-        if (error) { console.warn("[Kompass] Push fehlgeschlagen:", error.message); return false; }
+        if (error) return _pushNicht("Push fehlgeschlagen:", error);
         gespeichert = saved && saved.updated_at;
       }
       return _pushFertig(d, gespeichert);
     }
-    console.warn("[Kompass] Push: nach 3 Runden noch Konflikt - nächster Versuch beim nächsten Speichern.");
-    return false;
-  } catch(e) { console.warn("[Kompass] Push fehlgeschlagen:", e.message); return false; }
+    return _pushNicht("Push: nach 3 Runden noch Konflikt - nächster Versuch beim nächsten Speichern.");
+  } catch(e) { return _pushNicht("Push fehlgeschlagen:", e); }
 }
 
 /* ---- Web-Push Benachrichtigungen (auch wenn App geschlossen ist) ---- */
@@ -6330,7 +6395,7 @@ async function _fsLoadAggData(fahrschuleId){
     });
   });
   DB.lessons=[...DB.lessons,...urlaubBlocks];
-  _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer, fahrzeuge:fahrzeugeR.data||[], pakete:paketeR.data||[]};
+  _fsAgg={fahrschuleId, fahrschule:fsR.data||{name:"Fahrschule"}, lehrer, fahrzeuge:fahrzeugeR.data||[], pakete:paketeR.data||[]}; try{ if(window.SYNC)SYNC.zeichnen(); }catch(e){} // W23: Punkt in der Gesamtansicht verstecken
   _fsBaseline={students:JSON.parse(JSON.stringify(DB.students)),lessons:JSON.parse(JSON.stringify(DB.lessons)),exams:JSON.parse(JSON.stringify(DB.exams))};
   return true;
 }
@@ -6386,7 +6451,7 @@ async function _fsExitAggModeJetzt(){
     _fsPersonalBackup=null;
   }
   _fsUngespeichert=false; _fsNurOhneLehrer=false;
-  _fsAgg=null; _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; _fsFilterPanelOpen=false; _fsTileOpen={fahrzeug:false,lehrer:false};
+  _fsAgg=null; try{ if(window.SYNC)SYNC.zeichnen(); }catch(e){} _fsBaseline=null; _fsCalFahrzeugFilter=[]; _fsCalLehrerFilter=[]; _fsCalBueroFilter=[]; _fsFilterPanelOpen=false; _fsTileOpen={fahrzeug:false,lehrer:false};
   document.getElementById("fsCalTiles")?.remove();
   _fsSetDrawer(false);
   _zeigeSaStreifen();
@@ -8229,7 +8294,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.27.4";
+const APP_VERSION="2026.11.27.5";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8300,8 +8365,9 @@ function save(){
   if(_fsAgg){ _fsSyncAggChanges(); return; }
   if((DB.students&&DB.students.length)||(DB.lessons&&DB.lessons.length)) _sitzungHatteDaten=true;
   if(_lokalerSpeicherGehoertAnderem()){ location.reload(); return; } // anderer Tab hat anderes Konto angemeldet
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}
-  catch(e){ if(!_speicherVollGemeldet){ _speicherVollGemeldet=true; toast("⚠ Gerätespeicher voll – nur Cloud sichert"); } }
+  try{const j=JSON.stringify(DB);localStorage.setItem(STORE_KEY,j);if(window.SYNC)SYNC.speicherOk(j.length);}
+  catch(e){ if(window.SYNC)SYNC.speicherVoll(); if(!_speicherVollGemeldet){ _speicherVollGemeldet=true; toast("⚠ Gerätespeicher voll – nur Cloud sichert"); } }
+  if(_authUser&&_pullOk&&window.SYNC&&!_ohneEigenenStand())SYNC.offen("snap"); // W23: gelb, bis der Stand oben ist
   if(_authUser&&_pullOk){clearTimeout(_saveSyncDebounce);_saveSyncDebounce=setTimeout(pushToCloud,4000);_syncSchuelerBridge();_syncTermineBridge();_syncPruefungenBridge();}
 }
 
@@ -8678,12 +8744,12 @@ async function _fsSyncAggJetztKern(){
 let _schuelerSyncDebounce=null;
 function _syncSchuelerBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.students)return;
-  clearTimeout(_schuelerSyncDebounce);
+  clearTimeout(_schuelerSyncDebounce); if(window.SYNC)SYNC.offen("schueler");
   _schuelerSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     // Stand erst beim Auslösen lesen - und nie den Fahrschul-Bestand der Gesamtansicht.
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.students)||_lokalerSpeicherGehoertAnderem())return;
     // Erst nach einem Abruf schreiben: sonst überschriebe ein leeres Gedächtnis Büro-Änderungen.
-    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); return false; }
+    if(!_schuelerAbgerufen){ setTimeout(_syncSchuelerBridge,6000); if(window.SYNC)SYNC.wartet("schueler","Wartet auf den ersten Abruf vom Server"); return false; }
     let allesOben=true;
     try{
       const supa=getSupa();
@@ -8705,10 +8771,10 @@ function _syncSchuelerBridge(warte){
         const cap=capacityStats();
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
-    }catch(e){ allesOben=false; console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); }
+    }catch(e){ allesOben=false; console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); if(window.SYNC)SYNC.fehlerMerken("schueler",e); }
     try{ _theorieOffenNachholen(); }catch(e3){} // erst nach der Schüler-Brücke: ein neuer Schüler ist jetzt auf dem Server
     return allesOben;
-  }),warte===0?0:4000);
+  },"schueler"),warte===0?0:4000);
 }
 
 /* ===== Kalender-Synchronisations-Brücke (gleiches Prinzip wie bei Schülern) =====
@@ -8718,32 +8784,32 @@ function _syncSchuelerBridge(warte){
 let _termineSyncDebounce=null;
 function _syncTermineBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.lessons)return;
-  clearTimeout(_termineSyncDebounce);
+  clearTimeout(_termineSyncDebounce); if(window.SYNC)SYNC.offen("termine");
   _termineSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.lessons)||_lokalerSpeicherGehoertAnderem())return;
-    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); return false; }
+    if(!_termineAbgerufen){ setTimeout(_syncTermineBridge,6000); if(window.SYNC)SYNC.wartet("termine","Wartet auf den ersten Abruf vom Server"); return false; }
     try{ _absagenNachholen(); _stornoAufraeumen(); _theorieOffenNachholen(); }catch(e){}
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_termine", art:"termine", eintraege:P.lessons, zeileVon:_terminZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false), loeschWertFuer:_stornoWert });
       if(geschrieben.length) _lokalAblegen();
-    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); return false; }
-  }),warte===0?0:4000);
+    }catch(e){ console.warn("[Kompass] Kalender-Sync fehlgeschlagen:",e.message); if(window.SYNC)SYNC.fehlerMerken("termine",e); return false; }
+  },"termine"),warte===0?0:4000);
 }
 
 /* ===== Prüfungen-Synchronisations-Brücke (gleiches Prinzip) ===== */
 let _pruefungenSyncDebounce=null;
 function _syncPruefungenBridge(warte){
   if(!_authUser||!_pullOk||!_authProfile||!_authProfile.fahrschule_id||!DB.exams)return;
-  clearTimeout(_pruefungenSyncDebounce);
+  clearTimeout(_pruefungenSyncDebounce); if(window.SYNC)SYNC.offen("pruefungen");
   _pruefungenSyncDebounce=setTimeout(()=>_brueckeLauf(async()=>{
     const P=_persoenlicheDaten(); if(!P||!Array.isArray(P.exams)||_lokalerSpeicherGehoertAnderem())return;
     try{
       const geschrieben=await _brueckeAbgleichen({ tabelle:"kalender_pruefungen", art:"pruefungen", eintraege:P.exams, zeileVon:_pruefungZeile,
         loeschWert:{geloescht:true}, aktivFilter:q=>q.eq("geloescht",false) });
       if(geschrieben.length) _lokalAblegen();
-    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); return false; }
-  }),warte===0?0:4000);
+    }catch(e){ console.warn("[Kompass] Prüfungen-Sync fehlgeschlagen:",e.message); if(window.SYNC)SYNC.fehlerMerken("pruefungen",e); return false; }
+  },"pruefungen"),warte===0?0:4000);
 }
 /* Einmalige Migration: entfernt Prüfungsplatz-Doppel-Einträge, die durch die frühere automatische
    Warteliste-Zuordnung entstehen konnten (z.B. derselbe Schüler in zwei Terminen gleichzeitig).
@@ -13469,7 +13535,7 @@ function routeSettings(){
   view.innerHTML=`<div class="view-inner view-read fade-up">
     <h1 class="sec-h set-titel">Einstellungen</h1>
     ${_startHatWahl()?'<div class="res-block" id="ksStartKasten" style="animation:none;"></div>':''}
-    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:var(--muted);font-size:13px;">${esc(_authUser.email)}</p><p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p></div>`:""}
+    ${_authUser?`<div class="res-block" style="animation:none;background:rgba(74,139,69,.06);border-color:rgba(74,139,69,.2);"><h4 style="color:var(--akzent-bright)">☁ Cloud-Konto</h4><p style="color:var(--muted);font-size:13px;">${esc(_authUser.email)}</p>${_ohneEigenenStand()||_fsAgg?`<p style="color:var(--muted);font-size:12px;margin-top:4px;">Daten werden automatisch gesichert.</p>`:`<button type="button" class="sync-einst" data-sync-oeffnen data-sync="${window.SYNC?SYNC.zustand().farbe:"gruen"}"><span class="sync-mini" aria-hidden="true"></span><span data-sync-text>${esc(window.SYNC?SYNC.kurztext():"")}</span></button>`}</div>`:""}
 
     <div class="acc set-acc${_settingsAccOpen==='app'?' open':''}" data-acckey="app"><button class="acc-h" onclick="_settingsAccToggle('app')" style="cursor:pointer;"><span class="set-ic" style="width:30px;">${_li("handy")}</span><span style="flex:1;text-align:left;font-family:'Anton',sans-serif;text-transform:uppercase;font-size:15px;letter-spacing:.03em;">App anpassen</span><span class="chev">${ICN.chev}</span></button>
       <div class="acc-body"><div class="acc-inner" style="padding:0 16px 16px;">
