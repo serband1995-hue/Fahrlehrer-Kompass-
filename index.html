@@ -1659,8 +1659,9 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .ct-now::before{content:"";position:absolute;left:-5px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--gruen-bright,#4a8b45);}
 .ct-events{position:absolute;left:52px;right:0;top:0;bottom:0;}
 .ct-quer{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
-.ct-quer .ct-hl{z-index:4;transform:translateX(var(--ct-x,0px));background:var(--bg);border-radius:4px;}
-.ct-quer-hinweis{font-size:12.5px;color:var(--muted);font-weight:700;margin:6px 0 0;text-align:right;}
+.ct-quer .ct-hl{z-index:4;transform:translateX(var(--ct-x,0px));}
+.ct-zeitspalte{position:absolute;left:0;top:-8px;bottom:0;width:52px;z-index:3;background:var(--bg);transform:translateX(var(--ct-x,0px));box-shadow:4px 0 6px -4px rgba(0,0,0,.25);pointer-events:none;}
+.ct-quer-hinweis{font-size:13px;color:var(--txt);font-weight:700;margin:8px 0 0;}
 .ct-ev{position:absolute;left:2px;right:2px;background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-left:3px solid var(--gruen-bright,#4a8b45);border-radius:9px;padding:6px 10px;overflow:hidden;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.2);}
 .ct-ev.exam-soon{border-color:#c9a227;box-shadow:0 0 0 1.5px #c9a227,0 3px 8px rgba(0,0,0,.2);}
 .ct-ev.off{opacity:.5;}
@@ -15267,7 +15268,7 @@ function calDayHTML(){
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
   return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}${_fsKeineAuswahl()?'':`<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>`}
-    ${quer?`<div class="ct-quer-hinweis">↔ ${maxSp} Termine gleichzeitig – seitlich wischen</div><div class="ct-quer">`:''}<div class="ct-wrap" style="height:${totalH}px${quer?`;min-width:${52+maxSp*CT_SPALTE_MIN}px`:''}">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>${quer?'</div>':''}`;
+    ${quer?`<div class="ct-quer-hinweis">${maxSp} Termine gleichzeitig – seitlich wischen ↔</div><div class="ct-quer">`:''}<div class="ct-wrap" style="height:${totalH}px${quer?`;min-width:${52+maxSp*CT_SPALTE_MIN}px`:''}">${quer?'<div class="ct-zeitspalte"></div>':''}${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>${quer?'</div>':''}`;
 }
 // UE eines Tages (done=nur absolvierte)
 function dayUE(iso,doneOnly){
