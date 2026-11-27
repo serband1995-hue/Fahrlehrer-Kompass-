@@ -275,6 +275,9 @@ ok("App „Rückgängig“ nach Büro-Korrektur: Büro-Ergebnis bleibt", !r.fehl
 r = await als(db, U.buero, `update public.pruefungstage set start = '10:00' where id = $1`, [TAG]);
 ok("Tag mit Ergebnissen: Startzeit bleibt (abgeschlossene Prüfungen verrutschen nicht)", /W21:tag_hat_ergebnisse/.test(r.fehler || ""), r);
 
+r = await als(db, U.buero, `update public.pruefungstage set pruefer = 'XY' where id = $1`, [TAG2]);
+ok("Prüfer des Tages geändert → ausstehende Prüfungen tragen das neue Kürzel", !r.fehler && (await alle(db, "select pruefer from public.pruefungstermine where pruefungstag_id = $1 and status = 'geplant'", [TAG2])).every((x) => x.pruefer === "XY"), r);
+
 // ---------- 10. Fahrlehrer in der App ----------
 r = await als(db, U.fl1, `insert into public.pruefungstage (fahrschule_id, datum, erstellt_von) values ($1, current_date + 14, $2) returning id`, [FS, U.fl1]);
 ok("Fahrlehrer legt Prüfungstag an", !r.fehler, r);

@@ -600,6 +600,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       const z = Number(t.fenster_zahl || 9);
       if (n.fenster == null || n.fenster < 0 || n.fenster + n.fenster_anzahl > z) return "W21:fenster_ungueltig";
       n.datum = t.datum; n.von = w21Hm(w21Min(t.start || "08:00") + 55 * n.fenster);
+      if (n.status === "geplant" && t.pruefer) n.pruefer = t.pruefer;
       if (n.status !== "abgesagt" && T.some((q) => q.id !== n.id && q.pruefungstag_id === n.pruefungstag_id && q.status !== "abgesagt" && q.fenster != null
         && q.fenster < n.fenster + n.fenster_anzahl && n.fenster < q.fenster + (q.fenster_anzahl || 1))) return "W21:fenster_belegt";
     }
@@ -697,7 +698,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     return null;
   }
   function w21TagNachziehen(t, alt) {
-    if (t.start === alt.start && t.datum === alt.datum) return null;
+    if (t.start === alt.start && t.datum === alt.datum) { if (t.pruefer !== alt.pruefer) tabelle("pruefungstermine").forEach((q) => { if (q.pruefungstag_id === t.id && q.status === "geplant") q.pruefer = t.pruefer; }); return null; }
     for (const q of tabelle("pruefungstermine").filter((x) => x.pruefungstag_id === t.id)) { const a = kopie(q); const f = w21Pruefe(q, a); if (f) return f; }
     return null;
   }

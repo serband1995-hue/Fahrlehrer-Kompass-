@@ -125,6 +125,8 @@ as $function$
 begin
   if new.start is distinct from old.start or new.datum is distinct from old.datum or new.fenster_zahl is distinct from old.fenster_zahl then
     update public.pruefungstermine set aktualisiert_am = now() where pruefungstag_id = new.id;
+  elsif new.pruefer is distinct from old.pruefer then
+    update public.pruefungstermine set aktualisiert_am = now() where pruefungstag_id = new.id and status = 'geplant';
   end if;
   return null;
 end $function$;
@@ -234,6 +236,8 @@ begin
     end if;
     new.datum := t.datum;
     new.von := to_char(t.start + make_interval(mins => 55 * new.fenster), 'HH24:MI');   -- live: von ist Text 'HH:MM'
+    -- Prüfer kommt vom Tag (ein Tag = ein Prüfer), solange die Prüfung aussteht (Richter W21: sonst altes Kürzel nach Prüferwechsel)
+    if new.status = 'geplant' and t.pruefer is not null then new.pruefer := t.pruefer; end if;
     if new.status <> 'abgesagt' and exists (
          select 1 from public.pruefungstermine q
           where q.pruefungstag_id = new.pruefungstag_id and q.id <> new.id and q.status <> 'abgesagt' and q.fenster is not null
