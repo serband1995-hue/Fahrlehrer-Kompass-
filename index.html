@@ -6401,7 +6401,9 @@ async function _fsLoadAggData(fahrschuleId){
   const lehrer=lehrerR.data||[];
   window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||(p.rolle==="entfernt"?"Ehemaliger Fahrlehrer":p.email)||""; });
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
-  DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
+  // W26: offene Anschrift-Merker (noch nicht übertragen) beim Neuladen der Gesamtansicht behalten, sonst gingen sie still verloren
+  const adrOffen={}; (DB.students||[]).forEach(x=>{ if(x&&x._adresseOffen) adrOffen[x.id]=x._adresseOffen; });
+  DB.students=(schuelerR.data||[]).map(r=>{ const x=_fsMapSchueler(r,lehrerName); if(adrOffen[x.id]) x._adresseOffen=adrOffen[x.id]; return x; });
   _merkeFristen(schuelerR.data);
   _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
   _ladePakete(supa, (schuelerR.data||[]).map(r=>r.id)); // Werkstatt 13
@@ -10563,7 +10565,11 @@ async function _adresseOffenSenden(rows){
       if(rows&&!rows.some(r=>r.id===s.id&&"strasse" in r))continue;
       const neu={strasse:m.strasse||null,plz:m.plz||null,ort:m.ort||null};
       const erg=await _adresseServerSchreiben(s.id,neu,m.vorher||null);
-      if(erg.ok){ if(s._adresseOffen===m){ delete s._adresseOffen; save(); } }
+      if(erg.ok){
+        if(s._adresseOffen===m){ delete s._adresseOffen; save(); }
+        // W26: hatte das Büro dasselbe Feld inzwischen geändert, gilt dessen Stand – kurz sagen statt still verwerfen
+        if(erg.konflikte&&erg.konflikte.length&&typeof toast==="function") toast("Anschrift von "+(s.name||"Schüler")+": Das Büro hatte sie schon geändert, dessen Stand gilt.");
+      }
       else if(erg.spalteFehlt)_adrDbHinweis();
     }
   }catch(e){ /* Merker bleibt, nächster Versuch beim nächsten Abruf */ }
