@@ -2819,13 +2819,51 @@ const WOCHENTAGE_KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 function kAnsicht() { const a = fristenParam("ansicht"); return K_ANSICHTEN.some(([id]) => id === a) ? a : "tag"; }
 function kTag() { const t = fristenParam("tag"); return /^\d{4}-\d\d-\d\d$/.test(t) && KR.dateISO(KR.parseISO(t)) === t ? t : KR.todayISO(); }
 function kGewaehlteLehrer() { return (fristenParam("lehrer") || "").split(",").filter(Boolean); }
-function kTerminBlock(t) {
+// P1.4a (W25): Überschneidungs-Warnung mit dem gemeinsamen Prüf-Baustein KR.terminKonflikte (kompass-rechnen.js, auch in der App).
+// Nur ein Hinweis („Abbrechen“ ist der Hauptknopf), nichts wird gesperrt. Fahrzeug über den Namen (Groß/Klein, Leerzeichen egal).
+function kfForm(t) {
+  return { id: t.id, datum: t.datum, von: t.von, bis: t.bis, art: t.art, status: (t.payload && t.payload.status) || t.status || "geplant",
+    fahrlehrer: t.fahrlehrer_id || null, schueler: t.schueler_id || "", fahrzeug: t.fahrzeug || "", geloescht: !!t.geloescht };
+}
+function kfFinde(neue) {
+  const alle = S.termine.map(kfForm), out = [], schon = new Set();
+  for (const n of [].concat(neue || [])) {
+    if (!n || n.art === "block") continue;
+    for (const k of KR.terminKonflikte(kfForm(n), alle)) { if (schon.has(k.t.id)) continue; schon.add(k.t.id); out.push(k); }
+  }
+  return out;
+}
+function kfName(t) {
+  const n = schuelerName(t.schueler) || (t.art === "block" ? "Blockiert" : ARTEN[t.art] || "");
+  return n + (t.fahrlehrer ? " bei " + lehrerName(t.fahrlehrer) : "");
+}
+// true = speichern. Mehrere Tage (Serie): mit Datum.
+function kfFrage(konflikte) {
+  if (!konflikte || !konflikte.length) return Promise.resolve(true);
+  const mitDatum = new Set(konflikte.map((k) => k.t.datum)).size > 1;
+  return bestaetige("Überschneidung", "Zur gleichen Zeit ist schon etwas eingetragen:\n" + KR.konfliktText(konflikte, kfName, mitDatum) + "\n\nTrotzdem speichern?", "Trotzdem speichern", "Abbrechen", true);
+}
+// Ids aller Termine eines Tages mit Überschneidung (Warnzeichen im Kalender); gilt für einen Zeichenvorgang
+let kfTagCache = null;
+function kfIdsAmTag(datum) {
+  if (!kfTagCache) { kfTagCache = new Map(); setTimeout(() => { kfTagCache = null; }, 0); }
+  if (!kfTagCache.has(datum)) kfTagCache.set(datum, KR.konfliktIds(S.termine.filter((t) => t.datum === datum).map(kfForm)));
+  return kfTagCache.get(datum);
+}
+// P1.4b (W25): überlappende Termine in einer Kalenderspalte nebeneinander (Blocktage bleiben volle Breite)
+function kSpaltenBloecke(eigene) {
+  const lay = KR.spaltenLayout(eigene.filter((t) => t.art !== "block"));
+  return eigene.map((t) => kTerminBlock(t, lay.get(t.id))).join("");
+}
+function kTerminBlock(t, sp) {
   const a = Math.max(KR.hm2min(t.von), K_START), b = Math.min(KR.hm2min(t.bis), K_ENDE);
   if (b <= a) return "";
   const sn = schuelerName(t.schueler_id) || t.interessent_name || (t.payload && t.payload.note) || ARTEN[t.art] || "";
   const gesperrt = t.schueler_id && bueroGesperrt(S.schueler.find((x) => x.id === t.schueler_id));
-  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;--farbe:${K_FARBEN[t.art] || "#6a6a74"}">
-        <span class="k-zeit">${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
+  const kf = t.art !== "block" && kfIdsAmTag(t.datum).has(t.id);
+  const spStil = sp && sp.spalten > 1 ? `left:calc(${(sp.spalte * 100 / sp.spalten).toFixed(3)}% + 2px);right:auto;width:calc(${(100 / sp.spalten).toFixed(3)}% - 4px);` : "";
+  return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}${kf ? " kf-ueber" : ""}${spStil ? " k-schmal" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : kf ? ' title="Überschneidung: gleicher Fahrlehrer, Schüler oder Fahrzeug zur gleichen Zeit"' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;${spStil}--farbe:${K_FARBEN[t.art] || "#6a6a74"}">
+        <span class="k-zeit">${kf ? '<span class="kf-zeichen" aria-label="Überschneidung">⚠</span>' : ""}${esc(t.von)}–${esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
 }
 function kStundenAchse() {
   const stunden = [];
@@ -2902,7 +2940,7 @@ function renderKalender() {
   const spalten = lehrer.map((l) => {
     const eigene = termine.filter((t) => t.fahrlehrer_id === l.id && t.von && t.bis);
     return `<div class="k-spalte"><div class="k-kopf"><span class="k-lname" title="${esc(l.name || l.email)}"><span class="k-voll">${esc(l.name || l.email)}</span><span class="k-kurz">${esc(kVorname(l))}</span></span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
-      <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(tag)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
+      <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(tag)}" style="height:${hoehe}px">${kSpaltenBloecke(eigene)}</div></div>`;
   }).join("");
   const wtag = KR.parseISO(tag).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   return `<div class="karte">
@@ -2925,7 +2963,7 @@ function kalenderWoche(tag) {
     const d = KR.addDaysISO(montag, i);
     const eigene = S.termine.filter((t) => t.fahrlehrer_id === l.id && t.datum === d && t.von && t.bis);
     return `<div class="k-spalte${d === heute ? " heute" : ""}"><div class="k-kopf"><span class="k-lname">${WOCHENTAGE_KURZ[i]} ${esc(datumDE(d).slice(0, 6))}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
-      <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(d)}" style="height:${hoehe}px">${eigene.map(kTerminBlock).join("")}</div></div>`;
+      <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(d)}" style="height:${hoehe}px">${kSpaltenBloecke(eigene)}</div></div>`;
   }).join("") : "";
   const kw = (() => { const d = KR.parseISO(montag); const t = new Date(d.getTime()); t.setDate(t.getDate() + 3); const j = new Date(t.getFullYear(), 0, 4); return 1 + Math.round(((t - j) / 86400000 - 3 + ((j.getDay() + 6) % 7)) / 7); })();
   const titel = `Woche ${kw}: ${datumDE(montag).slice(0, 6)}–${datumDE(sonntag)}`;
@@ -3093,10 +3131,10 @@ function terminDialog(id, vorgabe) {
       const stopp = offeneNotizen(d.schueler_id).filter((n) => n.art === "stopp");
       if (stopp.length && !(await bestaetige("Achtung bei " + (sch.name || "diesem Schüler"), "Stopp-Notiz: " + stopp.map((n) => n.text).join(" / ") + ". Trotzdem buchen?", "Trotzdem buchen"))) return false;
     }
-    // Überschneidung beim selben Fahrlehrer warnen
-    const kollision = S.termine.find((x) => x.id !== id && x.fahrlehrer_id === d.fahrlehrer_id && x.datum === d.datum && x.von && x.bis
-      && KR.hm2min(x.von) < KR.hm2min(d.bis) && KR.hm2min(x.bis) > KR.hm2min(d.von));
-    if (kollision && !(await bestaetige("Zeit ist schon belegt", `${lehrerName(d.fahrlehrer_id)} hat um ${kollision.von}–${kollision.bis} schon einen Termin. Trotzdem speichern?`, "Trotzdem speichern"))) return false;
+    // P1.4a (W25): Überschneidung – gleicher Fahrlehrer, Schüler oder Fahrzeug (gemeinsamer Baustein mit der App).
+    // Beim Bearbeiten nur fragen, wenn sich Zeit, Tag, Personen oder Fahrzeug ändern (sonst störte eine alte Überschneidung jedes Speichern).
+    const geaendert = !id || ["datum", "von", "bis", "fahrlehrer_id", "schueler_id", "fahrzeug", "art"].some((k) => (t[k] || "") !== (d[k] || ""));
+    if (geaendert && !(await kfFrage(kfFinde(Object.assign({}, t, { id: id || null, schueler_id: d.schueler_id || null, art: d.art, fahrlehrer_id: d.fahrlehrer_id, datum: d.datum, von: d.von, bis: d.bis, fahrzeug: d.fahrzeug || null }))))) return false;
     // W16 Teil 2: Urlaub des Fahrlehrers (buero-verwaltung.js) – in der App sind diese Tage blockiert; hier eine Warnung, wenn Tag oder Fahrlehrer neu sind
     // vorsichtig: „Abbrechen“ ist der Hauptknopf (Design-Kritiker: nicht aus Gewohnheit speichern)
     if (typeof vwUrlaubWarnen === "function" && (!id || t.datum !== d.datum || t.fahrlehrer_id !== d.fahrlehrer_id)
@@ -4891,7 +4929,7 @@ function oeffneDialog(titel, inhalt, speichern, knopfText, optionen) {
 function bestaetige(titel, text, jaText, neinText, vorsichtig) {
   return new Promise((ok) => {
     let ergebnis = false;
-    const dlg = oeffneDialog(titel, `<p>${esc(text)}</p>`, () => { ergebnis = true; }, jaText || "Ja", neinText ? { abbrechenText: neinText } : undefined);
+    const dlg = oeffneDialog(titel, `<p style="white-space:pre-line">${esc(text)}</p>`, () => { ergebnis = true; }, jaText || "Ja", neinText ? { abbrechenText: neinText } : undefined);
     // vorsichtig: die zerstörende Antwort ist nicht der Hauptknopf, „Nein“ hat den Fokus (Enter verwirft nichts)
     if (vorsichtig) {
       const ja = dlg.querySelector("footer .haupt");
