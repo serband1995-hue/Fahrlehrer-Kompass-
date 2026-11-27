@@ -15,6 +15,9 @@
 --    Die Fahr-Akademie bekommt sie NICHT (Export-Sichten nennen ihre Spalten einzeln).
 -- 3. zahlungsbelege: kundennummer, schueler_adresse (jsonb), aussteller – vom Server beim Anlegen als feste Kopie gesetzt
 --    (Storno übernimmt sie vom Original). Alte Belege bleiben, wie sie sind (Felder leer).
+-- EINSPIELEN: als EIN Block (apply_migration bzw. SQL-Editor am Stück = eine Transaktion). Dann warten Geräte, die gerade
+-- einen Schüler anlegen, kurz und bekommen danach die nächste Nummer; scheitert etwas, bleibt nichts zurück (Richter W26).
+set local lock_timeout = '5s';
 
 -- ===== 1. Spalten =====
 alter table public.schueler add column if not exists kundennummer integer;
@@ -37,7 +40,30 @@ create table if not exists public.kunden_zaehler (
 alter table public.kunden_zaehler enable row level security;
 revoke all on public.kunden_zaehler from anon, authenticated;
 
--- ===== 3. Auslöser: Nummer vergeben/festhalten, Anschrift säubern =====
+-- ===== 3. Bestand: einmalig, Anlage-Reihenfolge, VOR dem Auslöser (ein UPDATE, nur Zeilen ohne Nummer) =====
+-- Der eigene Auslöser ist dabei noch nicht da (bei Wiederholung vorher entfernt); die übrigen Auslöser ändern ohne Nutzer
+-- nichts (live geprüft 27.11.: keine Zeile mit „bogen“ in ausbildung). Gibt es nichts zu vergeben (Wiederholung), läuft kein
+-- UPDATE: kein zweiter Anstoß der Akademie-Brücke (Statement-Auslöser).
+drop trigger if exists trg_schueler_kunde_vor on public.schueler;
+do $bestand$
+begin
+  if exists (select 1 from public.schueler where kundennummer is null and fahrschule_id is not null) then
+    with liste as (
+      select s.id,
+             coalesce((select max(x.kundennummer) from public.schueler x where x.fahrschule_id = s.fahrschule_id), 0)
+             + row_number() over (partition by s.fahrschule_id order by s.erstellt_am nulls last, s.id) as nr
+        from public.schueler s
+       where s.kundennummer is null and s.fahrschule_id is not null
+    )
+    update public.schueler s set kundennummer = l.nr from liste l where s.id = l.id;
+  end if;
+end
+$bestand$;
+insert into public.kunden_zaehler (fahrschule_id, letzte)
+  select fahrschule_id, max(kundennummer) from public.schueler where kundennummer is not null group by fahrschule_id
+  on conflict (fahrschule_id) do update set letzte = greatest(public.kunden_zaehler.letzte, excluded.letzte);
+
+-- ===== 4. Auslöser: Nummer vergeben/festhalten, Anschrift säubern =====
 create or replace function public.schueler_kunde_vor()
  returns trigger language plpgsql security definer set search_path to 'public'
 as $function$
@@ -62,8 +88,6 @@ begin
     elsif old.kundennummer is not null then
       new.kundennummer := old.kundennummer;            -- fest: niemand ändert sie
       return new;
-    elsif new.kundennummer is not null and coalesce(current_setting('kompass.w26_bestand', true), '') = '1' then
-      return new;                                      -- nur die einmalige Bestands-Vergabe dieser Migration
     else
       neu := true;                                     -- Zeile ohne Nummer (z. B. aus alter Sicherung): jetzt vergeben
     end if;
@@ -87,22 +111,6 @@ revoke all on function public.schueler_kunde_vor() from public, anon, authentica
 drop trigger if exists trg_schueler_kunde_vor on public.schueler;
 create trigger trg_schueler_kunde_vor before insert or update on public.schueler
   for each row execute function public.schueler_kunde_vor();
-
--- ===== 4. Bestand: einmalig, Anlage-Reihenfolge (ein UPDATE, nur Zeilen ohne Nummer) =====
--- Sitzungs-weit (nicht nur Transaktion): gilt auch, wenn der SQL-Editor jede Anweisung einzeln ausführt
-select set_config('kompass.w26_bestand', '1', false);
-with liste as (
-  select s.id, s.fahrschule_id,
-         coalesce((select max(x.kundennummer) from public.schueler x where x.fahrschule_id = s.fahrschule_id), 0)
-         + row_number() over (partition by s.fahrschule_id order by s.erstellt_am nulls last, s.id) as nr
-    from public.schueler s
-   where s.kundennummer is null and s.fahrschule_id is not null
-)
-update public.schueler s set kundennummer = l.nr from liste l where s.id = l.id;
-select set_config('kompass.w26_bestand', '', false);
-insert into public.kunden_zaehler (fahrschule_id, letzte)
-  select fahrschule_id, max(kundennummer) from public.schueler where kundennummer is not null group by fahrschule_id
-  on conflict (fahrschule_id) do update set letzte = greatest(public.kunden_zaehler.letzte, excluded.letzte);
 
 -- ===== 5. Änderungsverlauf: Anschrift mitschreiben (Rest wörtlich wie live am 27.11.2026) =====
 create or replace function public.schueler_protokoll()

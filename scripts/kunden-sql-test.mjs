@@ -62,6 +62,10 @@ async function grundDb() {
       end loop; return new;
     end $function$;
     create trigger trg_schueler_protokoll after update on public.schueler for each row execute function public.schueler_protokoll();
+    -- wie trg_akademie_sync live: Statement-Auslöser; hier wird nur gezählt, wie oft er anspringt
+    create table public.akademie_anstoss (n int);
+    create function public.akademie_zaehlen() returns trigger language plpgsql security definer as $f$ begin insert into public.akademie_anstoss values (1); return null; end $f$;
+    create trigger trg_akademie_sync after insert or delete or update on public.schueler for each statement execute function public.akademie_zaehlen();
     grant usage on schema public to authenticated, anon;
     grant select, insert, update on public.schueler to authenticated;
     grant select on public.profiles, public.fahrschulen to authenticated;
@@ -89,6 +93,8 @@ const nr = async (id) => (await q(`select kundennummer from public.schueler wher
 await db.exec(`insert into public.fahrschule_einstellungen (fahrschule_id, schluessel, wert) values ('${A}','beleg.bargeld','{"aktiv":true}')`);
 const alterBeleg = (await als(BU, () => q(`insert into public.zahlungsbelege (fahrschule_id, schueler_id, schueler_name, datum, betrag, zweck, zahlart) values ('${A}','s-a','x',current_date,10,'Grundbetrag','ec') returning *`)))[0];
 
+const anstoss = async () => (await q(`select count(*)::int n from public.akademie_anstoss`))[0].n;
+const anstossVor = await anstoss();
 let res = await db.exec(sql("migrations/20261205_w26_01_kunden_adresse.sql"));
 ok("Prüf-Abfrage", { spalten: 4, ohne_nummer: 0, doppelt: 0, zaehler_ok: true, trigger: 1, beleg_spalten: 3 }, res[res.length - 1].rows[0]);
 ok("Bestand A in Anlage-Reihenfolge (auch gelöschte, gleiche Zeit → id)", { "s-a": 1, "s-b": 2, "s-c": 3, "s-d": 4, "s-e": 5 },
@@ -97,8 +103,10 @@ ok("Bestand B beginnt bei 1", 1, await nr("x-1"));
 ok("Bestand: sonst nichts geändert (kein Verlauf, Status/Name gleich)", { log: 0, geloescht: "geloescht", name: "Ben Muster" },
   { log: (await q(`select count(*)::int n from public.aenderungsprotokoll where tabelle = 'schueler'`))[0].n, geloescht: (await q(`select status from public.schueler where id='s-b'`))[0].status, name: (await q(`select name from public.schueler where id='s-b'`))[0].name });
 ok("Zähler steht auf der höchsten Nummer", [{ fahrschule_id: A, letzte: 5 }, { fahrschule_id: B, letzte: 1 }], await q(`select * from public.kunden_zaehler order by fahrschule_id`));
-ok("Bestands-Schalter ist wieder aus", "", (await q(`select coalesce(current_setting('kompass.w26_bestand', true), '') v`))[0].v);
+const anstossNach1 = await anstoss();
+ok("Bestand: genau 1 Anstoß der Akademie-Brücke", 1, anstossNach1 - anstossVor);
 res = await db.exec(sql("migrations/20261205_w26_01_kunden_adresse.sql"));
+ok("zweites Einspielen stößt die Akademie nicht noch einmal an", anstossNach1, await anstoss());
 ok("zweimal einspielbar, Nummern bleiben", { pruef: res[res.length - 1].rows[0].doppelt, a: await nr("s-a"), e: await nr("s-e") }, { pruef: 0, a: 1, e: 5 });
 
 // Neu anlegen: als Fahrlehrer (App-Brücke) mit erfundener Nummer → Server vergibt die nächste

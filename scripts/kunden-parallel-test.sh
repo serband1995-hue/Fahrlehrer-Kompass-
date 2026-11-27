@@ -48,7 +48,7 @@ insert into public.profiles values ('$BU','$A','buero',true,'Büro Muster'),('$F
 insert into public.schueler (id, fahrschule_id, name, erstellt_am) select 'alt-' || g, '$A', 'Alt Muster ' || g, now() - (g || ' days')::interval from generate_series(1, 25) g;
 SQL
 for f in migrations/20261125_einst_01_fahrschule_einstellungen.sql migrations/20261201_w19_02_zahlungsbelege.sql migrations/20261205_w26_01_kunden_adresse.sql; do
-  $PSQL -f "$ROOT/supabase/$f" >/dev/null
+  $PSQL -1 -f "$ROOT/supabase/$f" >/dev/null   # wie beim Einspielen: eine Transaktion
 done
 geraet() { # $1 = Gerät, $2 = Nutzer
   for i in $(seq 1 100); do

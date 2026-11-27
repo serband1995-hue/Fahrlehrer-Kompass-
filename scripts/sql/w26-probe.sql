@@ -1,3 +1,10 @@
+-- W26 · A) VOR und NACH dem Einspielen ausführen: Prüfsumme aller Schülerzeilen ohne die neuen Spalten.
+--         Beide Werte müssen GLEICH sein (Bestands-Vergabe ändert nichts außer der Kundennummer). Nur lesen.
+select count(*) as schueler,
+       md5(string_agg(md5((to_jsonb(s) - 'kundennummer' - 'strasse' - 'plz' - 'ort')::text), '' order by s.id)) as pruefsumme
+  from public.schueler s;
+
+-- W26 · B) NACH dem Einspielen:
 -- W26: nach dem Einspielen von supabase/migrations/20261205_w26_01_kunden_adresse.sql (nur lesen, ändert nichts).
 -- Erwartet: je Fahrschule anzahl = verschieden = max_nr = zaehler, ohne_nummer = 0; reihenfolge_ok = true
 --           (Nummer steigt mit erstellt_am); trigger = 1; beleg_spalten = 3; adressen = 0 direkt nach dem Einspielen.

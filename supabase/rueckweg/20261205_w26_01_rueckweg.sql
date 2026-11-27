@@ -2,6 +2,8 @@
 -- ACHTUNG: Entfernt Kundennummern und Anschriften der Schüler. Sind schon Anschriften eingetragen oder Belege mit
 -- Kundennummer erstellt, bricht der Rückweg ab (nichts geändert). Erst sichern, dann bewusst p_trotzdem = true setzen.
 -- Belege selbst bleiben (aufbewahrungspflichtig); nur die drei neuen Spalten der Belege fallen weg.
+-- Als EIN Block einspielen (eine Transaktion).
+set local lock_timeout = '5s';
 do $$
 declare
   p_trotzdem boolean := false;   -- nur nach Sicherung auf true setzen
@@ -18,18 +20,7 @@ begin
   end if;
 end $$;
 
-drop trigger if exists trg_schueler_kunde_vor on public.schueler;
-drop function if exists public.schueler_kunde_vor();
-drop index if exists public.schueler_kundennummer_eindeutig;
-alter table public.schueler drop constraint if exists schueler_kundennummer_positiv;
-alter table public.schueler drop constraint if exists schueler_plz_format;
-alter table public.schueler drop constraint if exists schueler_adresse_laenge;
-alter table public.schueler drop column if exists kundennummer;
-alter table public.schueler drop column if exists strasse;
-alter table public.schueler drop column if exists plz;
-alter table public.schueler drop column if exists ort;
-drop table if exists public.kunden_zaehler;
-
+-- Reihenfolge (Richter W26): erst die Funktionen, die die Spalten nennen, zurücksetzen, dann die Spalten entfernen.
 -- Änderungsverlauf wieder ohne Anschrift (wörtlich wie vor W26)
 create or replace function public.schueler_protokoll()
  returns trigger language plpgsql security definer set search_path to 'public'
@@ -110,6 +101,20 @@ begin
 end;
 $function$;
 revoke all on function public.zahlungsbelege_anlegen() from public, anon, authenticated;
+
+
+drop trigger if exists trg_schueler_kunde_vor on public.schueler;
+drop function if exists public.schueler_kunde_vor();
+drop index if exists public.schueler_kundennummer_eindeutig;
+alter table public.schueler drop constraint if exists schueler_kundennummer_positiv;
+alter table public.schueler drop constraint if exists schueler_plz_format;
+alter table public.schueler drop constraint if exists schueler_adresse_laenge;
+alter table public.schueler drop column if exists kundennummer;
+alter table public.schueler drop column if exists strasse;
+alter table public.schueler drop column if exists plz;
+alter table public.schueler drop column if exists ort;
+drop table if exists public.kunden_zaehler;
+
 alter table public.zahlungsbelege drop column if exists kundennummer;
 alter table public.zahlungsbelege drop column if exists schueler_adresse;
 alter table public.zahlungsbelege drop column if exists aussteller;
