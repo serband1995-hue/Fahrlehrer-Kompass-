@@ -302,6 +302,63 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
   pruefe("W51 keine JS-Fehler (Teil 2b)", fehler.length === 0, fehler.join(" | "));
 }
 
+// ---------- Teil 2c: Nacharbeit (F1 Stand im Gerät, F5 Wiederholung nach „nicht bestanden“, F9 nur Fensterklassen) ----------
+{
+  const { ctx, page, fehler } = await starte();
+  const r = await page.evaluate(async () => {
+    const aus = {}, l = DB.students.filter((s) => !s.passed).slice(0, 6); l.forEach((s) => { s.ready = new Date().toISOString(); s.form = "B"; });
+    const plus = (n) => { const x = new Date(todayISO() + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+    const supa = getSupa(), tag = await PT.tagAnlegen(supa, { fahrschule_id: _authProfile.fahrschule_id, datum: plus(3), start: "08:00", pruefer: "GH", erstellt_von: _authUser.id });
+    await ptLaden();
+    // F1: eine Prüfung eintragen, Stand im Gerät, dann „kein Netz“
+    await PT.einplanen(supa, Object.assign(_ptSupaBasis(), { schueler_id: l[0].id, klasse: "B", pruefungstag_id: tag.id, fenster: 0, fenster_anzahl: 1 }));
+    await ptLaden();
+    aus.gespeichert = !!localStorage.getItem(_ptKey("stand")) && localStorage.getItem(_ptKey("aktiv")) === "1";
+    const echt = PT.ladeBelegung; PT.ladeBelegung = () => Promise.reject(new Error("Failed to fetch"));
+    Object.assign(_pt, { tage: [], eigene: [], geladen: false, sig: "" });
+    await ptLaden();
+    aus.offlineAktiv = _ptAktiv(); aus.offlineHinweis = !!_pt.fehler; aus.offlinePruefung = _tafel().some((t) => (t.slots || []).includes(l[0].id) && t._pt);
+    aus.offlineNurNeu = _ptNurNeu();
+    // ohne Stand, aber mit Merker: alte Tafel nicht schreibbar
+    localStorage.removeItem(_ptKey("stand")); Object.assign(_pt, { tage: [], eigene: [], geladen: false, sig: "" });
+    await ptLaden();
+    aus.ohneStandAktiv = _ptAktiv(); aus.ohneStandNurNeu = _ptNurNeu();
+    _pruefTab = "termine"; routePruefungen();
+    aus.knopf = !!document.querySelector("#addTermin"); aus.hinweis = !!document.querySelector("#ptNurNeu") && /brauchen Internet/.test(document.querySelector("#ptNurNeu").textContent);
+    PT.ladeBelegung = echt; await ptLaden();
+    aus.wiederAktiv = _ptAktiv() && _ptNurNeu() === false;
+    // F5: nicht bestanden vor 3 Tagen
+    const sf = l[1]; DB.exams.push({ id: "ex-fail", sid: sf.id, date: plus(-3), result: "fail", pruefer: "X" });
+    aus.ab = _ptWiederholungAb(sf) === plus(11); aus.text = _ptWiederholungText(sf); aus.keinAndere = _ptWiederholungText(l[2]) === "";
+    ptMehrereSheet(tag.id);
+    const box = document.querySelector("#sheet .pt-chk input[data-id='" + sf.id + "']");
+    aus.mehrText = !!box && /Wiederholung frühestens ab/.test(box.closest("label").textContent); aus.vorab = !!box && box.checked;
+    closeSheet(); ptFreiSheet(tag.id, 4);
+    const it = document.querySelector("#sheet .sl-item[data-id='" + sf.id + "']"); aus.freiText = !!it && /Wiederholung frühestens ab/.test(it.textContent);
+    const fr = []; const ec = window.confirm; window.confirm = (m) => { fr.push(m); return false; };
+    if (it) it.click(); await new Promise((q) => setTimeout(q, 500));
+    window.confirm = ec; aus.warnung = fr.length === 1 && /Wiederholung frühestens ab/.test(fr[0]);
+    aus.nichtEingeteilt = !_pt.eigene.some((x) => x.schueler_id === sf.id && x.status === "geplant");
+    closeSheet();
+    // F9: Klasse A nicht in der Fenster-Auswahl
+    const sa = l[3]; sa.form = "A";
+    const k = _ptKandidaten(); aus.f9 = ![...k.wl, ...k.rest].some((x) => x.id === sa.id) && [...k.wl, ...k.rest].some((x) => x.form === "B");
+    ptFreiSheet(tag.id, 5); aus.f9Sheet = !document.querySelector("#sheet .sl-item[data-id='" + sa.id + "']");
+    closeSheet(); sa.form = "B";
+    return aus;
+  });
+  pruefe("W52 F1: Stand + Merker im Gerät gespeichert", r.gespeichert);
+  pruefe("W53 F1: Laden ohne Netz → Stand von vorhin (Büro-Prüfungen da, Hinweis, neue Quelle aktiv)", r.offlineAktiv && r.offlineHinweis && r.offlinePruefung && !r.offlineNurNeu, JSON.stringify(r));
+  pruefe("W54 F1: ohne Stand, aber Merker → alte Tafel nicht schreibbar (kein „+ Termin“, Hinweis „brauchen Internet“)", !r.ohneStandAktiv && r.ohneStandNurNeu && !r.knopf && r.hinweis, JSON.stringify([r.ohneStandAktiv, r.ohneStandNurNeu, r.knopf, r.hinweis]));
+  pruefe("W55 F1: Netz wieder da → neue Quelle", r.wiederAktiv);
+  pruefe("W56 F5: Wiederholung frühestens ab Datum+14, nur bei „nicht bestanden“", r.ab && /frühestens ab \d\d\.\d\d\./.test(r.text) && r.keinAndere, JSON.stringify([r.ab, r.text]));
+  pruefe("W57 F5: Mehrere/Einteilen zeigen den Hinweis, nicht vorab angehakt", r.mehrText && !r.vorab && r.freiText, JSON.stringify([r.mehrText, r.vorab, r.freiText]));
+  pruefe("W58 F5: früherer Tag → freundliche Rückfrage (Nein bricht ab, keine Sperre)", r.warnung && r.nichtEingeteilt, JSON.stringify([r.warnung, r.nichtEingeteilt]));
+  pruefe("W59 F9: Fenster-Auswahl nur Fensterklassen (Klasse A fehlt, B da)", r.f9 && r.f9Sheet, JSON.stringify([r.f9, r.f9Sheet]));
+  await ctx.close();
+  pruefe("W60 keine JS-Fehler (Teil 2c)", fehler.length === 0, fehler.join(" | "));
+}
+
 // ---------- Teil 3: Handy-Größen (360/412 hoch, quer): nichts läuft über, Tippflächen mindestens 44 px ----------
 for (const g of [{ n: "360", w: 360, h: 780 }, { n: "412", w: 412, h: 860 }, { n: "quer", w: 740, h: 360 }]) {
   const { ctx, page, fehler } = await starte({ width: g.w, height: g.h });

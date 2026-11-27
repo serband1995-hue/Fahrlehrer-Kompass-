@@ -15853,6 +15853,17 @@ let _pt={tage:[],eigene:[],geladen:false,fehler:"",laeuft:false,nochmal:false,re
 let _ptTausch=null, _ptOffen={}, _ptBusy=false, _ptUeberVersucht={}, _ptUeberLaeuft=false;
 function _ptMoeglich(){ return !!(window.PT&&!_fsAgg&&_authUser&&_authProfile&&_authProfile.fahrschule_id); }
 function _ptAktiv(){ return _ptMoeglich()&&_pt.geladen&&_pt.user===_authUser.id; }
+// F1: letzter Stand je Nutzer im Gerät (Start ohne Netz); „aktiv“-Merker: danach ist die alte Tafel nie mehr schreibbar
+function _ptKey(k){ return "fk_pt_"+k+"_"+(_authUser&&_authUser.id); }
+function _ptSpeichern(){ try{ localStorage.setItem(_ptKey("stand"),JSON.stringify({tage:_pt.tage,eigene:_pt.eigene,zeit:Date.now()})); localStorage.setItem(_ptKey("aktiv"),"1"); }catch(e){} }
+function _ptAusSpeicher(){ if(!_ptMoeglich()||(_pt.geladen&&_pt.user===_authUser.id))return false; try{ const j=JSON.parse(localStorage.getItem(_ptKey("stand"))||"null"); if(j&&Array.isArray(j.tage)&&Array.isArray(j.eigene)){ Object.assign(_pt,{tage:j.tage,eigene:j.eigene,geladen:true,user:_authUser.id,fehler:""}); return true; } }catch(e){} return false; }
+function _ptNurNeu(){ if(!_ptMoeglich()||_ptAktiv())return false; try{ return localStorage.getItem(_ptKey("aktiv"))==="1"; }catch(e){ return false; } }
+function _ptNurNeuHinweis(){ toast("Prüfungen brauchen Internet"); }
+// F5: Wiederholung nach „nicht bestanden“ frühestens 14 Tage danach (nur Hinweis, keine Sperre)
+function _ptWiederholungAb(s){ const h=todayISO(), von=addDays(h,-14); let ab=null; (DB.exams||[]).forEach(ex=>{ if(ex&&s&&ex.sid===s.id&&istPruefung(ex)&&ex.result==="fail"&&ex.date&&ex.date>=von){ const a=addDays(ex.date,14); if(a>h&&(!ab||a>ab))ab=a; } }); return ab; }
+function _ptWiederholungText(s){ const ab=_ptWiederholungAb(s); return ab?`Wiederholung frühestens ab ${isoDE(ab).slice(0,6)}`:""; }
+function _ptZuFrueh(s,datum){ const ab=_ptWiederholungAb(s); return !!(ab&&datum<ab); }
+function _ptFruehFrage(s,datum){ const ab=_ptWiederholungAb(s); return !ab||datum>=ab||confirm(`${s.name} hat die Prüfung vor Kurzem nicht bestanden. Wiederholung frühestens ab ${isoDE(ab).slice(0,6)}. Trotzdem an diesem Tag einteilen?`); }
 function _ptBlock(r){ const von=PT.hm(r.von)||"09:00"; return {id:r.id,date:r.datum,von,bis:min2hm(hm2min(von)+((PT.istLkwKlasse(r.klasse)||Number(r.fenster_anzahl)===2)?85:PRUEF_MIN)),plaetze:1,slots:[r.schueler_id],_pt:r}; }
 function _ptEigeneOffen(mitVergangen){ const h=todayISO(); return (_pt.eigene||[]).filter(r=>r.status==="geplant"&&(r.art||"praxis")==="praxis"&&r.datum&&r.schueler_id&&(mitVergangen||r.datum>=h)); }
 // Alle Prüfungen in der alten Form {id,date,von,bis,slots:[sid]}: neue Quelle, sonst die alte Tafel
@@ -15865,13 +15876,14 @@ async function ptLaden(){
   if(!_ptMoeglich())return;
   if(_pt.laeuft){ _pt.nochmal=true; return; }
   _pt.laeuft=true; let ok=false;
+  if(_ptAusSpeicher()){ _pt.sig=JSON.stringify([_pt.tage,_pt.eigene,_pt.fehler]); _ptNeuZeichnen(); }
   try{
     const supa=getSupa(), heute=todayISO();
     const tage=await PT.ladeBelegung(supa,addDays(heute,-1),addDays(heute,400));
     const r=await supa.from("pruefungstermine").select("*").eq("fahrlehrer_id",_authUser.id).gte("datum",addDays(heute,-90));
     if(r.error)throw r.error;
     if(_pt.user!==_authUser.id)Object.assign(_pt,{tage:[],eigene:[],geladen:false,user:_authUser.id});
-    _pt.tage=tage; _pt.eigene=r.data||[]; _pt.geladen=true; _pt.fehler=""; ok=true;
+    _pt.tage=tage; _pt.eigene=r.data||[]; _pt.geladen=true; _pt.fehler=""; ok=true; _ptSpeichern();
   }catch(e){ _pt.fehler=PT.fehlerText(e); }
   _pt.zeit=Date.now(); _pt.laeuft=false;
   if(ok){ try{ await _ptBueroErgebnisse(); }catch(e){ console.warn("[Kompass] Büro-Ergebnisse:",e&&e.message); } _ptAltUebernehmen(); }
@@ -15952,7 +15964,7 @@ function _ptBinden(){
 
 /* ---------- Schüler wählen, Fenster wählen ---------- */
 function _ptKandidaten(){
-  const ohne=s=>!terminFor(s.id), wl=waitlist().filter(ohne), ids=new Set(wl.map(s=>s.id));
+  const ohne=s=>!terminFor(s.id)&&PT.istFensterKlasse(_ptKlasse(s)), wl=waitlist().filter(ohne), ids=new Set(wl.map(s=>s.id));
   const rest=activeStudents().filter(s=>!ids.has(s.id)&&ohne(s)&&!s.theorieWait).sort((a,b)=>a.name.localeCompare(b.name,"de"));
   return {wl,rest};
 }
@@ -15960,16 +15972,17 @@ function ptFreiSheet(tagId,i){
   const tag=_pt.tage.find(t=>t.id===tagId); if(!tag)return;
   const termine=_ptTagTermine(tag), {wl,rest}=_ptKandidaten();
   const passt=s=>PT.passt(tag,termine,i,PT.fensterAnzahlFuer(s.form),null);
-  const item=s=>`<button class="sl-item" data-id="${esc(s.id)}"><div><span>${esc(s.name)}</span>${PT.fensterAnzahlFuer(s.form)===2?` <span style="font-size:10px;color:var(--muted);">· Lkw, 2 Fenster</span>`:""}</div><span class="sl-sub">${esc(formLabel(s.form))}</span></button>`;
+  const item=s=>`<button class="sl-item" data-id="${esc(s.id)}"><div><span>${esc(s.name)}</span>${PT.fensterAnzahlFuer(s.form)===2?` <span style="font-size:10px;color:var(--muted);">· Lkw, 2 Fenster</span>`:""}</div><span class="sl-sub">${esc(formLabel(s.form))}</span>${_ptWiederholungText(s)?`<span class="sl-sub" style="display:block;color:var(--orange,#c2410c);">${esc(_ptWiederholungText(s))}</span>`:""}</button>`;
   const w=wl.filter(passt), r=rest.filter(passt), f=PT.fensterListe(tag)[i];
   openSheet(`<div class="sheet-h">Schüler einteilen</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${_ptTagTitel(tag)} · ${f.von}–${f.bis}</p>
-    ${(w.length||r.length)?`<div class="sheet-list">${w.length?`<div class="blk-h" style="margin:0 0 4px;">Warteliste</div>${w.map(item).join("")}`:""}${r.length?`<div class="blk-h" style="margin:8px 0 4px;">Weitere Schüler</div>${r.map(item).join("")}`:""}</div>`:`<p class="muted-p" style="margin-bottom:16px;">Niemand zum Einteilen (Warteliste leer oder alle haben schon eine Prüfung).</p>`}
+    ${(w.length||r.length)?`<div class="sheet-list">${w.length?`<div class="blk-h" style="margin:0 0 4px;">Warteliste</div>${w.map(item).join("")}`:""}${r.length?`<div class="blk-h" style="margin:8px 0 4px;">Weitere Schüler</div>${r.map(item).join("")}`:""}</div>`:`<p class="muted-p" style="margin-bottom:16px;">Niemand zum Einteilen (Warteliste leer oder alle haben schon eine Prüfung). Andere Klassen als Fenster-Klassen: in der Akte „Prüfungstermin planen“.</p>`}
     <div class="btn-row"><button class="btn btn-ghost" id="slCancel">Abbrechen</button></div>`);
   $("#slCancel").addEventListener("click",closeSheet);
   document.querySelectorAll("#sheet .sl-item").forEach(b=>b.addEventListener("click",()=>{
     const s=DB.students.find(x=>x.id===b.dataset.id); if(!s)return;
     if(_zahlungStopp(s.id,tag.datum,"pruefung"))return;
+    if(!_ptFruehFrage(s,tag.datum))return;
     ptEinteilen(s,tag,i);
   }));
 }
@@ -16078,7 +16091,7 @@ function ptTagSheet(tagId,nachher){
 function ptMehrereSheet(tagId){
   const tag=_pt.tage.find(t=>t.id===tagId); if(!tag)return;
   const termine=_ptTagTermine(tag), {wl,rest}=_ptKandidaten(), frei=PT.zaehle(tag,termine).frei, sel=[];
-  const chk=s=>`<label class="pt-chk"><input type="checkbox" data-id="${esc(s.id)}"><span>${esc(s.name)}${PT.fensterAnzahlFuer(s.form)===2?" · Lkw, 2 Fenster":""}</span><span class="sl-sub">${esc(formLabel(s.form))}</span></label>`;
+  const chk=s=>`<label class="pt-chk"><input type="checkbox" data-id="${esc(s.id)}"><span>${esc(s.name)}${PT.fensterAnzahlFuer(s.form)===2?" · Lkw, 2 Fenster":""}${_ptWiederholungText(s)?`<span class="sl-sub" style="display:block;">${esc(_ptWiederholungText(s))}</span>`:""}</span><span class="sl-sub">${esc(formLabel(s.form))}</span></label>`;
   openSheet(`<div class="sheet-h">Mehrere einteilen</div>
     <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">${_ptTagTitel(tag)} · ${frei} Fenster frei. Die Schüler kommen der Reihe nach in die freien Fenster.</p>
     ${(wl.length||rest.length)?`<div class="sheet-list">${wl.length?`<div class="blk-h" style="margin:0 0 4px;">Warteliste</div>${wl.map(chk).join("")}`:""}${rest.length?`<div class="blk-h" style="margin:8px 0 4px;">Weitere Schüler</div>${rest.map(chk).join("")}`:""}</div>`:`<p class="muted-p" style="margin-bottom:16px;">Niemand zum Einteilen.</p>`}
@@ -16092,6 +16105,8 @@ function ptMehrereSheet(tagId){
   go.addEventListener("click",async()=>{
     if(_ptBusy||!sel.length)return; _ptBusy=true; go.disabled=true;
     const studs=sel.map(id=>DB.students.find(x=>x.id===id)).filter(Boolean), fehler=[], gut=[];
+    const frueh=studs.filter(s=>_ptZuFrueh(s,tag.datum));
+    if(frueh.length&&!confirm(`${frueh.map(s=>s.name).join(", ")}: Prüfung vor Kurzem nicht bestanden, Wiederholung erst später. Trotzdem an diesem Tag einteilen?`)){ _ptBusy=false; go.disabled=false; return; }
     const ok=[]; studs.forEach(s=>{ if(_zahlungGesperrt(s.id))fehler.push({sid:s.id,text:"Zahlung ausstehend – bitte zuerst im Büro klären."}); else ok.push(s); });
     let erg={ok:[],fehler:[]};
     try{ erg=await PT.mehrereEinplanen(getSupa(),tag,termine,ok.map(s=>({id:s.id,klasse:_ptKlasse(s),fahrlehrer_id:_authUser.id})),{fahrschule_id:_authProfile.fahrschule_id,art:"praxis",quelle:"app"}); }
@@ -16115,13 +16130,14 @@ function ptMehrereSheet(tagId){
 function _ptPlanSheet(s,tagVor){
   const cur=terminFor(s.id), curRow=cur&&cur._pt?cur._pt:null, anzahl=PT.fensterAnzahlFuer(s.form);
   openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
-    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)}${curRow?` hat schon eine Prüfung am ${isoDE(cur.date)} um ${esc(cur.von)}. Mit der Auswahl wird sie verschoben.`:` bekommt einen Termin. Der Schüler kommt dabei auf die Warteliste.`}${anzahl===2?" Lkw: die Prüfung braucht zwei Fenster.":""}</p>
+    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)}${curRow?` hat schon eine Prüfung am ${isoDE(cur.date)} um ${esc(cur.von)}. Mit der Auswahl wird sie verschoben.`:` bekommt einen Termin. Der Schüler kommt dabei auf die Warteliste.`}${anzahl===2?" Lkw: die Prüfung braucht zwei Fenster.":""}${_ptWiederholungText(s)?` ${esc(_ptWiederholungText(s))}.`:""}</p>
     <div id="epWahl"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="epCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-ghost" id="epNeu">+ Neuer Prüfungstag</button></div>`);
   $("#epCancel").addEventListener("click",closeSheet);
   $("#epNeu").addEventListener("click",()=>ptTagSheet(null,neu=>setTimeout(()=>_ptPlanSheet(s,neu.id),250)));
   _ptFensterWahl($("#epWahl"),{anzahl,ignoriere:curRow?curRow.id:null,tagId:tagVor||(curRow&&curRow.pruefungstag_id)||null,beiWahl:async(tag,i)=>{
     if(_zahlungStopp(s.id,tag.datum,"pruefung"))return;
+    if(!_ptFruehFrage(s,tag.datum))return;
     const ok=await _ptSchreiben(()=>curRow?PT.aendern(getSupa(),curRow.id,{pruefungstag_id:tag.id,fenster:i,fenster_anzahl:anzahl}):PT.einplanen(getSupa(),Object.assign(_ptSupaBasis(),{schueler_id:s.id,klasse:_ptKlasse(s),pruefungstag_id:tag.id,fenster:i,fenster_anzahl:anzahl})),null);
     if(ok){ if(!s.ready&&!s.passed)setReady(s); save(); toast("Prüfungstermin am "+isoDE(tag.datum)+" um "+PT.fensterVon(tag,i)+" gesetzt"); routeDetail(s.id); }
   }});
@@ -16130,7 +16146,7 @@ function _ptPlanSheet(s,tagVor){
 function _ptPlanFreiSheet(s){
   const cur=terminFor(s.id), curRow=cur&&cur._pt?cur._pt:null;
   openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
-    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)} bekommt einen Termin. Der Schüler wird dabei automatisch auf die Warteliste gesetzt.</p>
+    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)} bekommt einen Termin. Der Schüler wird dabei automatisch auf die Warteliste gesetzt.${_ptWiederholungText(s)?` ${esc(_ptWiederholungText(s))}.`:""}</p>
     <div class="field"><label>Datum</label><input type="date" id="epDate" value="${esc(cur?cur.date:todayISO())}"></div>
     <div class="field"><label>Uhrzeit</label><input type="time" id="epTime" value="${esc(cur&&cur.von?cur.von:"09:00")}"></div>
     <div class="btn-row"><button class="btn btn-ghost" id="epCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="epSave">Termin setzen</button></div>`);
@@ -16140,6 +16156,7 @@ function _ptPlanFreiSheet(s){
     const von=$("#epTime").value||"09:00";
     if(_zahlungStopp(s.id,d,"pruefung"))return;
     if(d<todayISO()&&!confirm("Das Datum liegt in der Vergangenheit. Trotzdem setzen?"))return;
+    if(!_ptFruehFrage(s,d))return;
     const ok=await _ptSchreiben(()=>curRow?PT.aendern(getSupa(),curRow.id,{datum:d,von,pruefungstag_id:null,fenster:null}):PT.einplanen(getSupa(),Object.assign(_ptSupaBasis(),{schueler_id:s.id,klasse:_ptKlasse(s),datum:d,von})),null);
     if(ok){ if(!s.ready&&!s.passed)setReady(s); save(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id); }
   });
@@ -16529,6 +16546,7 @@ function renderPlanActions(s){ const pa=$("#planActions"); if(!pa)return; pa.inn
 
 /* ---------- Prüfung eintragen ---------- */
 function openExamPlanSheet(s){
+  if(_ptNurNeu()){ _ptNurNeuHinweis(); return; }
   if(_ptAktiv())return PT.istFensterKlasse(s.form||"B")?_ptPlanSheet(s):_ptPlanFreiSheet(s);
   const cur=terminFor(s.id);
   openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
@@ -16779,13 +16797,13 @@ function routePruefungen(){
   ensureDB();
   $("#tbTitle").textContent="Prüfungen"; setFab(false); view.scrollTop=0;
   syncTheoriePraxis(); // automatischer Wechsel bei 90%
-  const wl=waitlist(); const ptNeu=_ptAktiv(); const ts=ptNeu?[]:futureTermine();
+  const wl=waitlist(); const ptNeu=_ptAktiv(), nurNeu=_ptNurNeu(); const ts=(ptNeu||nurNeu)?[]:futureTermine();
   if(_ptMoeglich()&&Date.now()-_pt.zeit>20000)ptLaden();
   if(!window._pruefTab)_pruefTab="termine";
   const theorieList=theorieBestanden(); const praxisList=bereitFuerPraxis(); const waitList=theorieAusstehend();
   let html=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Prüf<span class="o">ungen</span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':(ptNeu?'<button class="mini-btn" id="addTermin">+ Prüfungstag</button>':'<button class="mini-btn" id="addTermin">+ Termin</button>')}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':(ptNeu?'<button class="mini-btn" id="addTermin">+ Prüfungstag</button>':(nurNeu?'':'<button class="mini-btn" id="addTermin">+ Termin</button>'))}</div></div>
     <div class="pruef-tabs">
       <button class="pt-tab${_pruefTab==='termine'?' on':''}" data-pt="termine">Termine</button>
       <button class="pt-tab${_pruefTab==='wait'?' on':''}" data-pt="wait">Wartet auf Theorie <span class="pt-cnt">${waitList.length}</span></button>
@@ -16794,6 +16812,7 @@ function routePruefungen(){
     </div>`;
   if(_pruefTab==="termine"){
     if(ptNeu)html+=_ptTageHTML();
+    if(nurNeu)html+=`<p class="muted-p" id="ptNurNeu" style="font-size:13px;margin:0 0 12px;">Prüfungen brauchen Internet. Sobald die Verbindung wieder da ist, erscheinen die Prüfungstage.</p>`;
     if(ts.length){
       html+=`<div class="blk-h">Termine</div>`;
       ts.forEach(t=>{
@@ -16913,6 +16932,7 @@ function bereitFuerPraxis(){ return activeStudents().filter(s=>s.theoryPassed&&s
 // Automatik: wer bereit ist, wird als prüfungsreif (ready) markiert
 function syncTheoriePraxis(){ let dirty=false; activeStudents().forEach(s=>{ if(s.theoryPassed&&stand(s)>=90&&!s.ready&&!s.wartelisteRaus&&!s.passed){ s.ready=new Date().toISOString(); dirty=true; } }); if(dirty)save(); }
 function openTerminSheet(){
+  if(_ptNurNeu()){ _ptNurNeuHinweis(); return; }
   let p=1;
   const defaultVon=()=>{ const base=540; return Array.from({length:p},(_,i)=>min2hm(base+i*(DB.workCfg.blockMin||90))); };
   const renderSlots=()=>{
