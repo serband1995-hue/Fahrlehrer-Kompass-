@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.8", datum: "2026-11-27", kurz: "Neu: Kundennummer, Anschrift und schönere Ausdrucke.",
+    punkte: ["Jeder Schüler hat jetzt eine eigene Kundennummer, zum Beispiel K-00012. Sie wird automatisch vergeben und ändert sich nie. Du siehst sie in der Schülerliste und in der Akte. Ist das Handy offline, steht dort „wird vergeben“, bis die Nummer da ist.",
+             "Beim Anlegen und Bearbeiten kannst du die Anschrift eintragen: Straße und Hausnummer, Postleitzahl und Ort. Nichts davon ist Pflicht.",
+             "Im Büro sieht die Quittung jetzt wie ein richtiges Geschäftspapier aus: mit Logo der Fahrschule, Quittungsnummer, Kundennummer, Anschrift, Leistung, Betrag und Feld für die Unterschrift.",
+             "Alle Ausdrucke haben jetzt dasselbe ruhige Aussehen: Logo und Name der Fahrschule oben, Seitenzahl unten, Tabellen werden nicht mehr abgeschnitten.",
+             "Neben dem Namen steht keine Rolle wie „Super-Admin“ mehr."] },
   { version: "2026.11.27.7", datum: "2026-11-27", kurz: "Feinschliff: neue Funktionen passen besser zusammen.",
     punkte: ["Laufen viele Termine gleichzeitig, wird die Tagesansicht breiter: seitlich wischen, damit jeder Termin lesbar bleibt.",
              "Die Leitung sieht eine Prüfung mit Ergebnis in der Gesamtansicht nur noch einmal statt doppelt.",

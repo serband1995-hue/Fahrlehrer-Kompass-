@@ -251,7 +251,7 @@ try {
     });
     await warte(page, 200);
     const r = await page.evaluate(() => { const d = document.getElementById("nurlesen"); return { felder: [...d.querySelectorAll("textarea")].map((x) => x.disabled), speichern: d.querySelectorAll("[data-esv-speichern]").length, platz: d.querySelectorAll("[data-esv-platz]").length, std: d.querySelectorAll("[data-esv-standard]").length, hinweis: d.querySelector(".es-fuss").textContent, vorschau: !!d.querySelector("[data-esv-vorschau] .esv-satz").textContent }; });
-    pruefe("V7", "ohne Schreibrecht: Felder gesperrt, kein Speichern/Platzhalter/Standard-Knopf, Hinweis „Ändern dürfen Büro, Leitung und Super-Admin.“, Vorschau da", r.felder.length === 2 && r.felder.every(Boolean) && !r.speichern && !r.platz && !r.std && /Ändern dürfen Büro, Leitung und Super-Admin\./.test(r.hinweis) && r.vorschau ? null : JSON.stringify(r));
+    pruefe("V7", "ohne Schreibrecht: Felder gesperrt, kein Speichern/Platzhalter/Standard-Knopf, Hinweis „Ändern dürfen Büro und Leitung.“, Vorschau da", r.felder.length === 2 && r.felder.every(Boolean) && !r.speichern && !r.platz && !r.std && /Ändern dürfen Büro und Leitung\./.test(r.hinweis) && r.vorschau ? null : JSON.stringify(r));
     pruefe("V11a", "Büro (bu-1) sieht das Thema und darf speichern", (await themenListe(page)).includes("Nachrichten-Vorlagen") && (await page.locator("[data-esv-speichern]").count()) === 1 ? null : "fehlt");
     pruefe("V12f", "keine Konsolenfehler", konsole.length ? konsole : null);
     await ctx.close();

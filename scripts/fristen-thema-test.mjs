@@ -154,7 +154,7 @@ try {
   // ---------- 4. Nur lesen, Fehler beim Speichern, Server rechnet anders, ke:geladen ----------
   {
     const { page, ctx } = await oeffne({ darf: false });
-    pruefe("T4a ohne Recht: alle Felder gesperrt, kein Speichern-Knopf", (await page.locator("[data-esf] input:not([disabled])").count()) === 0 && (await page.locator("[data-esf-speichern]").count()) === 0 && /Ändern dürfen Büro, Leitung/.test(await page.locator("[data-esf]").innerText()));
+    pruefe("T4a ohne Recht: alle Felder gesperrt, kein Speichern-Knopf", (await page.locator("[data-esf] input:not([disabled])").count()) === 0 && (await page.locator("[data-esf-speichern]").count()) === 0 && /Ändern dürfen Büro und Leitung/.test(await page.locator("[data-esf]").innerText()));
     await ctx.close();
   }
   {

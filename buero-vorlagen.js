@@ -153,7 +153,7 @@ h3.esv-gruppe{font-size:20px;margin:24px 0 4px;padding:0;}
         const st = el("span", "esv-fuss-text", "Nichts geändert."); st.setAttribute("data-esv-status", ""); st.setAttribute("role", "status");
         fuss.append(b, st);
         b.addEventListener("click", () => this.speichern());
-      } else fuss.appendChild(el("span", "esv-fuss-text", "Ändern dürfen Büro, Leitung und Super-Admin."));
+      } else fuss.appendChild(el("span", "esv-fuss-text", "Ändern dürfen Büro und Leitung."));
       sec.appendChild(fuss);
       root.append(h2, sec);
       sec.querySelectorAll("[data-esv-kopf]").forEach((b) => b.addEventListener("click", () => this.umschalten(b.dataset.esvKopf)));

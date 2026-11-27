@@ -88,7 +88,7 @@ function renderPreise() {
       const naechste = kommend.length ? kommend[kommend.length - 1] : null;
       const name = letzte.bezeichnung.trim().toLowerCase() === artName.trim().toLowerCase() ? "" : letzte.bezeichnung;
       const verlauf = z.slice().reverse().map((r) => `<li><b>${esc(prEuro(r.betrag_cent))}</b> ab ${esc(datumDE(r.gueltig_ab))}
-          <div class="leise klein">eingetragen ${esc(datumDE(String(r.angelegt_am || "").slice(0, 10)))}${r.bearbeiter ? " von " + esc(r.bearbeiter) : r.angelegt_von ? " von " + esc(prWer(r.angelegt_von)) : ""}</div></li>`).join("");
+          <div class="leise klein">eingetragen ${esc(datumDE(String(r.angelegt_am || "").slice(0, 10)))}${r.bearbeiter ? " von " + esc(r.bearbeiter) : r.angelegt_von && prWer(r.angelegt_von) ? " von " + esc(prWer(r.angelegt_von)) : ""}</div></li>`).join("");
       return `<tr class="pr-zeile">
         <td class="pr-name">${hinweis ? `<span class="marke-pill">nur Übersicht</span> ` : ""}${name ? `<b>${esc(name)}</b>` : ""}${letzte.klasse ? `<span class="pr-klasse">Klasse ${esc(letzte.klasse)}</span>` : ""}${!name && !letzte.klasse ? `<b>${esc(letzte.bezeichnung)}</b>` : ""}
           ${letzte.inhalt ? `<div class="leise klein">${esc(letzte.inhalt)}</div>` : ""}
@@ -115,7 +115,7 @@ function renderPreise() {
 function prWer(id) {
   const p = (S.team || []).find((x) => x.id === id);
   if (p && p.name) return p.name;
-  return p && p.rolle === "buero" ? "Büro" : p && p.rolle === "super_admin" ? "Super-Admin" : "Leitung";
+  return p && p.rolle === "buero" ? "Büro" : p && p.rolle === "super_admin" ? "" : "Leitung"; // W26: „Super-Admin“ erscheint nicht als Name (ohne Profilnamen steht nichts)
 }
 
 function prFormular(vorlage, nurBetrag) {

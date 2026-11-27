@@ -37,7 +37,7 @@ async function oeffne(nutzer, hash, breite = 1366) {
   const ctx = await browser.newContext({ viewport: { width: breite, height: 860 } });
   const page = await ctx.newPage();
   const konsole = [];
-  page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+  page.on("console", (m) => { if (m.type() === "error" && !/\/logos\/[^/]+\.png/.test((m.location() || {}).url || "")) konsole.push(m.text()); }); // W26: fehlendes Logo (Datei fehlt) ist gewollt: Quittung druckt ohne Logo
   page.on("pageerror", (e) => konsole.push(String(e)));
   await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
@@ -87,7 +87,7 @@ try {
   let t = await tab(page);
   await pruefe("B3", "Beleg Nr. 1, 45,50 €, EC, Name vom Schüler", () => (t.length === 1 && t[0].nummer === 1 && Number(t[0].betrag) === 45.5 && t[0].zahlart === "ec" && t[0].schueler_name ? null : JSON.stringify(t)));
   const druck = await page.evaluate(() => { const f = document.getElementById("belegDruckRahmen"); return f ? f.contentDocument.body.textContent.replace(/\s+/g, " ") : ""; });
-  await pruefe("B4", "Druck: Quittung, Beleg Nr. 1, Steuernummer, Betrag, keine Steuerzeile", () => [!/Quittung/.test(druck) && "kein Titel", !/Beleg Nr\. 1/.test(druck) && "keine Nummer", !/12\/345\/67890/.test(druck) && "keine Steuernummer", !/45,50/.test(druck) && "kein Betrag", /USt/.test(druck) && "Steuerzeile ohne Einstellung"].filter(Boolean));
+  await pruefe("B4", "Druck: Quittung, Beleg Nr. 1, Steuernummer, Betrag, keine Steuerzeile", () => [!/Quittung/.test(druck) && "kein Titel", !/Nr\. 1(?!\d)/.test(druck) && "keine Nummer", !/12\/345\/67890/.test(druck) && "keine Steuernummer", !/45,50/.test(druck) && "kein Betrag", /USt/.test(druck) && "Steuerzeile ohne Einstellung"].filter(Boolean));
   // Storno
   await page.click("[data-belegstorno]"); await page.waitForTimeout(250);
   await page.fill("dialog[open] input[name=grund]", "falscher Betrag");

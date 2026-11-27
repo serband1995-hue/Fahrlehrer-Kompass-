@@ -2,7 +2,7 @@
    Cached nur die App-Hülle (HTML, Icons, Manifest) plus Schriften und die Supabase-Bibliothek (alles lokal im Repo, W20).
    Antworten von Supabase (Schülerdaten) und anderen Diensten werden NIE gespeichert. */
 
-const CACHE_VERSION = "kompass-v156";
+const CACHE_VERSION = "kompass-v157";
 const CORE_FILES = [
   "./index.html",
   "./kompass-rechnen.js",
@@ -12,6 +12,7 @@ const CORE_FILES = [
   "./kompass-sicherung.js",
   "./kompass-fehler.js",
   "./kompass-sync.js",
+  "./kompass-druck.js",   // W26: gemeinsames Druckbild (Logos unter logos/<slug>.png speichert der Abruf unten beim ersten Laden)
   "./neuigkeiten.js",
   "./fonts/fonts.css",
   "./vendor/supabase-js-2.119.2.js",

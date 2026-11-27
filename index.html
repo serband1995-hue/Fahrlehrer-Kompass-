@@ -550,7 +550,9 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 @media print{
   body.bq-drucken > *:not(#bqDruck){display:none !important;}
   body.bq-drucken::before,body.bq-drucken::after{display:none !important;} /* Hintergrund-Verlauf würde das Blatt überdecken */
-  body.bq-drucken #bqDruck{display:block !important;text-align:center;color:#000;background:#fff;padding:10mm 0;}
+  body.bq-drucken #bqDruck{display:flex !important;flex-direction:column;align-items:center;text-align:center;color:#000;background:#fff;padding:4mm 0;}
+  #bqDruck .bqd-kopf{order:-1;align-self:stretch;display:flex;justify-content:space-between;align-items:center;gap:8mm;padding-bottom:4mm;margin-bottom:10mm;border-bottom:.6pt solid #9a9a9a;font:600 13pt system-ui,sans-serif;color:#333;text-align:left;}
+  #bqDruck .bqd-logo{max-width:48mm;max-height:20mm;width:auto;height:auto;object-fit:contain;margin-left:auto;}
   #bqDruck .bqd-titel{font:800 30pt system-ui,sans-serif;margin-bottom:4mm;}
   #bqDruck .bqd-zeile{font:16pt system-ui,sans-serif;margin-bottom:8mm;}
   #bqDruck img{width:120mm;height:120mm;image-rendering:pixelated;}
@@ -2089,6 +2091,7 @@ body:has(#view .fahrmodus) .sync-btn{--sync-gelb:#e0a73e;--sync-gruen:#4caf72;--
 <!-- Supabase Client -->
 <script src="vendor/supabase-js-2.119.2.js"></script>
 <script src="kompass-rechnen.js"></script>
+<script src="kompass-druck.js"></script>
 <script src="kompass-einstellungen.js"></script>
 <script src="kompass-sicherung.js"></script>
 <script src="kompass-pruefungstage.js"></script>
@@ -2547,6 +2550,11 @@ body:not(.light) .sl-sort.on{background:#2f3846;border-color:var(--k-mint);}
 .sr-name{font-size:15.5px;font-weight:800;overflow-wrap:anywhere;}
 .sr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;vertical-align:middle;}
 .sr-form{font-size:11px;font-weight:700;color:var(--h-text2);border:1px solid var(--h-rand);border-radius:999px;padding:1px 6px;vertical-align:middle;}
+.sr-kn{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;}
+.sr-kn.offen{font-style:italic;font-weight:500;}
+.detail-kn{margin-top:6px;font-size:14px;font-weight:700;color:var(--muted);letter-spacing:.02em;}
+.detail-kn.offen{font-weight:500;font-style:italic;}
+.adr-zwei{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);gap:0 10px;}
 .sr-sub{font-size:13px;font-weight:600;color:var(--h-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sr-sub.rot{color:#9E2F22;} .sr-sub.gelb{color:#7A4508;} .sr-sub.heute{color:var(--k-akzent);font-weight:800;}
 body:not(.light) .sr-sub.heute{color:var(--mint-ok);}
@@ -4579,7 +4587,7 @@ function _profilNachladen(uid){
     try {
       const { data, error } = await getSupa().from("profiles").select("*").eq("id", uid).single();
       if (error || !data) throw error || new Error("leer");
-      _profilMerken(Object.assign({}, data, { fahrschule_name: _authProfile && _authProfile.fahrschule_name }));
+      _profilMerken(Object.assign({}, data, { fahrschule_name: _authProfile && _authProfile.fahrschule_name, fahrschule_slug: _authProfile && _authProfile.fahrschule_slug }));
       // „Fährt selbst“ geändert: Startansicht ist eine andere → neu starten (Prüf-Team 21.11.)
       if (!data.aktiv || data.agb_akzeptiert_version !== AGB_VERSION || data.rolle !== (_authProfile && _authProfile.rolle) || (data.faehrt_selbst === true) !== !!(_authProfile && _authProfile.faehrt_selbst === true)) { location.reload(); return; }
       _authProfile = Object.assign({}, _authProfile, data);
@@ -4641,9 +4649,9 @@ async function afterLogin(user) {
   // Kill-Switch prüfen (ganze Fahrschule) — fehlte bisher komplett, der Schalter im Admin-Panel
   // hat bis eben niemanden wirklich am Einloggen gehindert.
   if (prof && prof.fahrschule_id) {
-    let fsRow = null; try { ({ data: fsRow } = await supa.from("fahrschulen").select("aktiv,name").eq("id", prof.fahrschule_id).maybeSingle()); } catch (e) {}
+    let fsRow = null; try { ({ data: fsRow } = await supa.from("fahrschulen").select("aktiv,name,slug").eq("id", prof.fahrschule_id).maybeSingle()); } catch (e) {}
     // T7: Name der Fahrschule für PDFs merken (auch für den Start im Funkloch)
-    if (fsRow && fsRow.name && prof.fahrschule_name !== fsRow.name) { prof = Object.assign({}, prof, { fahrschule_name: fsRow.name }); _authProfile = Object.assign({}, _authProfile, { fahrschule_name: fsRow.name }); _profilMerken(prof); }
+    if (fsRow && ((fsRow.name && prof.fahrschule_name !== fsRow.name) || (fsRow.slug && prof.fahrschule_slug !== fsRow.slug))) { const fz = { fahrschule_name: fsRow.name || prof.fahrschule_name, fahrschule_slug: fsRow.slug || prof.fahrschule_slug }; prof = Object.assign({}, prof, fz); _authProfile = Object.assign({}, _authProfile, fz); _profilMerken(prof); } // W26: Slug fürs Logo auf Ausdrucken
     if (fsRow && !fsRow.aktiv) {
       await supa.auth.signOut();
       _authUser = null; _authProfile = null;
@@ -4865,7 +4873,7 @@ function _abglWert(x) {
 function _abglNT(name, tel) { return _abglWert([String(name || ""), String(tel || "")]); }
 // Die Zeilen, die in die Fahrschul-Tabellen gehen (ohne Zeitstempel - der kommt erst beim Schreiben dazu).
 function _schuelerZeile(s) {
-  const { id, name, telefon, bogen, _sehhilfeOffen, ...rest } = s; // _sehhilfeOffen ist nur ein Merker dieses Geräts
+  const { id, name, telefon, bogen, _sehhilfeOffen, _adresseOffen, ...rest } = s; // _sehhilfeOffen/_adresseOffen sind nur Merker dieses Geräts
   try { rest.standPct = stand(s); } catch (e) {}
   return { id: s.id, fahrschule_id: _authProfile.fahrschule_id, fahrlehrer_id: _authUser.id,
     name: s.name || "(ohne Namen)", telefon: s.telefon || null, bogen_ausgefuellt: !!s.bogen, status: "aktiv", ausbildung: rest };
@@ -5600,12 +5608,15 @@ async function _ladeReaktRegel(supa,fsId){
     try{ localStorage.setItem(_REAKT_REGEL_KEY+":"+fs,JSON.stringify({fs,regel:data||null})); }catch(e){ /* voll: nur im Speicher */ }
   }catch(e){ /* Netz: gemerkte Regel bleibt */ }
 }
+// W26: Gibt es die Spalten kundennummer/strasse/plz/ort schon? Ja, sobald eine Zeile aus select("*") den Schlüssel hat.
+let _adrSpalteDa=false;
 function _merkeFristen(rows){
-  (rows||[]).forEach(r=>{ _schuelerFristen[r.id]={reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
+  (rows||[]).forEach(r=>{ if("kundennummer" in r)_adrSpalteDa=true; _schuelerFristen[r.id]={kundennummer:r.kundennummer==null?null:r.kundennummer,strasse:r.strasse||null,plz:r.plz||null,ort:r.ort||null,reakt_status:r.reakt_status,vertrag_am:r.vertrag_am,reakt_bezahlt_bis:r.reakt_bezahlt_bis,
     theorie_abgeschlossen_am:r.theorie_abgeschlossen_am,theorie_bestanden_am:r.theorie_bestanden_am,praxis_bestanden_am:r.praxis_bestanden_am||null,antrag_am:r.antrag_am,inaktiv_seit:r.inaktiv_seit,zahlung_gesperrt_seit:r.zahlung_gesperrt_seit||null,zahlung_gesperrt_grund:r.zahlung_gesperrt_grund||null,
     ausbildungsart:r.ausbildungsart||null,klasse:r.klasse||null,bewerbernummer:r.bewerbernummer||null,theorie_frist_bis:r.theorie_frist_bis||null,sehhilfe:r.sehhilfe==null?null:!!r.sehhilfe,
     vorbesitz:Array.isArray(r.vorbesitz)?r.vorbesitz:[],auslands_fs:Array.isArray(r.auslands_fs)?r.auslands_fs:[],wohnsitz_de_seit:r.wohnsitz_de_seit||null,uebersetzung_vorhanden:!!r.uebersetzung_vorhanden}; });
   _meldeBueroErgebnisse(rows);
+  try{ _adresseOffenSenden(rows); }catch(e){} // W26: auf dem Gerät eingetragene Anschrift senden, sobald die Zeile auf dem Server ist
 }
 /* Prüfungsergebnis vom Büro (Prüfungstafel): einmal als Hinweis melden, danach steht es in der Akte */
 function _meldeBueroErgebnisse(rows){
@@ -6243,7 +6254,7 @@ async function renderAdminPanel() {
     el.innerHTML = profiles.map(p => {
       const isMe = p.id === _authUser.id;
       const displayEmail = p.email || (isMe ? _authUser.email : '— E-Mail nicht bekannt —');
-      const rolleLabel = p.rolle === 'entfernt' ? '🗑 gelöscht' : p.rolle === 'super_admin' ? '👑 Super-Admin' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : esc(p.rolle));
+      const rolleLabel = p.rolle === 'entfernt' ? '🗑 gelöscht' : p.rolle === 'super_admin' ? '' : (p.rolle === 'fahrlehrer' ? `<span class="ic ic-clay" style="font-size:12px;">${ICN.car}</span> Fahrlehrer` : esc(p.rolle));
       return `<div class="ap-card">
         <div class="ap-email">${esc(displayEmail)}${isMe ? ' <span style="font-size:10px;color:#4a8b45;font-weight:700">(Du)</span>' : ''}</div>
         <div class="ap-role">${rolleLabel} &nbsp;<span class="${p.aktiv ? 'ap-status-on' : 'ap-status-off'}">${p.aktiv ? 'Aktiv' : 'GESPERRT'}</span></div>
@@ -6394,7 +6405,9 @@ async function _fsLoadAggData(fahrschuleId){
   const lehrer=lehrerR.data||[];
   window._fsAlleNamen={}; ((namenR&&!namenR.error&&namenR.data)||[]).forEach(p=>{ if(p&&p.id) window._fsAlleNamen[p.id]=p.name||(p.rolle==="entfernt"?"Ehemaliger Fahrlehrer":p.email)||""; });
   const lehrerName=id=>{ const l=lehrer.find(x=>x.id===id); return l?(l.name||l.email):_fsNameAusAlle(id,"Unbekannt"); };
-  DB.students=(schuelerR.data||[]).map(r=>_fsMapSchueler(r,lehrerName));
+  // W26: offene Anschrift-Merker (noch nicht übertragen) beim Neuladen der Gesamtansicht behalten, sonst gingen sie still verloren
+  const adrOffen={}; (DB.students||[]).forEach(x=>{ if(x&&x._adresseOffen) adrOffen[x.id]=x._adresseOffen; });
+  DB.students=(schuelerR.data||[]).map(r=>{ const x=_fsMapSchueler(r,lehrerName); if(adrOffen[x.id]) x._adresseOffen=adrOffen[x.id]; return x; });
   _merkeFristen(schuelerR.data);
   _ladeTheorieBesuch(supa, (schuelerR.data||[]).map(r=>r.id));
   _ladePakete(supa, (schuelerR.data||[]).map(r=>r.id)); // Werkstatt 13
@@ -6825,7 +6838,7 @@ async function routeFahrschuleDetail(fahrschuleId){
     const istSuperAdmin=l.rolle==="super_admin";
     return `
     <div class="fs-card">
-      <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
+      <div class="fs-name">${esc(l.name||l.email)}</div>
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung: ${l.auslastung_pct!=null?l.auslastung_pct+'%':'—'} &nbsp;·&nbsp; ${l.aktive_schueler_anzahl||0} aktive Schüler</div>
       ${istSuperAdmin?'':`<div class="fs-actions">
         ${l.aktiv
@@ -7136,7 +7149,7 @@ function routeFahrschuleLehrer(){
     const istSuperAdmin=l.rolle==="super_admin";
     const linksId="lehrerlinks_"+l.id.replace(/[^a-zA-Z0-9]/g,"");
     return `<div class="fs-card">
-      <div class="fs-name">${esc(l.name||l.email)}${istSuperAdmin?' <span style="color:var(--orange);font-size:11px;">(Super-Admin)</span>':''}</div>
+      <div class="fs-name">${esc(l.name||l.email)}</div>
       <div class="fs-sub">${l.aktiv?'<span class="fs-status-on">Aktiv</span>':'<span class="fs-status-off">GESPERRT</span>'} &nbsp;·&nbsp; Auslastung ${l.auslastung_pct!=null?`<span style="color:${l.auslastung_pct>=100?'var(--zahl-rot)':l.auslastung_pct>=85?'#cf9a3e':'inherit'};font-weight:${l.auslastung_pct>=85?'700':'400'};">${l.auslastung_pct}%</span>`:'—'} &nbsp;·&nbsp; ${meineSchueler.length} Schüler &nbsp;·&nbsp; ${q.pct==null?'Quote —':'Quote '+q.pct+'%'}</div>
       ${(istSuperAdmin||buero)?'':`<div class="fs-actions">
         ${l.aktiv
@@ -8082,33 +8095,19 @@ function fsMonatsberichtPDF(){
   const mitSimulator=schueler.filter(s=>s._hatSimulator).length;
   const mitTheorieApp=schueler.filter(s=>s._hatTheorieApp).length;
 
-  const win=window.open('','_blank');
-  win.document.write(`<html><head><title>Monatsbericht ${esc(name)}</title><meta charset="utf-8">
-  <style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#222;max-width:700px;margin:0 auto;}
-  h1{color:#20402c;font-size:22px;} h2{color:#3a7350;font-size:15px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px;}
-  table{width:100%;border-collapse:collapse;margin-top:8px;} td{padding:6px 4px;border-bottom:1px solid #eee;font-size:13.5px;}
-  .kpi{display:inline-block;background:#f2f2ea;border-radius:10px;padding:12px 18px;margin:6px 10px 6px 0;}
-  .kpi b{display:block;font-size:22px;color:#20402c;} .kpi span{font-size:11.5px;color:#666;}</style></head>
-  <body>
-  <h1>Monatsbericht — ${esc(name)}</h1>
-  <p style="color:#666;font-size:12.5px;">Erstellt am ${heute} mit Fahrlehrer-Kompass</p>
-  <div>
-    <div class="kpi"><b>${act}</b><span>Aktive Schüler</span></div>
-    <div class="kpi"><b>${lehrer.length}</b><span>Fahrlehrer</span></div>
-    <div class="kpi"><b>${q.pct==null?'–':q.pct+'%'}</b><span>Bestehensquote Monat</span></div>
-  </div>
-  <h2>Bestehensquote pro Fahrlehrer</h2>
-  <table>${quoteProLehrer.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q.pct}% (${x.q.pass}/${x.q.total})</td></tr>`).join("")||'<tr><td>Keine Prüfungen im Zeitraum</td></tr>'}</table>
-  <h2>Cross-Sell-Quote</h2>
-  <table>
-    <tr><td>Paket gebucht</td><td>${pct(mitPaket)}% (${mitPaket}/${schueler.length})</td></tr>
-    <tr><td>Simulator gekauft</td><td>${pct(mitSimulator)}% (${mitSimulator}/${schueler.length})</td></tr>
-    <tr><td>Theorie-App gekauft</td><td>${pct(mitTheorieApp)}% (${mitTheorieApp}/${schueler.length})</td></tr>
-  </table>
-  <p style="margin-top:30px;color:#999;font-size:11px;">Fahrlehrer-Kompass · ${esc(name)}</p>
-  </body></html>`);
-  win.document.close();
-  setTimeout(()=>win.print(),400);
+  const fsz=_fsAgg.fahrschule||{};
+  const kpi=(w,t)=>`<div class="dkachel"><b>${w}</b>${t}</div>`;
+  const body=`<div class="dkacheln">${kpi(act,"Aktive Schüler")}${kpi(lehrer.length,"Fahrlehrer")}${kpi(q.pct==null?'–':q.pct+'%',"Bestehensquote Monat")}</div>
+  <div class="dblock"><h2>Bestehensquote pro Fahrlehrer</h2>
+  <table><thead><tr><th>Fahrlehrer</th><th class="r">Quote</th></tr></thead><tbody>${quoteProLehrer.map(x=>`<tr><td>${esc(x.name)}</td><td class="r">${x.q.pct}% (${x.q.pass}/${x.q.total})</td></tr>`).join("")||'<tr><td colspan="2">Keine Prüfungen im Zeitraum</td></tr>'}</tbody></table></div>
+  <div class="dblock"><h2>Cross-Sell-Quote</h2>
+  <table><tbody>
+    <tr><td>Paket gebucht</td><td class="r">${pct(mitPaket)}% (${mitPaket}/${schueler.length})</td></tr>
+    <tr><td>Simulator gekauft</td><td class="r">${pct(mitSimulator)}% (${mitSimulator}/${schueler.length})</td></tr>
+    <tr><td>Theorie-App gekauft</td><td class="r">${pct(mitTheorieApp)}% (${mitTheorieApp}/${schueler.length})</td></tr>
+  </tbody></table></div>`;
+  const html=DRUCK.dokument({titel:"Monatsbericht",fenstertitel:"Monatsbericht "+name,untertitel:"Stand "+heute,fahrschule:name,logo:window.DRUCK&&fsz.slug?DRUCK.logoUrl(fsz.slug):"",body,leiste:true});
+  DRUCK.fenster("Monatsbericht",html,{blockiert:"Pop-up blockiert – bitte im Browser-Menü erlauben"});
 }
 
 async function neuenSchuelerAnlegenFS(fahrschuleId){
@@ -8318,7 +8317,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.27.7";
+const APP_VERSION="2026.11.27.8";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -8591,7 +8590,7 @@ async function _fsSyncAggJetztKern(){
       const curSIds=new Set(snap.students.map(s=>s.id));
       const schuelerUpserts=[], schuelerAend=[];
       const sZeile=s=>{
-        const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,_fahrlehrerAusgeblendetAm,...rest}=s;
+        const {id,name,telefon,_fahrlehrerId,_fahrlehrerName,_paketId,_hatSimulator,_hatTheorieApp,_bogenAusgefuellt,bogen,_fahrlehrerAusgeblendetAm,_sehhilfeOffen,_adresseOffen,...rest}=s; // Merker dieses Geräts gehören nicht ins jsonb
         if(_fahrlehrerAusgeblendetAm)rest.ausgeblendetAm=_fahrlehrerAusgeblendetAm; // „bei mir ausgeblendet“ des Fahrlehrers bleibt
         return { id:s.id, fahrschule_id:_fsAgg.fahrschuleId, fahrlehrer_id:s._fahrlehrerId||null,
           name:s.name||"(ohne Namen)", telefon:s.telefon||null, status:"aktiv",
@@ -8604,7 +8603,7 @@ async function _fsSyncAggJetztKern(){
         else if(JSON.stringify(s)!==JSON.stringify(b)) schuelerAend.push({mein:sZeile(s),basis:sZeile(b)});
       });
       const schuelerDeletes=(_fsBaseline.students||[]).filter(b=>!curSIds.has(b.id)).map(b=>b.id);
-      if(schuelerUpserts.length){ _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"})); _fsInBasis("students",snap.students,schuelerUpserts); }
+      if(schuelerUpserts.length){ _fsPruefe(await supa.from("schueler").upsert(schuelerUpserts,{onConflict:"id"})); _fsInBasis("students",snap.students,schuelerUpserts); try{ _adresseOffenSenden(); }catch(e){} }
       /* W14: Bestehende Schüler nicht mehr ganz überschreiben (sonst drehte die Gesamtansicht zurück, was Fahrlehrer-App oder
          Büro inzwischen geändert hatten, z. B. den Ausbildungsstand). Nur geänderte Spalten; frischen Stand lesen; hat jemand
          dieselbe Spalte geändert, bleibt sein Stand. Ausbildungsstand (jsonb) Feld für Feld zusammenführen. */
@@ -8796,6 +8795,7 @@ function _syncSchuelerBridge(warte){
         await supa.from("profiles").update({auslastung_pct:cap.auslastung, aktive_schueler_anzahl:cap.fahrend}).eq("id",_authUser.id);
       }catch(e2){}
     }catch(e){ allesOben=false; console.warn("[Kompass] Fahrschul-Sync fehlgeschlagen:",e.message); if(window.SYNC)SYNC.fehlerMerken("schueler",e); }
+    try{ _adresseOffenSenden(); }catch(e4){} // W26: Anschrift eines neuen Schülers, sobald seine Zeile auf dem Server ist
     try{ _theorieOffenNachholen(); }catch(e3){} // erst nach der Schüler-Brücke: ein neuer Schüler ist jetzt auf dem Server
     return allesOben;
   },"schueler"),warte===0?0:4000);
@@ -9615,6 +9615,7 @@ function cardHTML(s,i){
     <div>${ring(stand(s),50,3,col)}</div>
     <div class="s-body">
       <div class="s-name">${esc(s.name)}${s.sehhilfe?` <span class="s-sehhilfe">👓</span>`:''}${s.pruefungsreifManuell?' <span title="Prüfungsreif" style="color:var(--gruen);">🏁</span>':''}${istTurbo?' <span title="Turboboost" style="color:#d68a3e;">⚡</span>':''}${telefonFehlt(s)?' <span title="Telefonnummer fehlt – kein Akademie-Zugang möglich" style="color:var(--orange);">📵</span>':''}</div>
+      ${_kundennrKlein(s)?`<div class="s-meta" style="margin-top:2px;">${_kundennrKlein(s)}</div>`:""}
       <div class="s-meta"><span class="s-form-chip">${esc(s.form||"B")}</span>
         ${p?`<span class="s-dot" style="background:${p.color}"></span><span>${p.word}</span>`:`<span>Profil offen</span>`}</div>
       ${pct>0?`<div style="margin-top:6px;height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--gruen);border-radius:2px;"></div></div>`:''}
@@ -9666,7 +9667,7 @@ function cardHTML2(s,i,hinweise){
   return `<button class="s-card s-row" data-id="${s.id}" data-name="${esc(((s.name||'')+' '+(s.telefon||'').replace(/\s+/g,'')).toLowerCase())}" data-turbo="${istTurbo?'1':'0'}" style="animation-delay:${Math.min(i*30,300)}ms">
     <span class="sr-ring" style="background:conic-gradient(${_slRingFarbe(pct)} ${pct*3.6}deg, var(--sr-leer) 0deg)"><span class="sr-pct">${pct}%</span></span>
     <span class="sr-text"><span class="sr-name">${esc(s.name)}${p?` <span class="sr-dot" style="background:${p.color}" title="${esc(p.word)}"></span>`:''}${s.form&&s.form!=="B"?` <span class="sr-form">${esc(s.form)}</span>`:''}${s.sehhilfe?' <span title="Sehhilfe">👓</span>':''}${telefonFehlt(s)?' <span title="Telefonnummer fehlt">📵</span>':''}${s.pruefungsreifManuell?' <span title="Prüfungsreif">🏁</span>':''}${istTurbo?' <span title="Turboboost">⚡</span>':''}${_fsAgg&&s._fahrlehrerName?` <span class="sr-form">${esc(s._fahrlehrerName)}</span>`:''}</span>
-      <span class="sr-sub ${z.k}">${esc(z.text)}</span></span>
+      <span class="sr-sub ${z.k}">${esc(z.text)}</span>${_kundennrKlein(s)}</span>
     <svg class="sr-pfeil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
   </button>`;
 }
@@ -9913,6 +9914,7 @@ function routeDetail(id){
       <div>${ring(pct,132,4,col)}</div>
       <div class="detail-id">
         <div class="detail-name">${esc(s.name)}</div>
+        ${(()=>{ const k=_kundenNrInfo(s.id); return k?`<div class="detail-kn${k.offen?" offen":""}" id="kundennrAkte">${esc(k.text)}</div>`:""; })()}
         <div class="detail-line">
           <span class="chip chip-form">${esc(s.form||"B")}</span>
           ${E?`<span class="chip"><span class="cdot" style="background:${PROFILE[E.top].hex}"></span>${profSub}</span>`:`<span class="chip" style="color:var(--muted)">Profil noch offen</span>`}
@@ -9945,6 +9947,7 @@ function routeDetail(id){
     <div id="dashEmpfehlungen" style="margin-top:9px;">${simCard(s)}${akademieCard(s)}</div>
     ${uebernahmeCard(s)}
     ${behoerdeCard(s)}
+    ${anschriftCard(s)}
     ${theorieCard(s)}
     ${paketCard(s)}
     ${punkteCard(s)}
@@ -10005,6 +10008,7 @@ function routeDetail(id){
   _fillAkademieFortschritt(s);
   const dlb=$("#delBtn"); if(dlb)dlb.addEventListener("click",()=>schuelerAusblenden(id));
   const ebb=$("#einblendBtn"); if(ebb)ebb.addEventListener("click",()=>schuelerEinblenden(id));
+  const anb=$("#anschriftBearb"); if(anb)anb.addEventListener("click",()=>openAnschriftSheet(s));
   // Sehhilfe Toggle
   $("#sehhilfeBtn").addEventListener("click",()=>{
     s.sehhilfe=!s.sehhilfe; s._sehhilfeOffen=true; save();
@@ -10447,13 +10451,15 @@ async function _schuelerServerSetzen(sid,werte){
 /* W14: wie _schuelerServerSetzen, aber vorher frisch lesen. Hat das Büro DASSELBE Feld inzwischen geändert, bleibt der
    Büro-Stand (Rückgabe konflikte: Feldnamen); geschrieben wird nur, solange das Feld noch so ist wie gerade gelesen.
    vorher = Stand beim Öffnen, gleich(a,b) = Vergleich ohne Rücksicht auf Reihenfolge/leer. */
+let _schFehler=null; // letzter Datenbankfehler von _schuelerServerSicher (W26: „Spalte fehlt“ erkennen)
 async function _schuelerServerSicher(sid,vorher,werte,gleich){
+  _schFehler=null;
   try{
     const supa=getSupa(); if(!supa||!_authUser||!navigator.onLine)return {ok:false};
     const keys=Object.keys(werte); let alt=null, ohneBedingung=false;
     for(let versuch=0;versuch<3;versuch++){
       const {data:f,error:fe}=await supa.from("schueler").select(keys.join(",")).eq("id",sid).maybeSingle();
-      if(fe||!f)return {ok:false};
+      if(fe||!f){ _schFehler=fe||null; return {ok:false}; }
       const senden={}, konflikte=[];
       keys.forEach(k=>{ if(gleich(f[k],werte[k]))return; if(!gleich(f[k],vorher[k])){ konflikte.push(k); return; } senden[k]=werte[k]; });
       const fertig=()=>{ _schuelerFristen[sid]=Object.assign(_schuelerFristen[sid]||{},f,senden); return {ok:true,konflikte}; };
@@ -10463,13 +10469,145 @@ async function _schuelerServerSicher(sid,vorher,werte,gleich){
       let q=supa.from("schueler").update(senden).eq("id",sid);
       if(!ohneBedingung)Object.keys(senden).forEach(k=>{ const r=f[k]; if(r==null)q=q.is(k,null); else if(typeof r!=="object")q=q.eq(k,r); });
       const {data,error}=await q.select("id");
-      if(error)return {ok:false};
+      if(error){ _schFehler=error; return {ok:false}; }
       if(data&&data.length)return fertig();
       if(ohneBedingung)return {ok:false};
       alt=f;
     }
     return {ok:false};
   }catch(e){ return {ok:false}; }
+}
+
+/* ===== W26: Kundennummer und Anschrift (Spalten schueler.kundennummer/strasse/plz/ort) =====
+   Die Kundennummer vergibt NUR der Server – hier wird sie nur angezeigt. Die Anschrift liegt NUR in den Spalten (und im
+   Merker s._adresseOffen, solange sie noch nicht auf dem Server ist) – nie im Schüler selbst, nie in der Brücken-Zeile. */
+function _kundenNrInfo(sid){
+  if(!_umschreiberImBuero()||!_adrSpalteDa||!window.KR)return null; // ohne Fahrschule oder alte Datenbank: nichts zeigen
+  const f=_schuelerFristen[sid], t=f?KR.kundennummerText(f.kundennummer):"";
+  return t?{text:t,offen:false}:{text:"Kundennr. wird vergeben",offen:true};
+}
+function _kundennrKlein(s){ const k=_kundenNrInfo(s.id); return k?`<span class="sr-kn${k.offen?" offen":""}">${esc(k.text)}</span>`:""; }
+function _adrAktuell(s){ const m=s._adresseOffen, f=_schuelerFristen[s.id]||{}; return m?{strasse:m.strasse||null,plz:m.plz||null,ort:m.ort||null}:{strasse:f.strasse||null,plz:f.plz||null,ort:f.ort||null}; }
+const _adrGleich=(a,b)=>{ const n=v=>(v==null||String(v).trim()==="")?null:String(v).trim(); return n(a)===n(b); };
+const _adrSpalteFehlt=e=>!!e&&/does not exist|PGRST204|42703|schema cache/i.test(String(e.code||"")+" "+String(e.message||""));
+let _adrHinweisGezeigt=false;
+function _adrDbHinweis(){ if(_adrHinweisGezeigt)return; _adrHinweisGezeigt=true; toast("Datenbank noch nicht bereit – die Anschrift wird später übertragen"); }
+/* Drei Felder fürs Blatt oder Formular; pre = Vorsatz der Feld-Nummern */
+function _adrFelderHTML(a,pre){
+  a=a||{}; const opt=`<span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span>`;
+  return `<div class="field"><label>Straße und Hausnummer ${opt}</label><input id="${pre}Strasse" type="text" maxlength="120" autocomplete="off" placeholder="z. B. Musterweg 1" value="${esc(a.strasse||"")}"></div>
+    <div class="adr-zwei"><div class="field"><label>PLZ</label><input id="${pre}Plz" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="12345" value="${esc(a.plz||"")}"></div>
+    <div class="field"><label>Ort</label><input id="${pre}Ort" type="text" maxlength="80" autocomplete="off" placeholder="z. B. Musterstadt" value="${esc(a.ort||"")}"></div></div>`;
+}
+/* Felder lesen und prüfen. Rückgabe: {strasse,plz,ort} (leer = null) oder null bei falscher PLZ (Meldung ist gezeigt) */
+function _adrLesen(pre){
+  const g=k=>{ const e=$("#"+pre+k); return e?e.value:""; };
+  if(!KR.plzOk(g("Plz"))){ toast("Die PLZ hat genau 5 Ziffern, z. B. 12345."); const e=$("#"+pre+"Plz"); if(e){ try{ e.scrollIntoView({block:"center"}); }catch(x){} e.focus(); } return null; }
+  return KR.adresseNorm({strasse:g("Strasse"),plz:g("Plz"),ort:g("Ort")});
+}
+/* Direkt in die Spalten schreiben. vorher = Stand beim Öffnen (frisch lesen, Büro-Änderung gewinnt) oder null (blind schreiben). */
+async function _adresseServerSchreiben(sid,neu,vorher){
+  try{
+    const supa=getSupa(); if(!supa||!_authUser||!navigator.onLine)return {ok:false,offline:true};
+    if(vorher){
+      const erg=await _schuelerServerSicher(sid,vorher,neu,_adrGleich);
+      return erg.ok?erg:{ok:false,spalteFehlt:_adrSpalteFehlt(_schFehler)};
+    }
+    const {data,error}=await supa.from("schueler").update(neu).eq("id",sid).select("id");
+    if(error)return {ok:false,spalteFehlt:_adrSpalteFehlt(error)};
+    if(!data||!data.length)return {ok:false};
+    _schuelerFristen[sid]=Object.assign(_schuelerFristen[sid]||{},neu);
+    return {ok:true,konflikte:[]};
+  }catch(e){ return {ok:false}; }
+}
+/* Anschrift eines Schülers speichern. istNeu = gerade angelegt (Zeile evtl. noch nicht auf dem Server): nur Merker, gesendet wird
+   später (_adresseOffenSenden). Sonst: Merker setzen und gleich online schreiben; der Merker bleibt, bis der Server bestätigt hat. */
+/* Server-Stand der Anschrift (ohne Merker) – beim ÖFFNEN eines Formulars merken, damit eine Büro-Änderung danach als Konflikt erkannt wird */
+function _adrServerStand(s){ const f=(s&&_schuelerFristen[s.id])||{}; return {strasse:f.strasse||null,plz:f.plz||null,ort:f.ort||null}; }
+async function _adresseSpeichern(s,neu,istNeu,beimOeffnen){
+  const f=beimOeffnen||_schuelerFristen[s.id]||{};
+  const vorher=istNeu?null:{strasse:f.strasse||null,plz:f.plz||null,ort:f.ort||null};
+  const leer=!neu.strasse&&!neu.plz&&!neu.ort;
+  if(istNeu&&leer)return {ok:true,nichts:true};
+  if(!istNeu&&!s._adresseOffen&&_adrGleich(neu.strasse,vorher.strasse)&&_adrGleich(neu.plz,vorher.plz)&&_adrGleich(neu.ort,vorher.ort))return {ok:true,nichts:true};
+  const m=Object.assign({strasse:neu.strasse,plz:neu.plz,ort:neu.ort},vorher?{vorher}:{});
+  s._adresseOffen=m; save();
+  if(istNeu){ _adresseOffenSenden(); return {ok:false,wartet:true}; }
+  if(!_adrSpalteDa){ _adrDbHinweis(); return {ok:false,wartet:true,spalteFehlt:true}; }
+  const erg=await _adresseServerSchreiben(s.id,neu,vorher);
+  if(erg.ok){ if(s._adresseOffen===m){ delete s._adresseOffen; save(); } return erg; }
+  if(erg.spalteFehlt){ _adrDbHinweis(); return Object.assign({wartet:true},erg); }
+  return Object.assign({wartet:true},erg);
+}
+/* Meldung nach dem Speichern; Konflikt (Büro war schneller): Büro-Stand bleibt, „Meine nehmen“ nimmt die eigene Eingabe */
+function _adrNachSpeichern(s,erg,neu,mitOkToast){
+  if(!erg||erg.nichts)return;
+  const zurAkte=()=>{ if($("#sheet").classList.contains("open"))return; const l=_navStack[_navStack.length-1]; if(l&&l.name==="routeDetail"&&l.args&&l.args[0]===s.id){ const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y; } };
+  if(erg.ok){
+    if(erg.konflikte&&erg.konflikte.length){
+      toastUndo("Anschrift gespeichert, außer einem Teil: das Büro war schneller",async()=>{
+        const mein={}; erg.konflikte.forEach(k=>{ mein[k]=neu[k]; });
+        const ok=(await _adresseServerSchreiben(s.id,mein,null)).ok; toast(ok?"Deine Eingabe gilt ✓":"Nicht gespeichert – bitte später nochmal"); if(ok)zurAkte();
+      },15000,"Meine nehmen");
+    } else if(mitOkToast) toast("Gespeichert ✓ – das Büro sieht es sofort");
+    zurAkte(); return;
+  }
+  if(erg.spalteFehlt)return; // Hinweis „Datenbank noch nicht bereit“ kam schon
+  if(erg.wartet&&!erg.offline&&navigator.onLine&&!s._adresseOffen)return;
+  if(erg.offline||!navigator.onLine) toast("Keine Verbindung – die Anschrift wird übertragen, sobald du online bist");
+  else if(erg.wartet) toast("Anschrift gemerkt – wird übertragen, sobald der Schüler beim Büro angekommen ist");
+}
+/* Merker von diesem Gerät senden, sobald die Zeile auf dem Server ist. rows = frisch gelesene Zeilen (nur diese gelten als vorhanden),
+   ohne rows: nach der Schüler-Brücke, alle Merker versuchen (0 Zeilen getroffen = noch nicht da, Merker bleibt). */
+let _adrOffenLaeuft=false;
+async function _adresseOffenSenden(rows){
+  if(_adrOffenLaeuft||!navigator.onLine||!_umschreiberImBuero()||!_authUser)return;
+  const liste=(DB.students||[]).filter(s=>s&&s._adresseOffen);
+  if(!liste.length)return;
+  _adrOffenLaeuft=true;
+  try{
+    for(const s of liste){
+      const m=s._adresseOffen; if(!m)continue;
+      if(rows&&!rows.some(r=>r.id===s.id&&"strasse" in r))continue;
+      const neu={strasse:m.strasse||null,plz:m.plz||null,ort:m.ort||null};
+      const erg=await _adresseServerSchreiben(s.id,neu,m.vorher||null);
+      if(erg.ok){
+        if(s._adresseOffen===m){ delete s._adresseOffen; save(); }
+        // W26: hatte das Büro dasselbe Feld inzwischen geändert, gilt dessen Stand – kurz sagen statt still verwerfen
+        if(erg.konflikte&&erg.konflikte.length&&typeof toast==="function") toast("Anschrift von "+(s.name||"Schüler")+": Das Büro hatte sie schon geändert, dessen Stand gilt.");
+      }
+      else if(erg.spalteFehlt)_adrDbHinweis();
+    }
+  }catch(e){ /* Merker bleibt, nächster Versuch beim nächsten Abruf */ }
+  finally{ _adrOffenLaeuft=false; }
+}
+/* Karte „Anschrift“ in der Akte (nur mit Fahrschule und wenn die Spalten da sind oder noch etwas wartet) */
+function anschriftCard(s){
+  if(!_umschreiberImBuero()||!window.KR||!(_adrSpalteDa||s._adresseOffen))return "";
+  const z=KR.adresseZeilen(_adrAktuell(s));
+  const wartet=s._adresseOffen?`<p class="muted-p" style="font-size:12.5px;margin:6px 0 0;">Wird übertragen, sobald eine Verbindung besteht.</p>`:"";
+  if(!z.length)return `<button class="res-block behoerde-card behoerde-leer" id="anschriftBearb" type="button" style="animation:none;margin-top:9px;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;min-height:48px;"><span>${_li("datei")} Anschrift</span><span class="muted-p" style="font-size:13px;">eintragen ›</span></button>`;
+  return `<div class="res-block behoerde-card" id="anschriftKarte" style="animation:none;margin-top:9px;">
+    <h4>${_li("datei")} Anschrift</h4>
+    ${z.map(x=>`<div class="mini-dash-row"><b style="text-align:left;">${esc(x)}</b></div>`).join("")}${wartet}
+    <button class="btn btn-ghost" id="anschriftBearb" style="margin-top:8px;width:100%;min-height:44px;">Anschrift bearbeiten</button>
+  </div>`;
+}
+function openAnschriftSheet(s){
+  const adrBeimOeffnen=_adrServerStand(s);
+  openSheet(`<div class="sheet-h">Anschrift</div>
+    ${_adrFelderHTML(_adrAktuell(s),"adrS")}
+    <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="adrAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="adrSpeichern">Speichern</button></div>`);
+  $("#adrAbbr").addEventListener("click",closeSheet);
+  $("#adrSpeichern").addEventListener("click",async()=>{
+    const neu=_adrLesen("adrS"); if(!neu)return;
+    const b=$("#adrSpeichern"); b.disabled=true; b.textContent="Speichert …";
+    const erg=await _adresseSpeichern(s,neu,false,adrBeimOeffnen);
+    b.disabled=false; b.textContent="Speichern";
+    if(erg.nichts){ closeSheet(); toast("Nichts geändert"); return; }
+    closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y;
+    _adrNachSpeichern(s,erg,neu,true);
+  });
 }
 const VORBESITZ_KLASSEN=["AM","A1","A2","A","B","BE","C1","C1E","C","CE","D1","D1E","D","DE","L","T"];
 /* W22: Wer darf den Umschreiber in der App umschalten?
@@ -13328,6 +13466,7 @@ function routeSchuelerForm(id){ const s=id?DB.students.find(x=>x.id===id):null; 
 function routeErgebnis(id){ openResultFlow(id); }
 function formView(existing){
   const isEdit=!!existing;
+  const adrBeimOeffnen=isEdit?_adrServerStand(existing):null; // W26: Stand beim Öffnen (Büro-Änderung danach = Konflikt)
   const s=existing||{name:"",form:"B",beginn:"",profil:null,next:"",nextDate:"",nextTime:"",telefon:""};
   ensureAusbildungsplaene();
   const showPlanPicker=!isEdit&&DB.ausbildungsplaene.length>1;
@@ -13362,6 +13501,7 @@ function formView(existing){
         <input id="f_telefon" type="tel" placeholder="z.B. 0151 23456789" value="${esc(s.telefon||"")}" autocomplete="off"></div>
       <div class="field"><label>E-Mail <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
         <input id="f_email" type="email" placeholder="z.B. sara@beispiel.de" value="${esc(s.email||"")}" autocomplete="off"></div>
+      ${_umschreiberImBuero()&&window.KR?_adrFelderHTML(isEdit?_adrAktuell(s):{},"f_adr"):""}
       ${showPlanPicker?`<div class="field"><label>Prüfungsgebiet</label>
         <div class="pills" id="planPills">${DB.ausbildungsplaene.map(p=>`<button class="pill ${p.standard?'sel':''}" data-plan="${p.id}">${esc(p.name)}</button>`).join("")}</div></div>`:""}
       ${hasBogen?profCard:""}
@@ -13386,18 +13526,25 @@ function formView(existing){
   $("#saveBtn").addEventListener("click",()=>{
     const name=$("#f_name").value.trim();
     if(!name){toast("Bitte einen Namen eingeben");$("#f_name").focus();return;}
+    const adr=$("#f_adrPlz")?_adrLesen("f_adr"):undefined; // W26: nur mit Fahrschule; null = PLZ falsch (Meldung ist gezeigt)
+    if(adr===null)return;
     const data={name,form:pick.form||"B",beginn:$("#f_beginn").value.trim(),telefon:$("#f_telefon").value.trim(),geburtsdatum:$("#f_geburtsdatum").value||"",email:$("#f_email").value.trim()};
     if(!hasBogen)data.profil=pick.profil||null;
     // Gespeichert: das Formular aus dem Verlauf nehmen – Zurück führt nicht wieder hinein (sonst Doppelanlage möglich)
     const formRaus=()=>{ const o=_navStack[_navStack.length-1]; if(o&&o.name==="routeSchuelerForm")_navStack.pop(); };
-    if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");formRaus();routeDetail(existing.id);}
+    if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");formRaus();
+      const adrP=adr?_adresseSpeichern(existing,adr,false,adrBeimOeffnen):null; // Merker ist sofort gesetzt, das Schreiben läuft im Hintergrund
+      routeDetail(existing.id);
+      if(adrP)adrP.then(erg=>_adrNachSpeichern(existing,erg,adr,false));}
     else{
       if(!_doppelterSchuelerOk(data.name,data.telefon))return;
       const chosenPlan=DB.ausbildungsplaene.find(p=>p.id===pick.planId)||DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
       const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:data.profil||null,
         planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),...data};
       // A1: gleich zur Akte – das ausgefüllte Formular bleibt nicht stehen, ein zweites „Anlegen“ ist nicht möglich
-      DB.students.push(nst);save();formRaus();routeDetail(nst.id);openBogenChoiceSheet(nst.id,nst.name,()=>{});}
+      DB.students.push(nst);save();formRaus();
+      if(adr)_adresseSpeichern(nst,adr,true); // W26: Merker; gesendet, sobald der Schüler auf dem Server ist
+      routeDetail(nst.id);openBogenChoiceSheet(nst.id,nst.name,()=>{});}
   });
 }
 /* ===== Akademie-Vermittlung: Beträge/Split-Konfiguration =====
@@ -14494,17 +14641,22 @@ function openQuickNewStudentSheet(onCreated){
     <div class="field"><label>Vollständiger Name</label><input id="qnsName" type="text" placeholder="Vor- und Nachname" autocomplete="off" autofocus></div>
     <div class="field"><label>Telefonnummer <span style="font-size:11.5px;font-weight:600;color:var(--faint);background:var(--surface-2);padding:2px 8px;border-radius:6px;">optional</span></label>
       <input id="qnsTel" type="tel" placeholder="z.B. 0151 23456789" autocomplete="off"></div>
-    <div class="btn-row"><button class="btn btn-ghost" id="qnsCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="qnsSave">Anlegen</button></div>`);
+    <div class="btn-row"><button class="btn btn-ghost" id="qnsCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="qnsSave">Anlegen</button></div>
+    ${_umschreiberImBuero()&&window.KR?`<button id="qnsAdrAuf" type="button" style="background:none;border:0;color:var(--akzent-bright);font:inherit;font-size:14px;font-weight:600;padding:10px 0;margin:4px 0 0;min-height:44px;cursor:pointer;">＋ Anschrift dazu</button><div id="qnsAdrBox" hidden>${_adrFelderHTML({},"qnsA")}</div>`:""}`);
   $("#qnsCancel").addEventListener("click",closeSheet);
+  const adrAuf=$("#qnsAdrAuf"); if(adrAuf)adrAuf.addEventListener("click",()=>{ const box=$("#qnsAdrBox"); const reihe=$("#qnsCancel").closest(".btn-row"); reihe.parentNode.insertBefore(box,reihe); box.hidden=false; adrAuf.remove(); const e=$("#qnsAStrasse"); if(e)e.focus(); }); // W26: Anschrift erst auf Wunsch (Blatt bleibt kurz)
   $("#qnsSave").addEventListener("click",()=>{
     const name=$("#qnsName").value.trim();
     if(!name){toast("Bitte einen Namen eingeben");$("#qnsName").focus();return;}
+    const adr=$("#qnsAPlz")?_adrLesen("qnsA"):undefined; // W26
+    if(adr===null)return;
     if(!_doppelterSchuelerOk(name,$("#qnsTel").value))return;
     ensureAusbildungsplaene();
     const chosenPlan=DB.ausbildungsplaene.find(p=>p.standard)||DB.ausbildungsplaene[0];
     const nst={id:uid(),created:Date.now(),notiz:"",bogen:null,plan:newPlan(),profil:null,form:"B",beginn:"",
       telefon:$("#qnsTel").value.trim(),planId:chosenPlan.id,planSnapshot:JSON.parse(JSON.stringify(chosenPlan.stufen)),name};
     DB.students.push(nst); save();
+    if(adr)_adresseSpeichern(nst,adr,true);
     openBogenChoiceSheet(nst.id,nst.name,()=>onCreated(nst.id));
   });
 }
@@ -19096,8 +19248,10 @@ function _bqDrucken(link,typ,name){
   if(_bqDruckWeg)_bqDruckWeg(); // vorigen Druck sauber aufräumen (mehrfach getippt)
   document.getElementById("bqDruck")?.remove();
   const d=document.createElement("div"); d.id="bqDruck";
+  const fz=_druckFs(); // Kopf mit Fahrschule und Logo (steht im DOM zuletzt, im Druck per order ganz oben; der Code bleibt das erste Bild)
   d.innerHTML=`<div class="bqd-titel">Fahrstunde buchen</div><div class="bqd-zeile">QR-Code mit der Handy-Kamera scannen</div>
-    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>`;
+    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>
+    ${fz.echt||fz.logo?`<div class="bqd-kopf">${fz.logo?`<img class="bqd-logo" src="${esc(fz.logo)}" alt="">`:""}${fz.echt?`<span>${esc(fz.name)}</span>`:""}</div>`:""}`;
   document.body.appendChild(d); document.body.classList.add("bq-drucken");
   let uhr=null;
   const weg=()=>{ if(d.isConnected){ document.body.classList.remove("bq-drucken"); d.remove(); } window.removeEventListener("afterprint",weg); clearTimeout(uhr); if(_bqDruckWeg===weg)_bqDruckWeg=null; };
@@ -19105,7 +19259,9 @@ function _bqDrucken(link,typ,name){
   window.addEventListener("afterprint",weg);
   const los=()=>{ if(!d.isConnected)return; /* schon von einem neueren Druck ersetzt */ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
   const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
-  Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
+  const logo=d.querySelector(".bqd-logo"); // Logo fehlt oder lädt nicht: weglassen, nicht warten (höchstens ~1,5 s)
+  const logoBereit=logo?Promise.race([logo.decode().catch(()=>{ logo.remove(); }),new Promise(ok=>setTimeout(()=>{ if(!(logo.complete&&logo.naturalWidth>0))logo.remove(); ok(); },1500))]):null;
+  Promise.all([bild&&bild.decode?bild.decode().catch(()=>{}):null,logoBereit]).then(()=>setTimeout(los,60));
 }
 function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
@@ -19200,37 +19356,41 @@ function routeArchive(){
 }
 
 /* ---------- PDF / Druck ---------- */
-function printDoc(title,bodyHtml){
-  const PR_CSS=`*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;background:#fff;padding:12mm;}
-.pr-top{border-bottom:2px solid #3a7350;padding-bottom:8px;margin-bottom:16px;}
-.pr-brand{font-size:10px;color:#3a7350;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
-.pr-title{font-size:20px;font-weight:800;margin-top:3px;}
-.pr-meta{font-size:13px;font-weight:600;margin-bottom:4px;}
-.pr-prog{font-size:11px;color:#444;margin-bottom:14px;}
-.pr-sec{break-inside:avoid;page-break-inside:avoid;margin-bottom:16px;}
-.pr-sec h3{font-size:12.5px;font-weight:800;border-bottom:1px solid #ccc;padding-bottom:4px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;break-after:avoid;page-break-after:avoid;}
-.pr-cnt{font-weight:600;color:#666;font-size:11px;}
-.pr-list{font-size:11.5px;line-height:2;}
-.pr-sub{font-size:11px;color:#555;margin-top:6px;}
-.pr-tbl{width:100%;border-collapse:collapse;}
-.pr-tbl tr{break-inside:avoid;page-break-inside:avoid;}
-.pr-tbl td{padding:4px 6px;border-bottom:1px solid #eee;font-size:11px;vertical-align:top;}
-.pr-tbl td:last-child{width:64px;text-align:right;font-weight:700;}
-.pr-ort{color:#888;font-weight:400;}
-.pr-gruen{color:#2e8b57;}.pr-gelb{color:#b8860b;}.pr-rot{color:#c0392b;}.pr-none{color:#aaa;font-weight:400;}
-.pr-note{font-size:11px;color:#444;margin-top:6px;background:#f6f6f6;padding:6px 8px;border-radius:4px;}
-.pr-bar{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #eee;}
-.pr-bv{font-weight:700;}
-.pr-summary{font-size:11.5px;line-height:1.65;white-space:pre-wrap;}
-.pr-foot{margin-top:20px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;}
-@page{margin:14mm;size:A4 portrait;}
-@media print{body{padding:0;}}`;
-  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${PR_CSS}</style></head><body><div class="pr-doc"><div class="pr-top"><div class="pr-brand">${esc(_druckAbsender())}</div><div class="pr-title">${title}</div></div>${bodyHtml}<div class="pr-foot">Erstellt am ${isoDE(todayISO())} · Fahrlehrer-Kompass</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`;
-  const win=window.open('','_blank');
-  if(!win){toast("Pop-up blockiert – bitte im Browser-Menü erlauben");return;}
-  win.document.write(html);
-  win.document.close();
+/* W26 Teil 5: alle Ausdrucke teilen das Druckbild aus kompass-druck.js (A4, Kopf mit Fahrschule und Logo, Seite x von y).
+   Fahrschul-Name und Logo kommen aus den Daten (Profil bzw. Fahrschul-Zeile), nichts ist fest eingebaut. */
+function _druckFs(){
+  const p=_authProfile||{}, f=(_fsAgg&&_fsAgg.fahrschule)||{};
+  const name=f.name||p.fahrschule_name||"", slug=f.slug||p.fahrschule_slug||"";
+  const zeilen=[]; if(p.name&&!_fsAgg)zeilen.push("Fahrlehrer "+p.name);
+  return {echt:!!name, name:name||"Fahrlehrer-Kompass", zeilen, logo:(window.DRUCK&&slug)?DRUCK.logoUrl(slug):""};
+}
+// Schüler im Kopf: Name, Kundennummer, Anschrift (fehlt etwas, entfällt die Zeile)
+function _druckBezug(s){
+  const f=(typeof _schuelerFristen!=="undefined"&&_schuelerFristen[s.id])||{};
+  const z=[], kn=window.KR&&f.kundennummer?KR.kundennummerText(f.kundennummer):"";
+  if(kn)z.push("Kundennummer: "+kn);
+  const adr=window.KR?KR.adresseZeilen(_adrAktuell(s)):[]; if(adr.length)z.push("Anschrift: "+adr.join(", "));
+  return {wer:s.name,zeilen:z};
+}
+const _PR_CSS=`.pr-prog{font-size:9.5pt;color:#444;margin:0 0 3mm}
+.pr-meta{font-size:10pt;margin:0 0 1.5mm}
+.pr-sec{break-inside:avoid;page-break-inside:avoid;margin:0 0 4.5mm}
+.pr-sec h3{display:flex;justify-content:space-between;align-items:baseline;gap:3mm;margin:0 0 1.5mm;break-after:avoid;page-break-after:avoid}
+.pr-cnt{font-weight:500;color:#666;font-size:9pt}
+.pr-list{font-size:10pt;line-height:1.9}
+.pr-sub{font-size:9.5pt;color:#555;margin-top:1.5mm}
+.dok .pr-tbl{margin:0}
+.dok .pr-tbl td:last-child{width:18mm;text-align:right;font-weight:600;white-space:nowrap}
+.pr-ort{color:#888;font-weight:400}
+.pr-gruen{color:#2e8b57}.pr-gelb{color:#b8860b}.pr-rot{color:#c0392b}.pr-none{color:#999;font-weight:400}
+.pr-note{font-size:9.5pt;color:#444;margin-top:1.5mm;background:#f6f6f6;padding:1.5mm 2.5mm;border-radius:1mm}
+.pr-bar{display:flex;justify-content:space-between;font-size:10pt;padding:.6mm 0}
+.pr-bv{font-weight:600}
+.pr-summary{font-size:10pt;line-height:1.55;white-space:pre-wrap}`;
+function printDoc(title,bodyHtml,opt){
+  opt=opt||{}; const fs=_druckFs();
+  const html=DRUCK.dokument({titel:title,fahrschule:fs.name,zeilen:fs.zeilen,logo:fs.logo,bezug:opt.bezug,body:bodyHtml,extraCss:_PR_CSS,leiste:true});
+  DRUCK.fenster(title,html,{blockiert:"Pop-up blockiert – bitte im Browser-Menü erlauben"});
 }
 function printPlan(s){
   ensure(s);
@@ -19245,11 +19405,11 @@ function printPlan(s){
     return `<div class="pr-sec"><h3><span>${st.nr} · ${esc(st.titel)}</span><span class="pr-cnt">${done}/${st.items.length} grün</span></h3><table class="pr-tbl"><tbody>${rows}</tbody></table>${note}</div>`;
   }).join("");
   const body=`
-    <div class="pr-meta"><b>${esc(s.name)}</b> · Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
+    <div class="pr-meta">Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
     <div class="pr-prog">Ausbildungsstand: <b>${pct} %</b> · Theorie: <b>${pl.theorie?"bestanden":"offen"}</b>${s.simEmpf?` · Simulator empfohlen am ${isoDE(s.simEmpf)}`:""}</div>
     <div class="pr-sec"><h3><span>Fahrstunden</span><span class="pr-cnt">${std.length}/30</span></h3><div class="pr-list">${std.length?std.join(" · "):"—"}</div><div class="pr-sub">${sonder}</div></div>
     ${stufenHtml}`;
-  printDoc("Ausbildungsplan",body);
+  printDoc("Ausbildungsplan",body,{bezug:_druckBezug(s)});
 }
 /* ===== GESAMTAKTE: kompletter Schüler in einem PDF ===== */
 function printGesamtakte(s){
@@ -19257,7 +19417,7 @@ function printGesamtakte(s){
   const pl=s.plan; const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const VL={rot:"Rot",gelb:"Gelb",gruen:"Grün"};
   // 1. Kopf-Infos
-  const head=`<div class="pr-meta"><b>${esc(s.name)}</b> · Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
+  const head=`<div class="pr-meta">Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
     <div class="pr-prog">Ausbildungsstand: <b>${pct} %</b> · Theorie: <b>${pl.theorie?"bestanden":(typeof s.theoriePct==="number"&&s.theoriePct>0?s.theoriePct+" %":"offen")}</b>${s.sehhilfe?` · <b>Sehhilfe erforderlich</b>`:""}${s.simEmpf?` · Simulator empfohlen am ${isoDE(s.simEmpf)}`:""}</div>`;
   // 2. Persönlichkeitsprofil
   let profilSec="";
@@ -19303,10 +19463,10 @@ function printGesamtakte(s){
   let examSec="";
   if(exams.length){
     const rows=exams.map(e=>`<tr><td>${isoDE(e.date)}</td><td>${e.result==="pass"?"✓ Bestanden":"✕ Nicht bestanden"}</td><td>${esc(e.pruefer||"—")}</td><td>${e.attempt?e.attempt+". Versuch":""}</td></tr>`).join("");
-    examSec=`<div class="pr-sec"><h3><span>Prüfungs-Historie</span></h3><table class="pr-tbl"><thead><tr style="background:#f3f3f3"><td><b>Datum</b></td><td><b>Ergebnis</b></td><td><b>Prüfer</b></td><td><b>Versuch</b></td></tr></thead><tbody>${rows}</tbody></table></div>`;
+    examSec=`<div class="pr-sec"><h3><span>Prüfungs-Historie</span></h3><table class="pr-tbl"><thead><tr><th>Datum</th><th>Ergebnis</th><th>Prüfer</th><th>Versuch</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   const body=head+profilSec+fahrSec+stufenHtml+examSec;
-  printDoc("Schüler-Gesamtakte",body);
+  printDoc("Schüler-Gesamtakte",body,{bezug:_druckBezug(s)});
 }
 
 function _wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){

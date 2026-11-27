@@ -8,7 +8,9 @@ const SUPA_URL = "https://oectrvkjunntzsggyhxv.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lY3RydmtqdW5udHpzZ2d5aHh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1ODkyMjYsImV4cCI6MjA5ODE2NTIyNn0.8zmIzvyKh9x_WvykSO9LJczhff_eztl3rSycqmlPHPY";
 // Muss zu AGB_VERSION in index.html passen (scripts/rechnen-test.mjs prüft das)
 const AGB_VERSION = "1.0";
+// ROLLEN = Zugangsliste (Rechte-Prüfung, NICHT ändern). ROLLEN_ANZEIGE = nur, was auf dem Bildschirm steht: der Super-Admin zeigt kein Etikett (W26).
 const ROLLEN = { super_admin: "Super-Admin", fahrschule_admin: "Fahrschul-Leitung", buero: "Büro" };
+const ROLLEN_ANZEIGE = { fahrschule_admin: "Fahrschul-Leitung", buero: "Büro" };
 const NEU_LADEN_MS = 120000;
 // Bis zu 10 Minuten nach einem Update kann der Browser noch die alte kompass-rechnen.js haben: dann neue Regeln still ersetzen
 if (!KR.theorieFristInfo) KR.theorieFristInfo = () => ({ stufe: "ohne_datum", ablauf: null, tage: null });
@@ -983,6 +985,11 @@ function akteGleich(a, b, k) { return gleicherWert(akteNorm(k, a), akteNorm(k, b
 const AKTE_GRUPPEN = [["reakt_status", "reakt_bezahlt_bis", "reakt_notiz"]];
 // nurPruefen: Felder, die hier nur geprüft und nicht geschrieben werden (Fahrlehrerwechsel macht verschiebeSchueler)
 // Ergebnis: { ok, leer, konflikte: [{k, frisch, mein}], frei: {k: wert}, zeile } – ok=false: Meldung ist schon gezeigt
+// W26: Kundennummer (nur vom Server vergeben) und Anschrift. Spalten können in der Datenbank noch fehlen.
+const ADRESS_FELDER = ["strasse", "plz", "ort"];
+function adresseSpalteFehlt(err) { const m = String((err && (err.message || err.code)) || ""); return /strasse|plz|\bort\b|kundennummer/i.test(m) && /column|schema cache|PGRST204|does not exist|Could not find/i.test(m); }
+function kundennummerSpalteDa() { return S.schueler.some((x) => x && "kundennummer" in x); }
+function kundennummerAnzeige(x) { return x && x.kundennummer ? KR.kundennummerText(x.kundennummer) : ""; }
 async function speichereAkteSicher(id, basis, werte, nurPruefen) {
   const pruefen = new Set(nurPruefen || []), geaendert = {};
   for (const k of Object.keys(werte)) if (!akteGleich(werte[k], aktenWert(basis, k), k)) geaendert[k] = werte[k];
@@ -1021,6 +1028,14 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
       if (roh == null) q = q.is(k, null); else if (typeof roh !== "object") q = q.eq(k, roh); // Listen/jsonb: ohne Bedingung
     }
     const res = await q.select("*");
+    if (res.error && adresseSpalteFehlt(res.error) && ADRESS_FELDER.some((k) => k in geaendert)) {
+      // W26: Adress-Spalten noch nicht in der Datenbank: Rest speichern, Adresse nicht (verständliche Meldung)
+      ADRESS_FELDER.forEach((k) => { delete geaendert[k]; });
+      erg.adresseFehlt = true;
+      toast("Datenbank noch nicht bereit (Adresse). Die Anschrift ist nicht gespeichert, alles andere schon.", true);
+      if (!Object.keys(geaendert).length) return Object.assign(erg, { leer: true, zeile: frisch });
+      continue;
+    }
     if (res.error) { toast("Nicht gespeichert: " + dbFehlerText(res.error), true); return { ok: false }; }
     if (res.data && res.data.length) return Object.assign(erg, { konflikte, frei, zeile: res.data[0] });
     if (ohneBedingung) break; // auch nur nach der Nummer nichts geschrieben: keine Berechtigung
@@ -1030,7 +1045,7 @@ async function speichereAkteSicher(id, basis, werte, nurPruefen) {
   return { ok: false };
 }
 const AKTE_FELD_NAMEN = { name: "Name", telefon: "Telefon", email: "E-Mail", paket_id: "Paket", buero_notiz: "Interne Notiz", buero_todo: "To-do / aktueller Stand", fahrlehrer_id: "Fahrlehrer", inaktiv_seit: "Aktiv / Archiv",
-  eltern_email: "E-Mail Eltern", zahlungsmail_an: "Zahlungs-Mails an" };
+  eltern_email: "E-Mail Eltern", zahlungsmail_an: "Zahlungs-Mails an", strasse: "Straße und Hausnummer", plz: "PLZ", ort: "Ort" };
 const ZAHLUNGSMAIL_AN = [["beide", "Schüler und Eltern"], ["eltern", "nur Eltern"], ["schueler", "nur Schüler"]];
 function akteFeldName(k) { return AKTE_FELD_NAMEN[k] || FELD_NAMEN[k] || k; }
 function akteWertText(k, v) {
@@ -1097,7 +1112,7 @@ function akteKonfliktZeigen(dlg, konflikte) {
 // Konflikt, Fenster bleibt offen: Felder, die hier niemand angefasst hat, auf den neuen Stand bringen. Sonst gälte ein
 // alter Wert im Feld beim nächsten Speichern als „geändert“ und überschriebe den neuen (Prüfer Büro, W14).
 const AKTE_FELDER = ["name", "telefon", "email", "paket_id", "ausbildungsart", "klasse", "vertrag_am", "buero_notiz", "buero_todo", "bewerbernummer", "theorie_frist_bis",
-  "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden", "b197_testfahrt_am", "inaktiv_seit", "fahrlehrer_id"];
+  "sehhilfe", "vorbesitz", "auslands_fs", "wohnsitz_de_seit", "uebersetzung_vorhanden", "b197_testfahrt_am", "inaktiv_seit", "fahrlehrer_id", "strasse", "plz", "ort"];
 function akteFensterAuffrischen(dlg, altBasis, werte, zeile, konflikte, felder) {
   if (!zeile) return;
   const kk = new Set(konflikte.map((c) => c.k));
@@ -1888,7 +1903,8 @@ function renderSchueler() {
   else if (notizF) liste = liste.filter((x) => { const o = offeneNotizen(x.id); return notizF === "offen" ? o.length > 0 : o.some((n) => !S.gelesen.some((g) => g.notiz_id === n.id)); });
   if (lehrerFilter === "ohne") liste = liste.filter((x) => !x.fahrlehrer_id);
   else if (lehrerFilter) liste = liste.filter((x) => x.fahrlehrer_id === lehrerFilter);
-  if (suche) liste = liste.filter((x) => (x.name || "").toLowerCase().includes(suche) || (x.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, ""))
+  const sucheKn = suche.replace(/^k[-\s]?/, "").replace(/^0+(?=\d)/, "");
+  if (suche) liste = liste.filter((x) => (x.name || "").toLowerCase().includes(suche) || (/^\d+$/.test(sucheKn) && x.kundennummer && (String(x.kundennummer) === sucheKn || kundennummerAnzeige(x).toLowerCase().includes(suche))) || (x.telefon || "").replace(/\s/g, "").includes(suche.replace(/\s/g, ""))
     || (x.bewerbernummer || "").toLowerCase().replace(/\s/g, "").includes(suche.replace(/\s/g, "")));
   liste.sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
   const heute = KR.todayISO();
@@ -1902,7 +1918,7 @@ function renderSchueler() {
     const b197 = x.klasse === "B197";
     const testfahrt = b197 ? (x.b197_testfahrt_am ? `<span class="marke-pill gruen">Testfahrt ✓ ${esc(datumDE(x.b197_testfahrt_am).slice(0, 6))}</span>` : `<span class="marke-pill gelb">Testfahrt offen</span>`) : "";
     return `<tr${istAktiv(x) ? "" : ' class="inaktivzeile"'}>
-      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}</div></td>
+      <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div>${kundennummerAnzeige(x) ? `<div class="unter kundennr">${esc(kundennummerAnzeige(x))}</div>` : ""}<div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
       <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
       <td>${standHTML(a, x)}<div class="unter">Theorie ${esc(theo)}</div></td>
@@ -1920,7 +1936,7 @@ function renderSchueler() {
     <div class="tabs" style="margin-bottom:12px">${sichtTabs}</div>
     <div class="karte-kopf">
       <div class="knopfreihe">${klassenFilter}<select class="suche" id="sNotiz" aria-label="Notizen filtern"><option value="">Alle Notizen</option><option value="offen"${notizF === "offen" ? " selected" : ""}>Mit offener Notiz</option><option value="ungelesen"${notizF === "ungelesen" ? " selected" : ""}>Notiz noch nicht gelesen</option><option value="theorie"${fristenParam("notiz") === "theorie" ? " selected" : ""}>Theorie noch nicht vollständig</option></select><select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
-        <input type="search" class="suche" id="sSuche" placeholder="Name, Telefon, Bewerbernr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
+        <input type="search" class="suche" id="sSuche" placeholder="Name, Telefon, Bewerber-/Kundennr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
     <p class="leise klein">${liste.length} Schüler${sicht === "inaktiv" ? " (Archiv: bestanden oder nicht mehr dabei; überall ausgeblendet, zählen nicht bei Fristen, Reaktivierung und Auslastung)" : ""}${sicht === "warte" ? " (warten auf Theorie oder Praxisprüfung; zählen nicht in der Auslastung. Wer auf die Praxisprüfung wartet, ist wieder aktiv, sobald eine neue Fahrstunde oder ein Prüfungstermin im Kalender steht. Die Pause „wartet auf Theorie“ hebt der Fahrlehrer in seiner App auf. Prüfungstermine, die ein Fahrlehrer nur in seiner App einträgt, sieht das Büro erst, wenn sie im Kalender stehen.)" : ""}</p>
@@ -2459,17 +2475,13 @@ function druckeAnwesenheit(datum, lektion, termin) {
   const zeilen = anwesenheitZeilen(datum, lektion);
   const lekt = [...new Set(zeilen.map((t) => String(t.lektion)))].sort((a, b) => lektOrd(a) - lektOrd(b));
   const namen = [...new Set(zeilen.map((t) => t.schueler_id))].map((sid) => S.schueler.find((x) => x.id === sid)).filter(Boolean).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
-  const w = window.open("", "_blank");
-  if (!w) { toast("Bitte Pop-ups für den Druck erlauben.", true); return; }
-  w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Anwesenheit ${esc(datumDE(datum))}</title>
-    <style>body{font-family:system-ui,sans-serif;margin:24px;color:#111}h1{font-size:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px;text-align:left;font-size:13px}th{background:#eee}</style></head>
-    <body><h1>Theorieunterricht ${esc(datumDE(datum))}${termin && termin.von ? " · " + esc(termin.von) + "–" + esc(termin.bis || "") : ""} · ${esc(S.fs ? S.fs.name : "")}</h1>
-    <p>${termin && termin.fahrlehrer_id ? "Fahrlehrer: " + esc(lehrerName(termin.fahrlehrer_id)) + " · " : ""}${namen.length} Teilnehmer</p>
-    <p>${lekt.map((l) => `Lektion ${esc(l)}`).join(" + ") || "–"}</p>
-    <table><thead><tr><th>#</th><th>Name</th><th>Klasse</th>${lekt.map((l) => `<th>Lektion ${esc(l)}</th>`).join("")}</tr></thead><tbody>
-    ${namen.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.name)}</td><td>${esc(klasseVon(x) || "")}</td>${lekt.map((l) => `<td>${zeilen.some((t) => t.schueler_id === x.id && String(t.lektion) === l) ? "✓" : ""}</td>`).join("")}</tr>`).join("")}
-    </tbody></table><p style="margin-top:24px">Unterschrift Fahrlehrer: ______________________</p></body></html>`);
-  w.document.close(); w.focus(); w.print();
+  const kopfInfo = [termin && termin.fahrlehrer_id ? "Fahrlehrer: " + lehrerName(termin.fahrlehrer_id) : "", `${namen.length} Teilnehmer`, lekt.map((l) => `Lektion ${l}`).join(" + ")].filter(Boolean).join(" · ");
+  const body = `<table><thead><tr><th class="r">#</th><th>Name</th><th>Klasse</th>${lekt.map((l) => `<th>Lektion ${esc(l)}</th>`).join("")}</tr></thead><tbody>
+    ${namen.map((x, i) => `<tr><td class="r">${i + 1}</td><td>${esc(x.name)}</td><td>${esc(klasseVon(x) || "")}</td>${lekt.map((l) => `<td>${zeilen.some((t) => t.schueler_id === x.id && String(t.lektion) === l) ? "✓" : ""}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${3 + lekt.length}">Keine Teilnehmer erfasst.</td></tr>`}
+    </tbody></table><div class="dunterschrift"><div>Unterschrift Fahrlehrer</div></div>`;
+  const html = DRUCK.dokument({ titel: "Anwesenheit Theorieunterricht", fenstertitel: "Anwesenheit " + datumDE(datum), untertitel: `${datumDE(datum)}${termin && termin.von ? " · " + termin.von + "–" + (termin.bis || "") : ""} · ${kopfInfo}`,
+    fahrschule: (S.fs && S.fs.name) || "", logo: DRUCK.logoUrl(S.fs && S.fs.slug), body, quer: lekt.length > 5, leiste: true, fussTitel: "Anwesenheit " + datumDE(datum) });
+  DRUCK.fenster("Anwesenheit", html, { blockiert: "Bitte Pop-ups für den Druck erlauben." });
 }
 /* Sonderfahrten für Fahrlehrer ohne App (Gabriel): Zähler aus dem Kalender, Soll nach Anlage 4 (KR.sonderSoll) */
 const SONDER_ARTEN = [["ueberland", "Überland"], ["autobahn", "Autobahn"], ["nacht", "Dämmerung/Nacht"]];
@@ -2620,6 +2632,12 @@ function elternNachKonflikt(dlg, basis, neu, erg) {
   }
   Object.assign(basis, { email: (erg.zeile || erg.frisch).email || null, mail_an: (erg.zeile || erg.frisch).mail_an || "beide" });
 }
+// W26: feste Anzeige der Kundennummer (nie bearbeitbar, nie gesendet). Ohne Spalte in der Datenbank: nichts.
+function kundennummerFeld(x, id) {
+  if (!id || !kundennummerSpalteDa()) return "";
+  const k = kundennummerAnzeige(x);
+  return `<p class="kundennr-kopf" data-kundennummer>Kundennummer: <b>${k ? esc(k) : "wird vergeben"}</b></p>`;
+}
 function schuelerDialog(id) {
   const x = id ? S.schueler.find((y) => y.id === id) : { ausbildungsart: "ersterwerb", klasse: "B", vertrag_am: KR.todayISO() };
   if (!x) return;
@@ -2629,8 +2647,11 @@ function schuelerDialog(id) {
   // W14 (Fable B1): Vergleichsstand ist eine KOPIE vom Öffnen. Das Objekt in S.schueler ändern auch andere Knöpfe im Fenster
   // (z. B. „Zahlung ausstehend“ kopiert die ganze frische Zeile hinein) – dann gälte ein alter Wert im Feld als „von mir geändert“.
   const basisX = id ? JSON.parse(JSON.stringify(x)) : x;
-  const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}<div class="formular">
+  const body = `${ausgeblendetAm(x) ? `<p class="hinweis-ausgeblendet" id="ausgeblendetHinweis">Vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}. Im Büro bleibt der Schüler ganz normal.</p>` : ""}${kundennummerFeld(x, id)}<div class="formular">
       <label class="voll">Name<input type="text" name="name" required maxlength="100" value="${esc(x.name || "")}"></label>
+      ${schuelerSpalteDa("strasse") ? `<label class="voll">Straße und Hausnummer<input type="text" name="strasse" maxlength="120" autocomplete="off" value="${esc(x.strasse || "")}"></label>
+      <label>PLZ<input type="text" name="plz" maxlength="5" inputmode="numeric" pattern="[0-9]{5}" autocomplete="off" value="${esc(x.plz || "")}"></label>
+      <label>Ort<input type="text" name="ort" maxlength="80" autocomplete="off" value="${esc(x.ort || "")}"></label>` : ""}
       <label>Telefon (Login für die Fahr-Akademie)<input type="tel" name="telefon" maxlength="40" value="${esc(x.telefon || "")}"></label>
       <label>E-Mail<input type="email" name="email" maxlength="200" value="${esc(x.email || "")}"></label>
       ${elternFelderHTML(x)}
@@ -2675,12 +2696,14 @@ function schuelerDialog(id) {
     if (offenerText && offenerText.value.trim()) { toast("Die Notiz ist noch nicht gesendet. Bitte „An Fahrlehrer senden“ tippen oder den Text löschen.", true); return false; }
     const doppelt = d.telefon && S.schueler.find((y) => y.id !== id && y.telefon && y.telefon.replace(/\D/g, "").slice(-9) === d.telefon.replace(/\D/g, "").slice(-9));
     if (doppelt && !id && !(await bestaetige("Telefonnummer gibt es schon", `${doppelt.name} hat dieselbe Telefonnummer. Trotzdem neu anlegen?`, "Ja, anlegen"))) return false;
+    if (!KR.plzOk(d.plz)) { const pf = form.querySelector("[name=plz]"); if (pf) { pf.setCustomValidity("Bitte 5 Ziffern eintragen."); pf.reportValidity(); pf.focus(); pf.addEventListener("input", () => pf.setCustomValidity(""), { once: true }); } toast("Die PLZ hat 5 Ziffern.", true); return false; }
     const werte = {
       name, telefon: (d.telefon || "").trim() || null, email: (d.email || "").trim() || null,
       paket_id: d.paket_id || null, ausbildungsart: d.ausbildungsart || "ersterwerb", klasse: d.klasse || null, vertrag_am: d.vertrag_am || null,
       buero_notiz: (d.buero_notiz || "").trim() || null,
     };
     if (schuelerSpalteDa("buero_todo")) werte.buero_todo = (d.buero_todo || "").trim() || null; // W16 Teil 3: wie fsDetailExtrasSpeichern in der App
+    if ("strasse" in d) Object.assign(werte, KR.adresseNorm({ strasse: d.strasse, plz: d.plz, ort: d.ort })); // W26: Anschrift, leer = null
     Object.assign(werte, behoerdeWerte(form, dlg, d));
     if (bkAnm) bkAnm.werte(werte); // Paket setzt die Datenbank beim Verkauf (schueler.paket_id), nicht das Formular
     // Bestehende Akte: gesendet wird nur, was im Fenster geändert wurde (speichereAkteSicher, W14)
@@ -2700,7 +2723,12 @@ function schuelerDialog(id) {
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
         ausbildung: Object.assign({ form: formAusKlasse(werte.klasse), umschreiber: werte.ausbildungsart === "umschreibung" },
           werte.ausbildungsart === "umschreibung" ? { umschreiberVomBuero: { am: new Date().toISOString(), vorherApp: false } } : {}) }, werte);
-      const res = await supa.from("schueler").insert(zeile).select("*");
+      let res = await supa.from("schueler").insert(zeile).select("*");
+      if (res.error && adresseSpalteFehlt(res.error) && ADRESS_FELDER.some((k) => k in zeile)) {
+        ADRESS_FELDER.forEach((k) => { delete zeile[k]; });
+        toast("Datenbank noch nicht bereit (Adresse). Der Schüler wird ohne Anschrift angelegt.", true);
+        res = await supa.from("schueler").insert(zeile).select("*");
+      }
       if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
       const elt = elternBasis ? await speichereElternSicher(neueId, elternBasis, elternNeu) : { ok: true };
@@ -4229,7 +4257,7 @@ function renderTeam() {
   const admin = istAdmin();
   const zeile = (p, mitZahlen) => `<tr>
       <td>${mitZahlen ? `<button type="button" class="textknopf" data-flakte="${esc(p.id)}"><b>${esc(p.name || "–")}</b></button>` : `<b>${esc(p.name || "–")}</b>`}<div class="unter">${p.ohne_app ? "ohne App · das Büro trägt alles ein" : esc(p.email || "")}</div>${mitZahlen ? flFristPills(p) : ""}</td>
-      <td>${esc(ROLLEN[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.fahrlehrerlaubnis || []).length ? "Fahrlehrerlaubnis " + p.fahrlehrerlaubnis.map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : (p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
+      <td>${p.rolle === "super_admin" ? "–" : esc(ROLLEN_ANZEIGE[p.rolle] || (p.rolle === "fahrlehrer" ? "Fahrlehrer" : p.rolle))}${mitZahlen ? `<div class="unter">${(p.fahrlehrerlaubnis || []).length ? "Fahrlehrerlaubnis " + p.fahrlehrerlaubnis.map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : (p.klassen || []).length ? (p.klassen || []).map((k) => `<span class="marke-pill">${esc(k)}</span>`).join(" ") : "Klassen nicht eingetragen"}</div>` : ""}</td>
       ${mitZahlen ? `<td class="zahlspalte">${schuelerZahl[p.id] || 0}</td><td class="zahlspalte">${zahlDE(ue[p.id] || 0)}</td>` : ""}
       <td>${p.aktiv === false ? '<span class="marke-pill rot">gesperrt</span>' : p.ohne_app ? '<span class="marke-pill">ohne App</span>' : '<span class="marke-pill gruen">aktiv</span>'}</td>
       <td class="aktionen"><div class="aktionen-box">${mitZahlen ? `<button class="knopf klein" data-flakte="${esc(p.id)}" type="button">${darfPersonenVerwalten() ? "Akte & Klassen" : "Akte"}</button>` : ""}${mitZahlen && p.slug && typeof luBuchungsDialog === "function" ? `<button class="knopf klein" data-buchlink="${esc(p.id)}" type="button">Buchungslinks</button>` : ""}${admin && p.rolle !== "super_admin" && p.id !== S.user.id ? `${p.ohne_app ? "" : `<button class="knopf klein" data-einladung="${esc(p.id)}" type="button">Einladung senden</button><button class="knopf klein" data-pwreset="${esc(p.id)}" type="button">Neues Passwort</button>`}
@@ -4403,7 +4431,7 @@ function teamPerson(id) { return S.team.find((p) => p.id === id) || S.lehrer.fin
 // kommen sie dazu, solange sie im Zeitraum noch Daten haben, damit nichts verschwindet.
 function ehemaligName(p) {
   const name = p.name || (p.rolle === "entfernt" ? "Ehemaliger Fahrlehrer" : p.email) || "Ehemaliger Fahrlehrer"; // Platzhalter-E-Mail nie zeigen
-  return name + (p.rolle === "entfernt" ? " (gelöscht)" : " (jetzt " + (ROLLEN[p.rolle] || p.rolle) + ")");
+  return name + (p.rolle === "entfernt" ? " (gelöscht)" : (p.rolle === "super_admin" ? "" : " (jetzt " + (ROLLEN_ANZEIGE[p.rolle] || p.rolle) + ")"));
 }
 function lehrerMitEhemaligen(hatDaten) {
   const da = new Set(S.lehrer.map((l) => l.id));
@@ -5402,11 +5430,10 @@ function zeigeRollenStreifen() {
   if (!el || !S.profil || !ROLLEN[S.profil.rolle]) return;
   const rolle = S.profil.rolle;
   let kopf = "", zusatz = "";
-  if (rolle === "super_admin") {
-    kopf = KRONE_SVG + "<span>Super-Admin</span>";
-    zusatz = "alle Rechte";
-    const schule = (S.schulen || []).find((s) => s.id === S.fsId);
-    if (schule && (S.schulen || []).length > 1) zusatz += " · " + (schule.name || "");
+  if (rolle === "super_admin") { // W26: kein Rollen-Etikett für den Super-Admin (Rechte bleiben)
+    el.hidden = true; el.className = "rollen-streifen"; el.innerHTML = "";
+    document.body.classList.remove("mit-streifen");
+    return;
   } else if (rolle === "fahrschule_admin") {
     kopf = "<span>Fahrschul-Leitung</span>";
   } else {
@@ -5487,7 +5514,7 @@ async function starte(user) {
   }
   if (window.BUERO_VORFUEHRUNG) { $("vorfuehrung").hidden = false; document.title = "Vorführung · Kompass Büro"; }
   $("nutzerName").textContent = profil.name || user.email; $("nutzerName").title = $("nutzerName").textContent;
-  $("nutzerRolle").textContent = ROLLEN[profil.rolle];
+  $("nutzerRolle").textContent = ROLLEN_ANZEIGE[profil.rolle] || "";
   zeigeWerAnzeige();
   zeigeNur("app");
   zeichne();
@@ -5528,10 +5555,32 @@ function fuelleDruckKopf() {
   document.querySelectorAll("#ansicht .filterzeile input[type=search], #ansicht .karte-kopf input[type=search]").forEach((i) => { if (i.value.trim()) teile.push("Suche: „" + i.value.trim() + "“"); });
   document.querySelectorAll("#ansicht .filterzeile input[type=date]:not(#kDatum)").forEach((i) => { if (i.value) teile.push((i.closest("label") ? i.closest("label").textContent.trim().split(/\s+/)[0] + " " : "") + datumDE(i.value)); });
   const jetzt = new Date().toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
-  $("druckKopf").innerHTML = `<b>${esc(b.titel)}</b><span>${esc((S.fs && S.fs.name) || "")} · gedruckt am ${esc(jetzt)}${S.werAnzeige || (S.profil && S.profil.name) ? " von " + esc(S.werAnzeige || S.profil.name) : ""}${teile.length ? " · " + esc(teile.join(" · ")) : ""}</span>`;
+  const unter = `gedruckt am ${jetzt}${S.werAnzeige || (S.profil && S.profil.name) ? " von " + (S.werAnzeige || S.profil.name) : ""}${teile.length ? " · " + teile.join(" · ") : ""}`;
+  const logo = window.DRUCK ? DRUCK.logoUrl(S.fs && S.fs.slug) : "";
+  const kopf = $("druckKopf");
+  kopf.innerHTML = window.DRUCK ? DRUCK.kopf({ fahrschule: (S.fs && S.fs.name) || "", logo, titel: b.titel, untertitel: unter })
+    : `<b>${esc(b.titel)}</b><span>${esc((S.fs && S.fs.name) || "")} · ${esc(unter)}</span>`;
+  kopf.querySelectorAll("img").forEach((i) => i.addEventListener("error", () => i.remove())); // Logo fehlt: keine Lücke
+  document.documentElement.classList.toggle("druck-quer", druckQuer());
+}
+// Querformat nur, wo es gebraucht wird: Kalender und Raster (Urlaub, Schichtplan, Platz-Übersicht) stellt buero.css per body[data-bereich]
+// ein; hier kommen Tabellen mit vielen Spalten dazu. Gezählt wird, was im Druck sichtbar bleibt (ohne leere Köpfe und
+// „nur-schmal/nur-unter“-Spalten). Alles andere: A4 hoch.
+const DRUCK_QUER_SPALTEN = 7;
+function druckQuer() {
+  return [...document.querySelectorAll("#ansicht table")].some((t) => {
+    const kopf = t.tHead && t.tHead.rows[0]; if (!kopf) return false;
+    const n = [...kopf.cells].filter((c) => c.textContent.trim() && !c.classList.contains("nur-schmal") && !c.classList.contains("nur-unter")).length;
+    return n >= DRUCK_QUER_SPALTEN;
+  });
 }
 window.addEventListener("beforeprint", fuelleDruckKopf);
-$("drucken").addEventListener("click", () => { fuelleDruckKopf(); window.print(); });
+$("drucken").addEventListener("click", () => {
+  fuelleDruckKopf();
+  // Logo erst fertig laden lassen (höchstens ~1,5 s), sonst fehlt es beim ersten Druck
+  const bilder = [...$("druckKopf").querySelectorAll("img")];
+  (window.DRUCK && bilder.length ? DRUCK.bereit({ images: bilder }) : Promise.resolve()).then(() => window.print());
+});
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && S.geladenAm && Date.now() - S.geladenAm.getTime() > NEU_LADEN_MS) ladeDaten();
 });

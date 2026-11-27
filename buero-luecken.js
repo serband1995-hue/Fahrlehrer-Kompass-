@@ -89,13 +89,11 @@ function luBuchungsDialog(lehrerId, typWahl) {
   const druck = dlg.querySelector("[data-luqrdruck]");
   if (druck) druck.addEventListener("click", () => {
     const url = luQrBlatt(link, typ, name); if (!url) return;
-    const w = window.open("", "_blank");
-    if (!w) { toast("Bitte Pop-ups für das Drucken erlauben oder „Bild speichern“ nutzen.", true); return; }
-    w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Buchungs-QR ${esc(luTypName(typ))}</title>
-      <style>body{margin:0;font-family:system-ui,sans-serif;text-align:center}img{width:min(100%,160mm);height:auto}.nicht-drucken{margin:16px}@media print{.nicht-drucken{display:none}}</style></head>
-      <body><div class="nicht-drucken"><button id="d" style="font-size:18px;min-height:44px;padding:0 20px">Drucken</button></div><img src="${url}" alt="QR-Code zum Buchen"></body></html>`);
-    w.document.close(); w.focus();
-    const k = w.document.getElementById("d"); if (k) k.addEventListener("click", () => w.print());
+    // Das Bild enthält Überschrift, Code und Typ schon (luQrBlatt); der Kopf mit Fahrschule und Logo kommt aus dem gemeinsamen Druckbild
+    const body = `<div class="qr-blatt"><img class="qr-bild" src="${url}" alt="QR-Code zum Buchen"></div>`;
+    const html = DRUCK.dokument({ titel: "", fenstertitel: "Buchungs-QR " + luTypName(typ), fussTitel: "Buchungs-QR " + luTypName(typ), fahrschule: (S.fs && S.fs.name) || "", logo: DRUCK.logoUrl(S.fs && S.fs.slug), body, leiste: true,
+      extraCss: ".qr-blatt{text-align:center;break-inside:avoid}.qr-bild{width:min(100%,150mm);height:auto}" });
+    DRUCK.fenster("Buchungs-QR", html, { auto: false, blockiert: "Bitte Pop-ups für das Drucken erlauben oder „Bild speichern“ nutzen." });
   });
 }
 document.addEventListener("click", (e) => {
@@ -214,50 +212,31 @@ function luMonatsberichtHTML(d) {
   const schulName = (S.fs && S.fs.name) || "";
   const zeilen = Object.entries(d.lehrer).map(([id, v]) => ({ name: id ? lehrerName(id) : "ohne Fahrlehrer", v })).sort((a, b) => a.name.localeCompare(b.name, "de"));
   const ue = (n) => zahlDE(n, 1);
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Monatsbericht ${esc(monatLang(d.monat))}</title>
-  <style>
-    body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#111;margin:24px;line-height:1.4}
-    h1{font-size:24px;margin:0 0 2px}.unter{color:#555;margin:0 0 18px}
-    .kacheln{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}
-    .k{border:1px solid #ccc;border-radius:8px;padding:10px}.k b{display:block;font-size:22px}
-    table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:14px}th,td{border-bottom:1px solid #ddd;padding:6px 4px;text-align:left}
-    th.z,td.z{text-align:right}h2{font-size:17px;margin:18px 0 6px}.fuss{color:#666;font-size:12px;margin-top:24px}
-    .nicht-drucken{margin:0 0 16px}.nicht-drucken button{font-size:16px;min-height:44px;padding:0 18px;margin-right:8px}
-    @media print{.nicht-drucken{display:none}body{margin:12mm}}
-  </style></head><body>
-  <div class="nicht-drucken"><button id="luDruck">Drucken / als PDF speichern</button><button id="luZu">Schließen</button></div>
-  <h1>Monatsbericht ${esc(monatLang(d.monat))}</h1>
-  <p class="unter">${esc(schulName)}${d.bisHeute ? " · Stand " + esc(datumDE(KR.todayISO())) + " (Monat läuft noch)" : ""}</p>
-  <div class="kacheln">
-    <div class="k"><b>${d.aktive}</b>aktive Schüler</div>
-    <div class="k"><b>${d.fahrlehrer}</b>Fahrlehrer</div>
-    <div class="k"><b>${d.anm}</b>Anmeldungen im Monat</div>
-    <div class="k"><b>${luQuote(d.praxis.ok, d.praxis.n)}</b>Praxis bestanden (${d.praxis.ok} von ${d.praxis.n})</div>
-    <div class="k"><b>${luQuote(d.theorie.ok, d.theorie.n)}</b>Theorie bestanden (${d.theorie.ok} von ${d.theorie.n})</div>
-    <div class="k"><b>${esc(euro(d.umsatz))}</b>Akademie & Simulator bezahlt (${d.akademie + d.simulator})</div>
+  const body = `<div class="dkacheln">
+    <div class="dkachel"><b>${d.aktive}</b>aktive Schüler</div>
+    <div class="dkachel"><b>${d.fahrlehrer}</b>Fahrlehrer</div>
+    <div class="dkachel"><b>${d.anm}</b>Anmeldungen im Monat</div>
+    <div class="dkachel"><b>${luQuote(d.praxis.ok, d.praxis.n)}</b>Praxis bestanden (${d.praxis.ok} von ${d.praxis.n})</div>
+    <div class="dkachel"><b>${luQuote(d.theorie.ok, d.theorie.n)}</b>Theorie bestanden (${d.theorie.ok} von ${d.theorie.n})</div>
+    <div class="dkachel"><b>${esc(euro(d.umsatz))}</b>Akademie & Simulator bezahlt (${d.akademie + d.simulator})</div>
   </div>
   <h2>Je Fahrlehrer</h2>
-  <table><thead><tr><th>Fahrlehrer</th><th class="z">aktive Schüler</th><th class="z">Unterrichtseinheiten</th><th class="z">Praxis</th><th class="z">Theorie</th></tr></thead><tbody>
-  ${zeilen.map((z) => `<tr><td>${esc(z.name)}</td><td class="z">${z.v.schueler}</td><td class="z">${ue(z.v.ue)}</td><td class="z">${z.v.p.n ? `${z.v.p.ok} von ${z.v.p.n} (${luQuote(z.v.p.ok, z.v.p.n)})` : "–"}</td><td class="z">${z.v.t.n ? `${z.v.t.ok} von ${z.v.t.n} (${luQuote(z.v.t.ok, z.v.t.n)})` : "–"}</td></tr>`).join("") || `<tr><td colspan="5">Keine Daten in diesem Monat.</td></tr>`}
+  <table><thead><tr><th>Fahrlehrer</th><th class="r">aktive Schüler</th><th class="r">Unterrichtseinheiten</th><th class="r">Praxis</th><th class="r">Theorie</th></tr></thead><tbody>
+  ${zeilen.map((z) => `<tr><td>${esc(z.name)}</td><td class="r">${z.v.schueler}</td><td class="r">${ue(z.v.ue)}</td><td class="r">${z.v.p.n ? `${z.v.p.ok} von ${z.v.p.n} (${luQuote(z.v.p.ok, z.v.p.n)})` : "–"}</td><td class="r">${z.v.t.n ? `${z.v.t.ok} von ${z.v.t.n} (${luQuote(z.v.t.ok, z.v.t.n)})` : "–"}</td></tr>`).join("") || `<tr><td colspan="5">Keine Daten in diesem Monat.</td></tr>`}
   </tbody></table>
   <h2>Verkäufe und Provision</h2>
   <table><tbody>
-    <tr><td>Fahr-Akademie bezahlt</td><td class="z">${d.akademie}</td></tr>
-    <tr><td>Simulator bezahlt</td><td class="z">${d.simulator}</td></tr>
-    <tr><td>Umsatz Akademie & Simulator</td><td class="z">${esc(euro(d.umsatz))}</td></tr>
-    <tr><td>Provision an Fahrlehrer offen (heute)</td><td class="z">${esc(euro(d.provOffen))}</td></tr>
+    <tr><td>Fahr-Akademie bezahlt</td><td class="r">${d.akademie}</td></tr>
+    <tr><td>Simulator bezahlt</td><td class="r">${d.simulator}</td></tr>
+    <tr><td>Umsatz Akademie & Simulator</td><td class="r">${esc(euro(d.umsatz))}</td></tr>
+    <tr><td>Provision an Fahrlehrer offen (heute)</td><td class="r">${esc(euro(d.provOffen))}</td></tr>
   </tbody></table>
-  <p class="fuss">Erstellt am ${esc(datumDE(KR.todayISO()))} mit dem Kompass Büro. Zahlen sind nur so vollständig wie die Daten im Kompass.</p>
-  </body></html>`;
+  <p class="dfuss">Erstellt am ${esc(datumDE(KR.todayISO()))} mit dem Kompass Büro. Zahlen sind nur so vollständig wie die Daten im Kompass.</p>`;
+  return DRUCK.dokument({ titel: "Monatsbericht " + monatLang(d.monat), untertitel: d.bisHeute ? "Stand " + datumDE(KR.todayISO()) + " (Monat läuft noch)" : "", fahrschule: schulName, logo: DRUCK.logoUrl(S.fs && S.fs.slug), body, leiste: true });
 }
 function luMonatsberichtOeffnen(monat) {
-  const w = window.open("", "_blank");
-  if (!w) { toast("Bitte Pop-ups für den Monatsbericht erlauben.", true); return false; }
-  w.document.write(luMonatsberichtHTML(luMonatsberichtDaten(monat)));
-  w.document.close(); w.focus();
-  const k = (id, fn) => { const b = w.document.getElementById(id); if (b) b.addEventListener("click", fn); };
-  k("luDruck", () => w.print()); k("luZu", () => w.close());
-  return true;
+  const w = DRUCK.fenster("Monatsbericht", luMonatsberichtHTML(luMonatsberichtDaten(monat)), { auto: false, blockiert: "Bitte Pop-ups für den Monatsbericht erlauben." });
+  return !!w;
 }
 function luMonatsberichtDialog() {
   const monate = letzteMonate(12).reverse();

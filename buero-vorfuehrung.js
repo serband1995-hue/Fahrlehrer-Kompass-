@@ -24,7 +24,7 @@ function bauDaten(heute) {
   const buero = [
     { id: "bu-1", name: "Büro Muster", email: "buero@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "ad-1", name: "Leitung Muster", email: "leitung@example.org", rolle: "fahrschule_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
-    { id: "sa-1", name: "Super-Admin", email: "super@example.org", rolle: "super_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
+    { id: "sa-1", name: "Muster Betrieb", email: "super@example.org", rolle: "super_admin", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "fl-x", name: "Elif Muster", email: "fl@example.org", rolle: "fahrlehrer", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: "1.0" },
     { id: "gesperrt-1", name: "Gesperrt Test", email: "gesperrt@example.org", rolle: "buero", fahrschule_id: FS, aktiv: false, agb_akzeptiert_version: "1.0" },
     { id: "agb-1", name: "Ohne AGB", email: "agb@example.org", rolle: "buero", fahrschule_id: FS, aktiv: true, agb_akzeptiert_version: null },
@@ -39,6 +39,8 @@ function bauDaten(heute) {
       id: "s" + n, fahrschule_id: FS, fahrlehrer_id: fl, name: `${vor} ${nach}`, telefon: "0170 000" + String(n).padStart(4, "0"),
       status: "aktiv", paket_id: n % 4 === 0 ? "p-turbo" : (n % 2 ? "p-1" : null), hat_simulator: n % 5 === 0, hat_theorie_app: n % 3 === 0,
       bogen_ausgefuellt: true,
+      // W26: Kundennummer vergibt der Server; Anschrift nur teilweise gefüllt (Muster-Testdaten)
+      kundennummer: n, strasse: n % 5 === 0 ? null : "Musterweg " + n, plz: n % 5 === 0 ? null : "12345", ort: n % 5 === 0 ? null : "Musterstadt",
       vertrag_am: n % 7 === 0 ? null : addTage(heute, -[400, 380, 370, 350, 340, 200, 90, 30, 500, 366, 330, 100][n % 12]),
       reakt_status: n % 10 === 0 ? "befreit" : (n % 3 === 0 ? "bezahlt" : "pruefen"),
       reakt_bezahlt_bis: n % 3 === 0 && n % 10 !== 0 ? addTage(heute, [-20, 15, 200][n % 3 === 0 ? (n / 3) % 3 : 0]) : null,
@@ -530,13 +532,13 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         if (!o) return "Beleg zum Stornieren nicht gefunden";
         if (o.storno_von) return "Ein Storno kann nicht storniert werden";
         if (tabelle("zahlungsbelege").some((x) => x.storno_von === o.id)) return "duplicate key value violates unique constraint zahlungsbelege_ein_storno";
-        Object.assign(r, { schueler_id: o.schueler_id, schueler_name: o.schueler_name, zahlart: o.zahlart, betrag: -Number(o.betrag), fahrschule_daten: o.fahrschule_daten, steuer: o.steuer, zweck: "Storno zu Beleg Nr. " + o.nummer + (String(r.zweck || "").trim() ? ": " + String(r.zweck).trim() : "") });
+        Object.assign(r, { kundennummer: o.kundennummer || null, schueler_adresse: o.schueler_adresse || null, schueler_id: o.schueler_id, schueler_name: o.schueler_name, zahlart: o.zahlart, betrag: -Number(o.betrag), fahrschule_daten: o.fahrschule_daten, steuer: o.steuer, zweck: "Storno zu Beleg Nr. " + o.nummer + (String(r.zweck || "").trim() ? ": " + String(r.zweck).trim() : "") });
       } else {
         if (!(Number(r.betrag) > 0)) return "Betrag muss größer als 0 sein";
         if (r.zahlart === "bar" && !((ein("beleg.bargeld") || {}).aktiv === true)) return "Bargeld-Belege sind in den Einstellungen ausgeschaltet";
         const s = tabelle("schueler").find((x) => x.id === r.schueler_id);
         if (r.schueler_id && !s) return "Schüler gehört nicht zu dieser Fahrschule";
-        if (s) r.schueler_name = s.name;
+        if (s) { r.schueler_name = s.name; r.kundennummer = s.kundennummer || null; const ad = [s.strasse, s.plz, s.ort].some(Boolean) ? { strasse: s.strasse || null, plz: s.plz || null, ort: s.ort || null } : null; r.schueler_adresse = ad; }
         const fs = tabelle("fahrschulen").find((x) => x.id === r.fahrschule_id);
         const kopf = Object.assign({}, ein("beleg.fahrschule") || {}); if (!String(kopf.name || "").trim()) kopf.name = fs ? fs.name : "";
         r.fahrschule_daten = kopf;
@@ -545,6 +547,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       let z = fsZ.find((x) => x.fs === r.fahrschule_id); if (!z) { z = { fs: r.fahrschule_id, letzte: 0 }; fsZ.push(z); }
       r.nummer = ++z.letzte;
       r.erstellt_von = (F.session && F.session.user && F.session.user.id) || null; r.bearbeiter = p ? p.name : null;
+      r.aussteller = p ? p.name : ((F.session && F.session.user && F.session.user.name) || null); // W26: Büro-Bearbeiter, sonst Name aus dem Profil
     }
     return null;
   }
@@ -743,6 +746,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         if (this.name === "schueler_aufgaben") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.von_person_id = si ? si.person : null; r.bearbeiter = p ? p.name : null; }); }
         // wie der Schutz-Trigger der Preisliste (K9): Verfasser und Zeit vom Server
         if (this.name === "fahrschule_preise") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.angelegt_von = (F.session && F.session.user && F.session.user.id) || null; r.angelegt_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
+        // W26: Kundennummer vergibt nur der Server (fortlaufend je Fahrschule, nie vom Client)
+        if (this.name === "schueler") daten.forEach((r) => { r.kundennummer = t.filter((x) => x.fahrschule_id === r.fahrschule_id).reduce((a, x) => Math.max(a, Number(x.kundennummer) || 0), 0) + 1; });
         // wie der Auslöser zahlungsbelege_anlegen (W19 Teil 2): Nummer, Name, Kopf und Storno vom Server, Bargeld nur mit Schalter
         if (this.name === "zahlungsbelege") { const f = belegStempel(daten); if (f) return { data: null, error: { message: f } }; }
         // wie der Auslöser schueler_punkte_anlegen (W19 Teil 3): Schalter, Vorzeichen, Kontostand; die Zeilen werden dort schon gebucht
