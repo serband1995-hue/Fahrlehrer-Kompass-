@@ -29,7 +29,7 @@ const page = await ctx.newPage();
 const js = [];
 page.on("pageerror", (e) => js.push(String(e)));
 page.on("dialog", (d) => d.dismiss().catch(() => {}));
-await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
 
 // G5: zweiter Start (gleiche Version) – Startbild nach unter 1 s weg
 await page.goto(basis + "index.html"); await page.waitForTimeout(2500);
@@ -91,7 +91,7 @@ if (weg.titel !== "Heute") fehler("Logo-Tipp: kein Dashboard (" + weg.titel + ")
   // Bewegung reduzieren (Bedienungshilfe): kein Warten auf eine Animation, die nicht läuft
   const c2 = await browser.newContext({ viewport: { width: 390, height: 780 }, reducedMotion: "reduce" });
   const p2 = await c2.newPage();
-  await p2.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+  await p2.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
   await p2.goto(basis + "index.html"); await p2.waitForTimeout(2500);
   const rm = await p2.evaluate(async () => { const sp = document.getElementById("splash"); replaySplash(); const pe = getComputedStyle(sp).pointerEvents; const t = performance.now(); while (!sp.classList.contains("hide") && performance.now() - t < 5000) await new Promise((k) => setTimeout(k, 20)); return { ms: Math.round(performance.now() - t), pe }; });
   if (rm.ms > 900 || rm.pe !== "none") fehler("Bewegung reduziert: Startbild " + JSON.stringify(rm)); else ok("Bewegung reduziert: Standbild nur " + rm.ms + " ms, Tippen geht durch");

@@ -4,6 +4,10 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.26.18", datum: "2026-11-26", kurz: "Schriften und Technik laden jetzt direkt vom Kompass.",
+    punkte: ["Schriften und die Technik für die Anmeldung kommen jetzt direkt vom Kompass, nicht mehr von fremden Servern.",
+             "Das macht den Kompass unabhängiger und sicherer: Fällt ein fremder Dienst aus, startet die App trotzdem.",
+             "Ohne Internet startet die App jetzt zuverlässiger, mit den gewohnten Schriften."] },
   { version: "2026.11.26.17", datum: "2026-11-26", kurz: "Büro: Durchfallgründe und Verschiebungen jetzt auch hier.",
     punkte: ["Büro: Unter „Statistik“ gibt es jetzt „Durchfallgründe“. Dort siehst du, woran Schüler in der Praxisprüfung am häufigsten scheitern, auch je Fahrlehrer.",
              "Büro: Unter „Verschiebungen“ siehst du, welcher Schüler wann zu welchem Fahrlehrer gewechselt ist.",

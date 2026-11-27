@@ -38,7 +38,7 @@ async function oeffne({ nutzer, hash = "#preise", vorbereiten, breite = 1366 }) 
   const konsole = [];
   page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
   page.on("pageerror", (e) => konsole.push(String(e)));
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.addInitScript(([d, s, v]) => {
     window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s };

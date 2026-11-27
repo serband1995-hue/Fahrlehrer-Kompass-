@@ -27,7 +27,7 @@ const page = await ctx.newPage();
 let konsole = [];
 page.on("pageerror", (e) => konsole.push(String(e)));
 page.on("dialog", (d) => d.accept().catch(() => {}));
-await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
 await page.clock.install();
 await page.goto(basis + "index.html");
 await page.waitForTimeout(1200);

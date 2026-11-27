@@ -44,7 +44,7 @@ async function oeffne({ breite = 1366, hoehe = 860, nutzer = "bu-1", person = ["
   const konsole = [], dialoge = [];
   page.on("pageerror", (e) => konsole.push(String(e)));
   page.on("dialog", (d) => { dialoge.push(d.message()); d.dismiss().catch(() => {}); });
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.addInitScript(([d, nutzer, personen, heute]) => {
     d.tabellen.fahrschule_urlaub = []; d.tabellen.fahrschule_schichten = []; d.tabellen.fahrschule_backups = [];

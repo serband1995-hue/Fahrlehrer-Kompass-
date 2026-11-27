@@ -43,7 +43,7 @@ async function oeffne({ breite, hoehe, ladefehler = false, person = ["Paula Must
   const page = await ctx.newPage();
   const konsole = [];
   page.on("pageerror", (e) => konsole.push(String(e)));
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.addInitScript(([d, ladefehler]) => {
     d.tabellen.fahrschule_urlaub = []; d.tabellen.fahrschule_schichten = []; d.tabellen.fahrschule_backups = [];
