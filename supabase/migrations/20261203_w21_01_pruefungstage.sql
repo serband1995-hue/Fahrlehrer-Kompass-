@@ -276,7 +276,22 @@ as $function$
 declare v_status text;
 begin
   if coalesce(current_setting('kompass.w21_ergebnis', true), '') = '1' then return null; end if;
-  if new.schueler_id is null or new.datum is null or coalesce(new.geloescht, false) then return null; end if;
+  if new.schueler_id is null or new.datum is null then return null; end if;
+  -- Ergebnis gelöscht (App: Rückgängig): Tafel wieder „geplant“, wenn kein anderes Ergebnis für Schüler + Tag bleibt
+  if coalesce(new.geloescht, false) or new.result is null then
+    if tg_op = 'UPDATE' and not coalesce(old.geloescht, false) and old.result is not null
+       and not exists (select 1 from public.kalender_pruefungen k where k.id <> new.id and k.schueler_id::text = new.schueler_id::text and k.datum = new.datum
+                         and not coalesce(k.geloescht, false) and k.result is not null) then
+      perform set_config('kompass.w21_ergebnis', '1', true);
+      begin
+        update public.pruefungstermine set status = 'geplant', aktualisiert_am = now()
+         where schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis' and status in ('bestanden', 'nicht_bestanden');
+      exception when others then null;
+      end;
+      perform set_config('kompass.w21_ergebnis', '', true);
+    end if;
+    return null;
+  end if;
   v_status := case when new.result in ('pass', 'bestanden') then 'bestanden' when new.result in ('fail', 'nicht_bestanden') then 'nicht_bestanden' end;
   if v_status is null then return null; end if;
   if tg_op = 'UPDATE' and new.result is not distinct from old.result and new.datum is not distinct from old.datum then return null; end if;
@@ -301,6 +316,8 @@ as $function$
 declare v_result text; v_id text;
 begin
   if coalesce(current_setting('kompass.w21_ergebnis', true), '') = '1' then return null; end if;
+  -- Nur Büro/Leitung/Server: Fahrlehrer schreiben ihr Ergebnis selbst nach kalender_pruefungen (sonst zwei Ergebnis-Zeilen)
+  if auth.uid() is not null and not (is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid())) then return null; end if;
   if coalesce(new.art, 'praxis') <> 'praxis' or new.schueler_id is null or new.datum is null then return null; end if;
   if tg_op = 'UPDATE' and new.status is not distinct from old.status and new.datum is not distinct from old.datum
      and new.fahrlehrer_id is not distinct from old.fahrlehrer_id then return null; end if;

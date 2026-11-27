@@ -624,6 +624,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   }
   // Ergebnis Büro → kalender_pruefungen
   function w21ErgebnisNachKp(n, alt) {
+    if (!w21Buero()) return; // Fahrlehrer schreiben ihr Ergebnis selbst nach kalender_pruefungen
     if ((n.art || "praxis") !== "praxis" || !n.schueler_id || !n.datum) return;
     if (alt && alt.status === n.status && alt.datum === n.datum && alt.fahrlehrer_id === n.fahrlehrer_id) return;
     const KP = tabelle("kalender_pruefungen"), res = n.status === "bestanden" ? "pass" : n.status === "nicht_bestanden" ? "fail" : null;
@@ -638,8 +639,13 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     } else { const da = KP.find((x) => x.id === "pt-" + n.id && !x.geloescht); if (da) da.geloescht = true; }
   }
   // Ergebnis App → pruefungstermine
-  function w21KpNachPt(r) {
-    if (!r || !r.schueler_id || !r.datum || r.geloescht) return;
+  function w21KpNachPt(r, alt) {
+    if (!r || !r.schueler_id || !r.datum) return;
+    if (r.geloescht || r.result == null) {
+      if (alt && !alt.geloescht && alt.result != null && !tabelle("kalender_pruefungen").some((k) => k.id !== r.id && k.schueler_id === r.schueler_id && k.datum === r.datum && !k.geloescht && k.result != null))
+        tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["bestanden", "nicht_bestanden"].includes(q.status)) q.status = "geplant"; });
+      return;
+    }
     const st = ["pass", "bestanden"].includes(r.result) ? "bestanden" : ["fail", "nicht_bestanden"].includes(r.result) ? "nicht_bestanden" : null;
     if (!st) return;
     tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["geplant", "bestanden", "nicht_bestanden"].includes(q.status)) q.status = st; });
@@ -723,7 +729,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         else if (this.name === "pruefungstermine") { const f = w21Einfuegen(daten); if (f) return { data: null, error: { message: f } }; }
         else if (this.name === "pruefungstage") { daten.forEach((r) => w21TagPruefe(r, null)); t.push(...daten); }
         else t.push(...daten);
-        if (this.name === "kalender_pruefungen") daten.forEach(w21KpNachPt);
+        if (this.name === "kalender_pruefungen") daten.forEach((r) => w21KpNachPt(r, null));
         // wie der Schutz-Trigger von fahrzeug_konflikt_gesehen (K18): wer und wann kommen vom Server
         if (this.name === "fahrzeug_konflikt_gesehen") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.gesehen_von = (F.session && F.session.user && F.session.user.id) || null; r.gesehen_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         if (this.name === "zahlungs_mails") daten.forEach((r) => { r.angelegt_am = r.angelegt_am || new Date().toISOString(); });
@@ -738,7 +744,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
           if (alt) { Object.assign(alt, kopie(r)); return spur(alt); }
           const neu = Object.assign(this.name === "fahrschule_zahlungsdaten" ? {} : { id: r.id || ("fake-" + Math.random().toString(36).slice(2, 10)) }, kopie(r)); t.push(neu); return spur(neu);
         });
-        if (this.name === "kalender_pruefungen") daten.forEach(w21KpNachPt);
+        if (this.name === "kalender_pruefungen") daten.forEach((r) => w21KpNachPt(r, null));
       } else if (this.art === "update") {
         daten = t.filter((r) => this.passt(r));
         if (this.name === "pruefungstermine") { const f = w21Aendern(daten, this.werte); if (f) return { data: null, error: { message: f } }; }
@@ -749,7 +755,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
             Object.assign(r, n, { aktualisiert_am: new Date().toISOString() });
             const f2 = w21TagNachziehen(r, alt); if (f2) { Object.assign(r, alt); return { data: null, error: { message: f2 } }; }
           }
-        } else daten.forEach((r) => { const alt = kopie(r); Object.assign(r, kopie(this.werte)); if (this.name === "kalender_termine") { w21KalenderSchutz(alt, r); terminSpur(alt, r); } if (this.name === "kalender_pruefungen") w21KpNachPt(r); });
+        } else daten.forEach((r) => { const alt = kopie(r); Object.assign(r, kopie(this.werte)); if (this.name === "kalender_termine") { w21KalenderSchutz(alt, r); terminSpur(alt, r); } if (this.name === "kalender_pruefungen") w21KpNachPt(r, alt); });
         if (this.name === "fahrschule_pakete") paketStempel(daten);
       } else if (this.art === "delete") {
         daten = t.filter((r) => this.passt(r));

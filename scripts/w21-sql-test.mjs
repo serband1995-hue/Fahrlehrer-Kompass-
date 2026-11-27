@@ -242,6 +242,9 @@ kp = await eins(db, "select * from public.kalender_pruefungen where id = 'app-ex
 ok("Büro-Korrektur ändert die App-Zeile (Fehlerpunkte bleiben)", kp.result === "pass" && kp.payload.faults[0] === "Vorfahrt" && !!kp.payload.buero_korrektur_am, kp);
 r = await als(db, U.fl1, `update public.pruefungstermine set status = 'nicht_bestanden' where id = $1`, [(await p("s4")).id]);
 ok("App setzt Ergebnis an eigener Prüfung direkt", !r.fehler && r.n === 1 && (await p("s4")).status === "nicht_bestanden", r);
+ok("… ohne zweite Ergebnis-Zeile (Fahrlehrer schreiben ihr Ergebnis selbst nach kalender_pruefungen)", (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's4'")).n === 0);
+r = await als(db, U.fl1, `update public.kalender_pruefungen set geloescht = true where id = 'app-ex-6'`);
+ok("App „Rückgängig“ (Ergebnis gelöscht) → Tafel wieder geplant", !r.fehler && (await p("s6")).status === "geplant", (await p("s6")).status);
 
 // ---------- 9. Startzeit ändern ----------
 r = await als(db, U.buero, `update public.pruefungstage set start = '09:00' where id = $1 returning start_geaendert_am`, [TAG]);

@@ -15770,7 +15770,7 @@ function offerNextExam(date,excludeId){
 function undoExam(s,snap,after){
   if(snap.exId)DB.exams=DB.exams.filter(e=>e.id!==snap.exId); else DB.exams.length=snap.exLen; // genau diesen Prüfungseintrag entfernen
   DB.termine=snap.termine;                // Termine (inkl. evtl. entfernter) wiederherstellen
-  if(snap.ptId){ const r=(_pt.eigene||[]).find(x=>x.id===snap.ptId); if(r)r.status='geplant'; PT.ergebnis(getSupa(),snap.ptId,'geplant').catch(e=>toast(PT.fehlerText(e))).then(()=>ptLaden()); }
+  if(snap.ptId){ const r=(_pt.eigene||[]).find(x=>x.id===snap.ptId); if(r)r.status='geplant'; try{ if(typeof _syncPruefungenBridge==="function")_syncPruefungenBridge(0); }catch(e){} } // Server setzt die Tafel zurück, wenn das Ergebnis gelöscht ist
   if(snap.passed)s.passed=snap.passed; else delete s.passed;
   if(snap.ready)s.ready=snap.ready; else delete s.ready;
   if(typeof snap.waitOrder==='number')s.waitOrder=snap.waitOrder; else delete s.waitOrder;
@@ -16075,9 +16075,11 @@ async function _ptLoesen(s,rerender){
 
 /* ---------- Ergebnis: App ↔ Büro ---------- */
 function _ptRowFuer(sid,date){ return _ptAktiv()?_pt.eigene.find(r=>r.schueler_id===sid&&r.datum===date&&r.status==="geplant"&&(r.art||"praxis")==="praxis")||null:null; }
+// Nur anzeigen: Das Ergebnis geht EINMAL über die Prüfungen-Brücke (DB.exams → kalender_pruefungen); der Server setzt daraus
+// pruefungstermine.status fürs Büro. Ein zweiter Schreibweg hier erzeugte eine zweite Ergebnis-Zeile (W21-Fund im Gesamttest).
 function _ptErgebnis(row,status){
-  const alt=row.status; row.status=status; // sofort sichtbar; der Server spiegelt es ohnehin
-  PT.ergebnis(getSupa(),row.id,status).catch(e=>{ row.status=alt; toast(PT.fehlerText(e)); }).then(()=>ptLaden());
+  row.status=status;
+  try{ if(typeof _syncPruefungenBridge==="function")_syncPruefungenBridge(0); }catch(e){}
 }
 // Das Büro hat ein Ergebnis eingetragen (kalender_pruefungen, id „pt-…“) oder korrigiert (payload.buero_korrektur_am)
 async function _ptBueroErgebnisse(){

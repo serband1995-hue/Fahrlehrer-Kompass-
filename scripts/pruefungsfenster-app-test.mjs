@@ -30,6 +30,7 @@ const bildOrdner = process.env.BILD_ORDNER || "";
 const daten = bauDaten(heute);
 // Eigener Prüfungstag mit festem Tag (für „fremd belegt“): Kollegin Berta (fl-2) belegt das Fenster 1
 const FS = daten.tabellen.fahrschulen[0].id;
+daten.tabellen.snapshots = [{ user_id: "fl-1", data: null, updated_at: new Date().toISOString() }]; // App-Speicher vorhanden (sonst schreiben die Brücken nicht)
 daten.tabellen.pruefungstage = [{ id: "pg-fremd", fahrschule_id: FS, datum: addTage(heute, 6), start: "08:00", fenster_zahl: 9, pruefer: "XY", erstellt_von: "fl-2", geloescht: false }];
 daten.tabellen.pruefungstermine.push({ id: "pt-fremd", fahrschule_id: FS, schueler_id: "s2", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", pruefungstag_id: "pg-fremd", fenster: 1, fenster_anzahl: 1, datum: addTage(heute, 6), von: "08:55", status: "geplant", entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false });
 
@@ -167,7 +168,8 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
     const s = DB.students.find((x) => x.id === info.ids[0]); const row = _pt.eigene.find((r) => r.schueler_id === s.id && r.status === "geplant");
     commitExamResult(s, { result: "pass", date: row.datum, pruefer: "CD" });
     const lokal = _pt.eigene.find((r) => r.id === row.id).status;
-    await new Promise((r) => setTimeout(r, 600));
+    // Das Ergebnis geht über die Prüfungen-Brücke nach kalender_pruefungen; der Server setzt daraus die Tafel
+    for (let i = 0; i < 20 && window.__FAKE.tabellen.pruefungstermine.find((r) => r.id === row.id).status === "geplant"; i++) { _syncPruefungenBridge(0); await new Promise((r) => setTimeout(r, 300)); }
     return { lokal, ex: DB.exams.filter((e) => e.sid === s.id).length, passed: s.passed, serverRow: window.__FAKE.tabellen.pruefungstermine.find((r) => r.id === row.id).status, id: row.id };
   }, [info]);
   pruefe("W26 Ergebnis „bestanden“: sofort grün, Server-Zeile bestanden, DB.exams-Eintrag, Schüler archiviert", erg.lokal === "bestanden" && erg.serverRow === "bestanden" && erg.ex === 1 && !!erg.passed, JSON.stringify(erg));
@@ -180,7 +182,8 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
     const z = await PT.einplanen(supa, Object.assign({}, basis, { schueler_id: info.ids[3], klasse: "B", pruefungstag_id: tag.id, fenster: 6, fenster_anzahl: 1 }));
     await ptLaden();
     // „Büro“ setzt das Ergebnis: Server schreibt kalender_pruefungen pt-… (die Attrappe bildet pt_ergebnis_spiegel nach)
-    await PT.ergebnis(supa, z.id, "nicht_bestanden");
+    const ich = window.__FAKE.session; window.__FAKE.session = { user: { id: "ad-1", email: "leitung@example.org" } }; // kurz das Büro
+    try { await PT.ergebnis(supa, z.id, "nicht_bestanden"); } finally { window.__FAKE.session = ich; }
     const kp = window.__FAKE.tabellen.kalender_pruefungen.filter((k) => k.schueler_id === info.ids[3]);
     await ptLaden();
     const s = DB.students.find((x) => x.id === info.ids[3]);
