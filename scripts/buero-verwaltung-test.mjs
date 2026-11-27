@@ -48,7 +48,15 @@ async function oeffne({ breite, hoehe, ladefehler = false, person = ["Paula Must
   await page.addInitScript(([d, ladefehler]) => {
     d.tabellen.fahrschule_urlaub = []; d.tabellen.fahrschule_schichten = []; d.tabellen.fahrschule_backups = [];
     window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "bu-1", email: "bu-1@example.org" } },
-      rpcs: { fahrschule_backup_erstellen: (a, F) => { F.tabellen.fahrschule_backups.push({ id: "bk-" + F.tabellen.fahrschule_backups.length, fahrschule_id: a.fs_id, erstellt_am: new Date().toISOString(), automatisch: !!a.ist_automatisch, daten: { schueler: [{ name: "Muster" }] } }); return null; } },
+      // W24: Sicherung Format 2 (Zählung, Arten, Größe), Vorschau und Zurückholen wie der Server (Code aus der Vorschau)
+      darf: false, zurueck: [],
+      rpcs: { fahrschule_backup_erstellen: (a, F) => { F.tabellen.fahrschule_backups.push({ id: "bk-" + F.tabellen.fahrschule_backups.length, fahrschule_id: a.fs_id, erstellt_am: new Date().toISOString(), automatisch: !!a.ist_automatisch,
+                format: 2, anlass: "hand", zaehlung: { schueler: 3, kalender_termine: 12, zahlungsbelege: 1, snapshots: 2 }, arten: { schueler: "voll", kalender_termine: "voll", zahlungsbelege: "anhaengen", snapshots: "auf_wunsch" }, groesse_bytes: 48000,
+                daten: { format: 2, tabellen: { schueler: [{ name: "Muster" }] } } }); return null; },
+              fahrschule_backup_vorschau: (a) => ({ ok: true, wiederherstellbar: true, darf_wiederherstellen: window.__FAKE.darf, modus: a.modus, code: "AB12CD",
+                einfuegen: 2, aendern: a.modus === "komplett" ? 1 : 0, loeschen: a.modus === "komplett" ? 1 : 0,
+                tabellen: [{ tabelle: "kalender_termine", einfuegen: 2, aendern: a.modus === "komplett" ? 1 : 0, loeschen: a.modus === "komplett" ? 1 : 0 }, { tabelle: "schueler", einfuegen: 0, aendern: 0, loeschen: 0 }] }),
+              fahrschule_backup_wiederherstellen: (a) => { window.__FAKE.zurueck.push(a); return a.bestaetigung === "AB12CD" ? { ok: true, vorher_backup_id: "bk-v" } : null; } },
       fehler: ladefehler ? { fahrschule_urlaub: "Testfehler" } : {} };
   }, [bauDaten(HEUTE), ladefehler]);
   await page.goto(basis + "buero.html#urlaub");
@@ -159,6 +167,27 @@ for (const [n, w, h, person] of [["PC, Büro ohne Verwalten-Recht", 1366, 860, [
     else if (!/^fahrschule-backup-\d{4}-\d{2}-\d{2}\.json$/.test(d.suggestedFilename())) f.push("Dateiname " + d.suggestedFilename());
     return f;
   });
+  // V12 (W24) Ansehen, Vorschau, Zurückholen nur mit Code; ohne Leitungs-Recht nur Vorschau
+  const inhalt = { liste: /15\.?\d* Einträge|18 Einträge/.test(await page.textContent("#ansicht")) && /4 Bereiche/.test(await page.textContent("#ansicht")) && /47 KB/.test(await page.textContent("#ansicht")) };
+  await page.click("[data-vwbackupsieh]"); await warte(page, 300);
+  inhalt.bereiche = /Schüler \(auch gelöschte\)/.test(await page.textContent("dialog[open]")) && /Handy-Stände/.test(await page.textContent("dialog[open]"));
+  await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
+  inhalt.nurLeitung = /nur die Leitung/.test(await page.textContent("dialog[open]")) && !(await page.locator("dialog[open] input[name=code]").count());
+  await page.click("dialog[open] [data-schliessen]").catch(() => {}); await warte(page, 300);
+  await page.evaluate(() => { window.__FAKE.darf = true; });
+  await page.click("[data-vwbackupsieh]"); await warte(page, 300);
+  await page.check("dialog[open] input[name=modus][value=komplett]");
+  await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
+  inhalt.zahlen = /2 kommen dazu, 1 werden geändert, 1 fallen weg/.test(await page.textContent("dialog[open]")) && /AB12CD/.test(await page.textContent("dialog[open]"));
+  await page.fill("dialog[open] input[name=code]", "XXXXXX");
+  await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
+  inhalt.falsch = /Code stimmt nicht/.test(await page.textContent("dialog[open]")) && (await page.evaluate(() => window.__FAKE.zurueck.length)) === 0;
+  await page.fill("dialog[open] input[name=code]", "ab12cd");
+  await page.click("dialog[open] footer button[value=ok]"); await warte(page, 500);
+  const aufruf = await page.evaluate(() => window.__FAKE.zurueck[0] || null);
+  inhalt.zurueck = !!aufruf && aufruf.modus === "komplett" && aufruf.bestaetigung === "AB12CD" && !(await page.locator("dialog[open]").count());
+  await page.evaluate(() => { window.__FAKE.darf = false; window.__FAKE.zurueck = []; });
+  await pruefe("V12", `${P} Backups (W24): Inhalt und Größe, Vorschau, Zurückholen nur mit Code, ohne Recht nur Vorschau`, () => Object.entries(inhalt).filter(([, v]) => !v).map(([k]) => k));
   // V8 kein seitliches Verrutschen, Knöpfe groß genug am Handy
   for (const b of ["#urlaub", "#schichtplan", "#backups"]) {
     await gehe(page, b);

@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.4", datum: "2026-11-27", kurz: "Backups sichern jetzt alles, jede Nacht.",
+    punkte: ["Ein Backup enthält jetzt alles der Fahrschule: auch gelöschte Schüler, den Papierkorb, Belege, Pakete, Preise, Notizen, Einstellungen und die Handy-Stände.",
+             "Jede Nacht wird von selbst gesichert. Die letzten 30 bleiben, ältere werden aufgeräumt. Von Hand gesicherte bleiben immer.",
+             "Bei jedem Backup steht, was drin ist: wie viele Einträge in welchem Bereich und wie groß es ist.",
+             "Büro: Ein Backup lässt sich ansehen. Vor dem Zurückholen zeigt eine Vorschau genau, was dazukommt, was sich ändert und was wegfällt.",
+             "Zurückholen darf nur die Leitung, und nur mit einem Code aus der Vorschau. Der Stand davor wird vorher automatisch gesichert. Belege bleiben immer erhalten."] },
   { version: "2026.11.27.3", datum: "2026-11-27", kurz: "Prüfungen: feste Zeitfenster für B und BE.",
     punkte: ["Ein Prüfungstag hat jetzt 9 feste Zeitfenster zu je 55 Minuten, ab 08:00 bis 16:15. Die Uhrzeit muss niemand mehr tippen.",
              "Belegte Fenster sind sofort zu sehen. Ein Fenster kann nie doppelt vergeben werden, auch nicht, wenn App und Büro gleichzeitig planen.",
