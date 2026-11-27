@@ -139,7 +139,7 @@ for (const breite of [360, 412]) {
       return f;
     });
   });
-  await pruefe("B12" + b, "acht gleichzeitige Termine (Gesamtansicht viele Fahrlehrer): Spalten mindestens 60 px, seitlich wischbar, Seite läuft nicht über", async () => {
+  await pruefe("B12" + b, "acht gleichzeitige Termine (Gesamtansicht viele Fahrlehrer): Spalten mindestens 60 px, seitlich wischbar, Uhrzeiten bleiben links, Seite läuft nicht über", async () => {
     await page.evaluate((tag) => { for (let i = 0; i < 5; i++) DB.lessons.push({ id: "V" + i, sid: "m1", date: tag, von: "10:15", bis: "11:15", art: "fahrstunde", status: "geplant" }); save(); _calView = "tag"; routeKalender(); }, tag); await warte(page, 400);
     const r = await page.evaluate(() => {
       const f = [], els = [...document.querySelectorAll('.ct-ev[data-evedit^="lesson|"]')].filter((e) => e.style.width);
@@ -151,6 +151,12 @@ for (const breite of [360, 412]) {
       const ueber = document.documentElement.scrollWidth - innerWidth; if (ueber > 1) f.push("Seite läuft " + ueber + " px über");
       return f;
     });
+    // Nach dem Wischen bleiben die Uhrzeiten links sichtbar
+    const z = await page.evaluate(async () => { const q = document.querySelector(".ct-quer"); if (!q) return null; q.scrollLeft = q.scrollWidth; await new Promise((ok) => setTimeout(ok, 120));
+      const qr = q.getBoundingClientRect(), hl = q.querySelector(".ct-hl"); if (!hl) return "keine Uhrzeit"; const r = hl.getBoundingClientRect();
+      return r.left >= qr.left - 1 && r.right <= qr.left + 60 ? true : "Uhrzeit nach dem Wischen bei " + Math.round(r.left - qr.left) + " px statt links"; });
+    if (z !== null && z !== true) r.push(z);
+    if (process.env.KF_BILD) await page.screenshot({ path: process.env.KF_BILD + "-" + b + ".png" });
     await page.evaluate(() => { DB.lessons = DB.lessons.filter((l) => !/^V\d$/.test(l.id)); save(); routeKalender(); });
     return r;
   });

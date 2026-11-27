@@ -1659,6 +1659,7 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .ct-now::before{content:"";position:absolute;left:-5px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--gruen-bright,#4a8b45);}
 .ct-events{position:absolute;left:52px;right:0;top:0;bottom:0;}
 .ct-quer{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+.ct-quer .ct-hl{z-index:4;transform:translateX(var(--ct-x,0px));background:var(--bg);border-radius:4px;}
 .ct-quer-hinweis{font-size:12.5px;color:var(--muted);font-weight:700;margin:6px 0 0;text-align:right;}
 .ct-ev{position:absolute;left:2px;right:2px;background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-left:3px solid var(--gruen-bright,#4a8b45);border-radius:9px;padding:6px 10px;overflow:hidden;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.2);}
 .ct-ev.exam-soon{border-color:#c9a227;box-shadow:0 0 0 1.5px #c9a227,0 3px 8px rgba(0,0,0,.2);}
@@ -13983,6 +13984,8 @@ function _kfAusLesson(l){ return {id:l.id,datum:l.date,von:l.von,bis:l.bis,art:l
 // neue: ein Termin oder mehrere ({id?,date,von,bis,art,sid,fahrzeug,_fahrlehrerId?}); Ergebnis ohne doppelte Treffer
 // Ältere kompass-rechnen.js aus einem Zwischenspeicher (ohne den Baustein): keine Rückfrage, kein ⚠, volle Breite – nichts bricht ab
 const CT_SPALTE_MIN=68; // Mindestbreite einer Spalte in der Tagesansicht (px), darunter wird seitlich gewischt
+// Stundenbeschriftung bleibt beim seitlichen Wischen links stehen (scroll blubbert nicht, daher Capture)
+document.addEventListener("scroll",e=>{ const q=e.target; if(q&&q.classList&&q.classList.contains("ct-quer")) q.style.setProperty("--ct-x",q.scrollLeft+"px"); },true);
 function _kfDa(){ return typeof KR!=="undefined"&&!!KR.terminKonflikte&&!!KR.konfliktIds&&!!KR.spaltenLayout; }
 function _kfFinde(neue){
   if(!_kfDa())return [];
