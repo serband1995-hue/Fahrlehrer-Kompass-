@@ -1207,6 +1207,40 @@ body.light .dt-n{background:linear-gradient(160deg,#24242a 10%,#2f5d3f 90%);-web
   background:linear-gradient(160deg,var(--gruen-2,#3a7350),var(--gruen,#2f5d3f));border:1px solid rgba(150,200,165,.25);
   box-shadow:inset 0 1px 0 rgba(190,220,200,.2),0 4px 10px rgba(0,0,0,.3);transition:transform .14s var(--pop)}
 .slot-result:active{transform:scale(.94)}
+/* W21: Prüfungstage mit Fenstern (Farben: gelb = ausstehend, grün = bestanden, rot = nicht bestanden) */
+.pt-tag{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;overflow:hidden;}
+.pt-kopf{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:10px 12px;text-align:left;color:var(--txt);}
+.pt-k-t{flex:1 1 auto;min-width:0;font-weight:800;font-size:14px;}
+.pt-k-z{flex:0 1 auto;font-size:12px;color:var(--muted);font-weight:700;text-align:right;}
+.pt-pf{flex:0 0 auto;font-size:18px;color:var(--muted);transition:transform .15s;}
+.pt-tag.offen .pt-pf{transform:rotate(90deg);}
+.pt-zeilen{display:flex;flex-direction:column;gap:5px;padding:0 8px 8px;}
+.pt-z{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);border-left:4px solid var(--line);background:var(--surface-2);color:var(--txt);text-align:left;font-size:13.5px;}
+.pt-zeit{flex:0 0 auto;font-weight:700;font-size:12.5px;color:var(--muted);min-width:84px;}
+.pt-inh{flex:1 1 auto;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pt-st{flex:0 0 auto;font-size:11.5px;font-weight:800;color:var(--muted);}
+.pt-z.frei{border-style:dashed;border-left-style:dashed;}
+.pt-z.frei .pt-inh{color:var(--akzent);}
+.pt-z.fremd{opacity:.7;}
+.pt-z.fremd .pt-inh{font-weight:600;color:var(--muted);}
+.pt-z.s-geplant{border-left-color:var(--gelb);}
+.pt-z.s-bestanden{border-left-color:var(--gruen);background:rgba(76,175,114,.14);}
+.pt-z.s-nicht_bestanden{border-left-color:var(--rot);background:rgba(207,90,72,.14);}
+.pt-z.s-bestanden .pt-st{color:var(--gruen);}
+.pt-z.s-nicht_bestanden .pt-st{color:var(--zahl-rot);}
+.pt-z.tauschbar{outline:2px solid var(--akzent);outline-offset:-2px;}
+.pt-z.gewaehlt{outline:2px solid var(--gelb);outline-offset:-2px;}
+.pt-bt.s-geplant{color:var(--gelb);} .pt-bt.s-bestanden{color:var(--gruen);} .pt-bt.s-nicht_bestanden{color:var(--zahl-rot);}
+.pt-fuss{display:flex;flex-wrap:wrap;gap:8px;padding:0 8px 10px;}
+.pt-tausch{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:13px;font-weight:700;}
+.pt-fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;}
+.pt-f{min-height:44px;padding:8px 6px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--txt);font-weight:700;font-size:13px;}
+.pt-f:active{transform:scale(.96);}
+.pt-chk{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface);font-weight:700;font-size:14px;}
+.pt-chk input{width:20px;height:20px;flex:0 0 auto;}
+.pt-chk span:first-of-type{flex:1 1 auto;min-width:0;}
+@media (max-width:420px){.pt-zeit{min-width:76px;}.pt-k-z{font-size:11.5px;}}
+
 .rf-step{display:flex;align-items:center;gap:11px;margin:0 0 13px;}
 .rf-num{width:28px;height:28px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-weight:800;font-size:14px;color:#eaf1ec;background:linear-gradient(150deg,var(--gruen-2,#3a7350),var(--gruen,#2f5d3f));
@@ -1993,6 +2027,7 @@ body:not(.light) #sheet .sheet-pills .pill.sel{background:#2f3846 !important;bor
 <script src="vendor/supabase-js-2.119.2.js"></script>
 <script src="kompass-rechnen.js"></script>
 <script src="kompass-einstellungen.js"></script>
+<script src="kompass-pruefungstage.js"></script>
 <script src="kompass-fehler.js"></script>
 <script src="neuigkeiten.js"></script>
 <script src="startseite.js"></script>
@@ -4586,6 +4621,7 @@ async function _continueLoginFlow(prof) {
   await pullPublicBookings();
   await pullSchuelerZuweisungen();
   await pullTermineZuweisungen();
+  ptLaden(); // W21: Prüfungstage und eigene Prüfungen holen
   try{ if(window.PW)PW.laden({sofort:true}); }catch(e){} // K5: gemeinsames Prüfer-Wissen der Fahrschule
   try{ if(window.SU)SU.pruefen(); }catch(e){} // K6: Schüler-Überblick der Fahrschule
   // Login-Overlay verstecken
@@ -5826,7 +5862,8 @@ async function pullTermineZuweisungen() {
         if (mem.termine[r.id] && DB.lessons.length) continue;
         const l = Object.assign({ id: r.id }, merged, { _syncedAt: remoteTime });
         DB.lessons.push(l); mem.termine[r.id] = _abglWertVon("termine", l);
-        neu++;
+        // W21: der Server-Spiegel einer Prüfung, die diese App selbst eingeplant hat, ist nichts „Neues von der Fahrschule“
+        if (!(_ptIstSpiegel(merged) && (_pt.eigene || []).some(e => e.id === merged.pruefungstermin_id && e.quelle === "app"))) neu++;
         continue;
       }
       const wertLokal = _abglWertVon("termine", local);
@@ -8686,6 +8723,7 @@ document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="hidden") _brueckenSofort();
   // Zurück in der App (z.B. Tablet nach dem Handy): sofort Änderungen des anderen Geräts holen.
   if(document.visibilityState==="visible"&&_authUser&&_pullOk&&!_fsAgg) pushToCloud();
+  if(document.visibilityState==="visible"&&_ptMoeglich())ptLaden(); // W21: zurück in der App
 });
 window.addEventListener("pagehide",()=>{
   if(_saveSyncDebounce){ clearTimeout(_saveSyncDebounce); _saveSyncDebounce=null; pushToCloud(); }
@@ -9457,7 +9495,7 @@ function _slNaechster(s){
   const heute=todayISO(), j=_h2JetztMin();
   const l=(DB.lessons||[]).filter(x=>x.sid===s.id&&x.date&&x.status!=="abgebrochen"&&x.status!=="nicht erschienen"&&x.art!=="block"&&(x.date>heute||(x.date===heute&&hm2min(x.bis||x.von)>j)))
     .map(x=>({date:x.date,von:x.von,art:x.art}));
-  (DB.termine||[]).forEach(t=>{ if((t.slots||[]).includes(s.id)&&t.date>=heute)l.push({date:t.date,von:t.von||"09:00",art:"pruefung"}); });
+  _tafel().forEach(t=>{ if((t.slots||[]).includes(s.id)&&t.date>=heute)l.push({date:t.date,von:t.von||"09:00",art:"pruefung"}); });
   l.sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
   return l[0]||null;
 }
@@ -9526,9 +9564,9 @@ function routeAkteTermine(id){
   $("#tbTitle").textContent="Termine"; setFab(false); view.scrollTop=0;
   const heute=todayISO(), j=_h2JetztMin();
   // Prüfung, die als Kalendertermin UND auf der Prüfungstafel steht, nur einmal zeigen (wie dayEvents)
-  const tafel=(DB.termine||[]).filter(t=>(t.slots||[]).includes(id)).map(t=>t.date);
+  const tafel=_tafel().filter(t=>(t.slots||[]).includes(id)).map(t=>t.date);
   const alle=(DB.lessons||[]).filter(l=>l.sid===id&&l.date&&!(l.art==="pruefung"&&tafel.some(d=>d>=l.date&&d<=addDays(l.date,3)))).map(l=>({kind:"lesson",id:l.id,sid:id,date:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant"}));
-  (DB.termine||[]).forEach(t=>{ if((t.slots||[]).includes(id))alle.push({kind:"pruefung",id:t.id,sid:id,date:t.date,von:t.von||"09:00",bis:t.bis||"",art:"pruefung",status:"geplant"}); });
+  _tafel().forEach(t=>{ if((t.slots||[]).includes(id))alle.push({kind:"pruefung",id:t.id,sid:id,date:t.date,von:t.von||"09:00",bis:t.bis||"",art:"pruefung",status:"geplant"}); });
   // Prüfungen gelten bis zum Ergebnis als kommend (wie die Prüfungs-Seite und die Liste)
   const kommt=x=>x.date>heute||(x.date===heute&&(x.kind==="pruefung"||hm2min(x.bis||x.von)>j));
   const kommend=alle.filter(x=>kommt(x)&&x.status!=="abgebrochen").sort((a,b)=>(a.date+a.von).localeCompare(b.date+b.von));
@@ -9562,7 +9600,7 @@ function routeAktePruefung(id){
   const s=DB.students.find(x=>x.id===id); if(!s){ routeHome(); return; }
   $("#tbTitle").textContent="Prüfung"; setFab(false); view.scrollTop=0;
   const heute=todayISO();
-  const termine=(DB.termine||[]).filter(t=>(t.slots||[]).includes(id)&&t.date>=heute).sort((a,b)=>a.date<b.date?-1:1);
+  const termine=_tafel().filter(t=>(t.slots||[]).includes(id)&&t.date>=heute).sort((a,b)=>a.date<b.date?-1:1);
   const ergebnisse=(DB.exams||[]).filter(e=>e.sid===id).sort((a,b)=>(""+b.date).localeCompare(""+a.date));
   const wl=s.ready?waitlist().findIndex(x=>x.id===id):-1;
   const theorie=s.plan&&s.plan.theorie;
@@ -13872,6 +13910,7 @@ function openEventSheet(kind,id,sid){
     $("#esToStats").addEventListener("click",()=>{ closeSheet(); routeStats('cur'); });
     return;
   }
+  if(kind==="pruefung"&&_ptAktiv()&&_pt.eigene.some(r=>r.id===id)){ ptPruefungSheet(id); return; }
   if(kind==="pruefung"){
     const st=DB.students.find(s=>s.id===sid);
     const t=DB.termine.find(x=>x.id===id);
@@ -13905,6 +13944,7 @@ function openEventSheet(kind,id,sid){
     <p class="muted-p" style="font-size:13.5px;margin:-4px 0 ${l.note?'8px':'16px'};">${isoDE(l.date)} · ${esc(l.von)}–${esc(l.bis)} · ${l.lektion?lektionTitel(l.lektion):artLab} ${statusInfo}</p>
     ${st?fristenHinweisHTML(st.id):""}
     ${(()=>{ const ev=dayEvents(l.date).find(e=>e.kind==="lesson"&&e.id===l.id); return ev&&ev.doppelt?`<div class="es-note">ℹ️ Doppelt: Diese Prüfung steht auch auf der Prüfungstafel bzw. hat schon ein Ergebnis. Sie zählt nur einmal (2 UE) – dieser Eintrag zählt nicht mit.</div>`:""; })()}
+    ${_ptIstSpiegel(l)?`<div class="es-note">Ändern unter „Prüfungen“: Verschieben, Tauschen, Absagen.</div>`:""}
     ${l.note?`<div class="es-note">${esc(l.note)}</div>`:''}
     <div class="es-actions">
       ${(fcRelevant&&st&&l.date<=todayISO())?(()=>{
@@ -13917,14 +13957,15 @@ function openEventSheet(kind,id,sid){
       ${fcRelevant&&st&&lkwZweiKlassen(st)?`<button class="es-act" id="esLkwKl">${lkwKlKnopf(st,l)}</button>`:''}
       ${fcRelevant&&sichtbar("fahrcheck")?`<button class="es-act" id="esFC">Fahrcheck · <b>${fcLab}</b></button>`:''}
       ${fcRelevant&&st?`<button class="es-act" id="esSig">Unterschrift · <b>${l.signed?'✓ vorhanden':l.signaturUngueltig&&!l.signaturUngueltig.erledigt?'neu nötig':'noch offen'}</b></button>`:''}
-      ${l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
+      ${_ptIstSpiegel(l)?`<button class="es-act primary" id="esPtErg">Ergebnis eintragen ›</button><button class="es-act" id="esToPruef">Unter „Prüfungen“ ändern</button>`:l.art==="block"?'':`<button class="es-act" id="esEdit">Bearbeiten / verschieben</button>
       <button class="es-act" id="esOther">Mit anderem Schüler gefahren</button>
       <button class="es-act" id="esNoshow">Nicht erschienen</button>
       <button class="es-act" id="esCancel">Abgebrochen</button>`}
       ${fcRelevant?`<button class="es-act" id="esGift">🎁 Zeit verschenkt${typeof l.tatsaechlicheDauer==="number"?` · <b>${l.tatsaechlicheDauer} Min berechnet</b>`:''}</button>`:''}
       ${l.status&&l.status!=="geplant"?`<button class="es-act" id="esReset">Status zurücksetzen</button>`:''}
-      <button class="es-act danger" id="esDelete">${istNachweisStunde(l)?"Stornieren":"Termin löschen"}</button>
+      ${_ptIstSpiegel(l)?"":`<button class="es-act danger" id="esDelete">${istNachweisStunde(l)?"Stornieren":"Termin löschen"}</button>`}
     </div>`);
+  { const b1=$("#esPtErg"); if(b1)b1.addEventListener("click",()=>{ closeSheet(); routeErgebnis(l.sid); }); const b2=$("#esToPruef"); if(b2)b2.addEventListener("click",()=>{ closeSheet(); routePruefungen(); }); }
   const prot=$("#esProtokoll"); if(prot)prot.addEventListener("click",()=>{ closeSheet(); sendeStundenProtokoll(st,l.date); });
   const ak=$("#esAkte"); if(ak)ak.addEventListener("click",()=>{ closeSheet(); routeDetail(l.sid); });
   const anw=$("#esAnwesend"); if(anw)anw.addEventListener("click",()=>openTheorieAnwesenheit(l));
@@ -13938,7 +13979,7 @@ function openEventSheet(kind,id,sid){
   if($("#esCancel"))$("#esCancel").addEventListener("click",()=>{ l.status="abgebrochen"; save(); _notifyOnlineBookingChange(id,"cancelled"); closeSheet(); toast("Als abgebrochen vermerkt"); routeKalender(); });
   const gb=$("#esGift"); if(gb)gb.addEventListener("click",()=>openGiftTimeSheet(id,routeKalender));
   const rs=$("#esReset"); if(rs)rs.addEventListener("click",()=>{ l.status="geplant"; save(); closeSheet(); toast("Status zurückgesetzt"); routeKalender(); });
-  $("#esDelete").addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(id,()=>refreshCurrentView()); });
+  if($("#esDelete"))$("#esDelete").addEventListener("click",()=>{ closeSheet(); deleteLessonMitRueckgaengig(id,()=>refreshCurrentView()); });
 }
 /* ===== Digitale Unterschrift für Fahrstundennachweis =====
    Master-Unterschrift wird einmal pro Schüler gespeichert (s.signature).
@@ -14915,8 +14956,10 @@ function _kachelName(e){
 // W20: Darf dieser Termin per Finger gezogen werden? Eine Stelle für Anzeige (Chip) und Ablegen.
 // Immer: nur geplante Fahrstunden, keine Blocker/Urlaub, keine doppelte Prüfung. In der Gesamtansicht zusätzlich:
 // keine Prüfung (fester Termin beim Prüfer) und nichts, was schon vorbei ist (dort sind es Termine anderer Fahrlehrer).
+function _ptIstSpiegel(l){ return !!l&&l.art==="pruefung"&&!!(l.pruefungstermin_id||/^pt/.test(String(l.id||""))); } // W21: Spiegel einer Prüfung aus pruefungstermine
 function _calZiehbar(e,iso){
   if(!e||e.kind!=="lesson"||e.status!=="geplant"||e.art==="block"||e.doppelt)return false;
+  if(e.ptSpiegel)return false; // Prüfungen ändert man unter „Prüfungen“, in jeder Ansicht
   if(_fsAgg&&(e.art==="pruefung"||(iso||e.date||"")<todayISO()))return false;
   return true;
 }
@@ -15235,12 +15278,13 @@ function dayTheorieWindow(iso){
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer??null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
+  (DB.lessons||[]).filter(l=>l.date===iso&&!(_ptAktiv()&&_ptIstSpiegel(l)&&(DB.exams||[]).some(ex=>ex.sid===l.sid&&ex.date===iso&&istPruefung(ex)))).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",ptSpiegel:_ptIstSpiegel(l),id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer??null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.
   const doneOnDay=new Set((DB.exams||[]).filter(ex=>ex.date===iso&&istPruefung(ex)).map(ex=>ex.sid));
-  (DB.termine||[]).filter(t=>t.date===iso).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+pruefMinFuer(st)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
+  // W21: mit der neuen Quelle kommen Prüfungen über den Server-Spiegel (Termine mit art pruefung). Nur solange der Spiegel noch fehlt, die Prüfung selbst zeigen.
+  (_ptAktiv()?_ptEigeneOffen(true).filter(r=>r.datum===iso&&!(DB.lessons||[]).some(l=>l.sid===r.schueler_id&&l.date===iso&&l.art==="pruefung"&&l.status!=="abgebrochen")).map(_ptBlock):(DB.termine||[]).filter(t=>t.date===iso)).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid&&!doneOnDay.has(sid)){ const st=DB.students.find(s=>s.id===sid); const rawVon=t.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+pruefMinFuer(st)); ev.push({kind:"pruefung",id:t.id,von:blockVon,bis:blockBis,art:"pruefung",sid,name:st?st.name:"—",status:"geplant",pruefTime:rawVon,_fahrlehrerId:t._fahrlehrerId,_fahrlehrerName:t._fahrlehrerName}); } }); });
   // Erledigte Prüfungen (Ergebnis liegt vor): bleiben dauerhaft im Kalender als Erfolgs-/Misserfolgs-Marker.
   (DB.exams||[]).filter(ex=>ex.date===iso).forEach(ex=>{ const rawVon=ex.von||"09:00"; const blockVon=rawVon; const blockBis=min2hm(hm2min(rawVon)+pruefMinFuer(DB.students.find(x=>x.id===ex.sid))); ev.push({kind:"examDone",b197:!!ex.b197,id:ex.id,von:blockVon,bis:blockBis,art:"pruefung",sid:ex.sid,name:ex.name||"—",status:"erledigt",result:ex.result,pruefTime:rawVon,pruefer:ex.pruefer||"",_fahrlehrerId:ex._fahrlehrerId,_fahrlehrerName:ex._fahrlehrerName}); });
   // Dieselbe Prüfung kann doppelt im Kalender stehen: als Kalendertermin (z.B. vom Büro geplant) UND auf der
@@ -15252,7 +15296,7 @@ function dayEvents(iso){
   // Nur nach vorn und kurz - eine echte Wiederholungsprüfung liegt frühestens 2 Wochen später.
   const bis3=addDays(iso,3);
   (DB.exams||[]).forEach(ex=>{ if(ex.sid&&istPruefung(ex)&&ex.date&&ex.date>iso&&ex.date<=bis3)pruefSids.add(ex.sid); });
-  (DB.termine||[]).forEach(t=>{ if(t.date&&t.date>iso&&t.date<=bis3)(t.slots||[]).forEach(sid=>{ if(sid)pruefSids.add(sid); }); });
+  _tafel(true).forEach(t=>{ if(t.date&&t.date>iso&&t.date<=bis3)(t.slots||[]).forEach(sid=>{ if(sid)pruefSids.add(sid); }); });
   const gesehen=new Set();
   ev.forEach(e=>{
     if(e.kind!=="lesson"||e.art!=="pruefung"||!e.sid||e.status==="abgebrochen")return;
@@ -15607,7 +15651,7 @@ function schuelerAusblenden(id){
   const kuenftig=(DB.lessons||[]).filter(l=>l.sid===id&&(l.status||"geplant")==="geplant"&&(l.date>heute||(l.date===heute&&(l.von||"00:00")>jetzt)));
   // K7: ohne Rückfrage. Künftige Termine bleiben im Kalender (nichts geht still verloren); einzeln löschen geht wie immer.
   const abgesagt=[];
-  const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===id)plaetze.push({t,i}); }));
+  const plaetze=[]; if(!_ptAktiv())(DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===id)plaetze.push({t,i}); }));
   s.ausgeblendetAm=new Date().toISOString(); logHist(s,"note","Bei mir ausgeblendet");
   clearSlot(id); // Platz auf der Prüfungstafel freigeben
   const ohne=abgesagt, online=[]; let rueck=false;
@@ -15656,7 +15700,7 @@ function bumpBehindScheduled(s){
 // Prüfungstermine ohne belegte Slots automatisch entfernen (Daten bleiben in exams erhalten).
 // Gibt die entfernten Termine zurück (für Undo).
 function pruneEmptyTermine(){
-  const removed=[];
+  const removed=[]; if(_ptAktiv())return removed; // nichts aus der alten Tafel löschen
   DB.termine=(DB.termine||[]).filter(t=>{
     const hasSlot=(t.slots||[]).some(Boolean);
     if(!hasSlot){ removed.push(JSON.parse(JSON.stringify(t))); return false; }
@@ -15681,9 +15725,11 @@ function commitExamResult(s,opts){
   // Snapshot für Undo
   const snap={ exLen:DB.exams.length, exId:ex.id, termine:JSON.parse(JSON.stringify(DB.termine||[])),
     passed:s.passed, ready:s.ready, waitOrder:s.waitOrder, attempts:s.attempts, histLen:Array.isArray(s.hist)?s.hist.length:0 };
+  const ptRow=_ptRowFuer(id,date); snap.ptId=ptRow?ptRow.id:null;
   DB.exams.push(ex);
   clearSlot(id);
   pruneEmptyTermine();
+  if(ptRow)_ptErgebnis(ptRow,opts.result==='pass'?'bestanden':'nicht_bestanden');
   const eur=Math.round(ueOf("pruefung")*DB.verdienst.proUE);
   if(opts.result==='pass'){
     s.passed=date; delete s.ready; delete s.waitOrder;
@@ -15706,7 +15752,7 @@ function commitExamResult(s,opts){
    Nach commitExamResult ist der gerade bearbeitete Slot bereits geleert, taucht hier also nicht mehr auf. */
 function pendingExamsForDate(date){
   const out=[];
-  (DB.termine||[]).filter(t=>t.date===date).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid){ const st=DB.students.find(x=>x.id===sid); if(st)out.push(st); } }); });
+  _tafel().filter(t=>t.date===date).forEach(t=>{ (t.slots||[]).forEach(sid=>{ if(sid){ const st=DB.students.find(x=>x.id===sid); if(st)out.push(st); } }); });
   return out;
 }
 // Mehrfach-Ergebnis-Eintragung (Bereich 7, Punkt 3): direkt zum nächsten Schüler desselben Prüfungstags,
@@ -15724,6 +15770,7 @@ function offerNextExam(date,excludeId){
 function undoExam(s,snap,after){
   if(snap.exId)DB.exams=DB.exams.filter(e=>e.id!==snap.exId); else DB.exams.length=snap.exLen; // genau diesen Prüfungseintrag entfernen
   DB.termine=snap.termine;                // Termine (inkl. evtl. entfernter) wiederherstellen
+  if(snap.ptId){ const r=(_pt.eigene||[]).find(x=>x.id===snap.ptId); if(r)r.status='geplant'; PT.ergebnis(getSupa(),snap.ptId,'geplant').catch(e=>toast(PT.fehlerText(e))).then(()=>ptLaden()); }
   if(snap.passed)s.passed=snap.passed; else delete s.passed;
   if(snap.ready)s.ready=snap.ready; else delete s.ready;
   if(typeof snap.waitOrder==='number')s.waitOrder=snap.waitOrder; else delete s.waitOrder;
@@ -15732,11 +15779,367 @@ function undoExam(s,snap,after){
   save(); if(after)after();
 }
 
-function futureTermine(){ const t=todayISO(); return DB.termine.filter(x=>x.date>=t).sort((a,b)=>a.date<b.date?-1:1); }
+/* ===== W21: Prüfungstage mit festen 55-Minuten-Fenstern (Serband 26.11.2026) =====
+   Quelle: Tabelle pruefungstermine + pruefungstage (gemeinsam mit dem Büro), Regeln in kompass-pruefungstage.js (window.PT).
+   Solange PT fehlt (alter Zwischenspeicher) oder noch nichts geladen wurde, bleibt die alte Tafel (DB.termine) wie sie war.
+   Alt-Tafel (DB.termine) wird nie gelöscht; ihre Plätze werden einmalig übernommen (_ptAltUebernehmen). */
+let _pt={tage:[],eigene:[],geladen:false,fehler:"",laeuft:false,nochmal:false,rev:0,zeit:0,sig:"",user:null};
+let _ptTausch=null, _ptOffen={}, _ptBusy=false, _ptUeberVersucht={}, _ptUeberLaeuft=false;
+function _ptMoeglich(){ return !!(window.PT&&!_fsAgg&&_authUser&&_authProfile&&_authProfile.fahrschule_id); }
+function _ptAktiv(){ return _ptMoeglich()&&_pt.geladen&&_pt.user===_authUser.id; }
+function _ptBlock(r){ const von=PT.hm(r.von)||"09:00"; return {id:r.id,date:r.datum,von,bis:min2hm(hm2min(von)+((PT.istLkwKlasse(r.klasse)||Number(r.fenster_anzahl)===2)?85:PRUEF_MIN)),plaetze:1,slots:[r.schueler_id],_pt:r}; }
+function _ptEigeneOffen(mitVergangen){ const h=todayISO(); return (_pt.eigene||[]).filter(r=>r.status==="geplant"&&(r.art||"praxis")==="praxis"&&r.datum&&r.schueler_id&&(mitVergangen||r.datum>=h)); }
+// Alle Prüfungen in der alten Form {id,date,von,bis,slots:[sid]}: neue Quelle, sonst die alte Tafel
+function _tafel(mitVergangen){ if(!_ptAktiv())return DB.termine||[]; return _ptEigeneOffen(mitVergangen).map(_ptBlock); }
+function _ptNeuZeichnen(){ try{ if(sheetOffen())return; const tb=$("#tbTitle"); if(tb&&tb.textContent==="Prüfungen"&&document.querySelector("#view .pruef-tabs")){ const y=view.scrollTop; routePruefungen(); view.scrollTop=y; } }catch(e){} }
+async function ptLaden(){
+  if(!_ptMoeglich())return;
+  if(_pt.laeuft){ _pt.nochmal=true; return; }
+  _pt.laeuft=true; let ok=false;
+  try{
+    const supa=getSupa(), heute=todayISO();
+    const tage=await PT.ladeBelegung(supa,addDays(heute,-1),addDays(heute,180));
+    const r=await supa.from("pruefungstermine").select("*").eq("fahrlehrer_id",_authUser.id).gte("datum",addDays(heute,-90));
+    if(r.error)throw r.error;
+    if(_pt.user!==_authUser.id)Object.assign(_pt,{tage:[],eigene:[],geladen:false,user:_authUser.id});
+    _pt.tage=tage; _pt.eigene=r.data||[]; _pt.geladen=true; _pt.fehler=""; ok=true;
+  }catch(e){ _pt.fehler=PT.fehlerText(e); }
+  _pt.zeit=Date.now(); _pt.laeuft=false;
+  if(ok){ try{ await _ptBueroErgebnisse(); }catch(e){ console.warn("[Kompass] Büro-Ergebnisse:",e&&e.message); } _ptAltUebernehmen(); }
+  _pt.rev++;
+  const sig=JSON.stringify([_pt.tage,_pt.eigene,_pt.fehler]), nochmal=_pt.nochmal; _pt.nochmal=false;
+  if(sig!==_pt.sig){ _pt.sig=sig; _ptNeuZeichnen(); }
+  if(nochmal)ptLaden();
+}
+// Ein Schreibweg: Doppeltipp-Schutz, Fehler in einfachen Worten, danach neu laden. Sheet bleibt bei Fehler offen.
+async function _ptSchreiben(fn,okText){
+  if(_ptBusy)return false; _ptBusy=true;
+  try{ await fn(); }
+  catch(e){ _ptBusy=false; toast(PT.fehlerText(e)); ptLaden(); return false; }
+  _ptBusy=false; closeSheet(); if(okText)toast(okText);
+  await ptLaden(); try{ pullTermineZuweisungen(); }catch(e){}
+  _ptNeuZeichnen(); return true;
+}
+function _ptTagTermine(tag){ return (tag.belegt||[]).map(b=>{ const e=b.id?_pt.eigene.find(r=>r.id===b.id):null; return e?Object.assign({},b,{status:e.status,fenster:e.fenster,fenster_anzahl:e.fenster_anzahl||b.anzahl||1,eigen:true}):Object.assign({},b); }); }
+function _ptTagTitel(tag){ return `${deWeekday(tag.datum)} ${isoDE(tag.datum).slice(0,6)}${tag.pruefer?` · Prüfer ${esc(tag.pruefer)}`:""}`; }
+function _ptSupaBasis(){ return {fahrschule_id:_authProfile.fahrschule_id,art:"praxis",quelle:"app",fahrlehrer_id:_authUser.id}; }
+function _ptZeitText(row){ const tag=row.pruefungstag_id?_pt.tage.find(t=>t.id===row.pruefungstag_id):null; return tag&&row.fenster!=null?`${PT.fensterVon(tag,row.fenster)}–${PT.fensterBis(tag,row.fenster,row.fenster_anzahl||1)}`:(PT.hm(row.von)||""); }
+
+/* ---------- Anzeige: Reiter „Termine“ ---------- */
+function _ptZeilen(tag){
+  const termine=_ptTagTermine(tag), b=PT.belegung(tag,termine);
+  return PT.fensterListe(tag).map(f=>{
+    const c=b[f.i], zeit=`${f.von}–${f.bis}`;
+    if(!c)return `<button class="pt-z frei" data-ptfrei="${esc(tag.id)}|${f.i}"><span class="pt-zeit">${zeit}</span><span class="pt-inh">+ frei</span></button>`;
+    const row=c.t.id?_pt.eigene.find(r=>r.id===c.t.id):null;
+    if(!row)return `<div class="pt-z fremd"><span class="pt-zeit">${zeit}</span><span class="pt-inh">belegt</span></div>`;
+    const s=DB.students.find(x=>x.id===row.schueler_id), si=PT.statusInfo(row.status);
+    const tauschbar=_ptTausch&&_ptTausch!==row.id&&row.status==="geplant"&&row.pruefungstag_id;
+    const name=c.erstes?esc(s?s.name:"Schüler"):"↳ zweites Fenster";
+    return `<button class="pt-z s-${esc(row.status)}${_ptTausch===row.id?" gewaehlt":""}${tauschbar?" tauschbar":""}" data-ptp="${esc(row.id)}"><span class="pt-zeit">${zeit}</span><span class="pt-inh">${name}</span>${c.erstes?`<span class="pt-st">${tauschbar?"tauschen":esc(si.text)}</span>`:""}</button>`;
+  }).join("");
+}
+function _ptTageHTML(){
+  const heute=todayISO(), me=_authUser.id, tage=(_pt.tage||[]).filter(t=>t.datum>=heute);
+  let h=`<div class="blk-h">Prüfungstage</div>`;
+  if(_pt.fehler)h+=`<p class="muted-p" style="font-size:12.5px;margin:-4px 0 8px;">${esc(_pt.fehler)} Angezeigt ist der Stand von vorhin.</p>`;
+  if(_ptTausch)h+=`<div class="pt-tausch"><span>Tauschen: tippe die zweite Prüfung oder ein freies Fenster an.</span><button class="mini-btn ghost" id="ptTauschAus">Abbrechen</button></div>`;
+  if(!tage.length)h+=`<p class="muted-p">Noch kein Prüfungstag. Oben „+ Prüfungstag“ antippen.</p>`;
+  tage.forEach(tag=>{
+    const termine=_ptTagTermine(tag), offen=!!_ptOffen[tag.id], frei=PT.zaehle(tag,termine).frei;
+    h+=`<div class="pt-tag${offen?" offen":""}"><button class="pt-kopf" data-ptday="${esc(tag.id)}" aria-expanded="${offen}"><span class="pt-k-t">${_ptTagTitel(tag)}</span><span class="pt-k-z">${esc(PT.zaehlText(tag,termine))}</span><span class="pt-pf">›</span></button>`;
+    if(offen){
+      h+=`<div class="pt-zeilen">${_ptZeilen(tag)}</div><div class="pt-fuss">${frei?`<button class="mini-btn" data-ptmehr="${esc(tag.id)}">Mehrere einteilen</button>`:""}${tag.erstellt_von===me?`<button class="mini-btn ghost" data-ptstart="${esc(tag.id)}">Startzeit ändern</button>`:""}</div>`;
+    }
+    h+=`</div>`;
+  });
+  const frei=_ptEigeneOffen(false).filter(r=>!r.pruefungstag_id).sort((a,b)=>(a.datum+PT.hm(a.von)).localeCompare(b.datum+PT.hm(b.von)));
+  if(frei.length){
+    h+=`<div class="blk-h" style="margin-top:16px;">Mit freier Uhrzeit</div><div class="pt-zeilen">${frei.map(r=>{ const s=DB.students.find(x=>x.id===r.schueler_id);
+      return `<button class="pt-z s-geplant" data-ptp="${esc(r.id)}"><span class="pt-zeit">${deWeekday(r.datum)} ${isoDE(r.datum).slice(0,6)} · ${esc(PT.hm(r.von)||"–")}</span><span class="pt-inh">${esc(s?s.name:"Schüler")}</span><span class="pt-st">${esc(r.klasse||"")}</span></button>`; }).join("")}</div>`;
+  }
+  return h;
+}
+function _ptBinden(){
+  document.querySelectorAll("[data-ptday]").forEach(b=>b.addEventListener("click",()=>{ _ptOffen[b.dataset.ptday]=!_ptOffen[b.dataset.ptday]; const y=view.scrollTop; routePruefungen(); view.scrollTop=y; }));
+  document.querySelectorAll("[data-ptfrei]").forEach(b=>b.addEventListener("click",()=>{ const [t,i]=b.dataset.ptfrei.split("|"); if(_ptTausch)ptVerschiebenNach(_ptTausch,t,+i); else ptFreiSheet(t,+i); }));
+  document.querySelectorAll("[data-ptp]").forEach(b=>b.addEventListener("click",()=>{
+    const id=b.dataset.ptp;
+    if(_ptTausch){ if(_ptTausch===id){ _ptTausch=null; _ptNeuZeichnen(); return; } if(b.classList.contains("tauschbar")){ ptTauschen(_ptTausch,id); return; } toast("Diese Prüfung kann nicht getauscht werden."); return; }
+    ptPruefungSheet(id);
+  }));
+  const ta=$("#ptTauschAus"); if(ta)ta.addEventListener("click",()=>{ _ptTausch=null; _ptNeuZeichnen(); });
+  document.querySelectorAll("[data-ptmehr]").forEach(b=>b.addEventListener("click",()=>ptMehrereSheet(b.dataset.ptmehr)));
+  document.querySelectorAll("[data-ptstart]").forEach(b=>b.addEventListener("click",()=>ptTagSheet(b.dataset.ptstart)));
+}
+
+/* ---------- Schüler wählen, Fenster wählen ---------- */
+function _ptKandidaten(){
+  const ohne=s=>!terminFor(s.id), wl=waitlist().filter(ohne), ids=new Set(wl.map(s=>s.id));
+  const rest=activeStudents().filter(s=>!ids.has(s.id)&&ohne(s)&&!s.theorieWait).sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  return {wl,rest};
+}
+function ptFreiSheet(tagId,i){
+  const tag=_pt.tage.find(t=>t.id===tagId); if(!tag)return;
+  const termine=_ptTagTermine(tag), {wl,rest}=_ptKandidaten();
+  const passt=s=>PT.passt(tag,termine,i,PT.fensterAnzahlFuer(s.form),null);
+  const item=s=>`<button class="sl-item" data-id="${esc(s.id)}"><div><span>${esc(s.name)}</span>${PT.fensterAnzahlFuer(s.form)===2?` <span style="font-size:10px;color:var(--muted);">· Lkw, 2 Fenster</span>`:""}</div><span class="sl-sub">${esc(formLabel(s.form))}</span></button>`;
+  const w=wl.filter(passt), r=rest.filter(passt), f=PT.fensterListe(tag)[i];
+  openSheet(`<div class="sheet-h">Schüler einteilen</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${_ptTagTitel(tag)} · ${f.von}–${f.bis}</p>
+    ${(w.length||r.length)?`<div class="sheet-list">${w.length?`<div class="blk-h" style="margin:0 0 4px;">Warteliste</div>${w.map(item).join("")}`:""}${r.length?`<div class="blk-h" style="margin:8px 0 4px;">Weitere Schüler</div>${r.map(item).join("")}`:""}</div>`:`<p class="muted-p" style="margin-bottom:16px;">Niemand zum Einteilen (Warteliste leer oder alle haben schon eine Prüfung).</p>`}
+    <div class="btn-row"><button class="btn btn-ghost" id="slCancel">Abbrechen</button></div>`);
+  $("#slCancel").addEventListener("click",closeSheet);
+  document.querySelectorAll("#sheet .sl-item").forEach(b=>b.addEventListener("click",()=>{
+    const s=DB.students.find(x=>x.id===b.dataset.id); if(!s)return;
+    if(_zahlungStopp(s.id,tag.datum,"pruefung"))return;
+    ptEinteilen(s,tag,i);
+  }));
+}
+async function ptEinteilen(s,tag,i,okText){
+  const anzahl=PT.fensterAnzahlFuer(s.form);
+  const ok=await _ptSchreiben(()=>PT.einplanen(getSupa(),Object.assign(_ptSupaBasis(),{schueler_id:s.id,klasse:s.form||"B",pruefungstag_id:tag.id,fenster:i,fenster_anzahl:anzahl})),okText||`${_fmVorname(s)} eingeteilt: ${isoDE(tag.datum).slice(0,6)} ${PT.fensterVon(tag,i)}`);
+  if(ok&&!s.ready&&!s.passed){ setReady(s); save(); }
+  return ok;
+}
+// Tag + freies Fenster wählen (für Verschieben und Planen in der Akte)
+function _ptFensterWahl(box,o){
+  const heute=todayISO(), tage=_pt.tage.filter(t=>t.datum>=heute);
+  if(!tage.length){ box.innerHTML=`<p class="muted-p" style="margin-bottom:10px;">Noch kein Prüfungstag. Bitte unten einen neuen Tag anlegen.</p>`; return; }
+  let sel=tage.find(t=>t.id===o.tagId)||tage[0];
+  const zeichne=()=>{
+    const termine=_ptTagTermine(sel), frei=PT.freieFenster(sel,termine,o.anzahl,o.ignoriere), fl=PT.fensterListe(sel);
+    box.innerHTML=`<div class="field"><label>Prüfungstag</label><select id="pwTag">${tage.map(t=>`<option value="${esc(t.id)}"${t.id===sel.id?" selected":""}>${deWeekday(t.datum)} ${isoDE(t.datum).slice(0,6)}${t.pruefer?` · ${esc(t.pruefer)}`:""} · ${esc(PT.zaehlText(t,_ptTagTermine(t)))}</option>`).join("")}</select></div>
+      <div class="field"><label>Freies Zeitfenster</label>${frei.length?`<div class="pt-fgrid">${frei.map(i=>`<button class="pt-f" data-pwf="${i}">${fl[i].von}–${PT.fensterBis(sel,i,o.anzahl)}</button>`).join("")}</div>`:`<p class="muted-p">An diesem Tag ist nichts mehr frei.</p>`}</div>`;
+    $("#pwTag").addEventListener("change",e=>{ sel=tage.find(t=>t.id===e.target.value)||sel; zeichne(); });
+    box.querySelectorAll("[data-pwf]").forEach(b=>b.addEventListener("click",()=>o.beiWahl(sel,+b.dataset.pwf)));
+  };
+  zeichne();
+}
+
+/* ---------- Blatt zu einer eigenen Prüfung ---------- */
+function ptPruefungSheet(id){
+  const row=_pt.eigene.find(r=>r.id===id); if(!row){ toast("Prüfung nicht gefunden"); return; }
+  const s=DB.students.find(x=>x.id===row.schueler_id), si=PT.statusInfo(row.status), offen=row.status==="geplant";
+  openSheet(`<div class="sheet-h">${s?esc(s.name):"Prüfung"}</div>
+    <p class="muted-p" style="font-size:13.5px;margin:-4px 0 14px;">${deWeekday(row.datum)} ${isoDE(row.datum)} · ${esc(_ptZeitText(row))} · <b class="pt-bt s-${esc(row.status)}">${esc(si.text)}</b></p>
+    <div class="es-actions">
+      ${s&&offen?`<button class="es-act primary" id="ppErg">Ergebnis eintragen ›</button>`:""}
+      ${offen?`<button class="es-act" id="ppVersch">Verschieben</button>`:""}
+      ${offen&&row.pruefungstag_id?`<button class="es-act" id="ppTausch">Tauschen</button>`:""}
+      ${s?`<button class="es-act" id="ppAkte">Schülerakte öffnen</button>`:""}
+      ${offen?`<button class="es-act danger" id="ppAbsage">Absagen</button>`:""}
+    </div>`);
+  const on=(i,f)=>{ const b=$(i); if(b)b.addEventListener("click",f); };
+  on("#ppErg",()=>{ closeSheet(); routeErgebnis(row.schueler_id); });
+  on("#ppAkte",()=>{ closeSheet(); routeDetail(row.schueler_id); });
+  on("#ppVersch",()=>ptVerschiebenSheet(id));
+  on("#ppTausch",()=>{ _ptTausch=id; if(row.pruefungstag_id)_ptOffen[row.pruefungstag_id]=true; closeSheet(); _ptNeuZeichnen(); toast("Jetzt die zweite Prüfung antippen"); });
+  on("#ppAbsage",async()=>{ const ok=await _ptSchreiben(()=>PT.absagen(getSupa(),id),null);
+    if(ok)toastUndo(`${s?_fmVorname(s):"Prüfung"}: Prüfung abgesagt`,()=>{ _ptSchreiben(()=>PT.aendern(getSupa(),id,{status:"geplant"}),"Wiederhergestellt ✓"); },_undoMs()); });
+}
+function ptVerschiebenSheet(id){
+  const row=_pt.eigene.find(r=>r.id===id); if(!row)return;
+  const s=DB.students.find(x=>x.id===row.schueler_id), anzahl=Number(row.fenster_anzahl)||PT.fensterAnzahlFuer(row.klasse);
+  const frei=!row.pruefungstag_id; // alte Einträge mit freier Uhrzeit dürfen auch eine freie Uhrzeit behalten
+  openSheet(`<div class="sheet-h">Verschieben</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${s?esc(s.name)+" · ":""}jetzt ${deWeekday(row.datum)} ${isoDE(row.datum).slice(0,6)} ${esc(_ptZeitText(row))}</p>
+    <div id="pvWahl"></div>
+    ${frei?`<div class="blk-h" style="margin:8px 0 6px;">Oder freie Uhrzeit</div><div class="field"><label>Datum</label><input type="date" id="pvDatum" value="${esc(row.datum)}"></div><div class="field"><label>Uhrzeit</label><input type="time" id="pvZeit" value="${esc(PT.hm(row.von)||"09:00")}"></div><button class="btn btn-primary" id="pvFrei" style="width:100%;margin-bottom:10px;">Freie Uhrzeit speichern</button>`:""}
+    <div class="btn-row"><button class="btn btn-ghost" id="pvZu">Abbrechen</button></div>`);
+  $("#pvZu").addEventListener("click",closeSheet);
+  _ptFensterWahl($("#pvWahl"),{anzahl,ignoriere:id,tagId:row.pruefungstag_id,beiWahl:(tag,i)=>ptVerschiebenNach(id,tag.id,i)});
+  const fr=$("#pvFrei"); if(fr)fr.addEventListener("click",()=>{
+    const d=$("#pvDatum").value, v=$("#pvZeit").value||"09:00"; if(!d){ toast("Bitte Datum wählen"); return; }
+    if(d!==row.datum&&_zahlungStopp(row.schueler_id,d,"pruefung"))return;
+    _ptSchreiben(()=>PT.aendern(getSupa(),id,{datum:d,von:v}),"Verschoben ✓");
+  });
+}
+async function ptVerschiebenNach(id,tagId,i){
+  const row=_pt.eigene.find(r=>r.id===id), tag=_pt.tage.find(t=>t.id===tagId); if(!row||!tag)return;
+  _ptTausch=null;
+  const anzahl=Number(row.fenster_anzahl)||PT.fensterAnzahlFuer(row.klasse);
+  if(!PT.passt(tag,_ptTagTermine(tag),i,anzahl,id)){ toast("Dort passt die Prüfung nicht hin."); return; }
+  if(tag.datum!==row.datum&&_zahlungStopp(row.schueler_id,tag.datum,"pruefung"))return;
+  await _ptSchreiben(()=>PT.aendern(getSupa(),id,{pruefungstag_id:tag.id,fenster:i,fenster_anzahl:anzahl}),`Verschoben: ${isoDE(tag.datum).slice(0,6)} ${PT.fensterVon(tag,i)}`);
+}
+async function ptTauschen(a,b){
+  _ptTausch=null;
+  await _ptSchreiben(()=>PT.tauschen(getSupa(),a,b),"Getauscht ✓");
+}
+
+/* ---------- Prüfungstag anlegen / Startzeit ändern ---------- */
+function ptTagSheet(tagId,nachher){
+  const tag=tagId?_pt.tage.find(t=>t.id===tagId):null;
+  if(tagId&&!tag)return;
+  const start=tag?PT.hm(tag.start)||PT.START:PT.START;
+  openSheet(`<div class="sheet-h">${tag?"Startzeit ändern":"Neuer Prüfungstag"}</div>
+    ${tag?`<p class="muted-p" style="font-size:13px;margin:-4px 0 12px;">${_ptTagTitel(tag)}</p>`:`<div class="field"><label>Datum</label><input type="date" id="ptDatum" value="${esc(todayISO())}"></div>`}
+    <div class="field"><label>Prüfer (Kürzel, kann leer bleiben)</label><input type="text" id="ptPruefer" maxlength="12" value="${esc(tag?tag.pruefer||"":"")}" placeholder="z. B. AB" autocomplete="off"></div>
+    <div class="field"><label>Erstes Fenster beginnt um</label><input type="time" id="ptStart" value="${esc(start)}" step="60"></div>
+    <p class="muted-p" id="ptVorschau" style="font-size:12.5px;margin:-4px 0 12px;"></p>
+    <div class="btn-row"><button class="btn btn-ghost" id="ptZu" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="ptSave">${tag?"Speichern":"Tag anlegen"}</button></div>`);
+  const vor=()=>{ const st=$("#ptStart").value||PT.START; $("#ptVorschau").textContent=`${PT.FENSTER_ZAHL} Fenster à ${PT.FENSTER_MIN} Min: ${st}–${PT.min2hm(PT.hm2min(st)+PT.FENSTER_MIN)} bis ${PT.min2hm(PT.hm2min(st)+(PT.FENSTER_ZAHL-1)*PT.FENSTER_MIN)}–${PT.min2hm(PT.hm2min(st)+PT.FENSTER_ZAHL*PT.FENSTER_MIN)}`; };
+  vor(); $("#ptStart").addEventListener("input",vor);
+  $("#ptZu").addEventListener("click",closeSheet);
+  $("#ptSave").addEventListener("click",async()=>{
+    const st=$("#ptStart").value||PT.START, pr=$("#ptPruefer").value.trim();
+    if(tag){ await _ptSchreiben(()=>PT.tagAendern(getSupa(),tag.id,{start:st,pruefer:pr||null}),"Gespeichert ✓"); return; }
+    const d=$("#ptDatum").value; if(!d){ toast("Bitte Datum wählen"); return; }
+    if(d<todayISO()){ toast("Das Datum liegt in der Vergangenheit."); return; }
+    const da=_pt.tage.find(t=>t.datum===d&&String(t.pruefer||"")===pr);
+    if(da){ closeSheet(); _ptOffen[da.id]=true; toast("Diesen Prüfungstag gibt es schon."); _ptNeuZeichnen(); return; }
+    let neu=null;
+    const ok=await _ptSchreiben(async()=>{ neu=await PT.tagAnlegen(getSupa(),{fahrschule_id:_authProfile.fahrschule_id,datum:d,start:st,pruefer:pr||null,erstellt_von:_authUser.id}); },"Prüfungstag angelegt ✓");
+    if(ok&&neu){ _ptOffen[neu.id]=true; if(nachher)nachher(neu); else _ptNeuZeichnen(); }
+  });
+}
+
+/* ---------- Mehrere Schüler hintereinander einteilen ---------- */
+function ptMehrereSheet(tagId){
+  const tag=_pt.tage.find(t=>t.id===tagId); if(!tag)return;
+  const termine=_ptTagTermine(tag), {wl,rest}=_ptKandidaten(), frei=PT.zaehle(tag,termine).frei, sel=[];
+  const chk=s=>`<label class="pt-chk"><input type="checkbox" data-id="${esc(s.id)}"><span>${esc(s.name)}${PT.fensterAnzahlFuer(s.form)===2?" · Lkw, 2 Fenster":""}</span><span class="sl-sub">${esc(formLabel(s.form))}</span></label>`;
+  openSheet(`<div class="sheet-h">Mehrere einteilen</div>
+    <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">${_ptTagTitel(tag)} · ${frei} Fenster frei. Die Schüler kommen der Reihe nach in die freien Fenster.</p>
+    ${(wl.length||rest.length)?`<div class="sheet-list">${wl.length?`<div class="blk-h" style="margin:0 0 4px;">Warteliste</div>${wl.map(chk).join("")}`:""}${rest.length?`<div class="blk-h" style="margin:8px 0 4px;">Weitere Schüler</div>${rest.map(chk).join("")}`:""}</div>`:`<p class="muted-p" style="margin-bottom:16px;">Niemand zum Einteilen.</p>`}
+    <div class="btn-row"><button class="btn btn-ghost" id="pmZu" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="pmGo" disabled>Einteilen</button></div>`);
+  $("#pmZu").addEventListener("click",closeSheet);
+  const go=$("#pmGo");
+  document.querySelectorAll("#sheet .pt-chk input").forEach(c=>c.addEventListener("change",()=>{
+    const id=c.dataset.id, k=sel.indexOf(id); if(c.checked&&k<0)sel.push(id); if(!c.checked&&k>=0)sel.splice(k,1);
+    go.disabled=!sel.length; go.textContent=sel.length?`${sel.length} einteilen`:"Einteilen";
+  }));
+  go.addEventListener("click",async()=>{
+    if(_ptBusy||!sel.length)return; _ptBusy=true; go.disabled=true;
+    const studs=sel.map(id=>DB.students.find(x=>x.id===id)).filter(Boolean), fehler=[], gut=[];
+    const ok=[]; studs.forEach(s=>{ if(_zahlungGesperrt(s.id))fehler.push({sid:s.id,text:"Zahlung ausstehend – bitte zuerst im Büro klären."}); else ok.push(s); });
+    let erg={ok:[],fehler:[]};
+    try{ erg=await PT.mehrereEinplanen(getSupa(),tag,termine,ok.map(s=>({id:s.id,klasse:s.form||"B",fahrlehrer_id:_authUser.id})),{fahrschule_id:_authProfile.fahrschule_id,art:"praxis",quelle:"app"}); }
+    catch(e){ erg.fehler.push({sid:null,text:PT.fehlerText(e)}); }
+    _ptBusy=false;
+    erg.ok.forEach(z=>{ const s=DB.students.find(x=>x.id===z.schueler_id); if(s){ gut.push(s); if(!s.ready&&!s.passed)setReady(s); } });
+    if(gut.length)save();
+    const alle=fehler.concat(erg.fehler);
+    closeSheet(); await ptLaden(); try{ pullTermineZuweisungen(); }catch(e){}
+    if(!alle.length){ toast(`${gut.length} eingeteilt ✓`); _ptNeuZeichnen(); return; }
+    openSheet(`<div class="sheet-h">${gut.length} eingeteilt</div>
+      <p class="muted-p" style="font-size:13px;margin:-4px 0 10px;">Das hat nicht geklappt:</p>
+      <div class="sheet-list">${alle.map(f=>{ const s=DB.students.find(x=>x.id===f.sid); return `<div class="sl-item"><span>${esc(s?s.name:"")}</span><span class="sl-sub">${esc(f.text)}</span></div>`; }).join("")}</div>
+      <div class="btn-row"><button class="btn btn-primary" id="pmOk" style="width:100%;">OK</button></div>`);
+    $("#pmOk").addEventListener("click",()=>{ closeSheet(); _ptNeuZeichnen(); });
+    _ptNeuZeichnen();
+  });
+}
+
+/* ---------- Schüler-Akte: Prüfungstermin planen ---------- */
+function _ptPlanSheet(s,tagVor){
+  const cur=terminFor(s.id), curRow=cur&&cur._pt?cur._pt:null, anzahl=PT.fensterAnzahlFuer(s.form);
+  openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
+    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)}${curRow?` hat schon eine Prüfung am ${isoDE(cur.date)} um ${esc(cur.von)}. Mit der Auswahl wird sie verschoben.`:` bekommt einen Termin. Der Schüler kommt dabei auf die Warteliste.`}${anzahl===2?" Lkw: die Prüfung braucht zwei Fenster.":""}</p>
+    <div id="epWahl"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="epCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-ghost" id="epNeu">+ Neuer Prüfungstag</button></div>`);
+  $("#epCancel").addEventListener("click",closeSheet);
+  $("#epNeu").addEventListener("click",()=>ptTagSheet(null,neu=>setTimeout(()=>_ptPlanSheet(s,neu.id),250)));
+  _ptFensterWahl($("#epWahl"),{anzahl,ignoriere:curRow?curRow.id:null,tagId:tagVor||(curRow&&curRow.pruefungstag_id)||null,beiWahl:async(tag,i)=>{
+    if(_zahlungStopp(s.id,tag.datum,"pruefung"))return;
+    const ok=await _ptSchreiben(()=>curRow?PT.aendern(getSupa(),curRow.id,{pruefungstag_id:tag.id,fenster:i,fenster_anzahl:anzahl}):PT.einplanen(getSupa(),Object.assign(_ptSupaBasis(),{schueler_id:s.id,klasse:s.form||"B",pruefungstag_id:tag.id,fenster:i,fenster_anzahl:anzahl})),null);
+    if(ok){ if(!s.ready&&!s.passed)setReady(s); save(); toast("Prüfungstermin am "+isoDE(tag.datum)+" um "+PT.fensterVon(tag,i)+" gesetzt"); routeDetail(s.id); }
+  }});
+}
+// Klassen ohne feste Fenster: Datum + Uhrzeit wie bisher, aber in der neuen Tabelle
+function _ptPlanFreiSheet(s){
+  const cur=terminFor(s.id), curRow=cur&&cur._pt?cur._pt:null;
+  openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
+    <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)} bekommt einen Termin. Der Schüler wird dabei automatisch auf die Warteliste gesetzt.</p>
+    <div class="field"><label>Datum</label><input type="date" id="epDate" value="${esc(cur?cur.date:todayISO())}"></div>
+    <div class="field"><label>Uhrzeit</label><input type="time" id="epTime" value="${esc(cur&&cur.von?cur.von:"09:00")}"></div>
+    <div class="btn-row"><button class="btn btn-ghost" id="epCancel" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="epSave">Termin setzen</button></div>`);
+  $("#epCancel").addEventListener("click",closeSheet);
+  $("#epSave").addEventListener("click",async()=>{
+    const d=$("#epDate").value; if(!d){ toast("Bitte Datum wählen"); return; }
+    const von=$("#epTime").value||"09:00";
+    if(_zahlungStopp(s.id,d,"pruefung"))return;
+    if(d<todayISO()&&!confirm("Das Datum liegt in der Vergangenheit. Trotzdem setzen?"))return;
+    const ok=await _ptSchreiben(()=>curRow?PT.aendern(getSupa(),curRow.id,{datum:d,von,pruefungstag_id:null,fenster:null}):PT.einplanen(getSupa(),Object.assign(_ptSupaBasis(),{schueler_id:s.id,klasse:s.form||"B",datum:d,von})),null);
+    if(ok){ if(!s.ready&&!s.passed)setReady(s); save(); toast("Prüfungstermin am "+isoDE(d)+" gesetzt"); routeDetail(s.id); }
+  });
+}
+// „Termin lösen“ in der Akte: Prüfung absagen (Rückgängig möglich), Platz auf der Warteliste bleibt
+async function _ptLoesen(s,rerender){
+  const cur=terminFor(s.id); if(!cur||!cur._pt)return; const id=cur._pt.id;
+  const ok=await _ptSchreiben(()=>PT.absagen(getSupa(),id),null); if(!ok)return;
+  rerender();
+  toastUndo("Prüfungstermin gelöst",()=>{ _ptSchreiben(()=>PT.aendern(getSupa(),id,{status:"geplant"}),"Wiederhergestellt ✓").then(()=>{ try{ rerender(); }catch(e){} }); },_undoMs());
+}
+
+/* ---------- Ergebnis: App ↔ Büro ---------- */
+function _ptRowFuer(sid,date){ return _ptAktiv()?_pt.eigene.find(r=>r.schueler_id===sid&&r.datum===date&&r.status==="geplant"&&(r.art||"praxis")==="praxis")||null:null; }
+function _ptErgebnis(row,status){
+  const alt=row.status; row.status=status; // sofort sichtbar; der Server spiegelt es ohnehin
+  PT.ergebnis(getSupa(),row.id,status).catch(e=>{ row.status=alt; toast(PT.fehlerText(e)); }).then(()=>ptLaden());
+}
+// Das Büro hat ein Ergebnis eingetragen (kalender_pruefungen, id „pt-…“) oder korrigiert (payload.buero_korrektur_am)
+async function _ptBueroErgebnisse(){
+  const supa=getSupa(), heute=todayISO();
+  const r=await supa.from("kalender_pruefungen").select("*").eq("fahrlehrer_id",_authUser.id).eq("geloescht",false).gte("datum",addDays(heute,-120));
+  if(r.error||!Array.isArray(r.data))return;
+  ensureDB(); let neu=false;
+  r.data.forEach(z=>{
+    if(!z.schueler_id||!z.datum||(z.result!=="pass"&&z.result!=="fail"))return;
+    const p=z.payload||{}, lokal=DB.exams.find(e=>e.id===z.id);
+    if(lokal){
+      if(p.buero_korrektur_am&&istPruefung(lokal)&&lokal.result!==z.result&&lokal.bueroKorrekturAm!==p.buero_korrektur_am){
+        const s=DB.students.find(x=>x.id===lokal.sid), alt=Object.assign({},lokal);
+        lokal.result=z.result; lokal.bueroKorrekturAm=p.buero_korrektur_am; if(z.result==="fail"&&!Array.isArray(lokal.faults))lokal.faults=[];
+        _ergebnisAnwenden(s,lokal,alt); neu=true;
+        if(s)logHist(s,"pruefung",`Ergebnis vom Büro geändert: ${z.result==="pass"?"bestanden":"nicht bestanden"}`);
+      }
+      return;
+    }
+    if(!String(z.id).startsWith("pt-"))return;
+    const s=DB.students.find(x=>x.id===z.schueler_id); if(!s)return;
+    if(DB.exams.some(e=>e.sid===z.schueler_id&&e.date===z.datum&&istPruefung(e)))return;
+    const attempt=DB.exams.filter(e=>e.sid===s.id&&istPruefung(e)).length+pruefungenUebernommen(s).length+1;
+    const zeile=(_pt.eigene||[]).find(x=>x.id===p.pruefungstermin_id)||(_pt.eigene||[]).find(x=>x.schueler_id===s.id&&x.datum===z.datum);
+    const ex={id:z.id,sid:s.id,name:s.name,date:z.datum,result:z.result,pruefer:z.pruefer||"",note:"",attempt,earnAt:z.datum,faults:[],eingriff:false,quelle:"buero"};
+    if(zeile&&zeile.von)ex.von=PT.hm(zeile.von);
+    if(p.pruefungstermin_id||zeile)ex.pruefungstermin_id=p.pruefungstermin_id||zeile.id;
+    DB.exams.push(ex);
+    const eur=Math.round(ueOf("pruefung")*DB.verdienst.proUE);
+    if(z.result==="pass"){ s.passed=z.datum; delete s.ready; delete s.waitOrder; logHist(s,"pruefung",`Praktische Prüfung bestanden (vom Büro eingetragen)${ex.pruefer?` · ${ex.pruefer}`:""}`,{eur}); }
+    else { s.attempts=(s.attempts||0)+1; bumpBehindScheduled(s); logHist(s,"pruefung",`Praktische Prüfung nicht bestanden (vom Büro eingetragen)${ex.pruefer?` · ${ex.pruefer}`:""}`,{eur}); }
+    neu=true;
+  });
+  if(neu)save();
+}
+// Einmalige Übernahme der alten Tafel (DB.termine) in pruefungstermine. Nichts wird aus DB.termine gelöscht.
+async function _ptAltUebernehmen(){
+  if(_ptUeberLaeuft||!_ptMoeglich())return; _ptUeberLaeuft=true;
+  try{
+    const heute=todayISO(), supa=getSupa(); let geschrieben=false, geaendert=false;
+    for(const t of (DB.termine||[])){
+      if(!t||!t.date||t.date<heute)continue;
+      for(const sid of (t.slots||[])){
+        if(!sid||(Array.isArray(t.uebernommen)&&t.uebernommen.includes(sid)))continue;
+        const s=DB.students.find(x=>x.id===sid), merk=()=>{ if(!Array.isArray(t.uebernommen))t.uebernommen=[]; t.uebernommen.push(sid); geaendert=true; };
+        if(!s)continue;
+        if(s.passed||DB.exams.some(e=>e.sid===sid&&e.date===t.date&&istPruefung(e))){ merk(); continue; }
+        const k=t.id+"|"+sid; if(_ptUeberVersucht[k])continue; _ptUeberVersucht[k]=true;
+        try{ await PT.einplanen(supa,{fahrschule_id:_authProfile.fahrschule_id,schueler_id:sid,art:"praxis",klasse:s.form||"B",fahrlehrer_id:_authUser.id,quelle:"app",datum:t.date,von:t.von||"09:00"}); merk(); geschrieben=true; }
+        catch(e){ if(/W21:schueler_doppelt/.test(String((e&&(e.message||e.details))||e)))merk(); else console.warn("[Kompass] Alt-Prüfung noch nicht übernommen:",e&&e.message); }
+      }
+    }
+    if(geaendert)save();
+    if(geschrieben){ _ptUeberLaeuft=false; await ptLaden(); try{ pullTermineZuweisungen(); }catch(e){} }
+  }catch(e){ console.warn("[Kompass] Übernahme:",e&&e.message); }
+  finally{ _ptUeberLaeuft=false; }
+}
+function futureTermine(){ const t=todayISO(); const l=_tafel().filter(x=>x.date>=t); return _ptAktiv()?l.sort((a,b)=>(a.date+(a.von||"")).localeCompare(b.date+(b.von||""))):l.sort((a,b)=>a.date<b.date?-1:1); }
 function terminFor(sid){ for(const t of futureTermine()){ if(t.slots&&t.slots.indexOf(sid)>=0)return t; } return null; }
 function assignedSet(){ const set=new Set(); futureTermine().forEach(t=>(t.slots||[]).forEach(x=>{if(x)set.add(x);})); return set; }
 function createTermin(date,plaetze,von){ const slots=new Array(plaetze).fill(null); const t={id:uid(),date,plaetze,slots}; if(von){ t.von=von; t.bis=min2hm(hm2min(von)+PRUEF_MIN); } DB.termine.push(t); save(); return t; }
-function clearSlot(sid){ DB.termine.forEach(t=>{ if(t.slots)t.slots=t.slots.map(x=>x===sid?null:x); }); }
+function clearSlot(sid){ if(_ptAktiv())return; /* neue Quelle: Platz wird über die Prüfung selbst frei (Ergebnis/Absagen) */ DB.termine.forEach(t=>{ if(t.slots)t.slots=t.slots.map(x=>x===sid?null:x); }); }
 function nextTermin(){ for(const t of futureTermine()){ const names=(t.slots||[]).filter(Boolean).map(id=>{const st=DB.students.find(x=>x.id===id);return st?st.name:null;}).filter(Boolean); if(names.length)return {date:t.date,names}; } return null; }
 
 // B197-Einträge (Schaltkompetenz) stehen nur für die Prüfer-Historie in DB.exams - sie sind keine Prüfung.
@@ -15807,7 +16210,7 @@ function showCalStudentDetail(sid){
   // Exams done
   const pastEx=(DB.exams||[]).filter(ex=>ex.sid===sid).sort((a,b)=>b.date.localeCompare(a.date));
   // Future exam slots
-  const futureEx=(DB.termine||[]).filter(t=>(t.slots||[]).includes(sid)).sort((a,b)=>a.date.localeCompare(b.date));
+  const futureEx=_tafel().filter(t=>(t.slots||[]).includes(sid)).sort((a,b)=>a.date.localeCompare(b.date));
   // Merge future: lessons + exam slots, sorted asc
   const futureItems=[
     ...futureL.map(l=>({ date:l.date, html:`<button class="cs-item future" data-date="${esc(l.date)}"><div class="csi-date">${deWeekday(l.date)} · ${isoDE(l.date)}</div><div class="csi-info">${esc(l.von)} · ${esc(artLabel[l.art]||l.art)}</div></button>` })),
@@ -15909,7 +16312,7 @@ function examReadyCard(s){
   }
   if(s.ready){
     const t=terminFor(s.id); const R=examReadiness(s);
-    const hatTermin=(DB.termine||[]).some(t=>(t.slots||[]).includes(s.id));
+    const hatTermin=_tafel().some(t=>(t.slots||[]).includes(s.id));
   const badge=hatTermin?'':(R.ready?`<span class="chip" style="border-color:var(--gruen);color:var(--gruen)">✓ Bereit zur Einteilung</span>`:`<span class="chip" style="border-color:var(--orange-line);color:var(--orange)">⏳ In Vorbereitung · noch ${R.openCount} ${R.openCount===1?"Punkt":"Punkte"}</span>`);
     return `<div class="ready-card active">
       <div class="ready-head">
@@ -15929,6 +16332,7 @@ function bindExamReady(s,rerender){
   const on=$("#readyOn"); if(on)on.addEventListener("click",()=>{ setReady(s); logHist(s,"ready","Auf die Praxis-Warteliste gesetzt"); save(); toast("Auf die Warteliste gesetzt"); celebrate(); rerender(); });
   const off=$("#readyOff"); if(off)off.addEventListener("click",()=>{
     const hatTermin=!!terminFor(s.id);
+    if(hatTermin&&_ptAktiv()){ _ptLoesen(s,rerender); return; }
     // Termin lösen: nur den Termin, der Platz auf der Warteliste bleibt. Ohne Termin: von der Warteliste nehmen.
     // K7: ohne Rückfrage, Rückgängig (Dauer aus den Einstellungen)
     const plaetze=[]; (DB.termine||[]).forEach(t=>(t.slots||[]).forEach((x,i)=>{ if(x===s.id)plaetze.push({t,i}); }));
@@ -16032,6 +16436,7 @@ function renderPlanActions(s){ const pa=$("#planActions"); if(!pa)return; pa.inn
 
 /* ---------- Prüfung eintragen ---------- */
 function openExamPlanSheet(s){
+  if(_ptAktiv())return PT.istFensterKlasse(s.form||"B")?_ptPlanSheet(s):_ptPlanFreiSheet(s);
   const cur=terminFor(s.id);
   openSheet(`<div class="sheet-h">Prüfungstermin planen</div>
     <p class="muted-p" style="margin:-4px 0 14px;font-size:13px;">${esc(s.name)} bekommt einen Termin. Der Schüler wird dabei automatisch auf die Warteliste gesetzt und dem Termin zugeteilt.</p>
@@ -16153,7 +16558,7 @@ function renderResultStep(s){
 function pruefungsTerminFuer(sid){
   const kommend=terminFor(sid); if(kommend)return kommend;
   const heute=todayISO();
-  const vergangen=(DB.termine||[])
+  const vergangen=_tafel(true)
     .filter(t=>Array.isArray(t.slots)&&t.slots.indexOf(sid)>=0&&t.date<heute)
     .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   if(vergangen[0])return vergangen[0];
@@ -16281,12 +16686,13 @@ function routePruefungen(){
   ensureDB();
   $("#tbTitle").textContent="Prüfungen"; setFab(false); view.scrollTop=0;
   syncTheoriePraxis(); // automatischer Wechsel bei 90%
-  const wl=waitlist(); const ts=futureTermine();
+  const wl=waitlist(); const ptNeu=_ptAktiv(); const ts=ptNeu?[]:futureTermine();
+  if(_ptMoeglich()&&Date.now()-_pt.zeit>20000)ptLaden();
   if(!window._pruefTab)_pruefTab="termine";
   const theorieList=theorieBestanden(); const praxisList=bereitFuerPraxis(); const waitList=theorieAusstehend();
   let html=`<div class="view-inner view-read fade-up">
     <div class="row-between" style="margin-bottom:14px;"><div class="sec-h">Prüf<span class="o">ungen</span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':'<button class="mini-btn" id="addTermin">+ Termin</button>'}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;"><button class="mini-btn ghost" id="openPruefWoche">Diese Woche</button><button class="mini-btn ghost" id="openPruefer">Prüfer</button>${_pruefTab==='wait'?'<button class="mini-btn" id="addTheorieWait">+ Schüler</button>':(ptNeu?'<button class="mini-btn" id="addTermin">+ Prüfungstag</button>':'<button class="mini-btn" id="addTermin">+ Termin</button>')}</div></div>
     <div class="pruef-tabs">
       <button class="pt-tab${_pruefTab==='termine'?' on':''}" data-pt="termine">Termine</button>
       <button class="pt-tab${_pruefTab==='wait'?' on':''}" data-pt="wait">Wartet auf Theorie <span class="pt-cnt">${waitList.length}</span></button>
@@ -16294,6 +16700,7 @@ function routePruefungen(){
       <button class="pt-tab${_pruefTab==='praxis'?' on':''}" data-pt="praxis">Bereit <span class="pt-cnt">${praxisList.length}</span></button>
     </div>`;
   if(_pruefTab==="termine"){
+    if(ptNeu)html+=_ptTageHTML();
     if(ts.length){
       html+=`<div class="blk-h">Termine</div>`;
       ts.forEach(t=>{
@@ -16349,7 +16756,8 @@ function routePruefungen(){
   }
   html+=`</div>`; view.innerHTML=html;
   document.querySelectorAll(".pt-tab").forEach(t=>t.addEventListener("click",()=>{ _pruefTab=t.dataset.pt; routePruefungen(); }));
-  const _at=$("#addTermin"); if(_at)_at.addEventListener("click",openTerminSheet);
+  const _at=$("#addTermin"); if(_at)_at.addEventListener("click",ptNeu?()=>ptTagSheet(null):openTerminSheet);
+  if(ptNeu)_ptBinden();
   const _atw=$("#addTheorieWait"); if(_atw)_atw.addEventListener("click",openTheorieWaitHinzufuegen);
   $("#openPruefWoche").addEventListener("click",routePruefungenWoche);
   $("#openPruefer").addEventListener("click",routePrueferListe);
@@ -16381,7 +16789,7 @@ function routePruefungenWoche(){
   const tage=[]; let cur=wk.von;
   while(cur<=wk.bis){ tage.push(cur); cur=addDays(cur,1); }
   const byTag={};
-  (DB.termine||[]).forEach(t=>{ if(t.date>=wk.von&&t.date<=wk.bis){ (t.slots||[]).forEach(sid=>{ if(sid){ const s=DB.students.find(x=>x.id===sid); if(s){ if(!byTag[t.date])byTag[t.date]=[]; byTag[t.date].push({s,von:t.von||"—"}); } } }); } });
+  _tafel().forEach(t=>{ if(t.date>=wk.von&&t.date<=wk.bis){ (t.slots||[]).forEach(sid=>{ if(sid){ const s=DB.students.find(x=>x.id===sid); if(s){ if(!byTag[t.date])byTag[t.date]=[]; byTag[t.date].push({s,von:t.von||"—"}); } } }); } });
   Object.values(byTag).forEach(list=>list.sort((a,b)=>(a.von||"").localeCompare(b.von||"")));
   const gesamt=Object.values(byTag).reduce((n,l)=>n+l.length,0);
   let html=`<div class="view-inner view-read fade-up">
@@ -17278,7 +17686,7 @@ function _h2Hinweise(){
       else if(!f.inaktiv_seit&&a&&a.stufe==="bald") out.push({sid:s.id,name:s.name,text:`Antrag bis ${isoDE(a.ablauf).slice(0,6)}`,farbe:"gelb"});
     }
     // Offene Sonderfahrten nur, wenn eine Prüfung in den nächsten 21 Tagen ansteht (Umschreiber brauchen keine).
-    const pTermin=(DB.termine||[]).filter(t=>t.date>=heute&&t.date<=in21&&(t.slots||[]).includes(s.id)).sort((a,b)=>a.date<b.date?-1:1)[0];
+    const pTermin=_tafel().filter(t=>t.date>=heute&&t.date<=in21&&(t.slots||[]).includes(s.id)).sort((a,b)=>a.date<b.date?-1:1)[0];
     const pruefungBald=!!pTermin;
     // Wie die alte Karte „Nächste Prüfung“: Prüfung steht an, aber bis dahin keine Fahrstunde geplant.
     if(pTermin&&pTermin.date>heute&&!(DB.lessons||[]).some(l=>l.sid===s.id&&l.date>=heute&&l.date<pTermin.date&&l.status!=="abgebrochen"&&l.status!=="nicht erschienen"&&["fahrstunde","sonder","nacht"].indexOf(l.art)>=0))
@@ -18778,7 +19186,7 @@ function getMorgenTermine(){
 function getMorgenPruefungen(){
   const mi=morgenIso();
   const out=[];
-  (DB.termine||[]).filter(t=>t.date===mi).forEach(t=>{
+  _tafel().filter(t=>t.date===mi).forEach(t=>{
     (t.slots||[]).filter(Boolean).forEach(sid=>out.push({sid,von:t.von||""}));
   });
   return out.sort((a,b)=>a.von.localeCompare(b.von));
