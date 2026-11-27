@@ -328,6 +328,14 @@ let appZeile = null, appZeileVorher = null, pctVorher = null;
       x.ausbildungsart = altArt; return { sichtbar, offen, neu: S.termine.length - vorher };
     });
     return r.sichtbar && r.offen && r.neu === 0 ? null : JSON.stringify(r); });
+  await pruefe("U9m", "Büro-Serientermine (Turboboost): Umschreiber ohne Auswahl „Sonderfahrt“, andere mit", () => page.evaluate(async () => {
+    S.lehrer = (S.lehrer || []).concat([{ id: "fl-s", name: "Test Serie", aktiv: true }]);
+    const a = { id: "us1", name: "Testschüler S1", fahrlehrer_id: "fl-s", status: "aktiv", ausbildungsart: "umschreibung", ausbildung: {} };
+    const b = { id: "us2", name: "Testschüler S2", fahrlehrer_id: "fl-s", status: "aktiv", ausbildungsart: "ersterwerb", ausbildung: {} };
+    S.schueler = (S.schueler || []).concat([a, b]);
+    const opt = async (sid) => { luSerienDialog(sid); await new Promise((ok) => setTimeout(ok, 150)); const dlg = [...document.querySelectorAll("dialog[open]")].pop();
+      const r = !!dlg.querySelector('select[name=art] option[value="sonder"]'); dlg.close(); return r; };
+    const r = [await opt("us1"), await opt("us2")]; return r[0] === false && r[1] === true ? null : JSON.stringify(r); }));
   await pruefe("U9h", "keine JS-Fehler (Büro)", () => jsFehler);
   await ctx.close();
 }
