@@ -6,6 +6,7 @@ const CACHE_VERSION = "kompass-v149";
 const CORE_FILES = [
   "./index.html",
   "./kompass-rechnen.js",
+  "./kompass-pruefungstage.js",
   "./kompass-einstellungen.js",
   "./kompass-fehler.js",
   "./neuigkeiten.js",
