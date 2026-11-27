@@ -4,6 +4,13 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.2", datum: "2026-11-27", kurz: "Prüfungen: feste Zeitfenster für B und BE.",
+    punkte: ["Ein Prüfungstag hat jetzt 9 feste Zeitfenster zu je 55 Minuten, ab 08:00 bis 16:15. Die Uhrzeit muss niemand mehr tippen.",
+             "Belegte Fenster sind sofort zu sehen. Ein Fenster kann nie doppelt vergeben werden, auch nicht, wenn App und Büro gleichzeitig planen.",
+             "Mehrere Schüler auf einmal einteilen, verschieben und zwei Schüler tauschen geht mit wenigen Tipps.",
+             "App und Büro zeigen dieselben Prüfungen, dieselben Zeiten und dasselbe Ergebnis: gelb heißt offen, grün bestanden, rot nicht bestanden.",
+             "Büro: Prüfungen lassen sich am PC zwischen Fenstern ziehen, der Fahrlehrer lässt sich direkt in der Zeile ändern.",
+             "Lkw-Prüfungen belegen an einem B-Tag zwei Fenster. Andere Klassen und Theorie bleiben mit freier Uhrzeit."] },
   { version: "2026.11.27.1", datum: "2026-11-27", kurz: "Umschreiber stellt jetzt das Büro ein.",
     punkte: ["Das Büro trägt „Umschreibung“ ein. Die App übernimmt das von selbst, der Fahrlehrer muss nichts einstellen.",
              "Bei Umschreibern entfallen die Sonderfahrten. Im Freigabe-Check steht „entfällt (Umschreiber)“ in Grün.",
