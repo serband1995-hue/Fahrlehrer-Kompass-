@@ -381,7 +381,7 @@ function ptMehrereDialog(tagId) {
   let letzteG = 0;
   const zeilen = liste.map(({ s, g, hat }) => {
     const gesperrt = bueroGesperrt(s);
-    const wh = ptWiederholungText(s);
+    const wh = ptWiederholungText(s.id);
     const an = g === 1 && !gesperrt && !wh && vorn < frei; if (an) vorn++;
     const kopf = g !== letzteG ? `<div class="pt-gruppe">${kopfG[g]}</div>` : ""; letzteG = g;
     return `${kopf}<label class="wahl pt-wahl" data-ptname="${esc(String(s.name || "").toLowerCase())}"><input type="checkbox" name="sid" value="${esc(s.id)}"${an ? " checked" : ""}${gesperrt ? " disabled" : ""}> <b>${esc(s.name)}</b> <span class="leise klein">${esc(s.klasse || "")}${s.fahrlehrer_id ? " · " + esc(lehrerName(s.fahrlehrer_id)) : ""}${gesperrt ? " · Zahlung ausstehend" : ""}${hat ? " · hat schon eine Prüfung" : ""}</span>${wh ? ` ${wh}` : ""}</label>`;

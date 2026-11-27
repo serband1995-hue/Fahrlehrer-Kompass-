@@ -370,7 +370,6 @@ async function tagAnlegen(page, datum, pruefer, start) {
   await page.evaluate(() => ptMehrereDialog("tg-a")); await page.waitForTimeout(200);
   const dm = dlg(page);
   const s11 = dm.locator('input[name=sid][value="s11"]'), s13 = dm.locator('input[name=sid][value="s13"]');
-  console.log('DBG', JSON.stringify(await page.evaluate(() => [S.pruefungstermine.filter(p => p.id === 'nb1'), ptWiederholungText('s11')])));
   const l5 = [await s11.count(), await s11.isChecked(), await s13.isChecked(), await dm.locator('label:has(input[value="s11"])').innerText()];
   pruefe("L5a Mehrere einplanen: Schüler mit „nicht bestanden“ (letzte 14 Tage) nicht vorab angehakt, mit „Wiederholung frühestens ab“", l5[0] === 1 && !l5[1] && l5[2] && /Wiederholung in der Regel frühestens ab/.test(l5[3]), JSON.stringify(l5));
   pruefe("L9a Mehrere einplanen: Klasse „A“ (ohne Prüfungsfenster) wird nicht angeboten", (await dm.locator('input[name=sid][value="s14"]').count()) === 0);
