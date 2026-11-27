@@ -1,0 +1,292 @@
+// Test W21 (Büro): Prüfungstage mit festen 55-Minuten-Fenstern in der Prüfungstafel (buero-pruefungstage.js).
+// Echter Browser, erfundene Daten (Attrappe buero-vorfuehrung.js). Es wird nichts verschickt, keine Datenbank berührt.
+// Aufruf:  NODE_PATH=$(npm root -g) node scripts/pruefungstage-buero-test.mjs
+import { createRequire } from "node:module";
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, join, normalize } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+const { bauDaten } = require("../buero-vorfuehrung.js");
+const { chromium } = require("playwright");
+const ROOT = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+const FOTOS = process.env.FOTOS || "";
+const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
+const d0 = new Date(); const HEUTE = `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, "0")}-${String(d0.getDate()).padStart(2, "0")}`;
+const KRtag = (n) => { const d = new Date(HEUTE + "T12:00:00"); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
+const server = createServer(async (req, res) => {
+  try {
+    const pfad = normalize(decodeURIComponent(req.url.split("?")[0])).replace(/^(\.\.[/\\])+/, "");
+    const datei = await readFile(join(ROOT, pfad === "/" ? "buero.html" : pfad));
+    res.writeHead(200, { "Content-Type": TYPES[extname(pfad)] || "application/octet-stream" });
+    res.end(datei);
+  } catch { res.writeHead(404); res.end(); }
+});
+await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
+const basis = `http://127.0.0.1:${server.address().port}/`;
+const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+let ok = 0, schlecht = 0;
+function pruefe(name, bed, info) { if (bed) { ok++; console.log("ok  " + name); } else { schlecht++; console.log("FEHLER  " + name + (info ? " · " + info : "")); } }
+
+async function oeffne({ breite = 1280, hoehe = 900, hash = "#pruefungen", vorbereiten, daten }) {
+  const d = daten || bauDaten(HEUTE);
+  const session = { user: { id: "ad-1", email: "leitung@example.org" } };
+  const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe } });
+  const page = await ctx.newPage();
+  const konsole = [];
+  page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+  page.on("pageerror", (e) => konsole.push(String(e)));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
+  await page.addInitScript(([dd, s, v]) => {
+    window.__FAKE = { tabellen: dd.tabellen, konten: dd.konten, session: s };
+    window.ZM_WARTE_MS = 500;
+    if (v) (new Function("F", v))(window.__FAKE);
+  }, [d, session, vorbereiten || ""]);
+  await page.goto(basis + "buero.html" + hash);
+  await page.waitForTimeout(400);
+  const frage = await page.waitForSelector("#wer:not([hidden])", { timeout: 1200 }).catch(() => null);
+  if (frage) {
+    await page.click(`#werListe button:has-text("Paula Muster")`);
+    await page.keyboard.type("7352", { delay: 20 });
+    await page.waitForTimeout(400);
+  }
+  await page.waitForFunction(() => { const a = document.getElementById("ansicht"); return a && !/Daten werden geladen/.test(a.textContent); }, null, { timeout: 8000 }).catch(() => {});
+  return { page, ctx, konsole };
+}
+const VOR = `
+  F.tabellen.fahrschule_zahlungsdaten = [{ fahrschule_id: "fs-test-1", kontoinhaber: "Boost Fahrschule Muster", iban: "DE89370400440532013000", bic: "COBADEFFXXX", paypal: "boostmuster", impressum: "Boost Fahrschule Muster, Beispielstraße 1, 12345 Beispielstadt, Tel. 000 0000, info@example.org", modus: "test", test_email: "test@example.org", geaendert_am: "2026-11-20T10:00:00Z", bearbeiter: "Mia Muster" }];
+  F.tabellen.fahrschule_preise = [{ id: "pz1", fahrschule_id: "fs-test-1", art: "pruefung_praxis", klasse: "B", bezeichnung: "Vorstellung", einheit: "pauschal", betrag_cent: 12000, gueltig_ab: "2026-01-01", angelegt_von: "ad-1", angelegt_am: "2026-01-01T10:00:00Z" }];
+  F.tabellen.schueler.forEach((s) => { s.reakt_bezahlt_bis = "2099-12-31"; });
+  F.tabellen.pruefungstermine.length = 0;
+`;
+const dlg = (page) => page.locator("dialog[open]").last();
+const fertig = (page) => page.waitForTimeout(450);
+const db = (page, f) => page.evaluate(f);
+// B-Schüler ohne Sperre, die noch keine Prüfung haben
+const kandidaten = (page, n, datum) => page.evaluate(([n, datum]) => S.schueler.filter((s) => istAktiv(s) && !bueroGesperrt(s) && (klasseVon(s) === "B" || klasseVon(s) === "B78" || klasseVon(s) === "B197") && !S.pruefungstermine.some((p) => p.schueler_id === s.id && p.datum === datum)).slice(0, n).map((s) => s.id), [n, datum]);
+const kartenText = (page, tagId) => page.locator(`[data-pttagkarte="${tagId}"]`).first().innerText();
+const ueberlauf = (page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
+async function tagAnlegen(page, datum, pruefer, start) {
+  await page.click("#ptNeu");
+  const d = dlg(page);
+  await d.locator('input[name="datum"]').fill(datum);
+  await d.locator('input[name="pruefer"]').fill(pruefer);
+  if (start) await d.locator('input[name="start"]').fill(start);
+  await d.locator("footer button[value=ok]").click();
+  await fertig(page);
+}
+
+{
+  const { page, ctx, konsole } = await oeffne({ vorbereiten: VOR, hoehe: 3600 });
+  pruefe("T0 „Tage“ ist die Standardansicht", (await page.locator('.tabs .tab[aria-current="page"]').first().innerText()).trim() === "Tage");
+  pruefe("T0b ohne Tag: freundlicher Text", /Noch kein Prüfungstag/.test(await page.locator("#ansicht").innerText()));
+
+  // --- Tag A anlegen, neun Schüler auf einmal
+  await tagAnlegen(page, KRtag(5), "ab");
+  const tagA = await db(page, () => window.__FAKE.tabellen.pruefungstage[0]);
+  pruefe("T1 Tag angelegt (Prüfer groß, Start 08:00)", !!tagA && tagA.pruefer === "AB" && String(tagA.start).slice(0, 5) === "08:00", JSON.stringify(tagA));
+  let txt = await kartenText(page, tagA.id);
+  pruefe("T1b Kopf: „0 geplant, 9 frei“, 9 Fenster-Zeilen 08:00 … 15:20–16:15", /0 geplant, 9 frei/.test(txt) && /08:00–08:55/.test(txt) && /15:20–16:15/.test(txt) && (await page.locator(`[data-pttabelle="${tagA.id}"] tr.pt-zeile`).count()) === 9, txt.slice(0, 200));
+  const neun = await kandidaten(page, 9, tagA.datum);
+  pruefe("T2 neun passende Schüler vorhanden", neun.length === 9);
+  await page.click(`[data-ptmehrere="${tagA.id}"]`);
+  const dd = dlg(page);
+  await dd.locator("input[name=sid]:checked").evaluateAll((l) => l.forEach((i) => i.click()));
+  for (const id of neun) await dd.locator(`input[name=sid][value="${id}"]`).check();
+  pruefe("T2b Zähler: 9 ausgewählt, 9 Fenster frei", /9 ausgewählt, 9 Fenster frei/.test(await dd.locator("#ptZaehl").innerText()));
+  await dd.locator("footer button[value=ok]").click();
+  await fertig(page);
+  txt = await kartenText(page, tagA.id);
+  pruefe("T3 9 geplant, 0 frei", /9 geplant, 0 frei/.test(txt), txt.slice(0, 160));
+  const reihe = await db(page, () => window.__FAKE.tabellen.pruefungstermine.filter((p) => p.pruefungstag_id === window.__FAKE.tabellen.pruefungstage[0].id).sort((a, b) => a.fenster - b.fenster).map((p) => p.fenster + "@" + String(p.von).slice(0, 5)));
+  pruefe("T3b Fenster 0–8 der Reihe nach, Zeiten 55 Minuten auseinander", reihe.join(",") === "0@08:00,1@08:55,2@09:50,3@10:45,4@11:40,5@12:35,6@13:30,7@14:25,8@15:20", reihe.join(","));
+  pruefe("T3c „Mehrere einplanen“ ist bei vollem Tag aus", await page.locator(`[data-ptmehrere="${tagA.id}"]`).isDisabled());
+  const kal = await db(page, () => window.__FAKE.tabellen.kalender_termine.filter((t) => t.payload && t.payload.pruefungstermin_id && window.__FAKE.tabellen.pruefungstermine.some((p) => p.id === t.payload.pruefungstermin_id && p.pruefungstag_id)).length);
+  const mitFl = await db(page, () => window.__FAKE.tabellen.pruefungstermine.filter((p) => p.pruefungstag_id && p.fahrlehrer_id).length);
+  pruefe("T3d der Server legt die Kalender-Einträge an (einer je Prüfung mit Fahrlehrer), der Browser schreibt keine", kal === mitFl && kal >= 8, kal + " von " + mitFl);
+  pruefe("T3e Hinweis D: neun neue Prüfungen warten auf die Zahlungsaufforderung", /9 neue Prüfungen – Zahlungsaufforderung offen/.test(await page.locator("[data-pthinweisd]").innerText().catch(() => "")), await page.locator("[data-pthinweisd]").innerText().catch(() => "keine Karte"));
+  pruefe("T3f nichts automatisch gesendet", (await db(page, () => window.__FAKE.log.filter((l) => l.function === "zahlungs-mail").length)) === 0);
+  await page.locator("[data-ptzm]").first().click();
+  await page.waitForTimeout(200);
+  pruefe("T3g Knopf öffnet die Karte „Zahlungsaufforderung“", (await page.locator("#zmKarte").count()) === 1);
+  await page.evaluate(() => zmKarteZu());
+
+  // --- Tag B: sieben, dann ziehen
+  await tagAnlegen(page, KRtag(6), "CD");
+  const tagB = await db(page, () => window.__FAKE.tabellen.pruefungstage.find((t) => t.pruefer === "CD"));
+  const sieben = await kandidaten(page, 7, tagB.datum);
+  await page.click(`[data-ptmehrere="${tagB.id}"]`);
+  const d2 = dlg(page);
+  await d2.locator("input[name=sid]:checked").evaluateAll((l) => l.forEach((i) => i.click()));
+  for (const id of sieben) await d2.locator(`input[name=sid][value="${id}"]`).check();
+  await d2.locator("footer button[value=ok]").click();
+  await fertig(page);
+  txt = await kartenText(page, tagB.id);
+  pruefe("T4 Tag B: 7 geplant, 2 frei", /7 geplant, 2 frei/.test(txt), txt.slice(0, 120));
+  const zeile = (i) => page.locator(`[data-pttabelle="${tagB.id}"] tr.pt-zeile[data-ptfenster="${i}"]`);
+  const idIn = (i) => zeile(i).getAttribute("data-ptid");
+  const id0 = await idIn(0), id1 = await idIn(1), id2 = await idIn(2);
+  // Ziehen auf freies Fenster 8
+  await zeile(0).dragTo(zeile(8), { sourcePosition: { x: 8, y: 8 } });
+  await fertig(page);
+  let f = await db(page, () => Object.fromEntries(window.__FAKE.tabellen.pruefungstermine.map((p) => [p.id, p.fenster + "@" + String(p.von).slice(0, 5)])));
+  pruefe("T5 Ziehen auf freies Fenster 8 = verschoben (15:20), Server rechnet die Zeit", f[id0] === "8@15:20", f[id0]);
+  pruefe("T5b Fenster 0 ist jetzt frei", (await zeile(0).getAttribute("class")).includes("pt-frei"));
+  // Ziehen auf belegtes Fenster = tauschen
+  await zeile(1).dragTo(zeile(2), { sourcePosition: { x: 8, y: 8 } });
+  await fertig(page);
+  f = await db(page, () => Object.fromEntries(window.__FAKE.tabellen.pruefungstermine.map((p) => [p.id, p.fenster + "@" + String(p.von).slice(0, 5)])));
+  pruefe("T6 Ziehen auf belegtes Fenster = getauscht (1↔2, Zeiten 09:50 / 08:55)", f[id1] === "2@09:50" && f[id2] === "1@08:55", f[id1] + " / " + f[id2]);
+  // Fahrlehrer in der Zeile ändern
+  const sel = page.locator(`[data-ptfl="${id1}"]`);
+  await sel.selectOption("fl-3");
+  await fertig(page);
+  const fl = await db(page, () => window.__FAKE.tabellen.pruefungstermine.map((p) => [p.id, p.fahrlehrer_id]));
+  const kt = await db(page, () => window.__FAKE.tabellen.kalender_termine.filter((t) => t.art === "pruefung" && t.fahrlehrer_id === "fl-3" && !t.geloescht).length);
+  pruefe("T7 Fahrlehrer in der Zeile geändert, Kalender beim neuen Fahrlehrer (Server)", fl.find((x) => x[0] === id1)[1] === "fl-3" && kt >= 1, JSON.stringify(fl.find((x) => x[0] === id1)));
+  // „+ Schüler“ in freiem Fenster
+  const [eine] = await kandidaten(page, 1, tagB.datum);
+  await page.locator(`[data-ptplus="${tagB.id}|0"]`).click();
+  await dlg(page).locator('select[name="schueler_id"]').selectOption(eine);
+  pruefe("T8 Fahrlehrer/Klasse vom Schüler vorgeschlagen", (await dlg(page).locator('select[name="klasse"]').inputValue()) === "B");
+  await dlg(page).locator("footer button[value=ok]").click();
+  await fertig(page);
+  pruefe("T8b „+ Schüler“ belegt Fenster 0", (await page.evaluate((s) => window.__FAKE.tabellen.pruefungstermine.some((p) => p.schueler_id === s && p.fenster === 0), eine)) && /8 geplant, 1 frei/.test(await kartenText(page, tagB.id)));
+  await page.evaluate(() => zmKarteZu());
+
+  // --- Startzeit 09:00: Zeiten rücken mit, Hinweis „Schüler informieren“
+  await page.locator(`[data-ptbearb="${tagA.id}"]`).click();
+  await dlg(page).locator('input[name="start"]').fill("09:00");
+  await dlg(page).locator("footer button[value=ok]").click();
+  await fertig(page);
+  const spaet = await db(page, () => window.__FAKE.tabellen.pruefungstermine.filter((p) => p.pruefungstag_id === window.__FAKE.tabellen.pruefungstage[0].id).sort((a, b) => a.fenster - b.fenster).map((p) => String(p.von).slice(0, 5)));
+  pruefe("T9 Start 09:00: Zeiten rücken (09:00 … 16:20)", spaet[0] === "09:00" && spaet[8] === "16:20", spaet.join(","));
+  txt = await kartenText(page, tagA.id);
+  pruefe("T9b Anzeige: 09:00–09:55 und Hinweis „Uhrzeit geändert – Schüler informieren“", /09:00–09:55/.test(txt) && /Uhrzeit geändert – Schüler informieren/.test(txt), txt.slice(0, 200));
+  await page.locator(`[data-ptinfo="${tagA.id}"]`).click();
+  pruefe("T9c „Erledigt“ blendet den Hinweis aus", !/Uhrzeit geändert/.test(await kartenText(page, tagA.id)));
+
+  // --- Prüfung planen: Prüfungstag + Fenster statt Uhrzeit
+  await page.click("#pNeu");
+  const dp = dlg(page);
+  pruefe("T10 Dialog: Zeitfenster-Auswahl statt Uhrzeit-Feld (Datum/Uhrzeit versteckt)", (await dp.locator('select[name="tag_id"]').isVisible()) && !(await dp.locator('input[name="von"]').isVisible()));
+  await dp.locator('select[name="art"]').selectOption("theorie");
+  pruefe("T10b Theorie: freie Uhrzeit", (await dp.locator('input[name="von"]').isVisible()) && !(await dp.locator('select[name="tag_id"]').isVisible()));
+  await dp.locator('select[name="art"]').selectOption("praxis");
+  const [noch] = await kandidaten(page, 1, tagB.datum);
+  await dp.locator('select[name="schueler_id"]').selectOption(noch);
+  const optT = await dp.locator('select[name="tag_id"] option').allInnerTexts();
+  pruefe("T10c Tage mit „x geplant, y frei“ in der Auswahl", optT.some((t) => /1 geplant, 8 frei|\d geplant, \d frei/.test(t)), optT.join(" | "));
+  await dp.locator('select[name="tag_id"]').selectOption(tagB.id);
+  const optF = await dp.locator('select[name="fenster"] option').allInnerTexts();
+  pruefe("T10d Fenster-Auswahl zeigt nur freie Fenster (hier 1)", optF.length === 1, optF.join(","));
+  await dp.locator("footer button[value=ok]").click();
+  await fertig(page);
+  const neuP2 = await page.evaluate(([s, t]) => window.__FAKE.tabellen.pruefungstermine.find((p) => p.schueler_id === s && p.pruefungstag_id === t), [noch, tagB.id]);
+  pruefe("T11 über den Dialog ins Fenster eingetragen: erstes freies Fenster (7), von 14:25", neuP2 && neuP2.pruefungstag_id === tagB.id && neuP2.datum === tagB.datum && neuP2.fenster === 7 && String(neuP2.von).slice(0, 5) === "14:25", JSON.stringify(neuP2));
+  await page.evaluate(() => zmKarteZu());
+  pruefe("T11c Tag B jetzt voll", /9 geplant, 0 frei/.test(await kartenText(page, tagB.id)));
+
+  // --- Freie Uhrzeit bleibt möglich (und alte Zeile erscheint)
+  await page.click("#pNeu");
+  const dq = dlg(page);
+  const [noch2] = await kandidaten(page, 1, KRtag(20));
+  await dq.locator('select[name="schueler_id"]').selectOption(noch2);
+  await dq.locator('select[name="zeitart"]').selectOption("frei");
+  await dq.locator('input[name="datum"]').fill(KRtag(20));
+  await dq.locator('input[name="von"]').fill("10:15");
+  await dq.locator("footer button[value=ok]").click();
+  await fertig(page);
+  const frei = await page.evaluate((s) => window.__FAKE.tabellen.pruefungstermine.find((p) => p.schueler_id === s && !p.pruefungstag_id), noch2);
+  pruefe("T12 freie Uhrzeit gespeichert ohne Prüfungstag", frei && !frei.pruefungstag_id && String(frei.von).slice(0, 5) === "10:15", JSON.stringify(frei));
+  pruefe("T12b erscheint unter „Prüfungen mit freier Uhrzeit“", /freier Uhrzeit/.test(await page.locator("#ansicht").innerText()) && /10:15/.test(await page.locator("#ansicht").innerText()));
+  await page.evaluate(() => zmKarteZu());
+
+  // --- Tag löschen: nur wenn leer
+  await tagAnlegen(page, KRtag(30), "XY");
+  const tagC = await db(page, () => window.__FAKE.tabellen.pruefungstage.find((t) => t.pruefer === "XY"));
+  pruefe("T13 „Tag löschen“ nur beim leeren Tag", (await page.locator(`[data-pttagkarte="${tagC.id}"] [data-ptloesch]`).count()) === 1 && (await page.locator(`[data-pttagkarte="${tagA.id}"] [data-ptloesch]`).count()) === 0);
+  await page.locator(`[data-ptloesch="${tagC.id}"]`).click();
+  await page.waitForSelector("dialog[open]"); await dlg(page).locator("footer button[value=ok]").click();
+  await fertig(page);
+  pruefe("T13b leerer Tag gelöscht", (await page.locator(`[data-pttagkarte="${tagC.id}"]`).count()) === 0);
+
+  // Neu laden mit gespeicherten Daten prüft scripts/w21-pruefungsfenster-test.mjs (Fall 10)
+  if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungstage-1280.png"), fullPage: true });
+  pruefe("T99 keine JS-Fehler", konsole.length === 0, konsole.join(" | ").slice(0, 400));
+  await ctx.close();
+}
+
+// ---- Layout, Ergebnisse, Tausch ohne Maus, Hinweis „aus der App“ (zweite Sitzung, heute als Prüfungstag)
+{
+  const vor = VOR + `
+    const heute = ${JSON.stringify(HEUTE)};
+    F.tabellen.pruefungstage = [{ id: "tg-h", fahrschule_id: "fs-test-1", datum: heute, start: "08:00", fenster_zahl: 9, pruefer: "EF", geloescht: false, erstellt_von: "ad-1" }];
+    const mk = (id, sid, fl, fen, extra) => Object.assign({ id, fahrschule_id: "fs-test-1", schueler_id: sid, fahrlehrer_id: fl, art: "praxis", klasse: "B", status: "geplant", pruefungstag_id: "tg-h", fenster: fen, fenster_anzahl: 1, datum: heute, von: ["08:00","08:55","09:50","10:45","11:40","12:35","13:30","14:25","15:20"][fen], quelle: "buero", entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false }, extra || {});
+    F.tabellen.pruefungstermine = [mk("h1", "s1", "fl-1", 0), mk("h2", "s2", "fl-2", 1), mk("h3", "s3", "fl-1", 2),
+      mk("h4", "s4", "fl-2", 4, { klasse: "CE", fenster_anzahl: 2, von: "11:40" }),
+      mk("a1", "s5", "fl-3", null, { pruefungstag_id: null, fenster: null, datum: ${JSON.stringify(KRtag(3))}, von: "10:00", quelle: "app" }),
+      mk("a2", "s7", "fl-3", null, { pruefungstag_id: null, fenster: null, datum: ${JSON.stringify(KRtag(4))}, von: "11:00", quelle: "app" })];
+  `;
+  for (const b of [1024, 1280, 1920]) {
+    const { page, ctx, konsole } = await oeffne({ vorbereiten: vor, breite: b, hoehe: 900 });
+    const ue = await ueberlauf(page);
+    pruefe(`L${b} Seite nicht seitlich wischbar`, ue <= 0, String(ue));
+    const raus = await page.evaluate(() => [...document.querySelectorAll(".pt-karte .pt-tabelle")].filter((t) => t.getBoundingClientRect().right > t.closest(".pt-karte").getBoundingClientRect().right + 1).length);
+    pruefe(`L${b} Tabellen ragen nicht aus der Karte`, raus === 0, String(raus));
+    if (b === 1280) {
+      const t = await page.locator("#ansicht").innerText();
+      pruefe("L1 Lkw braucht zwei Fenster: Folgezeile da", /gehört zur Prüfung darüber/.test(t) && /11:40–13:30/.test(t), t.slice(0, 300));
+      pruefe("L2 heutiger Tag: Kopf „5 geplant“ wird so gezählt (4 Prüfungen im Tag)", /4 geplant, 4 frei/.test(t), t.slice(0, 200));
+      pruefe("L3 Hinweis „2 neue Prüfungen aus der App – Zahlungsaufforderung offen“", /2 neue Prüfungen aus der App – Zahlungsaufforderung offen/.test(t), t.slice(0, 400));
+      // Ergebnis direkt: bestanden / nicht bestanden
+      await page.locator('[data-eja="h1"]').click(); await fertig(page);
+      await page.locator('[data-enein="h2"]').click(); await fertig(page);
+      const st = await db(page, () => Object.fromEntries(window.__FAKE.tabellen.pruefungstermine.map((p) => [p.id, p.status])));
+      pruefe("E1 ✓ = bestanden, ✗ = nicht bestanden", st.h1 === "bestanden" && st.h2 === "nicht_bestanden", JSON.stringify(st));
+      const kl = await page.evaluate(() => [document.querySelector('tr[data-ptid="h1"]').className, document.querySelector('tr[data-ptid="h2"]').className]);
+      pruefe("E2 Farben: bestanden grün, nicht bestanden rot", /pt-st-gruen/.test(kl[0]) && /pt-st-rot/.test(kl[1]), kl.join(" | "));
+      const ak = await db(page, () => ({ s1: S.schueler.find((x) => x.id === "s1").praxis_bestanden_am, aufg: S.aufgaben.some((a) => a.schueler_id === "s2" && /Neuen Termin/.test(a.text)), kp: window.__FAKE.tabellen.kalender_pruefungen.filter((k) => k.schueler_id === "s1" && k.datum === S.pruefungstermine.find((p) => p.id === "h1").datum && k.result === "pass").length }));
+      pruefe("E3 Akte: Datum bestanden; Aufgabe „Neuen Termin planen“; Server spiegelt in die App", !!ak.s1 && ak.aufg && ak.kp >= 1, JSON.stringify(ak));
+      pruefe("E4 Rückgängig bleibt möglich", (await page.locator('[data-erueck="h1"]').count()) === 1);
+      // Ziehen: bestandene Prüfung lässt sich nicht verschieben (nicht ziehbar)
+      pruefe("E5 mit Ergebnis nicht verschiebbar? Zeile bleibt, Fenster-Platz bleibt belegt", (await page.locator('tr[data-ptid="h1"]').getAttribute("data-ptfenster")) === "0");
+      // Tauschen ohne Maus (Bearbeiten-Dialog): h3 mit h4 (Lkw, 2 Fenster) geht nicht -> Fehlertext; h3 mit freier Auswahl
+      await page.locator('[data-pbearb="h3"]').click();
+      const d = dlg(page);
+      pruefe("E6 Bearbeiten: Tag und Fenster wählbar, „Mit einem anderen Schüler tauschen“ vorhanden", (await d.locator('select[name="tag_id"]').isVisible()) && (await d.locator('select[name="tauschen_mit"]').count()) === 1);
+      await d.locator('select[name="fenster"]').selectOption({ index: 1 });
+      const wahl = await d.locator('select[name="fenster"] option:checked').innerText();
+      await d.locator("footer button[value=ok]").click(); await fertig(page);
+      const h3 = await db(page, () => window.__FAKE.tabellen.pruefungstermine.find((p) => p.id === "h3"));
+      pruefe("E7 Verschieben im Dialog (erstes freies Fenster)", h3.fenster !== 2 && wahl.includes(String(h3.von).slice(0, 5)), `${h3.fenster} ${h3.von} ${wahl}`);
+      // Hinweis D: Knopf pro Prüfung
+      pruefe("D1 je Prüfung ein Knopf", (await page.locator("[data-ptzm]").count()) === 2);
+      pruefe("D2 Tag mit Lkw: freie Fenster zeigen „+ Schüler“", (await page.locator("[data-ptplus]").count()) >= 4);
+      if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungstage-heute-1280.png"), fullPage: true });
+    }
+    pruefe(`L${b} keine JS-Fehler`, konsole.length === 0, konsole.join(" | ").slice(0, 300));
+    await ctx.close();
+  }
+}
+
+// ---- Alte Datenbank ohne Migration: alte Tafel wie bisher
+{
+  const { page, ctx, konsole } = await oeffne({ vorbereiten: `F.rpcs = F.rpcs || {}; F.rpcs.pruefungstage_belegung = () => { throw new Error('function does not exist'); };` });
+  const t = await page.locator(".tabs .tab").allInnerTexts();
+  pruefe("A1 ohne Migration: kein Reiter „Tage“, Standard „Kommende“", !t.includes("Tage") && (await page.locator('.tabs .tab[aria-current="page"]').first().innerText()).trim() === "Kommende", t.join(","));
+  await page.click("#pNeu");
+  pruefe("A2 ohne Migration: Dialog wie bisher (Uhrzeit-Feld, keine Fenster-Auswahl)", (await dlg(page).locator('input[name="von"]').isVisible()) && (await dlg(page).locator('select[name="tag_id"]').count()) === 0);
+  pruefe("A3 keine JS-Fehler", konsole.length === 0, konsole.join(" | ").slice(0, 300));
+  await ctx.close();
+}
+
+await browser.close();
+server.close();
+console.log(`\nPrüfungstage-Büro-Test: ${ok} ok, ${schlecht} Fehler`);
+process.exit(schlecht ? 1 : 0);

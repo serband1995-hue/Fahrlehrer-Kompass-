@@ -7,6 +7,7 @@ const CORE_FILES = [
   "./index.html",
   "./kompass-rechnen.js",
   "./kompass-pruefungstage.js",
+  "./buero-pruefungstage.js",
   "./kompass-einstellungen.js",
   "./kompass-fehler.js",
   "./neuigkeiten.js",

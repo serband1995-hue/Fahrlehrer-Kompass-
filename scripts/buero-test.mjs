@@ -248,7 +248,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 
 // 4b) Prüfungstafel: Haken setzen, planen (mit Kalender), Ergebnis, Großansicht
 {
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen", breite: 1920, hoehe: 1080 });
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=kommend", breite: 1920, hoehe: 1080 });
   if (FOTOS) await page.screenshot({ path: join(FOTOS, "pruefungen-tafel.png"), fullPage: true });
   await page.click('[data-id="pt-1"][data-haken="tuev_gutschein"]');
   await page.waitForTimeout(200);
@@ -266,7 +266,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
   else {
     if (!neu.fahrlehrer_id) fehler("Prüfungstafel: Fahrlehrer nicht vom Schüler übernommen");
     const kt = await page.evaluate((id) => window.__FAKE.tabellen.kalender_termine.find((t) => t.id === id), neu.kalender_termin_id);
-    if (!kt || kt.art !== "pruefung" || kt.bis !== "13:00") fehler("Prüfungstafel: kein passender Kalendertermin für den Fahrlehrer " + JSON.stringify(kt));
+    if (!kt || kt.art !== "pruefung" || kt.bis !== "12:25") fehler("Prüfungstafel: kein passender Kalendertermin für den Fahrlehrer " + JSON.stringify(kt));
   }
   // Ergebnis für die gestrige Prüfung
   await page.click('[data-ergebnis="pt-4"]');
@@ -927,7 +927,7 @@ for (const [breite, hoehe] of [[1920, 1080], [1366, 768], [1024, 768]]) {
 
 // 4f3) B7: Prüfungstafel zwischen 1301 und 1440 px – kein Schülername zerbricht in der Warnkarte
 for (const breite of [1301, 1366, 1420]) {
-  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen", breite, hoehe: 800, vorbereiten: function () {
+  const { page, ctx, konsole } = await oeffne({ nutzer: "bu-1", hash: "#pruefungen?ansicht=kommend", breite, hoehe: 800, vorbereiten: function () {
     const g = new Date(); g.setDate(g.getDate() - 1);
     F.tabellen.pruefungstermine.push({ id: "pt-b7", fahrschule_id: "fs-test-1", schueler_id: "s12", fahrlehrer_id: "fl-2", art: "praxis", klasse: "B", datum: g.toISOString().slice(0, 10), von: "11:00", status: "geplant" });
   } });
