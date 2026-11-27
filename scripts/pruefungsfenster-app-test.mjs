@@ -237,6 +237,35 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
   await ctx.close();
   pruefe("W36 keine JS-Fehler (Teil 2)", fehler.length === 0, fehler.join(" | "));
 }
+
+// ---------- Teil 3: Handy-Größen (360/412 hoch, quer): nichts läuft über, Tippflächen mindestens 44 px ----------
+for (const g of [{ n: "360", w: 360, h: 780 }, { n: "412", w: 412, h: 860 }, { n: "quer", w: 740, h: 360 }]) {
+  const { ctx, page, fehler } = await starte({ width: g.w, height: g.h });
+  const r = await page.evaluate(async () => {
+    const l = DB.students.filter((s) => !s.passed).slice(0, 4); l.forEach((s) => { s.ready = new Date().toISOString(); s.form = "B"; });
+    const supa = getSupa(), d = todayISO(), x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + 2);
+    const tag = await PT.tagAnlegen(supa, { fahrschule_id: _authProfile.fahrschule_id, datum: x.toISOString().slice(0, 10), start: "08:00", pruefer: "AB", erstellt_von: _authUser.id });
+    await PT.einplanen(supa, Object.assign(_ptSupaBasis(), { schueler_id: l[0].id, klasse: "B", pruefungstag_id: tag.id, fenster: 0, fenster_anzahl: 1 }));
+    await PT.einplanen(supa, Object.assign(_ptSupaBasis(), { schueler_id: l[1].id, klasse: "B", pruefungstag_id: tag.id, fenster: 1, fenster_anzahl: 1 }));
+    await ptLaden(); _ptOffen[tag.id] = true; _pruefTab = "termine"; routePruefungen();
+    return tag.id;
+  });
+  await warte(page);
+  const mess = () => page.evaluate(() => ({ breit: document.documentElement.scrollWidth - window.innerWidth, klein: [...document.querySelectorAll(".pt-z, .pt-kopf, .pt-f, .pt-chk, #sheet .es-act, #sheet .sl-item")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 43.5).map((e) => e.className + ":" + Math.round(e.getBoundingClientRect().height)) }));
+  let m = await mess();
+  pruefe(`W37 [${g.n}] Prüfungstag: nichts läuft seitlich über, Tippflächen ≥ 44 px`, m.breit <= 0 && !m.klein.length, JSON.stringify(m));
+  await page.click("[data-ptp]"); await warte(page);
+  m = await mess(); pruefe(`W38 [${g.n}] Prüfung-Blatt: ≥ 44 px, nichts läuft über`, m.breit <= 0 && !m.klein.length, JSON.stringify(m));
+  await page.click("#ppVersch"); await warte(page);
+  m = await mess(); pruefe(`W39 [${g.n}] Verschieben-Blatt: ≥ 44 px, nichts läuft über`, m.breit <= 0 && !m.klein.length, JSON.stringify(m));
+  if (bildOrdner) await page.screenshot({ path: join(bildOrdner, `verschieben-${g.n}.png`) });
+  await page.evaluate(() => closeSheet()); await warte(page, 300);
+  await page.click("[data-ptmehr]"); await warte(page);
+  m = await mess(); pruefe(`W40 [${g.n}] „Mehrere einteilen“-Blatt: ≥ 44 px, nichts läuft über`, m.breit <= 0 && !m.klein.length, JSON.stringify(m));
+  if (bildOrdner) await page.screenshot({ path: join(bildOrdner, `mehrere-${g.n}.png`) });
+  await ctx.close();
+  pruefe(`W41 [${g.n}] keine JS-Fehler`, fehler.length === 0, fehler.join(" | "));
+}
 console.log(`\nPrüfungsfenster-App-Test: ${ok} ok, ${schlecht} Fehler`);
 await browser.close(); server.close();
 process.exit(schlecht ? 1 : 0);
