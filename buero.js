@@ -4601,7 +4601,10 @@ function fahrzeugKonflikteAlle() {
   const nach = {};
   for (const t of S.termine) {
     if (!t.fahrzeug || !t.von || !t.bis || t.art === "block" || t.datum < heute || t.datum > bis) continue;
-    (nach[t.datum + "|" + t.fahrzeug] = nach[t.datum + "|" + t.fahrzeug] || []).push(t);
+    // Gesamtprüfung (K1): dieselbe Regel wie die Überschneidungs-Warnung (W25) – Name ohne Groß/Klein und Leerzeichen, abgesagte/abgebrochene zählen nicht
+    if (kfDa() && !KR.terminZaehltFuerKonflikt(kfForm(t))) continue;
+    const fz = kfDa() ? KR.fahrzeugNorm(t.fahrzeug) : t.fahrzeug;
+    (nach[t.datum + "|" + fz] = nach[t.datum + "|" + fz] || []).push(t);
   }
   for (const liste of Object.values(nach)) {
     liste.sort((a, b) => a.von.localeCompare(b.von));
