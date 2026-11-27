@@ -2775,9 +2775,18 @@ async function verschiebeSchueler(x, neuerLehrer) {
       ? await vwUrlaubWarnen(neuerLehrer, kuenftig.map((t) => t.datum), `${kuenftig.length === 1 ? "1 künftiger Termin" : kuenftig.length + " künftige Termine"} von ${x.name} liegen noch bei ${lehrerName(alter)}. Trotzdem übertragen? Bei „Abbrechen“ bleiben sie bei ${lehrerName(alter)}.`, "Trotzdem übertragen")
       : await bestaetige("Künftige Termine mitnehmen?", `${kuenftig.length} künftige Termine von ${x.name} liegen noch bei ${lehrerName(alter)}. Zu ${lehrerName(neuerLehrer)} übertragen?`, "Ja, übertragen"));
     if (mitnehmen) {
-      const res = await supa.from("kalender_termine").update({ fahrlehrer_id: neuerLehrer, aktualisiert_am: new Date().toISOString() }).in("id", kuenftig.map((t) => t.id)).select("id");
-      if (res.error) toast("Termine nicht übertragen: " + dbFehlerText(res.error), true);
-      else kuenftig.forEach((t) => { t.fahrlehrer_id = neuerLehrer; });
+      // W21: Prüfungs-Einträge im Kalender bestimmt die Prüfungstafel – dort den Fahrlehrer ändern, der Server zieht den Kalender nach
+      const spiegel = kuenftig.filter((t) => typeof pruefungZuSpiegel === "function" && pruefungZuSpiegel(t));
+      const normal = kuenftig.filter((t) => !spiegel.includes(t));
+      if (normal.length) {
+        const res = await supa.from("kalender_termine").update({ fahrlehrer_id: neuerLehrer, aktualisiert_am: new Date().toISOString() }).in("id", normal.map((t) => t.id)).select("id");
+        if (res.error) toast("Termine nicht übertragen: " + dbFehlerText(res.error), true);
+        else normal.forEach((t) => { t.fahrlehrer_id = neuerLehrer; });
+      }
+      for (const t of spiegel) {
+        const p = pruefungZuSpiegel(t);
+        if (p && p.status === "geplant" && neuerLehrer) { const z = await speicherePruefung(p.id, { fahrlehrer_id: neuerLehrer }); if (z) t.fahrlehrer_id = neuerLehrer; }
+      }
     }
   }
   if (!(await speichereSchueler(x.id, { fahrlehrer_id: neuerLehrer }, neuerLehrer ? `${x.name} ist jetzt bei ${lehrerName(neuerLehrer)}` : `${x.name} ist jetzt ohne Fahrlehrer`))) return;
