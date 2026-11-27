@@ -185,9 +185,11 @@ begin
   perform set_config('request.jwt.claim.sub', v_b1::text, true);
   perform set_config('role', 'authenticated', true);
   select count(*) into v_n from public.fahrschule_backups_privat;
-  select count(*) into v_n2 from public.fahrschule_backups b where b.id = v_bk and ((b.daten -> 'tabellen') ? 'snapshots' or (b.daten -> 'tabellen') ? 'schueler_privat');
   perform set_config('role', v_start, true);
-  v_pr := v_pr || jsonb_build_object('name', 'Büro liest keine Handy-Stände/privaten Angaben über das Backup', 'kat', 'pflicht', 'ok', v_n = 0 and v_n2 = 0, 'ist', jsonb_build_array(v_n, v_n2));
+  -- Inhalt des offenen Teils (den Büro und Leitung herunterladen) als Server prüfen
+  select count(*) into v_n2 from public.fahrschule_backups b where b.id = v_bk and ((b.daten -> 'tabellen') ?| array['snapshots', 'schueler_privat', 'lc_zuordnung']
+     or exists (select 1 from public.w24_tabellen() t where t.entdeckt and (b.daten -> 'tabellen') ? t.tabelle));
+  v_pr := v_pr || jsonb_build_object('name', 'Büro liest keine Handy-Stände/privaten Angaben/LC-Zuordnung/entdeckten Tabellen über das Backup', 'kat', 'pflicht', 'ok', v_n = 0 and v_n2 = 0, 'ist', jsonb_build_array(v_n, v_n2));
 
   -- ===================================================================================================================
   -- Vorschau direkt danach (Büro): nichts zu tun, Büro darf nicht wiederherstellen

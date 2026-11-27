@@ -206,6 +206,7 @@ ok("Sicherung: Format 2, von Hand, Zählung (2 Schüler inkl. gelöschtem, 2 Ter
   && r.zaehlung.schueler_notizen === 1 && r.zaehlung.provisionen === 1 && r.zaehlung.zahlungsbelege === 1 && r.zaehlung.snapshots === 1 && r.zaehlung.att_neu === 1 && r.arten.att_neu === "entdeckt"
   && r.arten.zahlungsbelege === "anhaengen" && r.arten.snapshots === "auf_wunsch" && r.groesse_bytes > 500, { z: r.zaehlung, a: r.arten });
 ok("Sicherung enthält nichts der fremden Fahrschule", !JSON.stringify(r.daten).includes(FS2) && !JSON.stringify(r.daten).includes('"sx"'));
+ok("Entdeckte Tabellen nur im geschützten Teil (nicht in daten)", !("att_neu" in (r.daten.tabellen || {})) && !("provisionen" in (r.daten.tabellen || {})), Object.keys(r.daten.tabellen || {}));
 ok("Handy-Stände nur im geschützten Teil (nicht in daten)", !JSON.stringify(r.daten).includes("students"), Object.keys(r.daten.tabellen || {}));
 ok("Keine Anmeldedaten: kein PIN-Hash, keine Sitzungen; Büro-Person und Notiz-gelesen (1) drin", !JSON.stringify(r.daten).includes("GEHEIMER-HASH") && !JSON.stringify(r.daten).includes("TOKEN-HASH")
   && r.zaehlung.buero_personen === 1 && r.zaehlung.schueler_notiz_gelesen === 1 && !("buero_sitzungen" in r.zaehlung), r.zaehlung);

@@ -37,7 +37,10 @@
 --    DISABLE TRIGGER <name>; von Hand ausgeschaltete bleiben aus). Grund: Auslöser würden zurückgeschriebene Zeilen verändern
 --    (Bearbeiter, FC-Haken, Papierkorb-Zeit, Belegnummer) oder sperren (Belege fest, Zahlungssperre).
 --    Warum das für andere Sitzungen sicher ist: (1) Die Tabellen sind vorher mit LOCK … SHARE ROW EXCLUSIVE gesperrt; App und
---    Büro WARTEN beim Schreiben (lesen geht weiter), lock_timeout 15 s, dann Abbruch der Rücksicherung ohne Änderung.
+--    Büro WARTEN beim Schreiben, lock_timeout 15 s, dann Abbruch der Rücksicherung ohne Änderung. Lesen geht meist weiter;
+--    ALTER CONSTRAINT nimmt aber kurz ACCESS EXCLUSIVE auf der verweisenden Tabelle, dann warten auch Leser für Sekunden.
+--    Ein Verklemmen mit gleichzeitigem Betrieb kann eine Seite abbrechen (kein Datenverlust). Darum: zu ruhiger Zeit zurückholen.
+--    Jede Rücksicherung mit Änderungen lässt PostgREST sein Schema neu laden (harmlos).
 --    (2) Die Änderung an den Auslösern ist Teil derselben Transaktion: andere Sitzungen sehen sie nie (sie sehen den Katalog erst
 --    nach COMMIT, und dann sind die Auslöser schon wieder an). (3) Jeder Fehler = ROLLBACK, auch der DDL – die Auslöser sind
 --    danach im alten Zustand. Kein session_replication_role (für postgres nicht setzbar).
@@ -155,10 +158,12 @@ create or replace function public.w24_ausgenommen()
  returns text[] language sql immutable set search_path to 'public'
 as $function$ select array['fahrschule_backups', 'buero_sitzungen', 'snapshot_backups', 'trinkgeld_privat', 'push_subscriptions']::text[] $function$;
 
--- Tabellen, die in den geschützten Teil (fahrschule_backups_privat) kommen.
+-- Tabellen, die in den geschützten Teil (fahrschule_backups_privat) kommen: Handy-Stände, private Schülerangaben,
+-- LeadConnector-Zuordnung (Regel lc_zuordnung_admin: nur Super-Admin). Dazu IMMER alle „entdeckten“ Tabellen (ihre
+-- Leserechte hat niemand geprüft; Richter W24).
 create or replace function public.w24_privat_tabellen()
  returns text[] language sql immutable set search_path to 'public'
-as $function$ select array['snapshots', 'schueler_privat']::text[] $function$;
+as $function$ select array['snapshots', 'schueler_privat', 'lc_zuordnung']::text[] $function$;
 
 -- Spalten, die NIE in eine Sicherung gehören (Anmeldedaten). Fehlen sie im Backup, bleiben sie beim Zurückschreiben unberührt.
 create or replace function public.w24_ohne_spalten(p_tabelle text)
@@ -276,7 +281,7 @@ begin
       v_arten := v_arten || jsonb_build_object(t.tabelle, 'fehler');
       continue;
     end;
-    if t.tabelle = any(public.w24_privat_tabellen()) then
+    if t.entdeckt or t.tabelle = any(public.w24_privat_tabellen()) then
       v_privat := v_privat || jsonb_build_object(t.tabelle, v_rows);
     else
       v_tab := v_tab || jsonb_build_object(t.tabelle, v_rows);
@@ -793,7 +798,8 @@ begin
 end;
 $plan$;
 
--- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=19, nachtlauf = 1 Auftrag 'kompass-sicherung-nacht', alter Auftrag weg)
+-- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=19). Danach von Hand prüfen:
+--   select jobname, schedule, command from cron.job;  → genau ein Sicherungs-Auftrag 'kompass-sicherung-nacht', der alte ist weg.
 select
   (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'fahrschule_backups'
      and column_name in ('format', 'anlass', 'zaehlung', 'arten', 'groesse_bytes', 'pruefsumme', 'erstellt_von', 'hinweis')) as spalten,
