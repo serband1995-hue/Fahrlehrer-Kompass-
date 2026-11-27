@@ -18,7 +18,8 @@
 --   gelöschter Schüler, inaktives Fahrzeug, Papierkorb, Beleg, Handy-Stand, nichts von B) → Vorschau = nichts zu tun →
 --   Daten „verlieren“ und ändern → Vorschau zählt richtig → falscher Code/Büro/fremde Leitung abgewiesen → Ergänzen → Komplett
 --   (Stand = Backup, neuer Beleg bleibt, Zähler nie kleiner, Auslöser wieder an, B unverändert) → Handy-Stand nur auf Wunsch →
---   Rückgängig über die Sicherung „vor_wiederherstellung“ → Prüfsumme/gefälschtes Backup/altes Format abgewiesen → Aufräumen (30 Nacht, von Hand nie).
+--   Rückgängig über die Sicherung „vor_wiederherstellung“ → Prüfsumme/gefälschtes Backup/altes Format abgewiesen → Aufräumen (30 Nacht, von Hand nie)
+--   → gelaufene, unterschriebene Stunde bleibt bei „komplett“ unverändert.
 -- NICHT GETESTET: echtes gleichzeitiges Schreiben aus zwei Verbindungen (ein DO-Block = eine Verbindung); der Nachtlauf über
 --   ALLE Fahrschulen (würde jede echte Fahrschule sichern) – geprüft wird w24_sichern(…,'nacht') und das Aufräumen für A.
 -- =====================================================================================================================
@@ -407,6 +408,29 @@ begin
       || '/' || (select count(*) from public.fahrschule_backups where fahrschule_id = v_fsb)::text;
   v_pr := v_pr || jsonb_build_object('name', 'Aufräumen: 30 Nacht-Sicherungen bleiben, von Hand und vor_wiederherstellung bleiben, B unberührt', 'kat', 'pflicht',
     'ok', v_n = 4 and v_n2 = 30 and v_t = '4/29/33', 'ist', jsonb_build_array(v_n, v_n2, v_t));
+
+  -- ===================================================================================================================
+  -- Feste Stunde (gelaufen + unterschrieben): „komplett“ ändert sie nie
+  -- ===================================================================================================================
+  v_schritt := '14 Fest';
+  perform set_config('role', v_start, true);
+  perform set_config('request.jwt.claims', '', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, status, geloescht, payload)
+  values (v_s || 'k5', v_fsa, v_f1, v_s || '1', current_date - 2, '08:00', '09:30', 'fahrstunde', 'geplant', false, '{"w24":5,"signed":true}');
+  v_bk2 := public.w24_sichern(v_fsa, 'hand');
+  update public.kalender_termine set von = '07:00', bis = '08:30' where id = v_s || 'k5';
+  perform set_config('request.jwt.claims', json_build_object('sub', v_l1, 'role', 'authenticated')::text, true);
+  perform set_config('request.jwt.claim.sub', v_l1::text, true);
+  perform set_config('role', 'authenticated', true);
+  v_v := public.fahrschule_backup_vorschau(v_bk2, 'komplett', array['kalender_termine']);
+  if (v_v ->> 'aendern')::int + (v_v ->> 'loeschen')::int + (v_v ->> 'einfuegen')::int > 0 then
+    v_r := public.fahrschule_backup_wiederherstellen(v_bk2, 'komplett', array['kalender_termine'], v_v ->> 'code');
+  end if;
+  perform set_config('role', v_start, true);
+  select count(*) into v_n from public.kalender_termine where id = v_s || 'k5' and von = '07:00';
+  v_pr := v_pr || jsonb_build_object('name', 'Gelaufene/unterschriebene Stunde: komplett ändert sie nie, Vorschau zählt sie', 'kat', 'pflicht',
+    'ok', v_n = 1 and (v_v ->> 'bleibt_fest')::int >= 1, 'ist', jsonb_build_array(v_n, v_v ->> 'bleibt_fest', v_v ->> 'aendern'));
 
   perform set_config('role', v_start, true);
   v_ergebnis := jsonb_build_object(

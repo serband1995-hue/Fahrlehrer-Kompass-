@@ -82,6 +82,7 @@ drop function if exists public.w24_ausgenommen();
 drop function if exists public.w24_ohne_spalten(text);
 drop function if exists public.w24_privat_tabellen();
 drop function if exists public.w24_backup_inhalt(uuid);
+drop function if exists public.w24_fest_sql(text, text);
 drop function if exists public.w24_tabellen_liste();
 
 drop policy if exists "Fahrschule-Admin/Buero erstellt eigene Backups" on public.fahrschule_backups;

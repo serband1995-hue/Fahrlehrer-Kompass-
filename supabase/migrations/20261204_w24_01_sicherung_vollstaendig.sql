@@ -31,9 +31,18 @@
 --    Modus „komplett“: Stand wie im Backup (einfügen, ändern, löschen) – ausgenommen Belege, Punkte, Mail- und
 --    Änderungs-Protokolle (Art „anhaengen“: nur fehlende einfügen, nie ändern/löschen; aufbewahrungspflichtig) und der
 --    Beleg-Zähler (Art „zaehler“: nie kleiner, sonst würden Belegnummern doppelt vergeben).
---    Während des Zurückschreibens sind die Nutzer-Auslöser der beschriebenen Tabellen aus (ALTER TABLE … DISABLE TRIGGER USER,
---    nur in dieser Transaktion; Fremdschlüssel bleiben aktiv). Grund: Auslöser würden zurückgeschriebene Zeilen verändern
+--    FEST (nie geändert/gelöscht, auch nicht „komplett“): Nachweis-Stunden (gelaufen/unterschrieben, termin_ist_nachweis) und
+--    Termine mit Storno-Vermerk; fehlen sie, werden sie ergänzt; die Vorschau zählt sie als „bleibt_fest“.
+--    Während des Zurückschreibens sind genau die AKTIVEN Nutzer-Auslöser der beschriebenen Tabellen einzeln aus (ALTER TABLE …
+--    DISABLE TRIGGER <name>; von Hand ausgeschaltete bleiben aus). Grund: Auslöser würden zurückgeschriebene Zeilen verändern
 --    (Bearbeiter, FC-Haken, Papierkorb-Zeit, Belegnummer) oder sperren (Belege fest, Zahlungssperre).
+--    Warum das für andere Sitzungen sicher ist: (1) Die Tabellen sind vorher mit LOCK … SHARE ROW EXCLUSIVE gesperrt; App und
+--    Büro WARTEN beim Schreiben (lesen geht weiter), lock_timeout 15 s, dann Abbruch der Rücksicherung ohne Änderung.
+--    (2) Die Änderung an den Auslösern ist Teil derselben Transaktion: andere Sitzungen sehen sie nie (sie sehen den Katalog erst
+--    nach COMMIT, und dann sind die Auslöser schon wieder an). (3) Jeder Fehler = ROLLBACK, auch der DDL – die Auslöser sind
+--    danach im alten Zustand. Kein session_replication_role (für postgres nicht setzbar).
+--    Fremdschlüssel bleiben aktiv; die zwischen beschriebenen Tabellen (nicht RESTRICT) werden nur in dieser Transaktion
+--    aufgeschoben und am Ende geprüft (set constraints all immediate), danach wieder wie vorher.
 -- 4. Nachtlauf: Es gab schon einen täglichen Auftrag (02:00 UTC, Name „woechentliches-fahrschule-backup“, behielt 30 automatische,
 --    manuelle nie gelöscht). Er wird ehrlich ersetzt durch „kompass-sicherung-nacht“ (gleiche Zeit, vor papierkorb_leeren um
 --    03:17 UTC): fahrschule_backups_nachtlauf() sichert jede aktive Fahrschule (Fehler einer Fahrschule stoppt die anderen
@@ -208,6 +217,24 @@ create or replace function public.w24_teil(j jsonb, cols text[])
  returns jsonb language sql immutable set search_path to 'public'
 as $function$ select coalesce((select jsonb_object_agg(e.key, e.value) from jsonb_each(j) e where e.key = any(cols)), '{}'::jsonb) $function$;
 
+-- WHERE-Teil „Zeile ist fest“ (Alias): eine Rücksicherung ändert oder löscht sie NIE, auch im Modus komplett (Kassen- und
+-- Nachweis-Regeln dürfen nicht über die Rücksicherung umgangen werden). Fehlt sie, wird sie ergänzt; Abweichungen zeigt die
+-- Vorschau als „fest“. Belege, Punkte, Mails, Protokoll sind ohnehin nur „anhaengen“.
+-- kalender_termine: Storno-Vermerk oder Nachweis-Stunde (gelaufen/unterschrieben, termin_ist_nachweis aus k7_01).
+create or replace function public.w24_fest_sql(p_tabelle text, p_alias text default 'z')
+ returns text language plpgsql stable set search_path to 'public'
+as $function$
+begin
+  if p_tabelle = 'kalender_termine' then
+    if to_regprocedure('public.termin_ist_nachweis(public.kalender_termine)') is not null then
+      return format('(coalesce(jsonb_typeof(%1$I.payload -> ''storno'') = ''object'', false) or coalesce(public.termin_ist_nachweis(%1$I), false))', p_alias);
+    end if;
+    return format('coalesce(jsonb_typeof(%1$I.payload -> ''storno'') = ''object'', false)', p_alias);
+  end if;
+  return 'false';
+end;
+$function$;
+
 -- Alle Zeilen einer Tabelle für die Fahrschule als JSON-Liste.
 create or replace function public.w24_zeilen(p_tabelle text, p_bereich text, p_spalte text, p_fs uuid)
  returns jsonb language plpgsql stable security definer set search_path to 'public'
@@ -333,6 +360,7 @@ declare
   v_scope_z text := public.w24_bereich_sql(p_bereich, p_spalte, 'z');
   v_scope_b text := public.w24_bereich_sql(p_bereich, p_spalte, 'b');
   v_gueltig text;
+  v_fest text := public.w24_fest_sql(p_tabelle, 'z');
   r jsonb;
 begin
   select array_agg(a.attname::text order by k.ord) into v_pk
@@ -364,12 +392,14 @@ begin
       'jetzt',     (select count(*) from j),
       'fehlt',     (select count(*) from b where not exists (select 1 from public.%1$I z where %3$s)),
       'anders',    (select count(*) from b join j z on %3$s
-                     where public.w24_teil(to_jsonb(z), $4) is distinct from public.w24_teil(to_jsonb(b), $4)),
-      'zuviel',    (select count(*) from j z where not exists (select 1 from b where %3$s)),
+                     where public.w24_teil(to_jsonb(z), $4) is distinct from public.w24_teil(to_jsonb(b), $4) and not %5$s),
+      'zuviel',    (select count(*) from j z where not exists (select 1 from b where %3$s) and not %5$s),
+      'fest',      (select count(*) from j z where %5$s and (not exists (select 1 from b where %3$s)
+                     or exists (select 1 from b where %3$s and public.w24_teil(to_jsonb(z), $4) is distinct from public.w24_teil(to_jsonb(b), $4)))),
       'konflikt',  (select count(*) from b join public.%1$I z on %3$s where not (%2$s)),
       'ungueltig', (select count(*) from b where not coalesce(%4$s, false)),
       'stand',     (select md5(coalesce(string_agg(h, ',' order by h), '')) from (select md5(public.w24_teil(to_jsonb(z), $4)::text) h from j z) x)
-    )$q$, p_tabelle, v_scope_z, v_on, v_gueltig)
+    )$q$, p_tabelle, v_scope_z, v_on, v_gueltig, v_fest)
     into r using p_fs, p_rows, p_schueler_ids, v_cols;
   return r || jsonb_build_object('spalten', to_jsonb(v_cols), 'schluessel', to_jsonb(v_pk));
 end;
@@ -384,7 +414,7 @@ declare
   t record;
   v jsonb;
   v_liste jsonb := '[]'::jsonb;
-  v_ein bigint := 0; v_aend bigint := 0; v_loe bigint := 0; v_konf bigint := 0; v_ung bigint := 0;
+  v_ein bigint := 0; v_aend bigint := 0; v_loe bigint := 0; v_konf bigint := 0; v_ung bigint := 0; v_fest bigint := 0;
   e bigint; a bigint; l bigint;
   v_rows jsonb;
   v_sids text[];
@@ -438,7 +468,7 @@ begin
     if v_gewaehlt and not coalesce((v ->> 'ohne_schluessel')::boolean, false) then
       if t.art = 'voll' then
         e := (v ->> 'fehlt')::bigint;
-        if p_modus = 'komplett' then a := (v ->> 'anders')::bigint; l := (v ->> 'zuviel')::bigint; end if;
+        if p_modus = 'komplett' then a := (v ->> 'anders')::bigint; l := (v ->> 'zuviel')::bigint; v_fest := v_fest + coalesce((v ->> 'fest')::bigint, 0); end if;
       elsif t.art = 'anhaengen' then
         e := (v ->> 'fehlt')::bigint;
       elsif t.art = 'zaehler' then
@@ -473,6 +503,7 @@ begin
     'grund', case when v_ung > 0 then 'ungueltige_zeilen' when v_konf > 0 then 'konflikt' when v_kaskade > 0 then 'folge_loeschung' end,
     'backup_id', b.id, 'fahrschule_id', b.fahrschule_id, 'backup_vom', b.erstellt_am, 'modus', p_modus, 'auswahl', to_jsonb(p_tabellen),
     'einfuegen', v_ein, 'aendern', v_aend, 'loeschen', v_loe, 'konflikte', v_konf, 'ungueltig', v_ung,
+    'bleibt_fest', v_fest,
     'code', upper(left(md5(v_codequelle), 6)),
     'tabellen', v_liste);
 end;
@@ -574,8 +605,8 @@ begin
     if t.art = 'voll' and (v_info ->> 'loeschen')::bigint > 0 then
       v_pk := array(select jsonb_array_elements_text(v_info -> 'schluessel'));
       select string_agg(format('z.%I = b.%I', c, c), ' and ') into v_on from unnest(v_pk) c;
-      execute format('delete from public.%I z where %s and not exists (select 1 from jsonb_populate_recordset(null::public.%I, $2) b where %s)',
-                     t.tabelle, public.w24_bereich_sql(t.bereich, t.spalte, 'z'), t.tabelle, v_on)
+      execute format('delete from public.%I z where %s and not %s and not exists (select 1 from jsonb_populate_recordset(null::public.%I, $2) b where %s)',
+                     t.tabelle, public.w24_bereich_sql(t.bereich, t.spalte, 'z'), public.w24_fest_sql(t.tabelle, 'z'), t.tabelle, v_on)
         using v_fs, v_daten -> 'tabellen' -> t.tabelle;
       get diagnostics v_loe = row_count;
       v_geloescht := v_geloescht || jsonb_build_object(t.tabelle, v_loe);
@@ -608,11 +639,11 @@ begin
       else
         v_set := array(select c from unnest(v_cols) c where c <> all (v_pk));
         if array_length(v_set, 1) > 0 then
-          execute format('update public.%1$I z set (%2$s) = row(%3$s) from jsonb_populate_recordset(null::public.%1$I, $2) b where %4$s and %5$s and public.w24_teil(to_jsonb(z), $3) is distinct from public.w24_teil(to_jsonb(b), $3)',
+          execute format('update public.%1$I z set (%2$s) = row(%3$s) from jsonb_populate_recordset(null::public.%1$I, $2) b where %4$s and %5$s and not %6$s and public.w24_teil(to_jsonb(z), $3) is distinct from public.w24_teil(to_jsonb(b), $3)',
                          t.tabelle,
                          (select string_agg(format('%I', c), ', ') from unnest(v_set) c),
                          (select string_agg(format('b.%I', c), ', ') from unnest(v_set) c),
-                         v_on, v_scope)
+                         v_on, v_scope, public.w24_fest_sql(t.tabelle, 'z'))
             using v_fs, v_rows, v_cols;
           get diagnostics v_aend = row_count;
         end if;
@@ -720,6 +751,7 @@ revoke all on function public.w24_tabellen_liste() from public, anon, authentica
 revoke all on function public.w24_ausgenommen() from public, anon, authenticated;
 revoke all on function public.w24_ohne_spalten(text) from public, anon, authenticated;
 revoke all on function public.w24_privat_tabellen() from public, anon, authenticated;
+revoke all on function public.w24_fest_sql(text, text) from public, anon, authenticated;
 revoke all on function public.w24_backup_inhalt(uuid) from public, anon, authenticated;
 revoke all on function public.w24_tabellen() from public, anon, authenticated;
 revoke all on function public.w24_bereich_sql(text, text, text) from public, anon, authenticated;
@@ -761,13 +793,13 @@ begin
 end;
 $plan$;
 
--- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=18, nachtlauf = 1 Auftrag 'kompass-sicherung-nacht', alter Auftrag weg)
+-- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=19, nachtlauf = 1 Auftrag 'kompass-sicherung-nacht', alter Auftrag weg)
 select
   (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'fahrschule_backups'
      and column_name in ('format', 'anlass', 'zaehlung', 'arten', 'groesse_bytes', 'pruefsumme', 'erstellt_von', 'hinweis')) as spalten,
   (select count(*) from pg_policies where schemaname = 'public' and tablename = 'fahrschule_backups' and cmd = 'INSERT') as insert_regel,
   (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
-     and p.proname in ('w24_tabellen_liste', 'w24_ausgenommen', 'w24_ohne_spalten', 'w24_privat_tabellen', 'w24_backup_inhalt', 'w24_tabellen', 'w24_bereich_sql', 'w24_teil', 'w24_zeilen', 'w24_sichern',
+     and p.proname in ('w24_tabellen_liste', 'w24_ausgenommen', 'w24_ohne_spalten', 'w24_privat_tabellen', 'w24_backup_inhalt', 'w24_fest_sql', 'w24_tabellen', 'w24_bereich_sql', 'w24_teil', 'w24_zeilen', 'w24_sichern',
                        'w24_darf', 'w24_vergleich', 'w24_vorschau', 'fahrschule_backup_erstellen', 'fahrschule_backup_vorschau',
                        'fahrschule_backup_wiederherstellen', 'fahrschule_backups_aufraeumen', 'fahrschule_backups_nachtlauf')) as funktionen,
   (select array_agg(tabelle order by reihe) from public.w24_tabellen() where entdeckt) as entdeckte_tabellen,

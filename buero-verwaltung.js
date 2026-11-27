@@ -349,7 +349,8 @@ function vwVorschauZeigen(dlg, v) {
   else if (!v.darf_wiederherstellen) fuss = `<p class="leise klein">Zurückholen darf nur die Leitung der Fahrschule. Sie sieht dieselbe Vorschau.</p>`;
   else fuss = `<p>Vorher wird der jetzige Stand automatisch gesichert. Zum Bestätigen den Code eintippen: <b class="vw-code">${esc(v.code)}</b></p>
     <label>Code<input name="code" autocomplete="off" autocapitalize="characters" maxlength="6" required></label>`;
-  box.innerHTML = `<p><b>${summe ? `${v.einfuegen || 0} kommen dazu, ${v.aendern || 0} werden geändert, ${v.loeschen || 0} fallen weg.` : "Keine Unterschiede."}</b></p>${liste}${fuss}`;
+  const fest = v.bleibt_fest ? `<p class="leise klein">${v.bleibt_fest} gelaufene, unterschriebene oder stornierte Stunden bleiben, wie sie sind (werden nie geändert oder gelöscht).</p>` : "";
+  box.innerHTML = `<p><b>${summe ? `${v.einfuegen || 0} kommen dazu, ${v.aendern || 0} werden geändert, ${v.loeschen || 0} fallen weg.` : "Keine Unterschiede."}</b></p>${liste}${fest}${fuss}`;
   const darf = v.ok && v.wiederherstellbar && summe > 0 && v.darf_wiederherstellen;
   knopf.textContent = darf ? "Jetzt zurückholen" : "Vorschau ansehen";
   if (darf) { knopf.classList.add("gefahr"); const c = box.querySelector("input[name=code]"); if (c) c.focus(); }

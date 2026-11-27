@@ -283,6 +283,20 @@ r = await als(db, U.leitung, "select public.fahrschule_backup_wiederherstellen($
 q = await eins(db, "select (select count(*)::int from public.schueler where id = 's9') s, (select count(*)::int from public.schueler_eltern) e");
 ok("Alles gewählt: neuer Schüler samt Eltern-Kontakt weg (beides in der Vorschau)", !r.fehler && q.s === 0 && q.e === 0, { r, q });
 
+// Feste Termine (Nachweis/Storno): komplett ändert und löscht sie nie, die Vorschau zählt sie
+await db.exec(`create or replace function public.termin_ist_nachweis(t public.kalender_termine) returns boolean language sql stable as $$ select coalesce(t.payload->>'signed', '') = 'true' $$;
+  insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, payload) values ('t7', '${FS}', '${U.fl1}', 's1', current_date - 1, '08:00', '09:00', 'fahrstunde', '{"signed":true}');`);
+r = await als(db, U.buero, "select public.fahrschule_backup_erstellen($1, false) id", [FS]);
+const BK3 = r.rows[0].id;
+await db.exec(`update public.kalender_termine set von = '07:00', payload = '{"signed":true,"x":1}' where id = 't7';
+  insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, payload) values ('t8', '${FS}', '${U.fl1}', 's1', current_date, '15:00', '16:00', 'fahrstunde', '{"storno":{"grund":"x"}}');`);
+r = await als(db, U.leitung, "select public.fahrschule_backup_vorschau($1, 'komplett', null) v", [BK3]);
+VV = r.rows[0].v;
+r = await als(db, U.leitung, "select public.fahrschule_backup_wiederherstellen($1, 'komplett', null, $2) v", [BK3, VV.code]);
+q = await eins(db, "select (select von from public.kalender_termine where id = 't7') v, (select count(*)::int from public.kalender_termine where id = 't8') s");
+ok("Unterschriebene und stornierte Termine bleiben (bleibt_fest 2, nicht geändert, nicht gelöscht)", VV.bleibt_fest === 2 && VV.aendern === 0 && VV.loeschen === 0 && q.v === "07:00" && q.s === 1, { fest: VV.bleibt_fest, a: VV.aendern, l: VV.loeschen, r: r.fehler || r.rows[0].v.nichts_zu_tun, q });
+await db.exec(`delete from public.kalender_termine where id in ('t7', 't8');`); // termin_ist_nachweis bleibt (die Probe braucht sie wie live)
+
 // ---------- 5. Live-Probe in der Attrappe ----------
 const P = await probe(db);
 ok("Probe endet mit W24_ERGEBNIS", !!P.erg, P.text.slice(0, 3000));
