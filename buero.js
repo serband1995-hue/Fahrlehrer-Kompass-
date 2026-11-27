@@ -1936,7 +1936,7 @@ function renderSchueler() {
     <div class="tabs" style="margin-bottom:12px">${sichtTabs}</div>
     <div class="karte-kopf">
       <div class="knopfreihe">${klassenFilter}<select class="suche" id="sNotiz" aria-label="Notizen filtern"><option value="">Alle Notizen</option><option value="offen"${notizF === "offen" ? " selected" : ""}>Mit offener Notiz</option><option value="ungelesen"${notizF === "ungelesen" ? " selected" : ""}>Notiz noch nicht gelesen</option><option value="theorie"${fristenParam("notiz") === "theorie" ? " selected" : ""}>Theorie noch nicht vollständig</option></select><select class="suche" id="sLehrer" aria-label="Fahrlehrer filtern">${lehrerOpt}</select>
-        <input type="search" class="suche" id="sSuche" placeholder="Name, Telefon, Bewerbernr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
+        <input type="search" class="suche" id="sSuche" placeholder="Name, Telefon, Bewerber-/Kundennr." value="${esc(fristenParam("suche"))}" aria-label="Schüler suchen"></div>
       <button class="knopf haupt" id="sNeu" type="button">+ Schüler anlegen</button>
     </div>
     <p class="leise klein">${liste.length} Schüler${sicht === "inaktiv" ? " (Archiv: bestanden oder nicht mehr dabei; überall ausgeblendet, zählen nicht bei Fristen, Reaktivierung und Auslastung)" : ""}${sicht === "warte" ? " (warten auf Theorie oder Praxisprüfung; zählen nicht in der Auslastung. Wer auf die Praxisprüfung wartet, ist wieder aktiv, sobald eine neue Fahrstunde oder ein Prüfungstermin im Kalender steht. Die Pause „wartet auf Theorie“ hebt der Fahrlehrer in seiner App auf. Prüfungstermine, die ein Fahrlehrer nur in seiner App einträgt, sieht das Büro erst, wenn sie im Kalender stehen.)" : ""}</p>
