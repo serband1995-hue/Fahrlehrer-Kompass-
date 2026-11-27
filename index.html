@@ -16225,7 +16225,9 @@ async function _ptBueroErgebnisse(){
 }
 // Einmalige Übernahme der alten Tafel (DB.termine) in pruefungstermine. Nichts wird aus DB.termine gelöscht.
 async function _ptAltUebernehmen(){
-  if(_ptUeberLaeuft||!_ptMoeglich())return; _ptUeberLaeuft=true;
+  // Richter W21: erst nach erfolgreichem Cloud-Abruf dieser Sitzung (_pullOk) – sonst legte ein Gerät mit altem Stand
+  // eine inzwischen verschobene oder abgesagte Prüfung am alten Datum neu an
+  if(_ptUeberLaeuft||!_ptMoeglich()||!_pullOk)return; _ptUeberLaeuft=true;
   try{
     const heute=todayISO(), supa=getSupa(); let geschrieben=false, geaendert=false;
     for(const t of (DB.termine||[])){

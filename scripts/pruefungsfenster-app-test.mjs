@@ -192,6 +192,17 @@ const tabelle = (page, n) => page.evaluate((n) => JSON.parse(JSON.stringify(wind
     return { kp: kp.length, ex: ex.length, ex2: DB.exams.filter((e) => e.sid === s.id).length, quelle: ex[0] && ex[0].quelle, id: ex[0] && ex[0].id, attempts: s.attempts, result: ex[0] && ex[0].result };
   }, [info]);
   pruefe("W28 Ergebnis vom Büro/Server wird übernommen (genau einmal, nicht bestanden, Versuch +1)", bu.ex === 1 && bu.ex2 === 1 && bu.result === "fail" && bu.attempts === 1, JSON.stringify(bu));
+  // Übernahme der alten Tafel – erst nach erfolgreichem Cloud-Abruf (Richter W21)
+  const ohnePull = await page.evaluate(async ([info]) => {
+    const d = todayISO(), plus = (n) => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+    const t = { id: "alt0", date: plus(11), plaetze: 1, slots: [info.ids[4]], von: "11:00", bis: "11:55" };
+    DB.termine.push(t); const merk = _pullOk; _pullOk = false;
+    await _ptAltUebernehmen();
+    const n = window.__FAKE.tabellen.pruefungstermine.filter((r) => r.datum === plus(11) && r.schueler_id === info.ids[4]).length;
+    _pullOk = merk; DB.termine = DB.termine.filter((x) => x !== t);
+    return { n, ueb: t.uebernommen || null };
+  }, [info]);
+  pruefe("W61 Alte Tafel wird ohne Cloud-Abruf nicht übernommen", ohnePull.n === 0 && !ohnePull.ueb, JSON.stringify(ohnePull));
   // Übernahme der alten Tafel
   const alt = await page.evaluate(async ([info]) => {
     const d = todayISO(), plus = (n) => { const x = new Date(d + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
