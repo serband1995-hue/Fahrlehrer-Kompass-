@@ -4,6 +4,13 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.4", datum: "2026-11-27", kurz: "Neu: ein Punkt oben zeigt, ob alles gesichert ist.",
+    punkte: ["Oben rechts steht jetzt ein kleiner Punkt. Grün heißt: alles ist in der Cloud und beim Büro angekommen. Gelb heißt: wird gerade gesendet oder wartet, zum Beispiel ohne Internet. Rot heißt: etwas ist nicht angekommen.",
+             "Tippe auf den Punkt: Du siehst, wann zuletzt gesichert wurde – für deinen ganzen Stand und getrennt für Schüler, Termine und Prüfungsergebnisse.",
+             "Lehnt der Server einen Eintrag ab (zum Beispiel „Zahlung ausstehend“), bleibt er in der Liste „Nicht angekommen“ stehen, mit dem Grund. Mit „Jetzt erneut senden“ versuchst du es noch einmal.",
+             "Wird der Speicher auf dem Handy knapp, warnt die App rechtzeitig und sagt, was zu tun ist.",
+             "In den Einstellungen steht jetzt der echte Stand statt nur „wird gesichert“.",
+             "Büro: Oben steht, von wann die Daten sind. Klappt das Neuladen nicht, sagt das Büro es deutlich, statt still alte Daten zu zeigen."] },
   { version: "2026.11.27.3", datum: "2026-11-27", kurz: "Prüfungen: feste Zeitfenster für B und BE.",
     punkte: ["Ein Prüfungstag hat jetzt 9 feste Zeitfenster zu je 55 Minuten, ab 08:00 bis 16:15. Die Uhrzeit muss niemand mehr tippen.",
              "Belegte Fenster sind sofort zu sehen. Ein Fenster kann nie doppelt vergeben werden, auch nicht, wenn App und Büro gleichzeitig planen.",

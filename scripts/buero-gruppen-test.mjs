@@ -86,7 +86,7 @@ const markiert = (page) => page.$$eval('#nav .nav-punkt[aria-current="page"]', (
   const h = new Set(p.slice(0, 8).map((x) => x[3]));
   pruefe("L3", "alle 8 Hauptpunkte gleich hoch (≥ 40 px)", h.size === 1 && [...h][0] >= 40 ? null : [...h].join(","));
   pruefe("L4", "Heute ist markiert, der Titel heißt „Heute“", (await markiert(page)) === "#heute" && (await page.textContent("#titel")) === "Heute" ? null : await markiert(page));
-  pruefe("L5b", "Status: Tooltip „verbunden · Uhrzeit“ am Punkt", /^verbunden/.test(await page.getAttribute("#status", "title")) ? null : await page.getAttribute("#status", "title"));
+  pruefe("L5b", "Status: „Stand hh:mm“ sichtbar, Tooltip „Daten von … Uhr“ (W23)", /^Daten von \d\d:\d\d Uhr/.test(await page.getAttribute("#status", "title")) && /^Stand \d\d:\d\d$/.test(await page.textContent("#statusText")) ? null : await page.getAttribute("#status", "title"));
   const zahlen = await page.$$eval("#nav .nav-punkt .zahl", (z) => z.length);
   pruefe("L5", "Zähler sichtbar (mindestens einer, rot)", zahlen >= 1 ? null : "keine Zähler");
   // Zahlungen-Zähler = Verkäufe „empfohlen“

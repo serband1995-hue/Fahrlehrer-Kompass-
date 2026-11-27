@@ -133,7 +133,8 @@ nav{display:flex;flex-direction:column;gap:12px;}
 @media (max-width:1400px){
   .kopf-ik .ik-text{display:none;} .kopf-ik .ik-sym{display:block;} .knopf.klein.kopf-ik{min-width:44px;min-height:44px;padding:0;}
   /* Status: nur der Punkt, solange alles in Ordnung ist (Text bleibt für Vorlese-Programme); bei Warnung/Fehler steht der Text da */
-  .status.ok #statusText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  /* W23: „Stand hh:mm“ bleibt sichtbar (klein), damit das Büro sieht, wie frisch die Daten sind */
+  .status.ok #statusText{font-size:13px;white-space:nowrap;}
   .status.ok .punkt{width:12px;height:12px;}
 }
 @media (max-width:1200px){ .kopf h1{font-size:28px;} }
@@ -273,7 +274,7 @@ body.kiosk .tag-titel{font-size:30px;}
 
 /* Fahrcheck-Abgabe */
 .soll-ist{display:grid;grid-template-columns:auto auto 1fr;gap:24px;align-items:end;margin:8px 0 18px;padding:16px 18px;background:var(--bg);border-radius:14px;}
-.gross-zahl{font-family:'Source Serif 4',Georgia,serif;font-size:44px;font-weight:700;line-height:1;}
+.gross-zahl{font-family:'Source Serif 4',Georgia,serif;font-size:44px;font-weight:700;line-height:1.15;} /* W23: Schrift ragt bei 1 über die Zeile (Test „Text überlappt“) */
 .gross-eingabe{width:150px;min-height:58px;font-size:32px;font-weight:700;text-align:center;border:2px solid var(--feld);border-radius:12px;background:var(--surface);}
 .fc-ergebnis{font-weight:700;font-size:18px;}
 .fc-ergebnis.gut{color:var(--gruen);} .fc-ergebnis.schlecht{color:var(--rot);}
@@ -961,7 +962,8 @@ body.kiosk .rollen-streifen{display:none;}
 .kopf-aktionen[hidden]{display:none;}
 .tab .zahl{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--rot);color:#fff;font-size:13px;font-weight:700;vertical-align:1px;}
 @media (prefers-color-scheme:dark){.tab .zahl{background:#b3392b;}}
-@media (max-width:1400px){ .status:not(.ok) #statusText{max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} }
+@media (max-width:1400px){ .status:not(.ok) #statusText{max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .status.fehler #statusText{max-width:none;font-size:13px;font-weight:700;color:var(--rot);} }
+.status.fehler #statusText{font-weight:700;color:var(--rot);}
 /* W15: Reiter „Läuft bald ab“ – Knopf „Akte öffnen“ auch am PC mindestens 44 px (Regel für alle neuen Knöpfe) */
 .knopf.klein[data-baldakte],.knopf.klein[data-balderinnern]{min-height:44px;}
 /* W15 (Prüf-Team): „Läuft bald ab“ am Handy als Karten statt Tabelle – nichts abgeschnitten, Knopf erreichbar */

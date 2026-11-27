@@ -113,6 +113,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/zurueck-test.mjs
       - name: "Zahlung ausstehend (K8, App und Büro: Knöpfe, Sperre für neue Termine, alte Datenbank)"
         run: NODE_PATH=$(npm root -g) node scripts/zahlung-test.mjs
+      - name: "Sync-Punkt: grün/gelb/rot, Nicht angekommen, Gerätespeicher (W23)"
+        run: NODE_PATH=$(npm root -g) node scripts/sync-status-test.mjs
       - name: "Büro: Seitenleiste (8 Punkte) und Doppelbelegung gesehen (K18)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-gruppen-test.mjs
       - name: "Löschen, Stornieren, Papierkorb (K7)"

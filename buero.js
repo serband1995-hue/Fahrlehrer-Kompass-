@@ -5003,7 +5003,9 @@ async function ladeDaten() {
     S.geladenAm = new Date();
     $("schulName").textContent = S.fs ? S.fs.name : "";
     $("schulName").title = S.fs ? S.fs.name : ""; // W16 Teil 3: Name kann gekürzt sein (Glocke daneben)
-    setStatus("ok", "verbunden · " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+    S.ladeFehlerGemeldet = false; // W23: nach einem Fehler wieder melden
+    setStatus("ok", "Stand " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+    $("status").title = "Daten von " + S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " Uhr. Wird alle 2 Minuten neu geladen.";
     zeichne();
     if (typeof bkPruefeSpalten === "function") bkPruefeSpalten(); // Werkstatt 13: alte Datenbank ohne Vorlagen erkennen
     pruefeSitzungNoch(); // alle 2 Minuten mit: PIN zurückgesetzt oder Person ausgetreten → neu anmelden
@@ -5013,8 +5015,14 @@ async function ladeDaten() {
   } catch (e) {
     if (nr !== S.ladeNr) return;
     console.error(e);
-    setStatus("fehler", "keine Verbindung");
-    toast("Daten konnten nicht geladen werden. Bitte Internet prüfen und „Aktualisieren“ drücken.", true);
+    // W23 (R561): nicht still alte Daten zeigen – sagen, von wann sie sind. Der Hinweis kommt einmal je Störung, nicht alle 2 Minuten.
+    const hm = S.geladenAm ? S.geladenAm.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : null;
+    setStatus("fehler", hm ? "Nicht aktuell · Stand " + hm : "keine Verbindung");
+    $("status").title = hm ? "Neu laden hat nicht geklappt (keine Verbindung?). Angezeigt wird der Stand von " + hm + " Uhr. Es wird alle 2 Minuten erneut versucht." : "Daten konnten nicht geladen werden (keine Verbindung?).";
+    if (!S.ladeFehlerGemeldet) {
+      S.ladeFehlerGemeldet = true;
+      toast(hm ? "Daten nicht aktuell: Neu laden hat nicht geklappt. Du siehst den Stand von " + hm + " Uhr. Bitte Internet prüfen – es wird alle 2 Minuten erneut versucht." : "Daten konnten nicht geladen werden. Bitte Internet prüfen und „Aktualisieren“ drücken.", true);
+    }
     zeichne();
   }
 }
