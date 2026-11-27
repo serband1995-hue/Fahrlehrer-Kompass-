@@ -156,6 +156,18 @@ for (const breite of [360, 412]) {
       const qr = q.getBoundingClientRect(), hl = q.querySelector(".ct-hl"); if (!hl) return "keine Uhrzeit"; const r = hl.getBoundingClientRect();
       return r.left >= qr.left - 1 && r.right <= qr.left + 60 ? true : "Uhrzeit nach dem Wischen bei " + Math.round(r.left - qr.left) + " px statt links"; });
     if (z !== null && z !== true) r.push(z);
+    // Echte Wischgeste im Raster: Raster scrollt, der Tag bleibt (Fund Bedienung W27)
+    const g = await page.evaluate(() => { const q = document.querySelector(".ct-quer"); if (!q) return null; q.scrollLeft = 0; const b = q.getBoundingClientRect(); return { y: Math.min(b.top + 150, innerHeight - 120), datum: _calDate }; });
+    if (g) {
+      const cdp = await ctx.newCDPSession(page), pt = (x) => [{ x, y: g.y, id: 1 }];
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pt(breite - 40) });
+      for (let i = 1; i <= 10; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pt(breite - 40 - (breite - 80) * i / 10) }); await warte(page, 16); }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await warte(page, 400);
+      const n = await page.evaluate(() => ({ datum: _calDate, sl: document.querySelector(".ct-quer")?.scrollLeft || 0 }));
+      if (n.datum !== g.datum) r.push("Wischen im Raster wechselt den Tag (" + g.datum + " → " + n.datum + ")");
+      else if (n.sl < 20) r.push("Wischgeste scrollt das Raster nicht");
+      await cdp.detach();
+    }
     if (process.env.KF_BILD) await page.screenshot({ path: process.env.KF_BILD + "-" + b + ".png" });
     await page.evaluate(() => { DB.lessons = DB.lessons.filter((l) => !/^V\d$/.test(l.id)); save(); routeKalender(); });
     return r;

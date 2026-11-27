@@ -15089,12 +15089,13 @@ function wireCalendarDrag(){
 let _calDragBlockSwipe=false;
 function bindCalSwipe(){
   const wrap=document.querySelector(".cal-wrap"); if(!wrap)return;
-  let x0=null,y0=null;
-  wrap.addEventListener("touchstart",e=>{ const t=e.touches[0]; x0=t.clientX; y0=t.clientY; },{passive:true});
+  let x0=null,y0=null,q=null,sl0=0;
+  // Im seitlich wischbaren Raster (.ct-quer, viele gleichzeitige Termine) wechselt Wischen nur dann den Tag, wenn das Raster schon am Rand stand und sich nicht bewegt hat
+  wrap.addEventListener("touchstart",e=>{ const t=e.touches[0]; x0=t.clientX; y0=t.clientY; q=e.target&&e.target.closest?e.target.closest(".ct-quer"):null; sl0=q?q.scrollLeft:0; },{passive:true});
   wrap.addEventListener("touchend",e=>{
     if(_calDragBlockSwipe){ x0=null; return; }
     if(x0==null)return; const t=e.changedTouches[0]; const dx=t.clientX-x0, dy=t.clientY-y0;
-    x0=null; if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
+    x0=null; if(q&&Math.abs(q.scrollLeft-sl0)>1)return; if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
     _calDate=calShift(dx<0?1:-1); routeKalender();
   },{passive:true});
 }
