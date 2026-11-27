@@ -130,6 +130,12 @@ begin
     'ist', (select kalender_fehler from public.pruefungstermine where id = v_id));
   perform set_config('role', 'authenticated', true);
 
+  v_schritt := '7 Startzeit';
+  perform set_config('role', 'authenticated', true);
+  update public.pruefungstage set start = '09:00' where id = v_tag;
+  select to_char(von, 'HH24:MI') into v_t from public.pruefungstermine where pruefungstag_id = v_tag and fenster = 0;
+  v_pr := v_pr || jsonb_build_object('name', 'Startzeit 09:00: Fenster 1 = 09:00', 'kat', 'pflicht', 'ok', v_t = '09:00', 'ist', v_t);
+
   v_schritt := '6 Ergebnis Büro → App';
   select id into v_id from public.pruefungstermine where schueler_id = 'w21probe' || v_lauf || '5';
   update public.pruefungstermine set status = 'bestanden' where id = v_id;
@@ -137,18 +143,13 @@ begin
   select count(*) into v_n from public.kalender_pruefungen where id = 'pt-' || v_id and result = 'pass' and fahrlehrer_id = v_f1 and not coalesce(geloescht, false);
   v_pr := v_pr || jsonb_build_object('name', 'Fall 6: Büro bestanden → kalender_pruefungen pass', 'kat', 'pflicht', 'ok', v_n = 1, 'ist', v_n);
 
-  v_schritt := '7 Startzeit';
-  perform set_config('role', 'authenticated', true);
-  update public.pruefungstage set start = '09:00' where id = v_tag;
-  select to_char(von, 'HH24:MI') into v_t from public.pruefungstermine where pruefungstag_id = v_tag and fenster = 0;
-  v_pr := v_pr || jsonb_build_object('name', 'Startzeit 09:00: Fenster 1 = 09:00', 'kat', 'pflicht', 'ok', v_t = '09:00', 'ist', v_t);
-
   -- ===================================================================================================================
   -- Als Fahrlehrer F1 (App)
   -- ===================================================================================================================
   v_schritt := '8 App: Ergebnis';
   perform set_config('request.jwt.claims', json_build_object('sub', v_f1, 'role', 'authenticated')::text, true);
   perform set_config('request.jwt.claim.sub', v_f1::text, true);
+  perform set_config('role', 'authenticated', true);
   select datum into v_t from public.pruefungstermine where schueler_id = 'w21probe' || v_lauf || '6';
   insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, geloescht, payload)
   values ('w21probe-ex-' || v_lauf, v_fs, v_f1, 'w21probe' || v_lauf || '6', v_t::date, 'fail', false, '{"faults":[]}'::jsonb);
@@ -192,7 +193,7 @@ begin
   perform set_config('role', v_start, true);
   v_pr := v_pr || jsonb_build_object('name', 'anon: keine Rechte an pruefungstage', 'kat', 'pflicht', 'ok', v_t = '42501', 'ist', v_t);
   v_pr := v_pr || jsonb_build_object('name', 'anon: RPCs nicht ausführbar', 'kat', 'pflicht',
-    'ok', not has_function_privilege('anon', 'public.pruefung_tauschen(uuid, uuid)', 'EXECUTE') and not has_function_privilege('anon', 'public.pruefungstage_belegung(date, date)', 'EXECUTE'));
+    'ok', not has_function_privilege('anon', 'public.pruefung_tauschen(uuid, uuid)', 'EXECUTE') and not has_function_privilege('anon', 'public.pruefungstage_belegung(date, date, uuid)', 'EXECUTE'));
 
   perform set_config('role', v_start, true);
   v_ergebnis := jsonb_build_object(

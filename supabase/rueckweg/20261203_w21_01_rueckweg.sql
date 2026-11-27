@@ -14,7 +14,7 @@ drop function if exists public.kt_pruefung_spiegel();
 drop function if exists public.pt_schutz();
 drop function if exists public.pt_kalender_spiegel(public.pruefungstermine, boolean);
 drop function if exists public.pruefung_tauschen(uuid, uuid);
-drop function if exists public.pruefungstage_belegung(date, date);
+drop function if exists public.pruefungstage_belegung(date, date, uuid);
 drop policy if exists "Pruefungstermine Fahrlehrer anlegen" on public.pruefungstermine;
 drop policy if exists "Pruefungstermine Fahrlehrer eigene aendern" on public.pruefungstermine;
 drop index if exists public.pruefungstermine_fenster_frei;
@@ -25,6 +25,7 @@ alter table public.pruefungstermine
   drop column if exists fenster,
   drop column if exists fenster_anzahl,
   drop column if exists quelle,
+  drop column if exists ergebnis_uebernommen,
   drop column if exists kalender_fehler;
 drop table if exists public.pruefungstage;
 drop function if exists public.pruefungstag_schutz();

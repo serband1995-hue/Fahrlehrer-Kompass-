@@ -92,6 +92,7 @@
     if (/W21:tag_nicht_leer/.test(m)) return "Erst alle Prüfungen des Tages verschieben oder absagen.";
     if (/W21:tag_fremde_pruefungen/.test(m)) return "An diesem Tag prüfen auch Schüler anderer Fahrlehrer. Bitte das Büro fragen.";
     if (/W21:nur_fenster/.test(m)) return "Tauschen geht nur zwischen Zeitfenstern.";
+    if (/W21:tag_hat_ergebnisse/.test(m)) return "An diesem Tag stehen schon Ergebnisse. Datum und Uhrzeit bleiben deshalb, wie sie sind.";
     if (/W21:tausch_passt_nicht/.test(m)) return "Tauschen geht nicht: Eine Lkw-Prüfung braucht zwei freie Fenster hintereinander.";
     if (/W21:start_zu_spaet/.test(m)) return "So spät geht nicht: Das letzte Fenster muss vor Mitternacht enden (Start spätestens " + startMax() + ").";
     if (/W21:(nicht_gefunden|keine_berechtigung)/.test(m) || /row-level security|permission denied/i.test(m)) return "Dafür fehlt die Berechtigung.";
@@ -101,8 +102,10 @@
   }
 
   // ---------- Datenzugriff (supa = Supabase-Client) ----------
-  async function ladeBelegung(supa, von, bis) {
-    const { data, error } = await supa.rpc("pruefungstage_belegung", { p_von: von, p_bis: bis });
+  // fs: nur für den Super-Admin auf der Büro-Seite (gewählte Fahrschule); sonst weglassen
+  async function ladeBelegung(supa, von, bis, fs) {
+    const arg = { p_von: von, p_bis: bis }; if (fs) arg.p_fahrschule = fs;
+    const { data, error } = await supa.rpc("pruefungstage_belegung", arg);
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   }

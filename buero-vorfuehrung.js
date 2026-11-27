@@ -471,11 +471,12 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     },
   };
   // W21: Belegung (frei/belegt; Schüler nur eigene, Büro alle) und Tauschen
-  R.pruefungstage_belegung = ({ p_von, p_bis }) => {
+  R.pruefungstage_belegung = ({ p_von, p_bis, p_fahrschule }) => {
     const uid = (F.session && F.session.user && F.session.user.id) || null;
     const me = (F.tabellen.profiles || []).find((x) => x.id === uid); if (!me) return [];
     const alle = ["buero", "fahrschule_admin", "super_admin"].includes(me.rolle);
-    return (F.tabellen.pruefungstage || []).filter((t) => t.fahrschule_id === me.fahrschule_id && !t.geloescht && t.datum >= p_von && t.datum <= p_bis)
+    const fs = p_fahrschule && me.rolle === "super_admin" ? p_fahrschule : me.fahrschule_id;
+    return (F.tabellen.pruefungstage || []).filter((t) => t.fahrschule_id === fs && !t.geloescht && t.datum >= p_von && t.datum <= p_bis)
       .sort((a, b) => (a.datum + a.start).localeCompare(b.datum + b.start))
       .map((t) => Object.assign({}, t, { start: String(t.start || "08:00").slice(0, 5), belegt: (F.tabellen.pruefungstermine || []).filter((q) => q.pruefungstag_id === t.id && q.status !== "abgesagt")
         .sort((a, b) => a.fenster - b.fenster).map((q) => { const sicht = alle || q.fahrlehrer_id === uid;
@@ -585,8 +586,10 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     if (alt && n.pruefungstag_id === alt.pruefungstag_id && n.fenster === alt.fenster && alt.pruefungstag_id && (n.datum !== alt.datum || String(n.von || "").slice(0, 5) !== String(alt.von || "").slice(0, 5))) { n.pruefungstag_id = null; n.fenster = null; }
     if (!w21Buero()) {
       if (alt) { ["entgelt_bezahlt", "tuev_gutschein", "as_portal", "notiz", "quelle", "fahrschule_id"].forEach((k) => { n[k] = alt[k]; }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
-      else { Object.assign(n, { entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false, quelle: "app" }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
+      else { Object.assign(n, { entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false, quelle: n.quelle === "app_alt" ? "app_alt" : "app", ergebnis_uebernommen: true }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
     }
+    if (n.ergebnis_uebernommen == null) n.ergebnis_uebernommen = true;
+    if (alt && n.status !== alt.status) n.ergebnis_uebernommen = !["bestanden", "nicht_bestanden"].includes(n.status) ? true : (w21AusKp ? false : w21Buero());
     if (!n.quelle) n.quelle = "buero";
     if (!n.status) n.status = "geplant";
     if (!n.fenster_anzahl) n.fenster_anzahl = 1;
@@ -604,15 +607,20 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       && (!alt || n.schueler_id !== alt.schueler_id || n.datum !== alt.datum || alt.status === "abgesagt" || alt.art !== n.art)
       && T.some((q) => q.id !== n.id && q.schueler_id === n.schueler_id && q.datum === n.datum && (q.art || "praxis") === "praxis" && q.status !== "abgesagt")) return "W21:schueler_doppelt";
     const soll = (n.art || "praxis") === "praxis" && n.fahrlehrer_id && n.von && n.status !== "abgesagt";
+    let soll2 = soll;
     if (soll) {
-      const neuIm = !alt || !alt.kalender_termin_id || n.datum !== alt.datum || n.schueler_id !== alt.schueler_id || alt.status === "abgesagt";
+      const neuIm = !alt || n.datum !== alt.datum || n.schueler_id !== alt.schueler_id || n.fahrlehrer_id !== alt.fahrlehrer_id || alt.status === "abgesagt";
       const s = tabelle("schueler").find((x) => x.id === n.schueler_id);
-      if (w21Uid() && neuIm && n.datum >= w21Heute() && s && s.zahlung_gesperrt_seit) return "Zahlung ausstehend: " + (s.zahlung_gesperrt_grund || "Zahlung ausstehend");
+      const gesperrt = w21Uid() && n.datum >= w21Heute() && s && s.zahlung_gesperrt_seit;
+      if (gesperrt && neuIm) return "Zahlung ausstehend: " + (s.zahlung_gesperrt_grund || "Zahlung ausstehend");
+      if (gesperrt && !n.kalender_termin_id) soll2 = false;
+    }
+    if (soll2) {
       if (!n.kalender_termin_id) n.kalender_termin_id = "pt" + Math.random().toString(16).slice(2, 12) + Math.random().toString(16).slice(2, 12);
     }
     // Kalender-Spiegel
     const K = tabelle("kalender_termine");
-    if (soll) {
+    if (soll2) {
       const bis = w21Hm(w21Min(n.von) + ((n.fenster_anzahl === 2 || W21_LKW.includes(String(n.klasse || "").toUpperCase())) ? 85 : 55));
       let k = K.find((x) => x.id === n.kalender_termin_id);
       if (k) Object.assign(k, { fahrlehrer_id: n.fahrlehrer_id, schueler_id: n.schueler_id, datum: n.datum, von: String(n.von).slice(0, 5), bis, art: "pruefung", geloescht: false, aktualisiert_am: new Date().toISOString() });
@@ -639,6 +647,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     } else { const da = KP.find((x) => x.id === "pt-" + n.id && !x.geloescht); if (da) da.geloescht = true; }
   }
   // Ergebnis App → pruefungstermine
+  let w21AusKp = false;
   function w21KpNachPt(r, alt) {
     if (!r || !r.schueler_id || !r.datum) return;
     if (r.geloescht || r.result == null) {
@@ -648,7 +657,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     }
     const st = ["pass", "bestanden"].includes(r.result) ? "bestanden" : ["fail", "nicht_bestanden"].includes(r.result) ? "nicht_bestanden" : null;
     if (!st) return;
-    tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["geplant", "bestanden", "nicht_bestanden"].includes(q.status)) q.status = st; });
+    tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["geplant", "bestanden", "nicht_bestanden"].includes(q.status) && q.status !== st) { q.status = st; q.ergebnis_uebernommen = false; } });
   }
   function w21Einfuegen(daten) {
     const T = tabelle("pruefungstermine"), neu = [];
@@ -676,6 +685,7 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     if (!alt) { n.start = n.start || "08:00"; n.fenster_zahl = n.fenster_zahl || 9; n.geloescht = !!n.geloescht; n.erstellt_von = n.erstellt_von || w21Uid(); n.aktualisiert_am = new Date().toISOString(); return null; }
     const drin = tabelle("pruefungstermine").filter((q) => q.pruefungstag_id === alt.id && q.status !== "abgesagt");
     if (n.geloescht && !alt.geloescht && drin.length) return "W21:tag_nicht_leer";
+    if ((n.start !== alt.start || n.datum !== alt.datum) && drin.some((q) => ["bestanden", "nicht_bestanden"].includes(q.status))) return "W21:tag_hat_ergebnisse";
     if (!w21Buero() && (n.start !== alt.start || n.datum !== alt.datum) && drin.some((q) => q.fahrlehrer_id !== w21Uid())) return "W21:tag_fremde_pruefungen";
     if (n.start !== alt.start) n.start_geaendert_am = new Date().toISOString();
     return null;

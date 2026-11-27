@@ -101,6 +101,10 @@ begin
      and exists (select 1 from public.pruefungstermine q where q.pruefungstag_id = old.id and q.status <> 'abgesagt') then
     raise exception 'W21:tag_nicht_leer' using errcode = 'P0001', hint = 'Erst alle Prüfungen des Tages verschieben oder absagen.';
   end if;
+  if (new.start is distinct from old.start or new.datum is distinct from old.datum)
+     and exists (select 1 from public.pruefungstermine q where q.pruefungstag_id = old.id and q.status in ('bestanden', 'nicht_bestanden')) then
+    raise exception 'W21:tag_hat_ergebnisse' using errcode = 'P0001', hint = 'An diesem Tag stehen schon Ergebnisse. Uhrzeit und Datum bleiben.';
+  end if;
   if not v_buero and (new.start is distinct from old.start or new.datum is distinct from old.datum or new.fenster_zahl is distinct from old.fenster_zahl)
      and exists (select 1 from public.pruefungstermine q where q.pruefungstag_id = old.id and q.status <> 'abgesagt'
                    and q.fahrlehrer_id is distinct from auth.uid()) then
@@ -129,7 +133,9 @@ alter table public.pruefungstermine
   add column pruefungstag_id uuid references public.pruefungstage(id),
   add column fenster smallint check (fenster is null or fenster between 0 and 11),
   add column fenster_anzahl smallint not null default 1 check (fenster_anzahl in (1, 2)),
-  add column quelle text not null default 'buero' check (quelle in ('buero', 'app')),
+  add column quelle text not null default 'buero' check (quelle in ('buero', 'app', 'app_alt')),
+  -- false = Ergebnis kam aus der App (kalender_pruefungen); das Büro übernimmt es mit einem Tipp in die Akte (Datum, Reaktivierung, Aufgabe)
+  add column ergebnis_uebernommen boolean not null default true,
   add column kalender_fehler text;
 create index pruefungstermine_tag on public.pruefungstermine (pruefungstag_id) where pruefungstag_id is not null;
 -- Zweite Sicherung neben der Sperre im Auslöser: ein Fenster-Anfang nie doppelt (auch wenn zwei gleichzeitig schreiben)
@@ -195,10 +201,18 @@ begin
     end if;
   else
     if not v_buero then
-      new.entgelt_bezahlt := false; new.tuev_gutschein := false; new.as_portal := false; new.quelle := 'app';
+      -- 'app_alt' = einmal aus der alten App-Tafel übernommen (keine „neue Prüfung“ für den Zahlungs-Hinweis im Büro)
+      new.entgelt_bezahlt := false; new.tuev_gutschein := false; new.as_portal := false; new.quelle := case when new.quelle = 'app_alt' then 'app_alt' else 'app' end;
+      new.ergebnis_uebernommen := true;
     end if;
   end if;
   if new.status is null then new.status := 'geplant'; end if;
+  -- Ergebnis neu gesetzt: vom Büro = schon in der Akte; aus der App (Fahrlehrer, auch über kalender_pruefungen) = Büro übernimmt es
+  if tg_op = 'UPDATE' and new.status is distinct from old.status then
+    new.ergebnis_uebernommen := case when new.status not in ('bestanden', 'nicht_bestanden') then true
+                                     when coalesce(current_setting('kompass.w21_ergebnis', true), '') = '1' then false   -- kam aus kalender_pruefungen (App)
+                                     else v_buero end;
+  end if;
 
   -- Fenster
   if new.pruefungstag_id is null then
@@ -236,14 +250,21 @@ begin
   v_soll := coalesce(new.art, 'praxis') = 'praxis' and new.fahrlehrer_id is not null and new.von is not null and new.status <> 'abgesagt';
   if v_soll then
     -- Zahlungssperre wie im Büro: neue künftige Praxisprüfung im Kalender (neu, oder anderer Tag/Schüler) für gesperrte Schüler nicht
-    v_neu_im_kalender := tg_op = 'INSERT' or old.kalender_termin_id is null or new.datum is distinct from old.datum
-                         or new.schueler_id is distinct from old.schueler_id or old.status = 'abgesagt';
-    if auth.uid() is not null and v_neu_im_kalender and new.datum >= (now() at time zone 'Europe/Berlin')::date then
+    -- Neu ist: neue Prüfung, anderer Tag/Schüler/Fahrlehrer, wieder aktiv. Ein Haken oder Ergebnis an einer alten Zeile ohne
+    -- Kalender-Eintrag ist nicht neu: dann bei gesperrtem Schüler nur keinen Kalender-Eintrag anlegen, aber speichern.
+    v_neu_im_kalender := tg_op = 'INSERT' or new.datum is distinct from old.datum or new.schueler_id is distinct from old.schueler_id
+                         or new.fahrlehrer_id is distinct from old.fahrlehrer_id or old.status = 'abgesagt';
+    if auth.uid() is not null and new.datum >= (now() at time zone 'Europe/Berlin')::date
+       and (v_neu_im_kalender or new.kalender_termin_id is null) then
       v_g := public.schueler_buchung_gesperrt(new.schueler_id::text);
-      if v_g is not null then
+      if v_g is not null and v_neu_im_kalender then
         raise exception 'Zahlung ausstehend: %', v_g using errcode = 'P0001', hint = 'Bitte zuerst im Büro klären.';
+      elsif v_g is not null then
+        v_soll := false;
       end if;
     end if;
+  end if;
+  if v_soll then
     if new.kalender_termin_id is null then
       new.kalender_termin_id := 'pt' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 20);
     end if;
@@ -301,7 +322,7 @@ begin
   if tg_op = 'UPDATE' and new.result is not distinct from old.result and new.datum is not distinct from old.datum then return null; end if;
   perform set_config('kompass.w21_ergebnis', '1', true);
   begin
-    update public.pruefungstermine set status = v_status, aktualisiert_am = now()
+    update public.pruefungstermine set status = v_status, ergebnis_uebernommen = false, aktualisiert_am = now()
      where schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis'
        and status in ('geplant', 'bestanden', 'nicht_bestanden') and status <> v_status;
   exception when others then null; -- das Ergebnis der App wird nie dadurch verhindert
@@ -399,10 +420,12 @@ revoke all on function public.pruefung_tauschen(uuid, uuid) from public, anon;
 grant execute on function public.pruefung_tauschen(uuid, uuid) to authenticated;
 
 -- Belegung der Prüfungstage der eigenen Fahrschule: frei/belegt je Fenster. Schüler/Fahrlehrer nur bei eigenen (Büro/Leitung: alle).
-create or replace function public.pruefungstage_belegung(p_von date, p_bis date)
+-- p_fahrschule: nur der Super-Admin darf eine andere als die eigene Fahrschule wählen (Büro-Seite: Fahrschul-Auswahl)
+create or replace function public.pruefungstage_belegung(p_von date, p_bis date, p_fahrschule uuid default null)
  returns jsonb language plpgsql stable security definer set search_path to 'public'
 as $function$
-declare v_fs uuid := my_fahrschule_id(); v_alle boolean := is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid());
+declare v_fs uuid := case when p_fahrschule is not null and is_super_admin(auth.uid()) then p_fahrschule else my_fahrschule_id() end;
+  v_alle boolean := is_buero(auth.uid()) or is_fahrschule_admin(auth.uid()) or is_super_admin(auth.uid());
 begin
   if auth.uid() is null or v_fs is null then return '[]'::jsonb; end if;
   if not v_alle and not exists (select 1 from public.profiles p where p.id = auth.uid() and p.rolle = 'fahrlehrer' and p.aktiv) then return '[]'::jsonb; end if;
@@ -419,5 +442,5 @@ begin
       from public.pruefungstage t
      where t.fahrschule_id = v_fs and not t.geloescht and t.datum between p_von and p_bis), '[]'::jsonb);
 end $function$;
-revoke all on function public.pruefungstage_belegung(date, date) from public, anon;
-grant execute on function public.pruefungstage_belegung(date, date) to authenticated;
+revoke all on function public.pruefungstage_belegung(date, date, uuid) from public, anon;
+grant execute on function public.pruefungstage_belegung(date, date, uuid) to authenticated;

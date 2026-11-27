@@ -230,6 +230,12 @@ ok("Fall 5: Fahrlehrer geändert, Kalender-Eintrag wandert mit", !r.fehler && k3
 r = await als(db, U.fl1, `update public.pruefungstermine set fahrlehrer_id = $2 where id = $1`, [(await p("s4")).id, U.fl2]);
 ok("Fahrlehrer kann eigene Prüfung nicht an Kollegen geben", !!r.fehler || r.n === 0, r);
 
+// ---------- 9. Startzeit ändern ----------
+r = await als(db, U.buero, `update public.pruefungstage set start = '09:00' where id = $1 returning start_geaendert_am`, [TAG]);
+const vons2 = (await alle(db, "select fenster, to_char(von,'HH24:MI') von from public.pruefungstermine where pruefungstag_id = $1 and status <> 'abgesagt' order by fenster", [TAG])).map((x) => x.von);
+const k1 = await eins(db, "select to_char(k.von,'HH24:MI') von from public.kalender_termine k join public.pruefungstermine p on p.kalender_termin_id = k.id where p.pruefungstag_id = $1 and p.fenster = 0", [TAG]);
+ok("Startzeit 09:00: alle Fenster rücken mit, Kalender auch, Merker gesetzt", !r.fehler && vons2[0] === "09:00" && vons2[1] === "09:55" && k1.von === "09:00" && !!r.rows[0].start_geaendert_am, r.fehler || [vons2, k1]);
+
 // ---------- 8. Fall 6: bestanden / nicht bestanden, beide Richtungen ----------
 const p5 = await p("s5");
 r = await als(db, U.buero, `update public.pruefungstermine set status = 'bestanden' where id = $1`, [p5.id]);
@@ -240,10 +246,12 @@ kp = await eins(db, "select * from public.kalender_pruefungen where id = $1", ["
 ok("Büro „Rückgängig“ → Spiegel-Ergebnis gelöscht markiert", !r.fehler && kp.geloescht === true, r.fehler || kp);
 const p6 = await p("s6");
 r = await als(db, U.fl1, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('app-ex-6', $1, $2, 's6', $3, 'fail', '{"faults":["Vorfahrt"]}')`, [FS, U.fl1, p6.datum]);
+ok("App-Ergebnis: Büro muss es noch in die Akte übernehmen (ergebnis_uebernommen = false)", (await p("s6")).ergebnis_uebernommen === false);
 ok("Fall 6: App „nicht bestanden“ → Prüfungstafel nicht_bestanden", !r.fehler && (await p("s6")).status === "nicht_bestanden", r.fehler || (await p("s6")).status);
 ok("… und kein zweiter Ergebnis-Eintrag", (await eins(db, "select count(*)::int n from public.kalender_pruefungen where schueler_id = 's6' and not geloescht")).n === 1);
 r = await als(db, U.buero, `update public.pruefungstermine set status = 'bestanden' where id = $1`, [p6.id]);
 kp = await eins(db, "select * from public.kalender_pruefungen where id = 'app-ex-6'");
+ok("Büro-Ergebnis gilt als übernommen", (await p("s6")).ergebnis_uebernommen === true);
 ok("Büro-Korrektur ändert die App-Zeile (Fehlerpunkte bleiben)", kp.result === "pass" && kp.payload.faults[0] === "Vorfahrt" && !!kp.payload.buero_korrektur_am, kp);
 r = await als(db, U.fl1, `update public.pruefungstermine set status = 'nicht_bestanden' where id = $1`, [(await p("s4")).id]);
 ok("App setzt Ergebnis an eigener Prüfung direkt", !r.fehler && r.n === 1 && (await p("s4")).status === "nicht_bestanden", r);
@@ -251,11 +259,8 @@ ok("… ohne zweite Ergebnis-Zeile (Fahrlehrer schreiben ihr Ergebnis selbst nac
 r = await als(db, U.fl1, `update public.kalender_pruefungen set geloescht = true where id = 'app-ex-6'`);
 ok("App „Rückgängig“ (Ergebnis gelöscht) → Tafel wieder geplant", !r.fehler && (await p("s6")).status === "geplant", (await p("s6")).status);
 
-// ---------- 9. Startzeit ändern ----------
-r = await als(db, U.buero, `update public.pruefungstage set start = '09:00' where id = $1 returning start_geaendert_am`, [TAG]);
-const vons2 = (await alle(db, "select fenster, to_char(von,'HH24:MI') von from public.pruefungstermine where pruefungstag_id = $1 and status <> 'abgesagt' order by fenster", [TAG])).map((x) => x.von);
-const k1 = await eins(db, "select to_char(k.von,'HH24:MI') von from public.kalender_termine k join public.pruefungstermine p on p.kalender_termin_id = k.id where p.pruefungstag_id = $1 and p.fenster = 0", [TAG]);
-ok("Startzeit 09:00: alle Fenster rücken mit, Kalender auch, Merker gesetzt", !r.fehler && vons2[0] === "09:00" && vons2[1] === "09:55" && k1.von === "09:00" && !!r.rows[0].start_geaendert_am, r.fehler || [vons2, k1]);
+r = await als(db, U.buero, `update public.pruefungstage set start = '10:00' where id = $1`, [TAG]);
+ok("Tag mit Ergebnissen: Startzeit bleibt (abgeschlossene Prüfungen verrutschen nicht)", /W21:tag_hat_ergebnisse/.test(r.fehler || ""), r);
 
 // ---------- 10. Fahrlehrer in der App ----------
 r = await als(db, U.fl1, `insert into public.pruefungstage (fahrschule_id, datum, erstellt_von) values ($1, current_date + 14, $2) returning id`, [FS, U.fl1]);
@@ -308,6 +313,17 @@ await db.exec(`create function public.stoerung() returns trigger language plpgsq
 r = await als(db, U.buero, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, pruefungstag_id, fenster, fahrlehrer_id) values ($1, 's13', 'praxis', $2, 4, $3) returning kalender_fehler`, [FS, TAG3, U.fl2]);
 ok("Kalender-Fehler bricht das Speichern nicht ab (steht in kalender_fehler)", !r.fehler && /Kalender kaputt/.test(r.rows[0].kalender_fehler || ""), r);
 await db.exec(`drop trigger trg_test_stoerung on public.kalender_termine; drop function public.stoerung();`);
+
+// Altzeile ohne Kalender-Eintrag, Schüler gesperrt: Haken/Ergebnis speichern geht (nur kein neuer Kalender-Eintrag)
+await db.exec(`set session_replication_role = replica; insert into public.pruefungstermine (id, fahrschule_id, schueler_id, art, datum, von, fahrlehrer_id, status) values ('00000000-0000-0000-0000-0000000000b2', '${FS}', 'sg', 'praxis', current_date + 11, '09:00', '${U.fl1}', 'geplant'); set session_replication_role = origin;`);
+r = await als(db, U.buero, `update public.pruefungstermine set tuev_gutschein = true where id = '00000000-0000-0000-0000-0000000000b2' returning kalender_termin_id`);
+ok("Gesperrter Schüler, alte Zeile ohne Kalender: Haken speichern geht, kein neuer Kalender-Eintrag", !r.fehler && r.rows[0].kalender_termin_id === null, r);
+// Super-Admin wählt eine Fahrschule (Büro-Seite)
+await db.exec(`insert into public.profiles (id, rolle, fahrschule_id) values ('a0000000-0000-0000-0000-000000000009', 'super_admin', '${FS2}')`);
+r = await als(db, "a0000000-0000-0000-0000-000000000009", `select public.pruefungstage_belegung(current_date, current_date + 30, $1) b`, [FS]);
+ok("Super-Admin sieht die Tage der gewählten Fahrschule", !r.fehler && r.rows[0].b.length >= 2, r);
+r = await als(db, U.buero, `select public.pruefungstage_belegung(current_date, current_date + 30, $1) b`, [FS2]);
+ok("Büro kann keine fremde Fahrschule wählen (bekommt die eigene)", !r.fehler && r.rows[0].b.every((t) => t.id !== null) && r.rows[0].b.length >= 2, r);
 
 // ---------- 13. Fall 10: Probe ----------
 let pr = await probe(db);
