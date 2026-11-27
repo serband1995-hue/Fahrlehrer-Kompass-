@@ -188,6 +188,8 @@ jobs:
         run: |
           NODE_PATH=/tmp/w18-pg/node_modules node scripts/w21-sql-test.mjs
           NODE_PATH=/tmp/w20-pg17/node_modules node scripts/w21-sql-test.mjs
+          NODE_PATH=/tmp/w18-pg/node_modules node scripts/w24-sql-test.mjs
+          NODE_PATH=/tmp/w18-pg/node_modules node scripts/w27-sql-test.mjs
 
   buero:
     # Eigener Job (läuft parallel), weil der Büro-Test allein etwa 8 Minuten braucht.

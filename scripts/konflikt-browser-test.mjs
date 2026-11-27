@@ -6,6 +6,7 @@
 //   B5 Bearbeiten auf belegte Zeit → Rückfrage; nur Notiz ändern → keine Rückfrage
 //   B6 Wochenansicht: ⚠ an überlappenden Kacheln
 //   B7 nichts läuft seitlich über (360 px), keine JS-Fehler
+//   B12 acht gleichzeitige Termine: Spalten ≥ 60 px, Tagesansicht seitlich wischbar, Seite läuft nicht über
 //   B11 Büro-Kalender: zwei gleichzeitige Termine nebeneinander, ⇄ in der Ecke, Anfangszeit nicht abgeschnitten (360/412/1024 px)
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/konflikt-browser-test.mjs
 import { createRequire } from "node:module";
@@ -137,6 +138,39 @@ for (const breite of [360, 412]) {
       if (els.some((e) => { const t = e.querySelector(".ct-ev-t"); return t.scrollWidth > t.clientWidth + 1; })) f.push("Uhrzeit abgeschnitten");
       return f;
     });
+  });
+  await pruefe("B12" + b, "acht gleichzeitige Termine (Gesamtansicht viele Fahrlehrer): Spalten mindestens 60 px, seitlich wischbar, Uhrzeiten bleiben links, Seite läuft nicht über", async () => {
+    await page.evaluate((tag) => { for (let i = 0; i < 5; i++) DB.lessons.push({ id: "V" + i, sid: "m1", date: tag, von: "10:15", bis: "11:15", art: "fahrstunde", status: "geplant" }); save(); _calView = "tag"; routeKalender(); }, tag); await warte(page, 400);
+    const r = await page.evaluate(() => {
+      const f = [], els = [...document.querySelectorAll('.ct-ev[data-evedit^="lesson|"]')].filter((e) => e.style.width);
+      if (els.length < 8) f.push("nur " + els.length + " Spalten-Termine");
+      const eng = els.filter((e) => e.getBoundingClientRect().width < 60);
+      if (eng.length) f.push(eng.length + " Spalten schmaler als 60 px (" + Math.round(eng[0].getBoundingClientRect().width) + " px)");
+      const q = document.querySelector(".ct-quer"); if (!q) f.push("kein wischbarer Bereich"); else if (q.scrollWidth <= q.clientWidth) f.push("Bereich nicht breiter als der Bildschirm");
+      if (!document.querySelector(".ct-quer-hinweis")) f.push("Hinweis „seitlich wischen“ fehlt");
+      const ueber = document.documentElement.scrollWidth - innerWidth; if (ueber > 1) f.push("Seite läuft " + ueber + " px über");
+      return f;
+    });
+    // Nach dem Wischen bleiben die Uhrzeiten links sichtbar
+    const z = await page.evaluate(async () => { const q = document.querySelector(".ct-quer"); if (!q) return null; q.scrollLeft = q.scrollWidth; await new Promise((ok) => setTimeout(ok, 120));
+      const qr = q.getBoundingClientRect(), hl = q.querySelector(".ct-hl"); if (!hl) return "keine Uhrzeit"; const r = hl.getBoundingClientRect();
+      return r.left >= qr.left - 1 && r.right <= qr.left + 60 ? true : "Uhrzeit nach dem Wischen bei " + Math.round(r.left - qr.left) + " px statt links"; });
+    if (z !== null && z !== true) r.push(z);
+    // Echte Wischgeste im Raster: Raster scrollt, der Tag bleibt (Fund Bedienung W27)
+    const g = await page.evaluate(() => { const q = document.querySelector(".ct-quer"); if (!q) return null; q.scrollLeft = 0; const b = q.getBoundingClientRect(); return { y: Math.min(b.top + 150, innerHeight - 120), datum: _calDate }; });
+    if (g) {
+      const cdp = await ctx.newCDPSession(page), pt = (x) => [{ x, y: g.y, id: 1 }];
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: pt(breite - 40) });
+      for (let i = 1; i <= 10; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pt(breite - 40 - (breite - 80) * i / 10) }); await warte(page, 16); }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await warte(page, 400);
+      const n = await page.evaluate(() => ({ datum: _calDate, sl: document.querySelector(".ct-quer")?.scrollLeft || 0 }));
+      if (n.datum !== g.datum) r.push("Wischen im Raster wechselt den Tag (" + g.datum + " → " + n.datum + ")");
+      else if (n.sl < 20) r.push("Wischgeste scrollt das Raster nicht");
+      await cdp.detach();
+    }
+    if (process.env.KF_BILD) await page.screenshot({ path: process.env.KF_BILD + "-" + b + ".png" });
+    await page.evaluate(() => { DB.lessons = DB.lessons.filter((l) => !/^V\d$/.test(l.id)); save(); routeKalender(); });
+    return r;
   });
   await pruefe("B9" + b, "Wochenansicht: Uhrzeit neben ⚠ vollständig", async () => {
     await page.evaluate(() => { _calView = "woche"; routeKalender(); }); await warte(page, 400);

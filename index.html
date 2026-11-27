@@ -1658,6 +1658,10 @@ body:not(.light) .fs-buero-link .fbl-ic,body:not(.light) .fs-buero-link .fbl-pfe
 .ct-now{position:absolute;left:46px;right:0;height:2px;background:var(--gruen-bright,#4a8b45);z-index:5;box-shadow:0 0 8px rgba(74,139,69,.6);}
 .ct-now::before{content:"";position:absolute;left:-5px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--gruen-bright,#4a8b45);}
 .ct-events{position:absolute;left:52px;right:0;top:0;bottom:0;}
+.ct-quer{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+.ct-quer .ct-hl{z-index:4;transform:translateX(var(--ct-x,0px));}
+.ct-zeitspalte{position:absolute;left:0;top:-8px;bottom:0;width:52px;z-index:3;background:var(--bg);transform:translateX(var(--ct-x,0px));box-shadow:4px 0 6px -4px rgba(0,0,0,.25);pointer-events:none;}
+.ct-quer-hinweis{font-size:13px;color:var(--txt);font-weight:700;margin:8px 0 0;}
 .ct-ev{position:absolute;left:2px;right:2px;background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-left:3px solid var(--gruen-bright,#4a8b45);border-radius:9px;padding:6px 10px;overflow:hidden;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.2);}
 .ct-ev.exam-soon{border-color:#c9a227;box-shadow:0 0 0 1.5px #c9a227,0 3px 8px rgba(0,0,0,.2);}
 .ct-ev.off{opacity:.5;}
@@ -8314,7 +8318,7 @@ const STORE_KEY="serband-app-v1";
    Wird in den Einstellungen angezeigt + für den Update-Hinweis genutzt. */
 // K1: voreingestellter Wetter-Ort (früh definiert, weil ensureDB ihn schon beim Start braucht)
 const WETTER_START={city:"Offenbach",lat:50.1006,lon:8.7665};
-const APP_VERSION="2026.11.27.6";
+const APP_VERSION="2026.11.27.7";
 try{const f=document.getElementById("drawerFoot"); if(f)f.textContent="Fahrlehrer-Kompass · Version "+APP_VERSION;}catch(e){}
 // Nutzungsbedingungen & Haftungsausschluss (Bereich: rechtliche Absicherung) - Version hochzählen
 // und alle Nutzer müssen erneut zustimmen, sobald sich der Text inhaltlich ändert.
@@ -13980,6 +13984,9 @@ function _kfLehrerNeu(){ if(!_fsAgg)return "ich"; if(_fsCalLehrerFilter.length==
 function _kfAusLesson(l){ return {id:l.id,datum:l.date,von:l.von,bis:l.bis,art:l.art||"fahrstunde",status:l.status||"geplant",fahrlehrer:_fsAgg?(l._fahrlehrerId||null):"ich",schueler:l.sid||"",fahrzeug:l.fahrzeug||""}; }
 // neue: ein Termin oder mehrere ({id?,date,von,bis,art,sid,fahrzeug,_fahrlehrerId?}); Ergebnis ohne doppelte Treffer
 // Ältere kompass-rechnen.js aus einem Zwischenspeicher (ohne den Baustein): keine Rückfrage, kein ⚠, volle Breite – nichts bricht ab
+const CT_SPALTE_MIN=68; // Mindestbreite einer Spalte in der Tagesansicht (px), darunter wird seitlich gewischt
+// Stundenbeschriftung bleibt beim seitlichen Wischen links stehen (scroll blubbert nicht, daher Capture)
+document.addEventListener("scroll",e=>{ const q=e.target; if(q&&q.classList&&q.classList.contains("ct-quer")) q.style.setProperty("--ct-x",q.scrollLeft+"px"); },true);
 function _kfDa(){ return typeof KR!=="undefined"&&!!KR.terminKonflikte&&!!KR.konfliktIds&&!!KR.spaltenLayout; }
 function _kfFinde(neue){
   if(!_kfDa())return [];
@@ -15082,12 +15089,13 @@ function wireCalendarDrag(){
 let _calDragBlockSwipe=false;
 function bindCalSwipe(){
   const wrap=document.querySelector(".cal-wrap"); if(!wrap)return;
-  let x0=null,y0=null;
-  wrap.addEventListener("touchstart",e=>{ const t=e.touches[0]; x0=t.clientX; y0=t.clientY; },{passive:true});
+  let x0=null,y0=null,q=null,sl0=0;
+  // Im seitlich wischbaren Raster (.ct-quer, viele gleichzeitige Termine) wechselt Wischen nur dann den Tag, wenn das Raster schon am Rand stand und sich nicht bewegt hat
+  wrap.addEventListener("touchstart",e=>{ const t=e.touches[0]; x0=t.clientX; y0=t.clientY; q=e.target&&e.target.closest?e.target.closest(".ct-quer"):null; sl0=q?q.scrollLeft:0; },{passive:true});
   wrap.addEventListener("touchend",e=>{
     if(_calDragBlockSwipe){ x0=null; return; }
     if(x0==null)return; const t=e.changedTouches[0]; const dx=t.clientX-x0, dy=t.clientY-y0;
-    x0=null; if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
+    x0=null; if(q&&Math.abs(q.scrollLeft-sl0)>1)return; if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.3)return;
     _calDate=calShift(dx<0?1:-1); routeKalender();
   },{passive:true});
 }
@@ -15231,6 +15239,9 @@ function calDayHTML(){
   const spIds=new Map(); items.forEach((it,i)=>{ if(it.type==="ev"&&it.e.art!=="block")spIds.set("i"+i,it); });
   const lay=!_kfDa()?new Map():KR.spaltenLayout([...spIds.entries()].map(([k,it])=>({id:k,von:min2hm(it.von),bis:min2hm(it.bis)})));
   const kfIds=_kfIdsAmTag(iso);
+  // Gesamtprüfung (W18 × W25): viele Fahrlehrer gleichzeitig → jede Spalte mindestens CT_SPALTE_MIN breit, Zeitachse seitlich wischbar
+  let maxSp=1; lay.forEach(v=>{ if(v.spalten>maxSp)maxSp=v.spalten; });
+  const quer=maxSp>3&&52+maxSp*CT_SPALTE_MIN>(document.documentElement.clientWidth||innerWidth)-24;
   items.forEach((it,i)=>{
     const top=(it.von-startH*60)*pxPerMin; const h=Math.max(34,(it.bis-it.von)*pxPerMin-3);
     const sp=lay.get("i"+i), spStil=sp&&sp.spalten>1?`left:calc(${(sp.spalte*100/sp.spalten).toFixed(3)}% + 2px);right:auto;width:calc(${(100/sp.spalten).toFixed(3)}% - 4px);`:"";
@@ -15258,7 +15269,7 @@ function calDayHTML(){
   const doneUE=dayUE(iso,true), planUE=dayUE(iso,false);
   const hol=holidayName(iso);
   return `${hol?`<div class="cd-holiday">🎌 ${esc(hol)} · Feiertag in Hessen</div>`:''}${_fsKeineAuswahl()?'':`<div class="cd-summary"><span><b>${evs.filter(e=>!e.doppelt&&e.art!=="block").length}</b> belegt</span><span><b>${free.length}</b> frei</span>${_fsAgg?'':`<span><b>${planUE}</b> UE</span>`}</div>`}
-    <div class="ct-wrap" style="height:${totalH}px">${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>`;
+    ${quer?`<div class="ct-quer-hinweis">${maxSp} Termine gleichzeitig – seitlich wischen ↔</div><div class="ct-quer">`:''}<div class="ct-wrap" style="height:${totalH}px${quer?`;min-width:${52+maxSp*CT_SPALTE_MIN}px`:''}">${quer?'<div class="ct-zeitspalte"></div>':''}${hourLines}${nowLine}<div class="ct-events">${blocks}</div></div>${quer?'</div>':''}`;
 }
 // UE eines Tages (done=nur absolvierte)
 function dayUE(iso,doneOnly){
@@ -15502,9 +15513,10 @@ function dayTheorieWindow(iso){
   return null;
 }
 // Alle Termine (Fahrstunden + Prüfungen) eines Tages, vereinheitlicht
+// Gesamtprüfung: Spiegelzeile einer Prüfung mit Ergebnis immer ausblenden (auch in der Gesamtansicht der Leitung, sonst „2×“ neben dem Ergebnis)
 function dayEvents(iso){
   const ev=[];
-  (DB.lessons||[]).filter(l=>l.date===iso&&!(_ptAktiv()&&_ptIstSpiegel(l)&&(DB.exams||[]).some(ex=>ex.sid===l.sid&&ex.date===iso&&istPruefung(ex)))).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",ptSpiegel:_ptIstSpiegel(l),id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer??null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
+  (DB.lessons||[]).filter(l=>l.date===iso&&!(_ptIstSpiegel(l)&&(DB.exams||[]).some(ex=>ex.sid===l.sid&&ex.date===iso&&istPruefung(ex)))).forEach(l=>{ const st=DB.students.find(s=>s.id===l.sid); ev.push({kind:"lesson",ptSpiegel:_ptIstSpiegel(l),id:l.id,von:l.von,bis:l.bis,art:l.art||"fahrstunde",sid:l.sid,name:st?st.name:(l.name||"—"),status:l.status||"geplant",fc:l.fc||null,note:l.note||"",srcSonder:l.srcSonder||null,fahrzeug:l.fahrzeug||null,tatsaechlicheDauer:l.tatsaechlicheDauer??null,noshow:l.noshow||null,_fahrlehrerId:l._fahrlehrerId,_fahrlehrerName:l._fahrlehrerName}); });
   // Prüfungstermine: jeder belegte Slot = ein 90-Min-Event (Default 09:00, falls keine Zeit).
   // NUR solange noch kein Ergebnis eingetragen ist – sonst zählt die Prüfung über exams.earnAt (s. ueRange).
   // Prüfungstermine: Block beginnt genau zur eingetragenen Prüfungszeit und dauert PRUEF_MIN (55) Minuten.

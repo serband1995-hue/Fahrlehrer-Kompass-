@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.7", datum: "2026-11-27", kurz: "Feinschliff: neue Funktionen passen besser zusammen.",
+    punkte: ["Laufen viele Termine gleichzeitig, wird die Tagesansicht breiter: seitlich wischen, damit jeder Termin lesbar bleibt.",
+             "Die Leitung sieht eine Prüfung mit Ergebnis in der Gesamtansicht nur noch einmal statt doppelt.",
+             "Im Büro: Für Umschreiber kann man auch beim Nachtragen im Ausbildungsnachweis keine Sonderfahrt mehr eintragen.",
+             "Im Büro: Die Liste doppelt belegter Fahrzeuge zählt abgesagte Stunden nicht mehr mit und erkennt gleiche Namen auch bei anderer Schreibweise.",
+             "Im Büro: Beim Zurückholen einer Sicherung steht jetzt dabei, was auf den Handys der Fahrlehrer anders bleiben kann."] },
   { version: "2026.11.27.6", datum: "2026-11-27", kurz: "Neu: Warnung, wenn sich zwei Termine überschneiden.",
     punkte: ["Trägst du einen Termin ein, änderst oder verschiebst ihn, prüft die App: Ist der Fahrlehrer, der Schüler oder das Fahrzeug zur gleichen Zeit schon belegt? Dann fragt sie nach. „Abbrechen“ ist vorausgewählt, du kannst aber trotzdem speichern.",
              "Termine mit Überschneidung haben im Kalender ein ⚠ und eine orange Umrandung.",

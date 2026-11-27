@@ -379,7 +379,9 @@ function vwVorschauZeigen(dlg, v) {
   const anhang = bleiben.length ? `<p class="vw-warn">Seit dem Backup dazugekommen, bleibt erhalten: ${bleiben.map((t) => `${t.zuviel} ${esc(ks.name(t.tabelle))}`).join(", ")}. Bitte danach den Zahlungsstand der betroffenen Schüler ansehen.</p>` : "";
   const fest = v.bleibt_fest ? `<p class="leise klein">${v.bleibt_fest} gelaufene, unterschriebene oder stornierte Stunden bleiben, wie sie sind (werden nie geändert oder gelöscht).</p>` : "";
   // Handys behalten ihren eigenen Stand (Handy-Stände werden hier nicht mit zurückgeholt)
-  const handy = v.modus === "komplett" && geaendert.some((t) => t.tabelle === "schueler") ? `<p class="vw-warn">Die Handys der Fahrlehrer behalten ihren eigenen Stand. Bitte danach bei den Fahrlehrern die zurückgeholten Schüler ansehen: ein Handy kann eigene Änderungen wieder hochladen.</p>` : "";
+  // Gesamtprüfung (W24 × W23): auch Termine und Prüfungsergebnisse – das Handy behält eingetragene Ergebnisse, neuere Termine verschwinden dort
+  const hS = geaendert.some((t) => t.tabelle === "schueler"), hT = geaendert.some((t) => ["kalender_termine", "kalender_pruefungen", "pruefungstermine"].includes(t.tabelle));
+  const handy = v.modus === "komplett" && (hS || hT) ? `<p class="vw-warn">Die Handys der Fahrlehrer behalten ihren eigenen Stand.${hS ? " Bitte danach bei den Fahrlehrern die zurückgeholten Schüler ansehen: ein Handy kann eigene Änderungen wieder hochladen." : ""}${hT ? " Eingetragene Prüfungsergebnisse bleiben auf dem Handy stehen; Termine, die nach der Sicherung dazukamen, verschwinden dort beim nächsten Abgleich." : ""}</p>` : "";
   const kopfzeile = v.ok && v.wiederherstellbar ? `<p><b>${summe ? `${v.einfuegen || 0} kommen dazu, ${v.aendern || 0} werden geändert, ${v.loeschen || 0} fallen weg.` : "Keine Unterschiede."}</b></p>` : "";
   box.innerHTML = `${kopfzeile}${liste}${anhang}${handy}${fest}${fuss}`;
   const darf = v.ok && v.wiederherstellbar && summe > 0 && v.darf_wiederherstellen;

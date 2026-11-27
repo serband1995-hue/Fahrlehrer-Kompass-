@@ -251,6 +251,8 @@ function nwStundeDialog(x, t, nachher) {
     // Sonderfahrten wie im Termin-Fenster: art „sonder“ + payload.sonderArt (auch Nacht)
     if (!f.artwahl) { toast("Bitte die Art der Fahrt wählen.", true); return false; }
     const istSonder = ["ueberland", "autobahn", "nacht"].includes(f.artwahl);
+    // W22 (Gesamtprüfung): Umschreiber machen keine Sonderfahrten – wie Termin-Fenster und Serie; eine schon eingetragene bleibt änderbar
+    if (istSonder && !artGleich && typeof istUmschreiber === "function" && istUmschreiber(x)) { toast("Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.", true); return false; }
     const art = artGleich ? v.art : istSonder ? "sonder" : f.artwahl;
     const sonderArt = artGleich ? (((v.payload || {}).sonderArt) || null) : istSonder ? f.artwahl : null;
     const grund = (f.grund || "").trim();
