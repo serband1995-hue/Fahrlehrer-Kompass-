@@ -4956,7 +4956,7 @@ async function _schuelerNameTelVomServer(ids) {
   const supa = getSupa(); const out = {};
   for (let i = 0; i < ids.length; i += 150) {
     const { data, error } = await supa.from("schueler").select("id,name,telefon").in("id", ids.slice(i, i + 150));
-    if (error) { console.warn("[Kompass] Name/Telefon vom Server nicht gelesen:", error.message); return null; }
+    if (error) { console.warn("[Kompass] Name/Telefon vom Server nicht gelesen:", error.message); if (window.SYNC) SYNC.fehlerMerken("schueler", error); return null; } // W23: Schüler bleibt liegen – nicht grün
     (data || []).forEach(r => { out[r.id] = { name: r.name, telefon: r.telefon }; });
   }
   return out;
@@ -4981,6 +4981,8 @@ async function _upsertRobust(tabelle, rows, konflikt) {
       if (!e1) ok.push(r[konflikt]); else {
         console.warn("[Kompass] " + tabelle + " " + r[konflikt] + " übersprungen:", e1.message);
         abgelehnt.push({ id: r[konflikt], row: r, error: e1 });
+        // W23 (Daten-Prüfer): Netz fällt erst im Einzelversuch aus → nicht angekommen, Kanal wartet (nicht grün)
+        if (!e1.code || /^PGRST|^5\d\d$/.test(String(e1.code)) || /fetch|network|timeout/i.test(e1.message || "")) { _brueckenOk = false; if (kanal) SYNC.fehlerMerken(kanal, e1); }
         // K8: Server sperrt (App hatte die Sperre noch nicht) – einmal je Termin sichtbar melden
         if (e1.code === "P0001" && /Zahlung ausstehend/.test(e1.message || "") && !_zahlungAbgelehntGemeldet.has(r[konflikt])) {
           _zahlungAbgelehntGemeldet.add(r[konflikt]); toast("Termin nicht gespeichert: Zahlung ausstehend – bitte ans Büro");
@@ -5226,14 +5228,15 @@ async function pushToCloud() {
   // Jeder Lauf bekommt eine Nummer: ein Lauf, der nach dem Zeitlimit doch noch weiterläuft, fasst nichts mehr an.
   // W23: fertig = der Lauf kam vor dem Zeitlimit zurück – dann meldet das (immer noch ablaufende) Zeitlimit dem Sync-Punkt nichts mehr.
   const mitZeitlimit = () => { const gen = ++_pushGen; let fertig = false; return Promise.race([_pushToCloudJetzt(gen).then(ok => { fertig = true; if (!ok) _snapGeaendert = true; return ok; }), new Promise(ok => setTimeout(() => { if (!fertig) _pushNicht("Push: Zeitlimit", null, "netz"); _snapGeaendert = true; ok(false); }, 25000))]); };
+  // W23: Sync-Punkt (Kanal "snap" = ganzer Handy-Stand) – vor dem Lauf melden: _pushToCloudJetzt kann schon synchron abbrechen
+  // (Grund aus _pushNicht() muss in diesem Lauf landen).
+  const sync = window.SYNC && _authUser && !_ohneEigenenStand();
+  if (sync) SYNC.start("snap");
   _pushLaeuft = (async () => {
     let ok = false, runden = 0;
     do { _pushNochmal = false; ok = await mitZeitlimit(); } while (_pushNochmal && ++runden < 3);
     return ok;
   })();
-  // W23: Sync-Punkt (Kanal "snap" = ganzer Handy-Stand). Den Grund für ein false setzt _pushNicht().
-  const sync = window.SYNC && _authUser && !_ohneEigenenStand();
-  if (sync) SYNC.start("snap");
   let erg = false;
   try { erg = await _pushLaeuft; return erg; } finally { _pushLaeuft = null; if (sync) SYNC.ende("snap", erg === true); }
 }

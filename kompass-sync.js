@@ -18,7 +18,8 @@
 
   var S = { user: null, letzt: {}, abgelehnt: {}, aus: {} };   // gemerkt (pro Konto)
   var K = {};                                                  // nur zur Laufzeit
-  KANAELE.forEach(function (k) { K[k] = { laeuft: 0, offen: false, fehler: null, laufFehler: null, offenSeit: 0 }; });
+  KANAELE.forEach(function (k) { K[k] = { laeuft: 0, offen: false, fehler: null, laufFehler: null, offenSeit: 0, offenAm: 0, startAm: 0 }; });
+  var _nr = 0; // Reihenfolge von Speichern und Laufstart (Uhr kann stehen)
   var speicher = { voll: false, nutzung: 0, geprueftAm: 0, nahGemeldet: false };
 
   function uid() { try { return (typeof _authUser !== "undefined" && _authUser && _authUser.id) || null; } catch (e) { return null; } }
@@ -50,7 +51,7 @@
   }
 
   /* ---------- Meldungen aus index.html ---------- */
-  function start(k) { if (!K[k]) return; laden(); if (!K[k].laeuft) K[k].laufFehler = null; K[k].laeuft++; zeichnen(); }
+  function start(k) { if (!K[k]) return; laden(); if (!K[k].laeuft) { K[k].laufFehler = null; K[k].startAm = ++_nr; } K[k].laeuft++; zeichnen(); }
   function fehlerMerken(k, e, g) { if (!K[k]) return; K[k].laufFehler = g || grund(e); if (!K[k].laeuft) { K[k].fehler = K[k].laufFehler; K[k].laufFehler = null; zeichnen(); } }
   function wartet(k, text) { fehlerMerken(k, null, { art: "wartet", text: text }); }
   // ok: true = angekommen (oder nichts zu tun), false = nicht (Grund aus fehlerMerken, sonst „wartet“)
@@ -58,11 +59,12 @@
     if (!K[k]) return; laden();
     K[k].laeuft = Math.max(0, K[k].laeuft - 1); if (K[k].laeuft) return;
     var f = K[k].laufFehler; K[k].laufFehler = null;
-    if (ok && !f) { K[k].fehler = null; K[k].offen = false; K[k].offenSeit = 0; S.letzt[k] = Date.now(); merken(); }
+    // offen bleibt, wenn nach dem Start dieses Laufs neu gespeichert wurde (der nächste Lauf kommt gleich)
+    if (ok && !f) { K[k].fehler = null; if (!(K[k].offenAm > K[k].startAm)) { K[k].offen = false; K[k].offenSeit = 0; } S.letzt[k] = Date.now(); merken(); }
     else { K[k].fehler = f || { art: "wartet", text: "Noch nicht gesendet – wird erneut versucht" }; if (!K[k].offenSeit) K[k].offenSeit = Date.now(); }
     zeichnen();
   }
-  function offen(k) { if (!K[k]) return; K[k].offen = true; if (!K[k].offenSeit) K[k].offenSeit = Date.now(); zeichnen(); }
+  function offen(k) { if (!K[k]) return; K[k].offen = true; K[k].offenAm = ++_nr; if (!K[k].offenSeit) K[k].offenSeit = Date.now(); zeichnen(); }
   function zeileWert(r) { var o = {}; Object.keys(r || {}).forEach(function (x) { if (x !== "aktualisiert_am") o[x] = r[x]; }); try { return typeof _abglWert === "function" ? _abglWert(o) : JSON.stringify(o).length + ""; } catch (e) { return ""; } }
   // Ergebnis eines Schreibvorgangs je Zeile: angekommene IDs und abgelehnte [{row, error}]
   function ergebnis(tabelle, okIds, abgelehnt) {
@@ -236,7 +238,7 @@
   // Brücken laufen nur beim Speichern: nach einem Netzfehler hier erneut anstoßen (nicht bei Ablehnung durch den Server)
   function nachholen() {
     if (!aktiv() || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
-    var brauchts = ["schueler", "termine", "pruefungen"].some(function (k) { return K[k].fehler && K[k].fehler.art !== "server" && !K[k].laeuft; });
+    var brauchts = ["schueler", "termine", "pruefungen"].some(function (k) { return K[k].fehler && K[k].fehler.art === "netz" && !K[k].laeuft; }); // nur Netz: „wartet“ holt sich selbst nach, Ablehnungen nicht jede Minute
     if (brauchts) try { if (typeof _brueckenSofort === "function") _brueckenSofort(); } catch (x) {}
   }
   if (typeof document !== "undefined") {
@@ -252,7 +254,7 @@
     setInterval(function () { nachholen(); zeichnen(); }, 60000);
   }
   // Nach dem Abmelden: zur Laufzeit alles vergessen (der gemerkte Stand wird mit den übrigen Kontodaten gelöscht)
-  function vergessen() { S = { user: null, letzt: {}, abgelehnt: {}, aus: {} }; KANAELE.forEach(function (k) { K[k] = { laeuft: 0, offen: false, fehler: null, laufFehler: null, offenSeit: 0 }; }); speicher.voll = false; zeichnen(); }
+  function vergessen() { S = { user: null, letzt: {}, abgelehnt: {}, aus: {} }; KANAELE.forEach(function (k) { K[k] = { laeuft: 0, offen: false, fehler: null, laufFehler: null, offenSeit: 0, offenAm: 0, startAm: 0 }; }); speicher.voll = false; zeichnen(); }
 
   var api = { KEY: KEY, GRENZE: GRENZE, WARN_AB: WARN_AB, start: start, ende: ende, fehlerMerken: fehlerMerken, wartet: wartet, offen: offen, ergebnis: ergebnis,
     ausblenden: ausblenden, speicherOk: speicherOk, speicherVoll: speicherVoll, zustand: zustand, kurztext: kurztext, grund: grund, zeichnen: zeichnen,

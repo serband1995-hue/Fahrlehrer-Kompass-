@@ -286,6 +286,23 @@ await abschnitt("S7", async () => {
   await ctx.close();
 });
 
+// ---- S8 (Daten-Prüfer): Block mit Rechtefehler abgelehnt, im Einzelversuch fällt das Netz aus → nicht grün ----
+await abschnitt("S8", async () => {
+  const { ctx, page, jsFehler } = await neueApp(start);
+  await warteFarbe(page, "gruen");
+  await page.evaluate(() => {
+    window.__hook = (tab, art, werte) => (tab === "kalender_termine" && art === "upsert" ? (Array.isArray(werte) && werte.length > 1 ? { code: "42501", message: "row-level security" } : { message: "TypeError: Failed to fetch" }) : null);
+    DB.lessons.push({ id: "L5", date: "2026-11-29", von: "08:00", bis: "09:30", art: "fahrstunde", sid: "s-a", name: "", status: "geplant", note: "", fc: null },
+      { id: "L6", date: "2026-11-29", von: "10:00", bis: "11:30", art: "fahrstunde", sid: "s-a", name: "", status: "geplant", note: "", fc: null }); save(); });
+  await page.waitForTimeout(6500);
+  await pruefe("S8a", "Netz fällt erst im Einzelversuch aus → Punkt gelb (nicht grün), Termine „wartet auf Internet“", async () => {
+    const f = []; if ((await farbe(page)) !== "gelb") f.push("Farbe " + (await farbe(page)));
+    const z = await page.evaluate(() => { SYNC.fensterOeffnen(); return (document.querySelector('#syncFenster [data-kanal="termine"]') || {}).textContent || ""; });
+    if (!/wartet/.test(z)) f.push("Termine: " + z); return f; });
+  await pruefe("S8b", "keine JS-Fehler", () => jsFehler);
+  await ctx.close();
+});
+
 await browser.close();
 server.close();
 console.log(`\nSync-Status-Test: ${okZahl} ok, ${fehlerZahl} Fehler`);
