@@ -962,8 +962,9 @@ body.kiosk .rollen-streifen{display:none;}
 .kopf-aktionen[hidden]{display:none;}
 .tab .zahl{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--rot);color:#fff;font-size:13px;font-weight:700;vertical-align:1px;}
 @media (prefers-color-scheme:dark){.tab .zahl{background:#b3392b;}}
-@media (max-width:1400px){ .status:not(.ok) #statusText{max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .status.fehler #statusText{max-width:none;font-size:13px;font-weight:700;color:var(--rot);} }
-.status.fehler #statusText{font-weight:700;color:var(--rot);}
+@media (max-width:1400px){ .status:not(.ok) #statusText{max-width:7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} .status.fehler #statusText{max-width:none;font-size:13px;} }
+.status.fehler #statusText{font-weight:700;color:#a93226;} /* W23: ≥ 4,5:1 auf hellem Kopf */
+@media (prefers-color-scheme:dark){ .status.fehler #statusText{color:var(--rot);} }
 /* W15: Reiter „Läuft bald ab“ – Knopf „Akte öffnen“ auch am PC mindestens 44 px (Regel für alle neuen Knöpfe) */
 .knopf.klein[data-baldakte],.knopf.klein[data-balderinnern]{min-height:44px;}
 /* W15 (Prüf-Team): „Läuft bald ab“ am Handy als Karten statt Tabelle – nichts abgeschnitten, Knopf erreichbar */

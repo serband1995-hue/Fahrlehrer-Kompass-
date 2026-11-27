@@ -8,7 +8,7 @@
   "use strict";
   var KEY = "kompass-sync-v1";
   var KANAELE = ["snap", "schueler", "termine", "pruefungen"];
-  var NAMEN = { snap: "Handy-Stand (alles zusammen)", schueler: "Schüler", termine: "Termine", pruefungen: "Prüfungsergebnisse" };
+  var NAMEN = { snap: "Alles auf diesem Handy (Cloud)", schueler: "Schüler", termine: "Termine", pruefungen: "Prüfungsergebnisse" };
   var TABELLE_KANAL = { schueler: "schueler", schueler_privat: "schueler", kalender_termine: "termine", kalender_pruefungen: "pruefungen" };
   /* Gerätespeicher (localStorage): Browser erlauben je Adresse rund 5 Millionen Zeichen (Chrome, Safari, Firefox: ~5 MB).
      Frühe Warnung ab 80 % (4 Mio. Zeichen): Der Stand wächst je Woche nur um wenige zehntausend Zeichen, bei 80 % bleiben also
@@ -126,7 +126,7 @@
     var abg = abgelehnteListe();
     var rot = false, gelb = false;
     if (speicher.voll) { rot = true; gruende.push("Gerätespeicher voll"); }
-    if (abg.length) { rot = true; gruende.push(abg.length === 1 ? "1 Eintrag abgelehnt" : abg.length + " Einträge abgelehnt"); }
+    if (abg.length) { rot = true; gruende.push(abg.length === 1 ? "1 Eintrag ist nicht angekommen" : abg.length + " Einträge sind nicht angekommen"); }
     ks.forEach(function (k) {
       var c = K[k];
       if (c.fehler && c.fehler.art === "server") { rot = true; gruende.push(NAMEN[k] + ": " + c.fehler.text); return; }
@@ -151,7 +151,7 @@
     var z = zustand();
     if (z.farbe === "gruen") { var t = zeit(S.letzt.snap); return "Alles in der Cloud und beim Büro angekommen" + (t ? " – zuletzt gesichert " + t : "") + "."; }
     if (z.farbe === "gelb") return z.gruende.length ? "Wartet: " + z.gruende[0] + "." : "Wird gerade gesendet …";
-    return "Nicht alles angekommen: " + (z.gruende[0] || "bitte nachsehen") + ". Tippe auf den Punkt oben.";
+    return "Nicht alles angekommen: " + (z.gruende[0] || "bitte nachsehen") + ". Tippe hier für Einzelheiten.";
   }
 
   /* ---------- Anzeige ---------- */
@@ -189,28 +189,31 @@
     if (a.t === "schueler_privat") return "Fragebogen" + (x.name ? " · " + x.name : "");
     return "Schüler" + (x.name ? " · " + x.name : "");
   }
-  function kanalZeile(k) {
+  // W23 (Design-Kritik): hat ein Kanal abgelehnte Einträge, ist er rot – nie „angekommen“
+  function kanalZeile(k, abg) {
     var c = K[k], t = zeit(S.letzt[k]);
-    var stand = c.laeuft ? "wird gerade gesendet …" : c.fehler ? (c.fehler.art === "server" ? "nicht angekommen" : "wartet") : c.offen ? "wird gleich gesendet" : "angekommen";
-    var farbe = c.fehler && c.fehler.art === "server" ? "rot" : (c.laeuft || c.fehler || c.offen) ? "gelb" : "gruen";
+    var n = (abg || []).filter(function (x) { return TABELLE_KANAL[x.a.t] === k; }).length;
+    var stand = c.laeuft ? "wird gerade gesendet …" : c.fehler ? (c.fehler.art === "server" ? "nicht angekommen" : c.fehler.art === "netz" ? "wartet auf Internet" : "wartet") : n ? (n === 1 ? "1 Eintrag nicht angekommen" : n + " Einträge nicht angekommen") : c.offen ? "wird gleich gesendet" : "angekommen";
+    var farbe = (c.fehler && c.fehler.art === "server") || n ? "rot" : (c.laeuft || c.fehler || c.offen) ? "gelb" : "gruen";
     return '<li class="sync-kanal" data-kanal="' + k + '" data-sync="' + farbe + '"><span class="sync-mini" aria-hidden="true"></span><span class="sync-k-txt"><b>' + e(NAMEN[k]) + "</b><br><small>" +
       (t ? "Zuletzt gesichert " + e(t) : "Noch nicht gesichert") + " · " + e(stand) + "</small></span></li>";
   }
   function fensterInhalt(z) {
     var ks = z.kanaele, h = "";
     h += '<p class="sync-kopf" data-sync="' + z.farbe + '"><span class="sync-mini" aria-hidden="true"></span><b>' + e(TITEL[z.farbe]) + "</b></p>";
-    h += '<ul class="sync-kanaele">' + ks.map(kanalZeile).join("") + "</ul>";
-    // Nicht angekommen: abgelehnte Einträge + Kanäle mit Fehler
+    // Nicht angekommen: abgelehnte Einträge + Kanäle mit Fehler – steht direkt unter dem Kopf, wenn etwas fehlt
     var liste = [];
     z.abgelehnt.forEach(function (x) {
       liste.push('<li class="sync-nicht" data-abgelehnt="' + e(x.key) + '"><div><b>' + e(bezeichnung(x.a, x.e)) + "</b><br><small>" + e(x.a.grund) + "</small></div>" +
         '<button type="button" class="btn btn-ghost sync-aus" data-sync-aus="' + e(x.key) + '">Ausblenden</button></li>');
     });
     ks.forEach(function (k) { var c = K[k]; if (c.fehler) liste.push('<li class="sync-nicht" data-kanal-fehler="' + k + '"><div><b>' + e(NAMEN[k]) + "</b><br><small>" + e(c.fehler.text) + "</small></div></li>"); });
-    h += '<div class="sync-abschnitt"><b>Nicht angekommen</b>';
-    h += liste.length ? '<ul class="sync-liste">' + liste.join("") + "</ul>" : '<p class="muted-p">Nichts – alles ist angekommen oder wird gerade gesendet.</p>';
-    if (z.abgelehnt.length) h += '<p class="muted-p sync-klein">„Ausblenden“ nimmt den Eintrag nur aus dieser Liste. Er bleibt auf deinem Handy und wird bei jedem Speichern erneut gesendet.</p>';
-    h += "</div>";
+    var nicht = '<div class="sync-abschnitt"><b>Nicht angekommen</b>';
+    nicht += liste.length ? '<ul class="sync-liste">' + liste.join("") + "</ul>" : '<p class="muted-p">Nichts – alles ist angekommen oder wird gerade gesendet.</p>';
+    if (z.abgelehnt.length) nicht += '<p class="muted-p sync-klein">„Ausblenden“ nimmt den Eintrag nur aus dieser Liste. Er bleibt auf deinem Handy und wird bei jedem Speichern erneut gesendet.</p>';
+    nicht += "</div>";
+    var kan = '<ul class="sync-kanaele">' + ks.map(function (k) { return kanalZeile(k, z.abgelehnt); }).join("") + "</ul>";
+    h += liste.length ? nicht + '<div class="sync-abschnitt">' + kan + "</div>" : kan + nicht;
     // Gerätespeicher
     var pz = speicher.nutzung ? Math.min(100, Math.round(speicher.nutzung / GRENZE * 100)) : null;
     if (speicher.voll) h += '<div class="sync-warn" data-sync="rot" role="alert"><b>Gerätespeicher voll</b><p>Neue Änderungen passen nicht mehr in den Speicher dieser App auf dem Handy. Sie werden nur noch in der Cloud gesichert – aber nur, solange Internet da ist.</p><p><b>Was tun:</b> Internet anlassen, bis der Punkt oben grün ist. <b>Nicht abmelden</b> und die App nicht neu installieren. Gib dem Büro Bescheid, damit wir Platz schaffen.</p></div>';

@@ -134,7 +134,7 @@ await abschnitt("S1/S5", async () => {
   const t = await fenster(page);
   await pruefe("S1b", "Fenster: „Zuletzt gesichert um hh:mm“ für Handy-Stand, Schüler, Termine, Prüfungsergebnisse", () => {
     const f = [];
-    for (const k of ["Handy-Stand", "Schüler", "Termine", "Prüfungsergebnisse"]) if (!new RegExp(k + "[^\\n]*\\n?Zuletzt gesichert um \\d\\d:\\d\\d").test(t)) f.push(k + " ohne Zeit");
+    for (const k of ["auf diesem Handy", "Schüler", "Termine", "Prüfungsergebnisse"]) if (!new RegExp(k + "[^\\n]*\\n?Zuletzt gesichert um \\d\\d:\\d\\d").test(t)) f.push(k + " ohne Zeit");
     return f.length ? f.concat([t.slice(0, 300)]) : null;
   });
   await pruefe("S1c", "Fenster: „Nicht angekommen“ ist leer, Knopf „Jetzt erneut senden“ da", async () =>
@@ -202,6 +202,11 @@ await abschnitt("S3", async () => {
   let t = await fenster(page);
   await pruefe("S3b", "Liste: „Termin am 26.11. um 14:00 · Berta Muster“ mit Grund „Zahlung ausstehend – das Büro hat gesperrt“", () =>
     /Termin am 26\.11\. um 14:00 · Berta Muster[\s\S]*Zahlung ausstehend – das Büro hat gesperrt/.test(t) ? null : t.slice(0, 500));
+  await pruefe("S3b2", "Fenster rot: Zeile „Termine“ ist rot mit „1 Eintrag nicht angekommen“ (nie „angekommen“), Liste steht oben", () => page.evaluate(() => {
+    const z = document.querySelector('#syncFenster [data-kanal="termine"]'); const f = [];
+    if (!z || z.getAttribute("data-sync") !== "rot" || !/1 Eintrag nicht angekommen/.test(z.textContent)) f.push("Termine-Zeile: " + (z && z.getAttribute("data-sync") + " " + z.textContent));
+    const l = document.querySelector("#syncFenster .sync-liste"); if (!l || (l.compareDocumentPosition(z) & Node.DOCUMENT_POSITION_FOLLOWING) === 0) f.push("Liste nicht vor den Kanälen");
+    return f; }));
   await pruefe("S3c", "keine Schülernamen in der Konsole", () => konsole.filter((k) => /Muster/.test(k)));
   // nach Neuladen weiter markiert (Merker im Gerät)
   await pruefe("S3d", "abgelehnte Zeile bleibt gemerkt (überlebt Neuladen: Eintrag im Gerätespeicher, ohne Namen)", () => page.evaluate(() => {
