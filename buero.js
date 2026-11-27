@@ -1333,7 +1333,13 @@ function ergAppHinweisHTML() {
 async function uebernimmAppErgebnis(id) {
   const p = S.pruefungstermine.find((x) => x.id === id);
   if (!p || !ergAppOffen(p)) return null;
-  await uebertrageErgebnis(p, p.status, "geplant");
+  // Richter W21 B4: Was steht schon in der Akte? Wurde „bestanden“ früher übernommen und der Fahrlehrer ändert auf „nicht bestanden“,
+  // muss das Datum (und die Befreiung von der Reaktivierung) wieder weg – uebertrageErgebnis räumt nur bei alt = „bestanden“ ab.
+  const sx = S.schueler.find((x) => x.id === p.schueler_id) || {};
+  const feld = p.art === "theorie" ? "theorie_bestanden_am" : "praxis_bestanden_am";
+  const alt = sx[feld] && sx[feld] === p.datum ? "bestanden" : "geplant";
+  if (alt === p.status) { const g0 = await speicherePruefung(id, { ergebnis_uebernommen: true }); return g0 || null; }
+  await uebertrageErgebnis(p, p.status, alt);
   const g = await speicherePruefung(id, { ergebnis_uebernommen: true });
   return g || null;
 }

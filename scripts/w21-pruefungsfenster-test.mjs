@@ -255,6 +255,19 @@ pruefe("Fall 10b: Ergebnisse nach dem Neuladen noch da (Büro „bestanden“, A
 pruefe("Fall 10c: keine Prüfung doppelt, keine verloren (12 Prüfungen inkl. Altbestand)", nachher.pruefungstermine.filter((p) => p.status !== "abgesagt").length === 12
   && new Set(nachher.pruefungstermine.filter((p) => p.status !== "abgesagt" && p.art === "praxis").map((p) => p.schueler_id + p.datum)).size === 12);
 pruefe("Fall 10d: kein Kalender-Eintrag doppelt", (() => { const l = nachher.kalender_termine.filter((k) => k.art === "pruefung" && !k.geloescht && k.payload && k.payload.pruefungstermin_id); return new Set(l.map((k) => k.payload.pruefungstermin_id)).size === l.length; })());
+// Richter W21 B4: App „bestanden“ → Büro übernimmt → Fahrlehrer ändert auf „nicht bestanden“ → Büro übernimmt wieder: Akte räumt ab
+const b4 = await B.page.evaluate(async (sid) => {
+  const p = S.pruefungstermine.find((x) => x.schueler_id === sid && x.art === "praxis" && x.status !== "abgesagt");
+  const T = window.__FAKE.tabellen.pruefungstermine.find((x) => x.id === p.id);
+  Object.assign(T, { status: "bestanden", ergebnis_uebernommen: false }); Object.assign(p, { status: "bestanden", ergebnis_uebernommen: false });
+  await uebernimmAppErgebnis(p.id);
+  const s = S.schueler.find((x) => x.id === sid), nach1 = s.praxis_bestanden_am;
+  const p2 = S.pruefungstermine.find((x) => x.id === p.id), T2 = window.__FAKE.tabellen.pruefungstermine.find((x) => x.id === p.id);
+  Object.assign(T2, { status: "nicht_bestanden", ergebnis_uebernommen: false }); Object.assign(p2, { status: "nicht_bestanden", ergebnis_uebernommen: false });
+  await uebernimmAppErgebnis(p.id);
+  return { nach1, nach2: S.schueler.find((x) => x.id === sid).praxis_bestanden_am, datum: p.datum };
+}, anton[3].id);
+pruefe("Büro übernimmt geändertes App-Ergebnis: „bestanden“-Datum in der Akte wieder weg", b4.nach1 === b4.datum && !b4.nach2, JSON.stringify(b4));
 pruefe("Keine JS-Fehler in App und Büro", fehlerAlle.length === 0, fehlerAlle.join(" | "));
 await browser.close(); server.close();
 console.log(`\n${ok} ok, ${schlecht} FEHLER`);

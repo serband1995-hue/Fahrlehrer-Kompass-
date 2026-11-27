@@ -8,6 +8,25 @@ select json_build_object(
   'pt_indexe', (select json_agg(indexdef) from pg_indexes where schemaname = 'public' and tablename = 'pruefungstermine'),
   'pt_trigger', (select json_agg(pg_get_triggerdef(oid)) from pg_trigger where tgrelid = 'public.pruefungstermine'::regclass and not tgisinternal),
   'pt_rechte', (select json_agg(json_build_object('r', grantee, 'p', privilege_type)) from information_schema.role_table_grants where table_schema = 'public' and table_name = 'pruefungstermine'),
+  -- Richter W21: alle Auslöser (Name, Reihenfolge, Funktion) auf den drei Tabellen, Regeln, Prüfungen (CHECK), Fremdschlüssel, Pflichtspalten
+  'trigger_alle', (select json_agg(json_build_object('t', c.relname, 'n', tg.tgname, 'def', pg_get_triggerdef(tg.oid)) order by c.relname, tg.tgname)
+      from pg_trigger tg join pg_class c on c.oid = tg.tgrelid
+      where not tg.tgisinternal and c.relname in ('pruefungstermine', 'kalender_termine', 'kalender_pruefungen') and c.relnamespace = 'public'::regnamespace),
+  'trigger_fn_alle', (select json_agg(json_build_object('n', p.proname, 'def', pg_get_functiondef(p.oid)))
+      from pg_proc p where p.oid in (select tg.tgfoid from pg_trigger tg join pg_class c on c.oid = tg.tgrelid
+        where not tg.tgisinternal and c.relname in ('pruefungstermine', 'kalender_termine', 'kalender_pruefungen') and c.relnamespace = 'public'::regnamespace)),
+  'regeln', (select json_agg(json_build_object('t', tablename, 'n', policyname, 'cmd', cmd, 'rollen', roles, 'using', qual, 'check', with_check))
+      from pg_policies where schemaname = 'public' and tablename in ('pruefungstermine', 'kalender_termine', 'kalender_pruefungen')),
+  'constraints_alle', (select json_agg(json_build_object('t', conrelid::regclass::text, 'n', conname, 'typ', contype, 'def', pg_get_constraintdef(oid)))
+      from pg_constraint where conrelid in ('public.pruefungstermine'::regclass, 'public.kalender_termine'::regclass, 'public.kalender_pruefungen'::regclass)),
+  'fk_auf_pruefungstermine', (select json_agg(json_build_object('t', conrelid::regclass::text, 'n', conname, 'def', pg_get_constraintdef(oid)))
+      from pg_constraint where contype = 'f' and confrelid = 'public.pruefungstermine'::regclass),
+  'pflicht_ohne_standard', (select json_agg(json_build_object('t', table_name, 'n', column_name))
+      from information_schema.columns where table_schema = 'public' and table_name in ('kalender_termine', 'kalender_pruefungen', 'pruefungstermine')
+        and is_nullable = 'NO' and column_default is null),
+  'rechte_alle', (select json_agg(json_build_object('t', table_name, 'r', grantee, 'p', privilege_type))
+      from information_schema.role_table_grants where table_schema = 'public' and table_name in ('pruefungstermine', 'kalender_termine', 'kalender_pruefungen')
+        and grantee in ('anon', 'authenticated', 'service_role')),
   'kt_trigger_fn', (select json_agg(json_build_object('n', p.proname, 'def', pg_get_functiondef(p.oid)))
       from pg_proc p where p.proname in ('termin_zahlung_sperre', 'termin_papierkorb', 'termin_verschiebung_schutz', 'termin_entfernt_schutz', 'termin_fc_haken_schutz')),
   'extensions', (select json_agg(json_build_object('n', name, 'an', installed_version)) from pg_available_extensions where name in ('btree_gist', 'pg_net', 'pg_cron')),

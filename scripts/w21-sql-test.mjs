@@ -349,6 +349,28 @@ const r2 = await als(db, U.buero, `update public.pruefungstermine set status = '
 ok("Gesperrter Schüler: Absage gleich wieder zurücknehmen geht (Versehen, wie K8)", !r.fehler && !r2.fehler, [r, r2]);
 await db.exec(`update public.schueler set zahlung_gesperrt_seit = null where id = 's13'`);
 
+// Richter W21 B1: fremde Kalenderzeile nie überschreiben, fremde Fahrschule kippt nichts
+await db.exec(`insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, status, geloescht) values ('fremd-fahrstunde', '${FS}', '${U.fl2}', 's9', current_date + 4, '10:00', '11:30', 'fahrstunde', 'geplant', false)`);
+r = await als(db, U.fl1, `insert into public.pruefungstermine (fahrschule_id, schueler_id, art, datum, von, fahrlehrer_id, kalender_termin_id) values ($1, 's2', 'praxis', current_date + 40, '09:00', $2, 'fremd-fahrstunde') returning kalender_termin_id`, [FS, U.fl1]);
+const kf = await eins(db, "select * from public.kalender_termine where id = 'fremd-fahrstunde'");
+ok("B1: Fahrlehrer kann keine fremde Kalenderzeile als Spiegel angeben", !r.fehler && r.rows[0].kalender_termin_id !== "fremd-fahrstunde" && kf.art === "fahrstunde" && kf.fahrlehrer_id === U.fl2 && kf.schueler_id === "s9", [r, kf]);
+const p2neu = r.rows && r.rows[0];
+r = await als(db, U.fl1, `update public.pruefungstermine set kalender_termin_id = 'fremd-fahrstunde' where schueler_id = 's2' and datum = current_date + 40`);
+ok("B1: … auch nicht beim Ändern", (await eins(db, "select art, fahrlehrer_id from public.kalender_termine where id = 'fremd-fahrstunde'")).art === "fahrstunde");
+const p3s = await p("s3");
+r = await als(db, U.fremd, `insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('fremd-ex', $1, $2, 's3', $3, 'pass', '{}')`, [FS2, U.fremd, p3s.datum]);
+ok("B1: Ergebnis einer anderen Fahrschule ändert die Tafel hier nicht", (await p("s3")).status === p3s.status, r);
+// Richter W21 B2: Schülerwechsel mit „Termine mitnehmen“ nimmt die ausstehende Prüfung mit
+const p8 = await p("s8");
+r = await als(db, U.buero, `update public.kalender_termine set fahrlehrer_id = $2 where id = $1`, [p8.kalender_termin_id, U.fl1]);
+ok("B2: Kalender-Spiegel zu neuem Fahrlehrer → Prüfung wandert mit", !r.fehler && (await p("s8")).fahrlehrer_id === U.fl1 && (await eins(db, "select fahrlehrer_id from public.kalender_termine where id = $1", [p8.kalender_termin_id])).fahrlehrer_id === U.fl1, r);
+// Richter W21 B3: Büro-Ergebnis nie in die B197-Zeile
+const p9b = await p("s9");
+await db.query(`insert into public.kalender_pruefungen (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, result, payload) values ('b197-s9', $1, $2, 's9', $3, 'pass', '{"b197":true}')`, [FS, U.fl2, p9b.datum]);
+r = await als(db, U.buero, `update public.pruefungstermine set status = 'nicht_bestanden' where id = $1`, [p9b.id]);
+ok("B3: Büro-Ergebnis landet in eigener Zeile, B197-Zeile bleibt", !r.fehler && (await eins(db, "select result from public.kalender_pruefungen where id = 'b197-s9'")).result === "pass"
+  && (await eins(db, "select result from public.kalender_pruefungen where id = $1", ["pt-" + p9b.id])).result === "fail", r);
+
 // ---------- 13. Fall 10: Probe ----------
 let pr = await probe(db);
 ok("Probe ist grün", pr.erg && pr.erg.alle_ok === true, pr.erg || pr.text.slice(0, 400));

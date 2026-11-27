@@ -585,8 +585,8 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     const T = tabelle("pruefungstermine");
     if (alt && n.pruefungstag_id === alt.pruefungstag_id && n.fenster === alt.fenster && alt.pruefungstag_id && (n.datum !== alt.datum || String(n.von || "").slice(0, 5) !== String(alt.von || "").slice(0, 5))) { n.pruefungstag_id = null; n.fenster = null; }
     if (!w21Buero()) {
-      if (alt) { ["entgelt_bezahlt", "tuev_gutschein", "as_portal", "notiz", "quelle", "fahrschule_id"].forEach((k) => { n[k] = alt[k]; }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
-      else { Object.assign(n, { entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false, quelle: n.quelle === "app_alt" ? "app_alt" : "app", ergebnis_uebernommen: true }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
+      if (alt) { ["entgelt_bezahlt", "tuev_gutschein", "as_portal", "notiz", "quelle", "fahrschule_id", "kalender_termin_id"].forEach((k) => { n[k] = alt[k]; }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
+      else { Object.assign(n, { entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false, quelle: n.quelle === "app_alt" ? "app_alt" : "app", ergebnis_uebernommen: true, kalender_termin_id: null }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
     }
     if (n.ergebnis_uebernommen == null) n.ergebnis_uebernommen = true;
     if (alt && n.status !== alt.status) n.ergebnis_uebernommen = !["bestanden", "nicht_bestanden"].includes(n.status) ? true : (w21AusKp ? false : w21Buero());
@@ -703,8 +703,12 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
   }
   // Spiegel-Zeile im Kalender: Tag, Zeit, Personen, gelöscht bestimmt nur pruefungstermine (trg_termin_a_pruefung_spiegel)
   function w21KalenderSchutz(alt, r) {
-    if (!tabelle("pruefungstermine").some((p) => p.kalender_termin_id === r.id)) return;
-    ["datum", "von", "fahrlehrer_id", "schueler_id", "art", "geloescht"].forEach((k) => { r[k] = alt[k]; });
+    const p = tabelle("pruefungstermine").find((q) => q.kalender_termin_id === r.id);
+    if (!p) return;
+    ["datum", "von", "schueler_id", "art", "geloescht"].forEach((k) => { r[k] = alt[k]; });
+    // Schülerwechsel nimmt eine ausstehende Prüfung mit (trg_termin_b_pruefung_fahrlehrer)
+    if (p.status === "geplant" && r.fahrlehrer_id && r.fahrlehrer_id !== alt.fahrlehrer_id) p.fahrlehrer_id = r.fahrlehrer_id;
+    else r.fahrlehrer_id = alt.fahrlehrer_id;
   }
   class Abfrage {
     constructor(name) { this.name = name; this.filter = []; this.art = "select"; this.einzeln = null; this.sort = []; this.grenze = null; this.nachher = false; }

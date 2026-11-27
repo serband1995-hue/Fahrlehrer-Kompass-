@@ -158,7 +158,7 @@ begin
       v_bis := least(p.von + make_interval(mins => v_lang), time '23:59');
       update public.kalender_termine set fahrlehrer_id = p.fahrlehrer_id, schueler_id = p.schueler_id, datum = p.datum, von = p.von, bis = v_bis,
              art = 'pruefung', geloescht = false, aktualisiert_am = now()
-       where id = p.kalender_termin_id;
+       where id = p.kalender_termin_id and fahrschule_id = p.fahrschule_id and art = 'pruefung';   -- nie eine fremde Zeile (Richter W21 B1)
       if not found then
         insert into public.kalender_termine (id, fahrschule_id, fahrlehrer_id, schueler_id, datum, von, bis, art, status, geloescht, payload, erstellt_von, aktualisiert_am)
         values (p.kalender_termin_id, p.fahrschule_id, p.fahrlehrer_id, p.schueler_id, p.datum, p.von, v_bis, 'pruefung', 'geplant', false,
@@ -166,7 +166,8 @@ begin
                 auth.uid(), now());
       end if;
     elsif p.kalender_termin_id is not null then
-      update public.kalender_termine set geloescht = true, aktualisiert_am = now() where id = p.kalender_termin_id and not coalesce(geloescht, false);
+      update public.kalender_termine set geloescht = true, aktualisiert_am = now()
+       where id = p.kalender_termin_id and fahrschule_id = p.fahrschule_id and art = 'pruefung' and not coalesce(geloescht, false);
     end if;
   exception when others then
     perform set_config('kompass.w21_spiegel', '', true);
@@ -198,11 +199,13 @@ begin
     if not v_buero then
       new.entgelt_bezahlt := old.entgelt_bezahlt; new.tuev_gutschein := old.tuev_gutschein; new.as_portal := old.as_portal;
       new.notiz := old.notiz; new.quelle := old.quelle; new.fahrschule_id := old.fahrschule_id;
+      new.kalender_termin_id := old.kalender_termin_id; -- Kalender-Zeile vergibt nur der Server (sonst könnte eine fremde Zeile getroffen werden)
     end if;
   else
     if not v_buero then
       -- 'app_alt' = einmal aus der alten App-Tafel übernommen (keine „neue Prüfung“ für den Zahlungs-Hinweis im Büro)
       new.entgelt_bezahlt := false; new.tuev_gutschein := false; new.as_portal := false; new.quelle := case when new.quelle = 'app_alt' then 'app_alt' else 'app' end;
+      new.kalender_termin_id := null;
       new.ergebnis_uebernommen := true;
     end if;
   end if;
@@ -288,12 +291,28 @@ begin
   if coalesce(current_setting('kompass.w21_spiegel', true), '') = '1' then return new; end if;
   select * into p from public.pruefungstermine where kalender_termin_id = new.id limit 1;
   if not found then return new; end if;
-  new.datum := old.datum; new.von := old.von; new.fahrlehrer_id := old.fahrlehrer_id; new.schueler_id := old.schueler_id;
+  new.datum := old.datum; new.von := old.von; new.schueler_id := old.schueler_id;
   new.art := old.art; new.geloescht := old.geloescht;
+  -- Fahrlehrer: Schülerwechsel („Termine mitnehmen“, „Schüler weitergeben“, K6) nimmt eine ausstehende Prüfung mit (Richter W21 B2);
+  -- trg_termin_b_pruefung_fahrlehrer schreibt ihn danach in die Prüfungstafel. Sonst bleibt der alte.
+  if p.status <> 'geplant' or new.fahrlehrer_id is null then new.fahrlehrer_id := old.fahrlehrer_id; end if;
   return new;
 end $function$;
 create trigger trg_termin_a_pruefung_spiegel before update on public.kalender_termine
   for each row execute function public.kt_pruefung_spiegel();
+
+create or replace function public.kt_pruefung_fahrlehrer()
+ returns trigger language plpgsql security definer set search_path to 'public'
+as $function$
+begin
+  if coalesce(current_setting('kompass.w21_spiegel', true), '') = '1' then return null; end if;
+  if new.fahrlehrer_id is not distinct from old.fahrlehrer_id or new.fahrlehrer_id is null then return null; end if;
+  update public.pruefungstermine set fahrlehrer_id = new.fahrlehrer_id
+   where kalender_termin_id = new.id and fahrschule_id = new.fahrschule_id and status = 'geplant' and fahrlehrer_id is distinct from new.fahrlehrer_id;
+  return null;
+end $function$;
+create trigger trg_termin_b_pruefung_fahrlehrer after update on public.kalender_termine
+  for each row execute function public.kt_pruefung_fahrlehrer();
 
 -- ---------- 6. Ergebnis an einer Stelle ----------
 -- App → Büro: Ergebnis in kalender_pruefungen setzt pruefungstermine.status (gleicher Schüler, gleicher Tag, Praxis).
@@ -308,11 +327,11 @@ begin
   if coalesce(new.payload->>'b197', '') not in ('', 'false') then return null; end if;
   -- Zugehörige Praxisprüfung: gleicher Tag; sonst die einzige offene des Schülers im Umkreis von 3 Tagen (Datum im App-Dialog geändert)
   select id into v_pt from public.pruefungstermine
-   where schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis' and status <> 'abgesagt'
+   where fahrschule_id = new.fahrschule_id and schueler_id::text = new.schueler_id::text and datum = new.datum and coalesce(art, 'praxis') = 'praxis' and status <> 'abgesagt'
    order by aktualisiert_am desc nulls last limit 1;
   if v_pt is null then
     select count(*), min(id::text)::uuid into v_n, v_pt from public.pruefungstermine
-     where schueler_id::text = new.schueler_id::text and datum between new.datum - 3 and new.datum + 3
+     where fahrschule_id = new.fahrschule_id and schueler_id::text = new.schueler_id::text and datum between new.datum - 3 and new.datum + 3
        and coalesce(art, 'praxis') = 'praxis' and status = 'geplant';
     if v_n <> 1 then v_pt := null; end if;
   end if;
@@ -338,7 +357,7 @@ begin
     -- Eigene App-Zeile ersetzt eine vom Server angelegte Büro-Ergebniszeile desselben Tages (sonst zählte die Prüfung doppelt)
     if new.id not like 'pt-%' then
       update public.kalender_pruefungen set geloescht = true, aktualisiert_am = now()
-       where id like 'pt-%' and id <> new.id and schueler_id::text = new.schueler_id::text and datum = new.datum and not coalesce(geloescht, false);
+       where id like 'pt-%' and id <> new.id and fahrschule_id = new.fahrschule_id and schueler_id::text = new.schueler_id::text and datum = new.datum and not coalesce(geloescht, false);
     end if;
     if not (tg_op = 'UPDATE' and new.result is not distinct from old.result and new.datum is not distinct from old.datum) and v_pt is not null then
       update public.pruefungstermine set status = v_status, aktualisiert_am = now()
@@ -370,7 +389,8 @@ begin
   begin
     if v_result is not null then
       select id into v_id from public.kalender_pruefungen
-       where schueler_id::text = new.schueler_id::text and datum = new.datum and not coalesce(geloescht, false)
+       where fahrschule_id = new.fahrschule_id and schueler_id::text = new.schueler_id::text and datum = new.datum and not coalesce(geloescht, false)
+         and coalesce(payload->>'b197', '') in ('', 'false')   -- nie in die Schaltkompetenz-Zeile (Richter W21 B3)
        order by (id = 'pt-' || new.id::text) desc, id limit 1;
       if v_id is not null then
         update public.kalender_pruefungen set result = v_result,
