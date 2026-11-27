@@ -281,9 +281,10 @@ if (!NUR || NUR === "L8") {
   // Prüfung
   const pAnz = async () => (await tab(page, "pruefungstermine")).length;
   const p0 = await pAnz();
-  const pruefungVersuch = async (ja, lehrer) => {
+  // W21: ein Schüler hat nie zwei Praxisprüfungen am selben Tag (Server-Regel) – der dritte Versuch nimmt deshalb einen anderen Schüler
+  const pruefungVersuch = async (ja, lehrer, sid = "s5") => {
     await page.evaluate(() => pruefungDialog(null)); await warte(page, 300);
-    await page.selectOption("dialog[open] select[name=schueler_id]", "s5");
+    await page.selectOption("dialog[open] select[name=schueler_id]", sid);
     await page.fill("dialog[open] input[name=datum]", plus(HEUTE, 7));
     await page.fill("dialog[open] input[name=von]", "09:00");
     await page.selectOption("dialog[open] select[name=fahrlehrer_id]", lehrer);
@@ -295,7 +296,7 @@ if (!NUR || NUR === "L8") {
   };
   const tp1 = await pruefungVersuch(false, "fl-2"); const p1 = await pAnz();
   const tp2 = await pruefungVersuch(true, "fl-2"); const p2 = await pAnz();
-  const tp3 = await pruefungVersuch(false, "fl-3"); const p3 = await pAnz();
+  const tp3 = await pruefungVersuch(false, "fl-3", "s7"); const p3 = await pAnz();
   await pruefe("L8", "Praxisprüfung im Urlaub: Warnung, Abbrechen speichert nichts, Trotzdem speichert; anderer Fahrlehrer ohne Warnung", () => {
     const f = [];
     if (!/Berta Muster hat vom .* Urlaub/.test(tp1) || p1 !== p0) f.push("Abbrechen: " + tp1.slice(0, 80) + " / " + (p1 - p0));
