@@ -273,7 +273,9 @@ body.kiosk .tag-titel{font-size:30px;}
 @media (prefers-color-scheme:dark){:root{--kf-farbe:#e0a030;}}
 .k-termin.kf-ueber{box-shadow:inset 0 0 0 2px var(--kf-farbe);}
 .k-termin .kf-zeichen{color:var(--kf-farbe);font-weight:800;margin-right:3px;}
-.k-termin.k-schmal{padding:3px 4px;font-size:12.5px;}
+.k-termin.k-schmal{padding:3px 3px 3px 3px;font-size:12.5px;}
+.k-termin.k-schmal .k-zeit{font-size:11.5px;letter-spacing:-.2px;}
+.k-termin .kf-zeichen.kf-ecke{position:absolute;bottom:2px;right:3px;margin:0;font-size:11px;line-height:1;}
 .k-termin.k-schmal .k-zeit,.k-termin.k-schmal .k-name,.k-termin.k-schmal .k-fz{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .k-zeit{font-weight:700;font-size:13px;color:var(--muted);}
 .k-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

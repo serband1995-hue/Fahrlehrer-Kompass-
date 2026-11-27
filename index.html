@@ -14001,10 +14001,10 @@ function _kfFrage(konflikte,weiter,abbruch){
     <ul class="kf-liste">${zeilen}${mehr}</ul>
     <p style="font-size:14px;margin:10px 0 14px;font-weight:600;">Trotzdem speichern?</p>
     <div class="btn-row"><button class="btn btn-ghost" id="kfJa" style="flex:1;">Speichern</button><button class="btn btn-primary" id="kfNein" style="flex:1;">Abbrechen</button></div>`);
-  setTimeout(()=>{ const b=$("#kfNein"); if(b)try{ b.focus({preventScroll:true}); }catch(e){} },0);
+  setTimeout(()=>{ const b=$("#kfNein"); if(b)try{ b.focus(); }catch(e){} },0);
   $("#kfNein").addEventListener("click",()=>{ if(abbruch)abbruch(); else if(sheetZurueck(true)==="leer")closeSheet(); });
   let erledigt=false; // ein zweites schnelles Tippen speichert nicht doppelt
-  $("#kfJa").addEventListener("click",()=>{ if(erledigt)return; erledigt=true; weiter(); });
+  $("#kfJa").addEventListener("click",()=>{ if(erledigt)return; erledigt=true; setTimeout(()=>{ erledigt=false; },600); weiter(); });
 }
 // Ids der Termine eines Tages mit Überschneidung (für das Warnzeichen im Kalender)
 let _kfTagCache=null; // nur für einen Zeichenvorgang (Woche: viele Kacheln je Tag), danach sofort verworfen

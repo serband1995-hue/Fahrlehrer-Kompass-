@@ -73,6 +73,7 @@ ok("Büro: Rückfrage vorsichtig (Abbrechen Hauptknopf)", /"Trotzdem speichern",
 
 ok("App: Schutz gegen alte Rechendatei", /function _kfDa\(/.test(html) && /if\(!_kfDa\(\)\)return \[\]/.test(block(html, "_kfFinde")));
 ok("Büro: Schutz gegen alte Rechendatei", /function kfDa\(/.test(buero) && /if \(!kfDa\(\)\) return \[\]/.test(block(buero, "kfFinde")));
-ok("App: Doppeltipp auf Speichern gesperrt", /if\(erledigt\)return; erledigt=true; weiter\(\)/.test(block(html, "_kfFrage")));
+ok("App: Doppeltipp auf Speichern gesperrt", /if\(erledigt\)return; erledigt=true; setTimeout\(\(\)=>\{ erledigt=false; \},600\); weiter\(\)/.test(block(html, "_kfFrage")));
+ok("App: Fokus auf Abbrechen holt Knöpfe ins Bild (kein preventScroll)", !/preventScroll/.test(block(html, "_kfFrage")));
 console.log(fehler ? `❌ ${fehler} von ${faelle} Prüfungen fehlgeschlagen` : `✅ Konflikt-Test: alle ${faelle} Prüfungen bestanden`);
 process.exit(fehler ? 1 : 0);

@@ -8,7 +8,7 @@ window.KOMPASS_NEU = [
     punkte: ["Trägst du einen Termin ein, änderst oder verschiebst ihn, prüft die App: Ist der Fahrlehrer, der Schüler oder das Fahrzeug zur gleichen Zeit schon belegt? Dann fragt sie nach. „Abbrechen“ ist vorausgewählt, du kannst aber trotzdem speichern.",
              "Termine mit Überschneidung haben im Kalender ein ⚠ und eine orange Umrandung.",
              "In der Tagesansicht stehen Termine, die gleichzeitig laufen, jetzt nebeneinander statt übereinander.",
-             "Im Büro gilt dasselbe: gleiche Rückfrage beim Anlegen und Ändern, auch bei Serienterminen, und nebeneinander stehende Termine im Kalender."] },
+             "Im Büro gilt dasselbe: gleiche Rückfrage beim Anlegen und Ändern, auch bei Serienterminen, und nebeneinander stehende Termine im Kalender. Dort zeigt ein ⇄ die Überschneidung (das ⚠ bleibt dort für „Zahlung ausstehend“)."] },
   { version: "2026.11.27.5", datum: "2026-11-27", kurz: "Neu: ein Punkt oben zeigt, ob alles gesichert ist.",
     punkte: ["Oben rechts steht jetzt ein kleiner Punkt. Grün heißt: alles ist in der Cloud und beim Büro angekommen. Gelb heißt: wird gerade gesendet oder wartet, zum Beispiel ohne Internet. Rot heißt: etwas ist nicht angekommen.",
              "Tippe auf den Punkt: Du siehst, wann zuletzt gesichert wurde – für deinen ganzen Stand und getrennt für Schüler, Termine und Prüfungsergebnisse.",

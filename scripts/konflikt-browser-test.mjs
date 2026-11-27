@@ -6,6 +6,7 @@
 //   B5 Bearbeiten auf belegte Zeit → Rückfrage; nur Notiz ändern → keine Rückfrage
 //   B6 Wochenansicht: ⚠ an überlappenden Kacheln
 //   B7 nichts läuft seitlich über (360 px), keine JS-Fehler
+//   B11 Büro-Kalender: zwei gleichzeitige Termine nebeneinander, ⇄ in der Ecke, Anfangszeit nicht abgeschnitten (360/412/1024 px)
 // Aufruf:  NODE_PATH=$(npm root -g) node scripts/konflikt-browser-test.mjs
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
@@ -157,6 +158,40 @@ for (const breite of [360, 412]) {
     return f;
   });
   await ctx.close();
+}
+
+// B11 Büro (Vorführdaten, keine Datenbank): schmale Blöcke müssen die Anfangszeit ganz zeigen
+{
+  const { bauDaten } = require(join(ROOT, "buero-vorfuehrung.js"));
+  const fake = await readFile(join(ROOT, "buero-vorfuehrung.js"), "utf8");
+  const HEUTE = new Date().toISOString().slice(0, 10);
+  const d0 = new Date(HEUTE + "T12:00:00Z"); d0.setUTCDate(d0.getUTCDate() + 40); const TAG = d0.toISOString().slice(0, 10);
+  for (const breite of [360, 412, 1024]) {
+    const ctx = await browser.newContext({ viewport: { width: breite, height: 800 } });
+    const page = await ctx.newPage(); page.setDefaultTimeout(5000);
+    const jsFehler = []; page.on("pageerror", (e) => jsFehler.push(e.message));
+    await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await page.route("**/*", (r) => { const u = r.request().url(); if (/vendor\/supabase-js-/.test(u)) return r.fallback(); return u.startsWith(basis) ? r.continue() : r.abort(); });
+    await page.addInitScript(([d, TAG]) => {
+      d.tabellen.fahrschule_urlaub = []; d.tabellen.fahrschule_schichten = []; d.tabellen.fahrschule_backups = [];
+      d.tabellen.kalender_termine = d.tabellen.kalender_termine.filter((t) => t.datum !== TAG);
+      const T = (id, sid, von, bis) => d.tabellen.kalender_termine.push({ id, fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: TAG, von, bis, art: "fahrstunde", fahrzeug: null, status: "geplant", geloescht: false, payload: {}, buero_fc_status: "offen", kurs_bezahlt: false, interessent_name: null, interessent_telefon: null });
+      T("kx1", "s1", "10:00", "11:30"); T("kx2", "s2", "10:45", "12:15");
+      window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "ad-1", email: "ad-1@example.org" } }, rpcs: {}, fehler: {} };
+    }, [bauDaten(HEUTE), TAG]);
+    await page.goto(basis + "buero.html#kalender?tag=" + TAG); await warte(page, 900);
+    await pruefe("B11 [Büro " + breite + "]", "nebeneinander, ⇄ in der Ecke, Anfangszeit ganz lesbar", async () => {
+      const r = await page.evaluate(() => ["kx1", "kx2"].map((id) => { const b = document.querySelector(`.k-termin[data-termin="${id}"]`); if (!b) return id + " fehlt";
+        const z = b.querySelector(".k-zeit"), e = b.querySelector(".kf-zeichen.kf-ecke");
+        if (!b.classList.contains("kf-ueber") || !b.classList.contains("k-schmal")) return id + " nicht markiert/schmal";
+        if (!e) return id + " ohne ⇄ in der Ecke";
+        if (z.scrollWidth > z.clientWidth + 1) return id + " Zeit abgeschnitten (" + z.textContent + ", " + Math.round(b.getBoundingClientRect().width) + " px)";
+        return null; }).filter(Boolean));
+      if (jsFehler.length) r.push(...jsFehler);
+      return r;
+    });
+    await ctx.close();
+  }
 }
 await browser.close(); server.close();
 console.log(fehlerZahl ? `❌ ${fehlerZahl} Fehler, ${okZahl} ok` : `✅ Konflikt-Browser-Test: alle ${okZahl} Prüfungen bestanden`);

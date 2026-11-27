@@ -2867,7 +2867,7 @@ function kTerminBlock(t, sp) {
   const kf = t.art !== "block" && kfIdsAmTag(t.datum).has(t.id);
   const spStil = sp && sp.spalten > 1 ? `left:calc(${(sp.spalte * 100 / sp.spalten).toFixed(3)}% + 2px);right:auto;width:calc(${(100 / sp.spalten).toFixed(3)}% - 4px);` : "";
   return `<button type="button" class="k-termin${t.art === "block" ? " block" : ""}${gesperrt ? " gesperrt" : ""}${kf ? " kf-ueber" : ""}${spStil ? " k-schmal" : ""}" data-termin="${esc(t.id)}"${gesperrt ? ' title="Zahlung ausstehend" data-zahlung-hinweis' : kf ? ' title="Überschneidung: gleicher Fahrlehrer, Schüler oder Fahrzeug zur gleichen Zeit"' : ""} style="top:${(a - K_START) * K_PX}px;height:${Math.max((b - a) * K_PX - 2, 22)}px;${spStil}--farbe:${K_FARBEN[t.art] || "#6a6a74"}">
-        <span class="k-zeit">${kf ? '<span class="kf-zeichen" aria-label="Überschneidung">⇄</span>' : ""}${esc(t.von)}${spStil ? "" : "–" + esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
+        ${kf && spStil ? '<span class="kf-zeichen kf-ecke" aria-label="Überschneidung">⇄</span>' : ""}<span class="k-zeit">${kf && !spStil ? '<span class="kf-zeichen" aria-label="Überschneidung">⇄</span>' : ""}${esc(t.von)}${spStil ? "" : "–" + esc(t.bis)}</span><span class="k-name">${gesperrt ? "⚠ " : ""}${esc(sn)}</span>${gesperrt ? `<span class="k-fz k-zahlung">Zahlung ausstehend</span>` : ""}${t.fahrzeug ? `<span class="k-fz">${esc(t.fahrzeug)}</span>` : ""}</button>`;
 }
 function kStundenAchse() {
   const stunden = [];
