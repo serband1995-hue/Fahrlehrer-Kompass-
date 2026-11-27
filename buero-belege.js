@@ -201,7 +201,7 @@ function belegHTML(b, opt) {
   const erstelltText = erstellt && !isNaN(erstellt) ? erstellt.toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" }) : "";
   const kopfZeilen = [k.anschrift ? zeilen(k.anschrift) : "", k.steuernummer ? "Steuernummer: " + esc(k.steuernummer) : "", k.ustid ? "USt-IdNr.: " + esc(k.ustid) : ""].filter(Boolean);
   const meta = [
-    nr ? ["Quittungsnummer", "Nr. " + esc(nr)] : null,
+    nr ? ["Quittungsnummer", "Nr. " + esc(nr), "haupt"] : null,
     b.datum ? ["Datum der Zahlung", esc(datumDE(b.datum))] : null,
     kn ? ["Kundennummer", esc(kn)] : null,
     storno ? ["Gegenbeleg zu", orig && orig.nummer != null ? "Nr. " + esc(String(orig.nummer)) : "früherem Beleg"] : null,
@@ -222,6 +222,7 @@ function belegHTML(b, opt) {
   .meta div{min-width:30mm}
   .label{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.8pt;color:#777;margin-bottom:.8mm}
   .meta b{font-weight:600;font-size:10.5pt}
+  .meta .haupt b{font-weight:700;font-size:12.5pt}
   .empf{margin:7mm 0 0}
   .empf .wer{font-size:11.5pt;font-weight:600}
   .empf .zeile{color:#333}
@@ -246,7 +247,7 @@ function belegHTML(b, opt) {
   </div>
   <h1>Quittung</h1>
   ${storno ? `<div class="stempel">STORNO</div>` : ""}
-  ${meta.length ? `<div class="meta">${meta.map(([l, w]) => `<div><span class="label">${l}</span><b>${w}</b></div>`).join("")}</div>` : ""}
+  ${meta.length ? `<div class="meta">${meta.map(([l, w, k]) => `<div${k ? ` class="${k}"` : ""}><span class="label">${l}</span><b>${w}</b></div>`).join("")}</div>` : ""}
   ${b.schueler_name ? `<div class="empf"><span class="label">Erhalten von</span><div class="wer">${esc(b.schueler_name)}</div>${adr.map((z) => `<div class="zeile">${esc(z)}</div>`).join("")}</div>` : ""}
   <table>
     <thead><tr><th>Leistung</th>${zart ? `<th>Zahlungsart</th>` : ""}<th class="r">Betrag</th></tr></thead>
