@@ -37,7 +37,7 @@ body{font:10pt/1.5 ${FONT};color:#1c1c1c;margin:0;background:#fff}
 .dkopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12mm;padding-bottom:5mm;border-bottom:.6pt solid #9a9a9a;break-inside:avoid;break-after:avoid}
 .dkopf .absender .name{font-size:13pt;font-weight:600;letter-spacing:.2pt;margin-bottom:1.5mm}
 .dkopf .absender .zeile{font-size:9pt;color:#555;line-height:1.45}
-.dlogo{flex:none;max-width:48mm;max-height:24mm;width:auto;height:auto;object-fit:contain}
+.dlogo{flex:0 1 auto;min-width:0;max-width:min(48mm,40%);max-height:24mm;width:auto;height:auto;object-fit:contain}
 .dtitel{font-size:17pt;font-weight:300;letter-spacing:.8pt;margin:9mm 0 0;break-after:avoid}
 .duntertitel{font-size:10pt;color:#555;margin:1.5mm 0 0;break-after:avoid}
 .dbezug{margin:5mm 0 0;padding:3mm 0;border-top:.5pt solid #cfcfcf;border-bottom:.5pt solid #cfcfcf;break-inside:avoid}

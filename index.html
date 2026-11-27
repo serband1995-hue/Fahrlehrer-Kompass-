@@ -10518,8 +10518,10 @@ async function _adresseServerSchreiben(sid,neu,vorher){
 }
 /* Anschrift eines Schülers speichern. istNeu = gerade angelegt (Zeile evtl. noch nicht auf dem Server): nur Merker, gesendet wird
    später (_adresseOffenSenden). Sonst: Merker setzen und gleich online schreiben; der Merker bleibt, bis der Server bestätigt hat. */
-async function _adresseSpeichern(s,neu,istNeu){
-  const f=_schuelerFristen[s.id]||{};
+/* Server-Stand der Anschrift (ohne Merker) – beim ÖFFNEN eines Formulars merken, damit eine Büro-Änderung danach als Konflikt erkannt wird */
+function _adrServerStand(s){ const f=(s&&_schuelerFristen[s.id])||{}; return {strasse:f.strasse||null,plz:f.plz||null,ort:f.ort||null}; }
+async function _adresseSpeichern(s,neu,istNeu,beimOeffnen){
+  const f=beimOeffnen||_schuelerFristen[s.id]||{};
   const vorher=istNeu?null:{strasse:f.strasse||null,plz:f.plz||null,ort:f.ort||null};
   const leer=!neu.strasse&&!neu.plz&&!neu.ort;
   if(istNeu&&leer)return {ok:true,nichts:true};
@@ -10588,6 +10590,7 @@ function anschriftCard(s){
   </div>`;
 }
 function openAnschriftSheet(s){
+  const adrBeimOeffnen=_adrServerStand(s);
   openSheet(`<div class="sheet-h">Anschrift</div>
     ${_adrFelderHTML(_adrAktuell(s),"adrS")}
     <div class="btn-row sheet-knoepfe"><button class="btn btn-ghost" id="adrAbbr" style="flex:0;padding:13px 18px;">Abbrechen</button><button class="btn btn-primary" id="adrSpeichern">Speichern</button></div>`);
@@ -10595,7 +10598,7 @@ function openAnschriftSheet(s){
   $("#adrSpeichern").addEventListener("click",async()=>{
     const neu=_adrLesen("adrS"); if(!neu)return;
     const b=$("#adrSpeichern"); b.disabled=true; b.textContent="Speichert …";
-    const erg=await _adresseSpeichern(s,neu,false);
+    const erg=await _adresseSpeichern(s,neu,false,adrBeimOeffnen);
     b.disabled=false; b.textContent="Speichern";
     if(erg.nichts){ closeSheet(); toast("Nichts geändert"); return; }
     closeSheet(); const y=view.scrollTop; routeDetail(s.id); view.scrollTop=y;
@@ -13459,6 +13462,7 @@ function routeSchuelerForm(id){ const s=id?DB.students.find(x=>x.id===id):null; 
 function routeErgebnis(id){ openResultFlow(id); }
 function formView(existing){
   const isEdit=!!existing;
+  const adrBeimOeffnen=isEdit?_adrServerStand(existing):null; // W26: Stand beim Öffnen (Büro-Änderung danach = Konflikt)
   const s=existing||{name:"",form:"B",beginn:"",profil:null,next:"",nextDate:"",nextTime:"",telefon:""};
   ensureAusbildungsplaene();
   const showPlanPicker=!isEdit&&DB.ausbildungsplaene.length>1;
@@ -13525,7 +13529,7 @@ function formView(existing){
     // Gespeichert: das Formular aus dem Verlauf nehmen – Zurück führt nicht wieder hinein (sonst Doppelanlage möglich)
     const formRaus=()=>{ const o=_navStack[_navStack.length-1]; if(o&&o.name==="routeSchuelerForm")_navStack.pop(); };
     if(isEdit){Object.assign(existing,data);save();toast("Gespeichert");formRaus();
-      const adrP=adr?_adresseSpeichern(existing,adr,false):null; // Merker ist sofort gesetzt, das Schreiben läuft im Hintergrund
+      const adrP=adr?_adresseSpeichern(existing,adr,false,adrBeimOeffnen):null; // Merker ist sofort gesetzt, das Schreiben läuft im Hintergrund
       routeDetail(existing.id);
       if(adrP)adrP.then(erg=>_adrNachSpeichern(existing,erg,adr,false));}
     else{
