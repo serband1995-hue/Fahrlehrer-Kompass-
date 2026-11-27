@@ -370,6 +370,8 @@ function luSerienTage(start, intervall, anzahl) {
   for (let i = 0; i < anzahl; i++) { out.push(d); d = KR.addDaysISO(d, intervall); }
   return out;
 }
+// W22: Umschreiber (Büro-Spalte) bekommen keine Sonderfahrten. istUmschreiber steht in buero.js.
+function luUmschreiber(x) { return typeof istUmschreiber === "function" ? istUmschreiber(x) : String((x && x.ausbildungsart) || "") === "umschreibung"; }
 function luSerienDialog(sid) {
   const x = S.schueler.find((y) => y.id === sid);
   if (!x) return;
@@ -378,7 +380,8 @@ function luSerienDialog(sid) {
       <p class="voll leise klein">Für ${esc(x.name)} bei ${esc(lehrerName(x.fahrlehrer_id))}. Jeder Termin dauert 90 Minuten.</p>
       <label>Erster Tag<input type="date" name="start" required value="${esc(KR.addDaysISO(KR.todayISO(), 1))}"></label>
       <label>Uhrzeit<input type="time" name="von" required value="10:00"></label>
-      <label>Art<select name="art"><option value="fahrstunde">Fahrstunde</option><option value="sonder">Sonderfahrt</option></select></label>
+      <label>Art<select name="art"><option value="fahrstunde">Fahrstunde</option>${luUmschreiber(x) ? "" : '<option value="sonder">Sonderfahrt</option>'}</select></label>
+      ${luUmschreiber(x) ? '<p class="voll leise klein">Umschreiber: keine Sonderfahrten, nur Fahrstunden.</p>' : ""}
       <label>Wie oft<select name="intervall"><option value="1">täglich</option><option value="2">jeden 2. Tag</option><option value="7">wöchentlich</option></select></label>
       <label>Anzahl Termine<input type="number" name="anzahl" min="1" max="20" value="5" required></label>
       <p class="voll leise klein" id="luSerieVorschau" aria-live="polite"></p>
@@ -388,6 +391,7 @@ function luSerienDialog(sid) {
     const anzahl = Math.round(Number(d.anzahl));
     if (!d.start || !d.von) { toast("Bitte ersten Tag und Uhrzeit eintragen.", true); return false; }
     if (!(anzahl >= 1 && anzahl <= 20)) { toast("Bitte 1 bis 20 Termine wählen.", true); return false; }
+    if (d.art === "sonder" && luUmschreiber(x)) { toast("Umschreiber: keine Sonderfahrten. Bitte „Fahrstunde“ wählen.", true); return false; } // W22
     if (bueroGesperrt(x) && d.start >= KR.todayISO()) { toast(ZAHLUNG_MELDUNG, true); return false; }
     const bis = plusMinuten(d.von, 90);
     if (KR.hm2min(bis) <= KR.hm2min(d.von)) { toast("Zu spät am Tag für 90 Minuten.", true); return false; }

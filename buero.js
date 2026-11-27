@@ -2956,6 +2956,13 @@ function bindeKalender(ziel) {
 }
 // K8: Wäre das ein neuer künftiger Termin (neu, anderer Schüler, anderes Datum) für einen gesperrten Schüler? Wie die Datenbank: nur Fahrstunde, Sonder, Nacht, Schalt, Prüfung
 function umschreiberSchueler(sid) { const x = sid && S.schueler.find((y) => y.id === sid); return !!(x && istUmschreiber(x)); }
+// W22: Sonderfahrten sind im Büro „Sonderfahrt“ und „Nachtfahrt“. Gesperrt für Umschreiber, außer es ist schon dieselbe
+// Sonderfahrt desselben Schülers (bestehender Termin bleibt bearbeitbar; ein Schülertausch zählt als neu).
+const SF_TERMIN_ARTEN = ["sonder", "nacht"];
+function umschreiberSfGesperrt(t, art, sid) {
+  if (!SF_TERMIN_ARTEN.includes(art) || !umschreiberSchueler(sid)) return false;
+  return !(t && t.id && SF_TERMIN_ARTEN.includes(t.art) && t.schueler_id === sid); // nur ein schon gespeicherter Termin
+}
 function neuerTerminGesperrt(t, id, d) {
   if (!d.schueler_id || !["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(d.art) || d.datum < KR.todayISO()) return false;
   if (id && t.schueler_id === d.schueler_id && t.datum === d.datum) return false;
@@ -3009,7 +3016,7 @@ function terminDialog(id, vorgabe) {
     // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
     if (neuerTerminGesperrt(t, id, d)) { zahlHinweisZeigen(tdlg, true); toast(ZAHLUNG_MELDUNG, true); return false; }
     // W22: Umschreiber machen keine Sonderfahrten (eine schon eingetragene bleibt bearbeitbar)
-    if (d.art === "sonder" && t.art !== "sonder" && umschreiberSchueler(d.schueler_id)) { toast("Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.", true); return false; }
+    if (umschreiberSfGesperrt(t, d.art, d.schueler_id)) { toast("Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.", true); return false; }
     // Stopp-Notiz: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
     if (!id && d.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt"].includes(d.art)) {
       const sch = S.schueler.find((x) => x.id === d.schueler_id) || {};
@@ -3063,7 +3070,7 @@ function terminDialog(id, vorgabe) {
     tdlg.querySelector("#ohneAppFeld").hidden = !fl.ohne_app || (!zeigeSonder && !zeigeKl);
     tdlg.querySelector("#appHinweis").hidden = !!fl.ohne_app;
     tdlg.querySelector("#sonderArtFeld").hidden = !zeigeSonder;
-    tdlg.querySelector("#umSfHinweis").hidden = !(zeigeSonder && t.art !== "sonder" && sx && istUmschreiber(sx));
+    tdlg.querySelector("#umSfHinweis").hidden = !umschreiberSfGesperrt(t, art, sx ? sx.id : "");
     tdlg.querySelector("#lkwKlasseFeld").hidden = !zeigeKl;
     if (kl) { const sel = tdlg.querySelector("select[name=lkwKlasse]"), alt = sel.value || (t.payload || {}).lkwKlasse; sel.innerHTML = kl.map((k) => `<option${k === alt ? " selected" : ""}>${k}</option>`).join(""); }
   };
