@@ -46,7 +46,9 @@
     if (code === "23505") return { art: "server", text: "Vom Server abgelehnt: gibt es dort schon (doppelt)" };
     if (code === "23503") return { art: "server", text: "Vom Server abgelehnt: gehört zu einem Schüler, den der Server nicht kennt" };
     if (code === "23502" || code === "23514" || /^22/.test(code)) return { art: "server", text: "Vom Server abgelehnt: Angaben unvollständig oder ungültig" };
-    if (code === "P0001" && msg) return { art: "server", text: "Vom Server abgelehnt: " + kurz(msg, 110) };
+    if (/Nur Fahrschule-Admin/i.test(msg)) return { art: "server", text: "Nur das Büro darf Schüler einem anderen Fahrlehrer geben – bitte im Büro klären" };
+    // Eigene Server-Meldungen: der verständliche Satz steht im Hinweis (z. B. W21-Prüfungsfenster), sonst die Meldung selbst
+    if (code === "P0001" && (e.hint || msg)) return { art: "server", text: "Vom Server abgelehnt: " + kurz(e.hint && /^W\d+:/.test(msg) || e.hint && !msg ? e.hint : (e.hint ? msg + " – " + e.hint : msg), 140) };
     return { art: "server", text: "Vom Server abgelehnt" + (code ? " (Fehler " + kurz(code, 12) + ")" : "") };
   }
 
@@ -251,6 +253,11 @@
     });
     window.addEventListener("online", function () { try { if (aktiv() && typeof pushToCloud === "function") pushToCloud(); } catch (x) {} nachholen(); zeichnen(); });
     window.addEventListener("offline", zeichnen);
+    // Zurück in der App: abgelehnte Einträge noch einmal senden (z. B. hat das Büro inzwischen „Bezahlt“ gedrückt)
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible" || !aktiv() || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+      try { if (abgelehnteListe().length && typeof _brueckenSofort === "function") _brueckenSofort(); } catch (x) {}
+    });
     setInterval(function () { nachholen(); zeichnen(); }, 60000);
   }
   // Nach dem Abmelden: zur Laufzeit alles vergessen (der gemerkte Stand wird mit den übrigen Kontodaten gelöscht)
