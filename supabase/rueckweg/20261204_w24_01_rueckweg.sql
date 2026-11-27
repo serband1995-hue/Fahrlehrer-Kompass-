@@ -1,6 +1,6 @@
 -- Rückweg zu 20261204_w24_01_sicherung_vollstaendig.sql
 -- Folgen: „Jetzt sichern“ sichert wieder nur die 4 Tabellen von k1_04; Vorschau/Wiederherstellen gibt es nicht mehr.
--- Vorhandene Sicherungen (auch Format 2) und die neuen Spalten BLEIBEN (nichts geht verloren; Herunterladen geht weiter).
+-- Vorhandene Sicherungen (auch Format 2, mit geschütztem Teil in fahrschule_backups_privat) und die neuen Spalten BLEIBEN (nichts geht verloren; Herunterladen geht weiter).
 -- Der Nachtlauf „kompass-sicherung-nacht“ wird entfernt und der frühere Auftrag „woechentliches-fahrschule-backup“ (täglich
 -- 02:00 UTC, alle_fahrschulen_woechentlich_sichern) wieder geplant.
 -- Büro/App ab W24 rufen fahrschule_backup_vorschau auf: vorher die Seiten auf den Stand davor zurücksetzen.
@@ -80,6 +80,8 @@ drop function if exists public.w24_bereich_sql(text, text, text);
 drop function if exists public.w24_tabellen();
 drop function if exists public.w24_ausgenommen();
 drop function if exists public.w24_ohne_spalten(text);
+drop function if exists public.w24_privat_tabellen();
+drop function if exists public.w24_backup_inhalt(uuid);
 drop function if exists public.w24_tabellen_liste();
 
 drop policy if exists "Fahrschule-Admin/Buero erstellt eigene Backups" on public.fahrschule_backups;

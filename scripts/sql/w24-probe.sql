@@ -147,18 +147,18 @@ begin
   -- ===================================================================================================================
   v_schritt := '3 Inhalt';
   select daten, zaehlung into v_daten, v_zaehl from public.fahrschule_backups where id = v_bk;
-  select jsonb_build_object('format', format, 'anlass', anlass, 'automatisch', automatisch, 'pruefsumme_ok', pruefsumme = md5(daten::text),
-                            'groesse_ok', groesse_bytes = octet_length(daten::text), 'von', erstellt_von = v_b1)
+  select jsonb_build_object('format', format, 'anlass', anlass, 'automatisch', automatisch, 'pruefsumme_ok', (public.w24_backup_inhalt(id) ->> 'pruefsumme_ok')::boolean,
+                            'groesse_ok', groesse_bytes > octet_length(daten::text), 'von', erstellt_von = v_b1)
     into v_r from public.fahrschule_backups where id = v_bk;
   v_pr := v_pr || jsonb_build_object('name', 'Format 2, von Hand, Prüfsumme und Größe stimmen', 'kat', 'pflicht',
     'ok', v_r = '{"format":2,"anlass":"hand","automatisch":false,"pruefsumme_ok":true,"groesse_ok":true,"von":true}'::jsonb, 'ist', v_r);
-  select count(*) into v_n from jsonb_each(v_daten -> 'tabellen') e where (v_zaehl ->> e.key)::int is distinct from jsonb_array_length(e.value);
+  select count(*) into v_n from jsonb_each(public.w24_backup_inhalt(v_bk) -> 'tabellen') e where (v_zaehl ->> e.key)::int is distinct from jsonb_array_length(e.value);
   v_pr := v_pr || jsonb_build_object('name', 'Zählung je Tabelle = Zeilen im Backup', 'kat', 'pflicht', 'ok', v_n = 0 and v_daten -> 'zaehlung' = v_zaehl, 'ist', v_n);
   -- Zählung = Zeilen der Fahrschule in der Datenbank (jede Tabelle der Liste)
   select count(*) into v_n from public.w24_tabellen() t
    where (v_zaehl ->> t.tabelle)::int is distinct from jsonb_array_length(public.w24_zeilen(t.tabelle, t.bereich, t.spalte, v_fsa));
   v_pr := v_pr || jsonb_build_object('name', 'Zählung = Zeilen in der Datenbank (alle Tabellen)', 'kat', 'pflicht', 'ok', v_n = 0, 'ist', v_n);
-  select count(*) into v_n from public.w24_tabellen() t where not (v_daten -> 'tabellen') ? t.tabelle;
+  select count(*) into v_n from public.w24_tabellen() t where not (public.w24_backup_inhalt(v_bk) -> 'tabellen') ? t.tabelle;
   v_pr := v_pr || jsonb_build_object('name', 'Jede Tabelle der Liste steht im Backup', 'kat', 'pflicht', 'ok', v_n = 0, 'ist', v_n);
   v_r := jsonb_build_object(
     'schueler_mit_geloeschtem', (select count(*) from jsonb_array_elements(v_daten -> 'tabellen' -> 'schueler') x where x ->> 'id' like v_s || '_'),
@@ -167,7 +167,7 @@ begin
     'inaktives_auto', (select count(*) from jsonb_array_elements(v_daten -> 'tabellen' -> 'fahrschule_fahrzeuge') x where x ->> 'name' = 'W24 Auto 2 ' || v_lauf and not (x ->> 'aktiv')::boolean),
     'beleg', (select count(*) from jsonb_array_elements(v_daten -> 'tabellen' -> 'zahlungsbelege') x where x ->> 'zweck' = 'W24 Probe Beleg 1'),
     'einstellung', (select count(*) from jsonb_array_elements(v_daten -> 'tabellen' -> 'fahrschule_einstellungen') x where x ->> 'schluessel' = 'fristen.w24_probe'),
-    'handy_stand', (select count(*) from jsonb_array_elements(v_daten -> 'tabellen' -> 'snapshots') x where (x ->> 'user_id')::uuid = v_f1));
+    'handy_stand', (select count(*) from public.fahrschule_backups_privat p, jsonb_array_elements(p.daten -> 'snapshots') x where p.backup_id = v_bk and (x ->> 'user_id')::uuid = v_f1));
   v_pr := v_pr || jsonb_build_object('name', 'Gesichert: gelöschter Schüler, Papierkorb, inaktives Fahrzeug, Beleg, Einstellung, Handy-Stand', 'kat', 'pflicht',
     'ok', v_r = '{"schueler_mit_geloeschtem":4,"geloeschter":1,"papierkorb":1,"inaktives_auto":1,"beleg":1,"einstellung":1,"handy_stand":1}'::jsonb, 'ist', v_r);
   select count(*) into v_n from jsonb_each(v_daten -> 'tabellen') e, jsonb_array_elements(e.value) x
@@ -179,6 +179,14 @@ begin
     into v_h0 from public.w24_tabellen() t where t.art = 'voll' and not t.entdeckt;
   select jsonb_object_agg(t.tabelle, (select md5(coalesce(string_agg(e::text, ',' order by e::text), '')) from jsonb_array_elements(public.w24_zeilen(t.tabelle, t.bereich, t.spalte, v_fsb)) e))
     into v_hb from public.w24_tabellen() t where not t.entdeckt;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_b1, 'role', 'authenticated')::text, true);
+  perform set_config('request.jwt.claim.sub', v_b1::text, true);
+  perform set_config('role', 'authenticated', true);
+  select count(*) into v_n from public.fahrschule_backups_privat;
+  select count(*) into v_n2 from public.fahrschule_backups b where b.id = v_bk and ((b.daten -> 'tabellen') ? 'snapshots' or (b.daten -> 'tabellen') ? 'schueler_privat');
+  perform set_config('role', v_start, true);
+  v_pr := v_pr || jsonb_build_object('name', 'Büro liest keine Handy-Stände/privaten Angaben über das Backup', 'kat', 'pflicht', 'ok', v_n = 0 and v_n2 = 0, 'ist', jsonb_build_array(v_n, v_n2));
 
   -- ===================================================================================================================
   -- Vorschau direkt danach (Büro): nichts zu tun, Büro darf nicht wiederherstellen

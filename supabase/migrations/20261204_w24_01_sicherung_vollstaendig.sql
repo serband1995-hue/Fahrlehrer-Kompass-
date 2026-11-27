@@ -75,6 +75,20 @@ update public.fahrschule_backups b
 -- Client-INSERT entfernen (Sicherungen entstehen nur noch über die Funktionen). Lesen bleibt wie bisher.
 drop policy if exists "Fahrschule-Admin/Buero erstellt eigene Backups" on public.fahrschule_backups;
 
+-- Geschützter Teil einer Sicherung: Tabellen, die Büro und Leitung direkt NICHT lesen dürfen (Handy-Stände der Fahrlehrer,
+-- private Angaben der Schüler; rechte-abzug.sql: nur Besitzer/zugeordneter Fahrlehrer und Super-Admin). Sonst könnte man sie
+-- über „Herunterladen“ lesen (Fehlersucher Daten W24, Muss 1). Lesen: nur Super-Admin; schreiben nur die Funktionen.
+create table if not exists public.fahrschule_backups_privat (
+  backup_id uuid primary key references public.fahrschule_backups(id) on delete cascade,
+  daten jsonb not null
+);
+alter table public.fahrschule_backups_privat enable row level security;
+revoke all on public.fahrschule_backups_privat from anon, authenticated;
+grant select on public.fahrschule_backups_privat to authenticated;
+drop policy if exists "Super Admin liest geschuetzte Backup-Teile" on public.fahrschule_backups_privat;
+create policy "Super Admin liest geschuetzte Backup-Teile" on public.fahrschule_backups_privat for select to authenticated
+  using (public.is_super_admin(auth.uid()));
+
 -- ===== 2. Tabellenliste (Reihenfolge = Einfüge-Reihenfolge; gelöscht wird rückwärts) =====
 -- bereich: fs = Spalte ist die Fahrschul-ID · id = Zeile IST die Fahrschule · schueler = Spalte ist eine Schüler-ID der
 --          Fahrschule · profil = Spalte ist ein Konto (profiles.id) der Fahrschule
@@ -132,6 +146,11 @@ create or replace function public.w24_ausgenommen()
  returns text[] language sql immutable set search_path to 'public'
 as $function$ select array['fahrschule_backups', 'buero_sitzungen', 'snapshot_backups', 'trinkgeld_privat', 'push_subscriptions']::text[] $function$;
 
+-- Tabellen, die in den geschützten Teil (fahrschule_backups_privat) kommen.
+create or replace function public.w24_privat_tabellen()
+ returns text[] language sql immutable set search_path to 'public'
+as $function$ select array['snapshots', 'schueler_privat']::text[] $function$;
+
 -- Spalten, die NIE in eine Sicherung gehören (Anmeldedaten). Fehlen sie im Backup, bleiben sie beim Zurückschreiben unberührt.
 create or replace function public.w24_ohne_spalten(p_tabelle text)
  returns text[] language sql immutable set search_path to 'public'
@@ -139,6 +158,8 @@ as $function$ select case p_tabelle when 'buero_personen' then array['pin_hash']
 
 -- Wirksame Liste: feste Liste (nur vorhandene Tabellen MIT der erwarteten Spalte) + entdeckte Tabellen (nur sichern).
 -- Fehlt einer Tabelle der Liste die Spalte (Schema geändert), scheitert die Sicherung nicht: die Tabelle wird dann „entdeckt“.
+-- Entdeckt wird nur mit passendem Spaltentyp (fahrschule_id uuid, schueler_id text/uuid); scheitert eine Tabelle trotzdem,
+-- steht sie im Backup als „fehler“ (w24_sichern), die übrigen werden gesichert.
 create or replace function public.w24_tabellen()
  returns table(reihe integer, tabelle text, bereich text, spalte text, art text, entdeckt boolean)
  language sql stable set search_path to 'public'
@@ -158,7 +179,9 @@ as $function$
             from pg_class c
             join pg_namespace n on n.oid = c.relnamespace
             join pg_attribute a on a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped
-           where n.nspname = 'public' and c.relkind in ('r', 'p') and a.attname in ('fahrschule_id', 'schueler_id')
+           where n.nspname = 'public' and c.relkind in ('r', 'p')
+             and ((a.attname = 'fahrschule_id' and a.atttypid = 'uuid'::regtype)
+               or (a.attname = 'schueler_id' and a.atttypid in ('text'::regtype, 'uuid'::regtype, 'varchar'::regtype)))
            group by c.relname) d
    where d.relname::text not in (select l2.tabelle from liste l2)
      and d.relname::text <> all (public.w24_ausgenommen())
@@ -206,8 +229,10 @@ declare
   t record;
   v_rows jsonb;
   v_tab jsonb := '{}'::jsonb;
+  v_privat jsonb := '{}'::jsonb;
   v_zaehl jsonb := '{}'::jsonb;
   v_arten jsonb := '{}'::jsonb;
+  v_fehler jsonb := '{}'::jsonb;
   v_payload jsonb;
   v_id uuid;
 begin
@@ -216,18 +241,46 @@ begin
     raise exception 'Fahrschule nicht gefunden' using errcode = 'P0002';
   end if;
   for t in select * from public.w24_tabellen() order by reihe loop
-    v_rows := public.w24_zeilen(t.tabelle, t.bereich, t.spalte, p_fs);
-    v_tab := v_tab || jsonb_build_object(t.tabelle, v_rows);
+    begin
+      v_rows := public.w24_zeilen(t.tabelle, t.bereich, t.spalte, p_fs);
+    exception when others then
+      -- eine kaputte Tabelle stoppt die Sicherung nicht; sie steht als „fehler“ drin (sichtbar in arten/hinweis)
+      v_fehler := v_fehler || jsonb_build_object(t.tabelle, sqlerrm);
+      v_arten := v_arten || jsonb_build_object(t.tabelle, 'fehler');
+      continue;
+    end;
+    if t.tabelle = any(public.w24_privat_tabellen()) then
+      v_privat := v_privat || jsonb_build_object(t.tabelle, v_rows);
+    else
+      v_tab := v_tab || jsonb_build_object(t.tabelle, v_rows);
+    end if;
     v_zaehl := v_zaehl || jsonb_build_object(t.tabelle, jsonb_array_length(v_rows));
     v_arten := v_arten || jsonb_build_object(t.tabelle, case when t.entdeckt then 'entdeckt' else t.art end);
   end loop;
   v_payload := jsonb_build_object('format', 2, 'fahrschule_id', p_fs, 'erstellt_am', now(), 'anlass', p_anlass,
-                                  'zaehlung', v_zaehl, 'arten', v_arten, 'tabellen', v_tab);
+                                  'zaehlung', v_zaehl, 'arten', v_arten, 'tabellen', v_tab,
+                                  'geschuetzt', to_jsonb(array(select jsonb_object_keys(v_privat))));
+  if v_fehler <> '{}'::jsonb then v_payload := v_payload || jsonb_build_object('fehler', v_fehler); end if;
   insert into public.fahrschule_backups (fahrschule_id, automatisch, daten, format, anlass, zaehlung, arten, groesse_bytes, pruefsumme, erstellt_von, hinweis)
-  values (p_fs, p_anlass = 'nacht', v_payload, 2, p_anlass, v_zaehl, v_arten, octet_length(v_payload::text), md5(v_payload::text), p_von, p_hinweis)
+  values (p_fs, p_anlass = 'nacht', v_payload, 2, p_anlass, v_zaehl, v_arten, octet_length(v_payload::text) + octet_length(v_privat::text),
+          md5(v_payload::text || '|' || v_privat::text), p_von,
+          case when v_fehler <> '{}'::jsonb then coalesce(p_hinweis, '{}'::jsonb) || jsonb_build_object('fehler', v_fehler) else p_hinweis end)
   returning id into v_id;
+  insert into public.fahrschule_backups_privat (backup_id, daten) values (v_id, v_privat);
   return v_id;
 end;
+$function$;
+
+-- Alle Tabellen einer Sicherung (offener + geschützter Teil) und ob die Prüfsumme stimmt. Intern.
+create or replace function public.w24_backup_inhalt(p_backup uuid)
+ returns jsonb language sql stable security definer set search_path to 'public'
+as $function$
+  select jsonb_build_object(
+    'tabellen', coalesce(b.daten -> 'tabellen', '{}'::jsonb) || coalesce(p.daten, '{}'::jsonb),
+    'pruefsumme_ok', b.pruefsumme is not null
+       and b.pruefsumme in (md5(b.daten::text || '|' || coalesce(p.daten, '{}'::jsonb)::text), case when p.backup_id is null then md5(b.daten::text) end))
+  from public.fahrschule_backups b left join public.fahrschule_backups_privat p on p.backup_id = b.id
+  where b.id = p_backup
 $function$;
 
 -- Rechte: 'sichern' (Super-Admin; Leitung/Büro eigene Fahrschule) oder 'wiederherstellen' (Super-Admin; Leitung eigene).
@@ -337,6 +390,9 @@ declare
   v_sids text[];
   v_codequelle text;
   v_gewaehlt boolean;
+  v_inhalt jsonb;
+  v_tabs jsonb;
+  v_kaskade bigint;
 begin
   if p_modus not in ('ergaenzen', 'komplett') then raise exception 'W24: Modus muss ergaenzen oder komplett sein'; end if;
   select x.id, x.fahrschule_id, x.format, x.daten, x.pruefsumme, x.erstellt_am into b from public.fahrschule_backups x where x.id = p_backup;
@@ -344,26 +400,28 @@ begin
   if coalesce(b.format, 1) < 2 then
     return jsonb_build_object('ok', false, 'wiederherstellbar', false, 'grund', 'altes_format', 'fahrschule_id', b.fahrschule_id);
   end if;
-  if b.pruefsumme is null or md5(b.daten::text) <> b.pruefsumme then
+  v_inhalt := public.w24_backup_inhalt(b.id);
+  if not coalesce((v_inhalt ->> 'pruefsumme_ok')::boolean, false) then
     return jsonb_build_object('ok', false, 'wiederherstellbar', false, 'grund', 'pruefsumme', 'fahrschule_id', b.fahrschule_id);
   end if;
   if (b.daten ->> 'fahrschule_id')::uuid is distinct from b.fahrschule_id then
     return jsonb_build_object('ok', false, 'wiederherstellbar', false, 'grund', 'fremde_fahrschule', 'fahrschule_id', b.fahrschule_id);
   end if;
+  v_tabs := v_inhalt -> 'tabellen';
   if p_tabellen is not null and exists (select 1 from unnest(p_tabellen) x where x not in (select tabelle from public.w24_tabellen())) then
     raise exception 'W24: unbekannte Tabelle in der Auswahl';
   end if;
   -- IDs, die im Backup selbst stehen (gehören zur Fahrschule, auch wenn sie jetzt fehlen): Schüler (s:) und Notizen (n:)
-  select coalesce(array_agg('s:' || (s ->> 'id')), '{}') into v_sids from jsonb_array_elements(coalesce(b.daten -> 'tabellen' -> 'schueler', '[]')) s;
-  v_sids := v_sids || coalesce((select array_agg('n:' || (n ->> 'id')) from jsonb_array_elements(coalesce(b.daten -> 'tabellen' -> 'schueler_notizen', '[]')) n), '{}');
+  select coalesce(array_agg('s:' || (s ->> 'id')), '{}') into v_sids from jsonb_array_elements(coalesce(v_tabs -> 'schueler', '[]')) s;
+  v_sids := v_sids || coalesce((select array_agg('n:' || (n ->> 'id')) from jsonb_array_elements(coalesce(v_tabs -> 'schueler_notizen', '[]')) n), '{}');
   v_codequelle := b.id::text || '|' || p_modus || '|' || coalesce(array_to_string(array(select unnest(p_tabellen) order by 1), ','), '*');
 
   for t in select * from public.w24_tabellen() order by reihe loop
-    if not (b.daten -> 'tabellen') ? t.tabelle then
+    if not v_tabs ? t.tabelle then
       v_liste := v_liste || jsonb_build_object('tabelle', t.tabelle, 'art', t.art, 'im_backup', null, 'hinweis', 'nicht_im_backup');
       continue;
     end if;
-    v_rows := b.daten -> 'tabellen' -> t.tabelle;
+    v_rows := v_tabs -> t.tabelle;
     v_gewaehlt := (p_tabellen is null and t.art <> 'auf_wunsch') or (p_tabellen is not null and t.tabelle = any(p_tabellen));
     if t.art = 'nur_sichern' or t.entdeckt then
       v_liste := v_liste || jsonb_build_object('tabelle', t.tabelle, 'art', case when t.entdeckt then 'entdeckt' else t.art end,
@@ -402,10 +460,17 @@ begin
                            || (v - 'stand'));
   end loop;
 
+  -- Löschen in einer gewählten Tabelle darf nicht still per Kaskade in einer NICHT gewählten Tabelle mitlöschen
+  select count(*) into v_kaskade
+    from jsonb_array_elements(v_liste) x
+    join pg_constraint c on c.confrelid = format('public.%I', x ->> 'tabelle')::regclass and c.contype = 'f' and c.confdeltype in ('c', 'n', 'd')
+    join pg_class k on k.oid = c.conrelid
+   where coalesce((x ->> 'loeschen')::bigint, 0) > 0
+     and not exists (select 1 from jsonb_array_elements(v_liste) y where y ->> 'tabelle' = k.relname::text and coalesce((y ->> 'gewaehlt')::boolean, false));
   return jsonb_build_object(
     'ok', true,
-    'wiederherstellbar', v_konf = 0 and v_ung = 0,
-    'grund', case when v_ung > 0 then 'ungueltige_zeilen' when v_konf > 0 then 'konflikt' end,
+    'wiederherstellbar', v_konf = 0 and v_ung = 0 and v_kaskade = 0,
+    'grund', case when v_ung > 0 then 'ungueltige_zeilen' when v_konf > 0 then 'konflikt' when v_kaskade > 0 then 'folge_loeschung' end,
     'backup_id', b.id, 'fahrschule_id', b.fahrschule_id, 'backup_vom', b.erstellt_am, 'modus', p_modus, 'auswahl', to_jsonb(p_tabellen),
     'einfuegen', v_ein, 'aendern', v_aend, 'loeschen', v_loe, 'konflikte', v_konf, 'ungueltig', v_ung,
     'code', upper(left(md5(v_codequelle), 6)),
@@ -448,8 +513,10 @@ declare
   v_schreib text[] := '{}';
   v_ein bigint; v_aend bigint; v_loe bigint;
   v_geloescht jsonb := '{}'::jsonb;
+  v_trig jsonb;
+  v_fk jsonb;
 begin
-  select fahrschule_id, daten into v_fs, v_daten from public.fahrschule_backups where id = backup_id;
+  select fahrschule_id into v_fs from public.fahrschule_backups where id = backup_id;
   if v_fs is null or not public.w24_darf(v_fs, 'wiederherstellen') then
     raise exception 'Keine Berechtigung zum Wiederherstellen (nur Leitung der eigenen Fahrschule)' using errcode = '42501';
   end if;
@@ -473,17 +540,32 @@ begin
     return jsonb_build_object('ok', true, 'nichts_zu_tun', true, 'vorschau', v_vor);
   end if;
 
+  v_daten := public.w24_backup_inhalt(backup_id);   -- {tabellen (offen + geschützt), pruefsumme_ok}
   -- Zuerst den jetzigen Stand sichern.
   v_vorher_id := public.w24_sichern(v_fs, 'vor_wiederherstellung', auth.uid(),
                    jsonb_build_object('fuer_backup', backup_id, 'modus', modus, 'auswahl', to_jsonb(tabellen)));
 
   begin
-  -- Betroffene Tabellen: Auslöser aus (nur in dieser Transaktion).
   for v_info in select x from jsonb_array_elements(v_vor -> 'tabellen') x loop
     if (v_info ->> 'einfuegen')::bigint + (v_info ->> 'aendern')::bigint + (v_info ->> 'loeschen')::bigint > 0 then
       v_schreib := v_schreib || (v_info ->> 'tabelle');
-      execute format('alter table public.%I disable trigger user', v_info ->> 'tabelle');
     end if;
+  end loop;
+  -- Betroffene Tabellen: nur die Auslöser aus, die gerade AN sind (Zustand merken; nur in dieser Transaktion).
+  select coalesce(jsonb_agg(jsonb_build_array(c.relname, tg.tgname)), '[]') into v_trig
+    from pg_trigger tg join pg_class c on c.oid = tg.tgrelid join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relname = any(v_schreib) and not tg.tgisinternal and tg.tgenabled = 'O';
+  for v_info in select x from jsonb_array_elements(v_trig) x loop
+    execute format('alter table public.%I disable trigger %I', v_info ->> 0, v_info ->> 1);
+  end loop;
+  -- Fremdschlüssel zwischen den beschriebenen Tabellen erst am Ende prüfen (Reihenfolge Löschen/Ändern egal, z. B. neues
+  -- Paket löschen, bevor der Schüler wieder auf das alte zeigt). Nur „ohne Regel“/Kaskade, nie RESTRICT (nicht aufschiebbar).
+  select coalesce(jsonb_agg(jsonb_build_array(k.relname, c.conname)), '[]') into v_fk
+    from pg_constraint c join pg_class k on k.oid = c.conrelid join pg_class e on e.oid = c.confrelid join pg_namespace n on n.oid = k.relnamespace
+   where c.contype = 'f' and not c.condeferrable and n.nspname = 'public' and c.confdeltype <> 'r' and c.confupdtype <> 'r'
+     and k.relname = any(v_schreib) and e.relname = any(v_schreib);
+  for v_info in select x from jsonb_array_elements(v_fk) x loop
+    execute format('alter table public.%I alter constraint %I deferrable initially deferred', v_info ->> 0, v_info ->> 1);
   end loop;
 
   -- a) Löschen (nur komplett, Art voll), rückwärts.
@@ -552,9 +634,13 @@ begin
        and exists (select 1 from jsonb_array_elements(v_daten -> 'tabellen' -> 'snapshots') s where (s ->> 'user_id')::uuid = z.user_id);
   end if;
 
-  -- Auslöser wieder an.
-  foreach v_scope in array v_schreib loop
-    execute format('alter table public.%I enable trigger user', v_scope);
+  -- Fremdschlüssel jetzt prüfen und wieder wie vorher; Auslöser wieder an (genau die vorher aktiven).
+  set constraints all immediate;
+  for v_info in select x from jsonb_array_elements(v_fk) x loop
+    execute format('alter table public.%I alter constraint %I not deferrable', v_info ->> 0, v_info ->> 1);
+  end loop;
+  for v_info in select x from jsonb_array_elements(v_trig) x loop
+    execute format('alter table public.%I enable trigger %I', v_info ->> 0, v_info ->> 1);
   end loop;
 
   -- Nachprüfung: danach darf es nichts mehr zu tun geben (sonst alles zurück).
@@ -564,10 +650,15 @@ begin
     raise exception 'W24: Nachprüfung fehlgeschlagen, nichts geändert: %', v_nach;
   end if;
 
-  exception when foreign_key_violation then
-    -- z. B. ein Termin eines Fahrlehrers, dessen Zugang endgültig gelöscht ist: melden, nichts still überspringen
-    raise exception 'W24: Zurückholen nicht möglich, ein Eintrag verweist auf etwas, das es nicht mehr gibt (%). Es wurde nichts geändert.', sqlerrm
-      using errcode = '23503';
+  exception
+    when foreign_key_violation then
+      -- z. B. ein Termin eines Fahrlehrers, dessen Zugang endgültig gelöscht ist: melden, nichts still überspringen
+      raise exception 'W24: Zurückholen nicht möglich, ein Eintrag verweist auf etwas, das es nicht mehr gibt (%). Es wurde nichts geändert.', sqlerrm
+        using errcode = '23503';
+    when unique_violation then
+      -- z. B. ein Handy-Stand wurde nach der Sicherung neu angelegt (gleiches Konto, neue ID)
+      raise exception 'W24: Zurückholen nicht möglich, ein Eintrag gibt es schon in anderer Form (%). Es wurde nichts geändert.', sqlerrm
+        using errcode = '23505';
   end;
 
   update public.fahrschule_backups set hinweis = coalesce(hinweis, '{}'::jsonb) || jsonb_build_object('ergebnis', v_ergebnis, 'fertig_am', now())
@@ -616,6 +707,10 @@ begin
     end;
   end loop;
   v_weg := public.fahrschule_backups_aufraeumen(null);
+  -- pg_cron meldet den Lauf trotzdem als erfolgreich: Fehler sichtbar ins Protokoll (Fehlersucher Daten W24)
+  if v_fehler <> '[]'::jsonb or exists (select 1 from public.fahrschule_backups where anlass = 'nacht' and erstellt_am > now() - interval '1 hour' and hinweis ? 'fehler') then
+    raise warning 'W24 Nachtlauf mit Fehlern: % (Tabellen-Fehler siehe fahrschule_backups.hinweis)', v_fehler;
+  end if;
   return jsonb_build_object('gesichert', v_ok, 'fehler', v_fehler, 'aufgeraeumt', v_weg, 'am', now());
 end;
 $function$;
@@ -624,6 +719,8 @@ $function$;
 revoke all on function public.w24_tabellen_liste() from public, anon, authenticated;
 revoke all on function public.w24_ausgenommen() from public, anon, authenticated;
 revoke all on function public.w24_ohne_spalten(text) from public, anon, authenticated;
+revoke all on function public.w24_privat_tabellen() from public, anon, authenticated;
+revoke all on function public.w24_backup_inhalt(uuid) from public, anon, authenticated;
 revoke all on function public.w24_tabellen() from public, anon, authenticated;
 revoke all on function public.w24_bereich_sql(text, text, text) from public, anon, authenticated;
 revoke all on function public.w24_teil(jsonb, text[]) from public, anon, authenticated;
@@ -649,9 +746,13 @@ declare j record;
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
     -- Bisheriger Auftrag (Name sagt „wöchentlich“, lief aber täglich 02:00 UTC: alle_fahrschulen_woechentlich_sichern + backups_aufraeumen)
-    for j in execute 'select jobid from cron.job where jobname in (''woechentliches-fahrschule-backup'', ''kompass-sicherung-nacht'') or command ilike ''%alle_fahrschulen_woechentlich_sichern%''' loop
+    for j in execute 'select jobid, jobname, schedule, command from cron.job where jobname in (''woechentliches-fahrschule-backup'', ''kompass-sicherung-nacht'') or command ilike ''%alle_fahrschulen_woechentlich_sichern%''' loop
+      raise notice 'W24: ersetze Auftrag % (%): %', j.jobname, j.schedule, j.command;
       perform cron.unschedule(j.jobid);
     end loop;
+    if to_regprocedure('public.alle_fahrschulen_woechentlich_sichern()') is null then
+      raise notice 'W24: alle_fahrschulen_woechentlich_sichern() fehlt – der Rückweg kann den alten Auftrag nicht neu planen';
+    end if;
     -- Gleiche Zeit wie bisher: 02:00 UTC, vor papierkorb_leeren (03:17 UTC) – was der Papierkorb endgültig löscht, ist vorher gesichert.
     perform cron.schedule('kompass-sicherung-nacht', '0 2 * * *', 'select public.fahrschule_backups_nachtlauf()');
   else
@@ -660,13 +761,13 @@ begin
 end;
 $plan$;
 
--- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=16, nachtlauf = 1 Auftrag 'kompass-sicherung-nacht', alter Auftrag weg)
+-- Ergebniszeile (erwartet: spalten=8, insert_regel=0, funktionen=18, nachtlauf = 1 Auftrag 'kompass-sicherung-nacht', alter Auftrag weg)
 select
   (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'fahrschule_backups'
      and column_name in ('format', 'anlass', 'zaehlung', 'arten', 'groesse_bytes', 'pruefsumme', 'erstellt_von', 'hinweis')) as spalten,
   (select count(*) from pg_policies where schemaname = 'public' and tablename = 'fahrschule_backups' and cmd = 'INSERT') as insert_regel,
   (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
-     and p.proname in ('w24_tabellen_liste', 'w24_ausgenommen', 'w24_ohne_spalten', 'w24_tabellen', 'w24_bereich_sql', 'w24_teil', 'w24_zeilen', 'w24_sichern',
+     and p.proname in ('w24_tabellen_liste', 'w24_ausgenommen', 'w24_ohne_spalten', 'w24_privat_tabellen', 'w24_backup_inhalt', 'w24_tabellen', 'w24_bereich_sql', 'w24_teil', 'w24_zeilen', 'w24_sichern',
                        'w24_darf', 'w24_vergleich', 'w24_vorschau', 'fahrschule_backup_erstellen', 'fahrschule_backup_vorschau',
                        'fahrschule_backup_wiederherstellen', 'fahrschule_backups_aufraeumen', 'fahrschule_backups_nachtlauf')) as funktionen,
   (select array_agg(tabelle order by reihe) from public.w24_tabellen() where entdeckt) as entdeckte_tabellen,

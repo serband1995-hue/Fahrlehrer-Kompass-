@@ -79,8 +79,12 @@ async function baueDb() {
 
     create table public.aenderungsprotokoll (id bigserial primary key, fahrschule_id uuid, tabelle text, datensatz_id text, feld text, alt text, neu text,
       geaendert_von uuid, bearbeiter text, grund text, erstellt_am timestamptz default now());
+    create table public.fahrschule_pakete (id uuid primary key default gen_random_uuid(), fahrschule_id uuid not null references public.fahrschulen(id) on delete cascade, name text not null);
     create table public.schueler (id text primary key, fahrschule_id uuid references public.fahrschulen(id), fahrlehrer_id uuid, name text,
-      status text not null default 'aktiv', geaendert_am timestamptz default now());
+      status text not null default 'aktiv', geaendert_am timestamptz default now(), paket_id uuid references public.fahrschule_pakete(id));
+    create table public.schueler_eltern (schueler_id text primary key references public.schueler(id) on delete cascade, fahrschule_id uuid not null, email text);
+    create function public.att_eltern_spur() returns trigger language plpgsql as $$ begin return new; end $$;
+    create trigger schueler_eltern_spur after insert or update on public.schueler_eltern for each row execute function public.att_eltern_spur();
     -- Auslöser wie live: verändert Zeilen (Zeitstempel) und schreibt Protokoll
     create function public.att_schueler_stempel() returns trigger language plpgsql as $$ begin new.geaendert_am := clock_timestamp(); return new; end $$;
     create trigger trg_att_schueler_stempel before insert or update on public.schueler for each row execute function public.att_schueler_stempel();
@@ -202,8 +206,13 @@ ok("Sicherung: Format 2, von Hand, Zählung (2 Schüler inkl. gelöschtem, 2 Ter
   && r.zaehlung.schueler_notizen === 1 && r.zaehlung.provisionen === 1 && r.zaehlung.zahlungsbelege === 1 && r.zaehlung.snapshots === 1 && r.zaehlung.att_neu === 1 && r.arten.att_neu === "entdeckt"
   && r.arten.zahlungsbelege === "anhaengen" && r.arten.snapshots === "auf_wunsch" && r.groesse_bytes > 500, { z: r.zaehlung, a: r.arten });
 ok("Sicherung enthält nichts der fremden Fahrschule", !JSON.stringify(r.daten).includes(FS2) && !JSON.stringify(r.daten).includes('"sx"'));
+ok("Handy-Stände nur im geschützten Teil (nicht in daten)", !JSON.stringify(r.daten).includes("students"), Object.keys(r.daten.tabellen || {}));
 ok("Keine Anmeldedaten: kein PIN-Hash, keine Sitzungen; Büro-Person und Notiz-gelesen (1) drin", !JSON.stringify(r.daten).includes("GEHEIMER-HASH") && !JSON.stringify(r.daten).includes("TOKEN-HASH")
   && r.zaehlung.buero_personen === 1 && r.zaehlung.schueler_notiz_gelesen === 1 && !("buero_sitzungen" in r.zaehlung), r.zaehlung);
+r = await als(db, U.buero, "select count(*)::int n from public.fahrschule_backups_privat");
+ok("Büro liest den geschützten Teil nicht", !r.fehler ? r.rows[0].n === 0 : true, r);
+r = await als(db, U.super, "select count(*)::int n from public.fahrschule_backups_privat");
+ok("Super-Admin liest den geschützten Teil", !r.fehler && r.rows[0].n >= 1, r);
 r = await als(db, U.fl1, "select public.fahrschule_backup_erstellen($1, false) id", [FS]);
 ok("Fahrlehrer: keine Berechtigung", /Keine Berechtigung/.test(r.fehler || ""), r);
 r = await als(db, U.buero, "insert into public.fahrschule_backups (fahrschule_id, automatisch, daten) values ($1, false, '{}')", [FS]);
@@ -247,6 +256,32 @@ await db.exec(`alter table public.kalender_termine drop constraint att_stoerer;`
 await db.exec(`update public.schueler set name = 'Eins geändert' where id = 's1';`);
 r = await als(db, U.leitung, "select public.fahrschule_backup_wiederherstellen($1, 'ergaenzen', null, $2) v", [BK, V2.code]);
 ok("Stand nach der Vorschau geändert: Code passt nicht mehr", /Stand hat sich/.test(r.fehler || ""), r);
+
+// ---------- 4b. Funde Fehlersucher Daten (W24) ----------
+await db.exec(`update public.schueler set name = 'Eins' where id = 's1';`);
+r = await als(db, U.buero, "select public.fahrschule_backup_erstellen($1, false) id", [FS]);
+const BK2 = r.rows[0].id;
+await db.exec(`insert into public.fahrschule_pakete (fahrschule_id, name) values ('${FS}', 'Neu');`);
+await db.exec(`update public.schueler set paket_id = (select id from public.fahrschule_pakete where name = 'Neu') where id = 's1';
+  alter table public.schueler_eltern disable trigger schueler_eltern_spur;`);
+r = await als(db, U.leitung, "select public.fahrschule_backup_vorschau($1, 'komplett', null) v", [BK2]);
+let VV = r.rows[0].v;
+r = await als(db, U.leitung, "select public.fahrschule_backup_wiederherstellen($1, 'komplett', null, $2) v", [BK2, VV.code]);
+let q = await eins(db, "select (select paket_id from public.schueler where id = 's1') p, (select count(*)::int from public.fahrschule_pakete) n");
+ok("Komplett: neues Paket weg, obwohl ein Schüler darauf zeigte (Fremdschlüssel am Ende geprüft)", !r.fehler && q.p === null && q.n === 0, { r, q });
+q = await eins(db, "select (select tgenabled from pg_trigger where tgname = 'schueler_eltern_spur') e, (select count(*)::int from pg_constraint where contype = 'f' and condeferrable) d");
+ok("Von Hand ausgeschalteter Auslöser bleibt aus; Fremdschlüssel wieder nicht aufschiebbar", q.e === "D" && q.d === 0, q);
+await db.exec(`alter table public.schueler_eltern enable trigger schueler_eltern_spur;
+  insert into public.schueler (id, fahrschule_id, fahrlehrer_id, name) values ('s9', '${FS}', '${U.fl1}', 'Neu');
+  insert into public.schueler_eltern (schueler_id, fahrschule_id, email) values ('s9', '${FS}', 'eltern@example.invalid');`);
+r = await als(db, U.leitung, "select public.fahrschule_backup_vorschau($1, 'komplett', array['schueler']) v", [BK2]);
+VV = r.rows[0].v;
+ok("Nur „Schüler“ gewählt, Löschen würde Eltern-Kontakte mitlöschen: abgewiesen (folge_loeschung)", VV.wiederherstellbar === false && VV.grund === "folge_loeschung", VV.grund);
+r = await als(db, U.leitung, "select public.fahrschule_backup_vorschau($1, 'komplett', null) v", [BK2]);
+VV = r.rows[0].v;
+r = await als(db, U.leitung, "select public.fahrschule_backup_wiederherstellen($1, 'komplett', null, $2) v", [BK2, VV.code]);
+q = await eins(db, "select (select count(*)::int from public.schueler where id = 's9') s, (select count(*)::int from public.schueler_eltern) e");
+ok("Alles gewählt: neuer Schüler samt Eltern-Kontakt weg (beides in der Vorschau)", !r.fehler && q.s === 0 && q.e === 0, { r, q });
 
 // ---------- 5. Live-Probe in der Attrappe ----------
 const P = await probe(db);
