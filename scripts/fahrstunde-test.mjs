@@ -990,8 +990,10 @@ await pruefe("F4c", "Rechnen/Abgleich unverändert gegenüber " + BASIS.slice(0,
   const alt = r.stdout, neu = await readFile(join(ROOT, "index.html"), "utf8");
   const fl = [];
   for (const n of ["ueRange", "dayEvents", "dayFreeSlots", "nextLessonEvents", "themenDesTages", "stundenProtokollText", "save", "pushToCloud", "_fsSyncAggChanges"]) {
-    const a = schneide(alt, n); let b = schneide(neu, n);
-    if (n === "dayEvents" && b) b = w21Zurueck(b); // W21: Prüfungen kommen aus der neuen Quelle; nur diese drei Stellen sind absichtlich anders
+    let a = schneide(alt, n), b = schneide(neu, n);
+    // W21: Prüfungen kommen aus der neuen Quelle; nur diese drei Stellen sind absichtlich anders.
+    // Auf beiden Seiten zurückdrehen: liegt die Basis schon nach W21 (z. B. auf main), stünde der W21-Text sonst nur links.
+    if (n === "dayEvents") { if (a && a.includes("_ptIstSpiegel(")) a = w21Zurueck(a); if (b) b = w21Zurueck(b); }
     if (a === null) continue;
     if (b === null) fl.push(`${n} fehlt`); else if (a !== b) fl.push(`${n} geändert`);
   }
