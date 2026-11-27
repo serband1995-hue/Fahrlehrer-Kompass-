@@ -550,7 +550,9 @@ input,select,textarea{font-family:inherit;font-size:16px;color:var(--txt);}
 @media print{
   body.bq-drucken > *:not(#bqDruck){display:none !important;}
   body.bq-drucken::before,body.bq-drucken::after{display:none !important;} /* Hintergrund-Verlauf würde das Blatt überdecken */
-  body.bq-drucken #bqDruck{display:block !important;text-align:center;color:#000;background:#fff;padding:10mm 0;}
+  body.bq-drucken #bqDruck{display:flex !important;flex-direction:column;align-items:center;text-align:center;color:#000;background:#fff;padding:4mm 0;}
+  #bqDruck .bqd-kopf{order:-1;align-self:stretch;display:flex;justify-content:space-between;align-items:center;gap:8mm;padding-bottom:4mm;margin-bottom:10mm;border-bottom:.6pt solid #9a9a9a;font:600 13pt system-ui,sans-serif;color:#333;text-align:left;}
+  #bqDruck .bqd-logo{max-width:48mm;max-height:20mm;width:auto;height:auto;object-fit:contain;margin-left:auto;}
   #bqDruck .bqd-titel{font:800 30pt system-ui,sans-serif;margin-bottom:4mm;}
   #bqDruck .bqd-zeile{font:16pt system-ui,sans-serif;margin-bottom:8mm;}
   #bqDruck img{width:120mm;height:120mm;image-rendering:pixelated;}
@@ -2069,6 +2071,7 @@ body:has(#view .fahrmodus) .sync-btn{--sync-gelb:#e0a73e;--sync-gruen:#4caf72;--
 <!-- Supabase Client -->
 <script src="vendor/supabase-js-2.119.2.js"></script>
 <script src="kompass-rechnen.js"></script>
+<script src="kompass-druck.js"></script>
 <script src="kompass-einstellungen.js"></script>
 <script src="kompass-sicherung.js"></script>
 <script src="kompass-pruefungstage.js"></script>
@@ -4563,7 +4566,7 @@ function _profilNachladen(uid){
     try {
       const { data, error } = await getSupa().from("profiles").select("*").eq("id", uid).single();
       if (error || !data) throw error || new Error("leer");
-      _profilMerken(Object.assign({}, data, { fahrschule_name: _authProfile && _authProfile.fahrschule_name }));
+      _profilMerken(Object.assign({}, data, { fahrschule_name: _authProfile && _authProfile.fahrschule_name, fahrschule_slug: _authProfile && _authProfile.fahrschule_slug }));
       // „Fährt selbst“ geändert: Startansicht ist eine andere → neu starten (Prüf-Team 21.11.)
       if (!data.aktiv || data.agb_akzeptiert_version !== AGB_VERSION || data.rolle !== (_authProfile && _authProfile.rolle) || (data.faehrt_selbst === true) !== !!(_authProfile && _authProfile.faehrt_selbst === true)) { location.reload(); return; }
       _authProfile = Object.assign({}, _authProfile, data);
@@ -4625,9 +4628,9 @@ async function afterLogin(user) {
   // Kill-Switch prüfen (ganze Fahrschule) — fehlte bisher komplett, der Schalter im Admin-Panel
   // hat bis eben niemanden wirklich am Einloggen gehindert.
   if (prof && prof.fahrschule_id) {
-    let fsRow = null; try { ({ data: fsRow } = await supa.from("fahrschulen").select("aktiv,name").eq("id", prof.fahrschule_id).maybeSingle()); } catch (e) {}
+    let fsRow = null; try { ({ data: fsRow } = await supa.from("fahrschulen").select("aktiv,name,slug").eq("id", prof.fahrschule_id).maybeSingle()); } catch (e) {}
     // T7: Name der Fahrschule für PDFs merken (auch für den Start im Funkloch)
-    if (fsRow && fsRow.name && prof.fahrschule_name !== fsRow.name) { prof = Object.assign({}, prof, { fahrschule_name: fsRow.name }); _authProfile = Object.assign({}, _authProfile, { fahrschule_name: fsRow.name }); _profilMerken(prof); }
+    if (fsRow && ((fsRow.name && prof.fahrschule_name !== fsRow.name) || (fsRow.slug && prof.fahrschule_slug !== fsRow.slug))) { const fz = { fahrschule_name: fsRow.name || prof.fahrschule_name, fahrschule_slug: fsRow.slug || prof.fahrschule_slug }; prof = Object.assign({}, prof, fz); _authProfile = Object.assign({}, _authProfile, fz); _profilMerken(prof); } // W26: Slug fürs Logo auf Ausdrucken
     if (fsRow && !fsRow.aktiv) {
       await supa.auth.signOut();
       _authUser = null; _authProfile = null;
@@ -8066,33 +8069,19 @@ function fsMonatsberichtPDF(){
   const mitSimulator=schueler.filter(s=>s._hatSimulator).length;
   const mitTheorieApp=schueler.filter(s=>s._hatTheorieApp).length;
 
-  const win=window.open('','_blank');
-  win.document.write(`<html><head><title>Monatsbericht ${esc(name)}</title><meta charset="utf-8">
-  <style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#222;max-width:700px;margin:0 auto;}
-  h1{color:#20402c;font-size:22px;} h2{color:#3a7350;font-size:15px;margin-top:26px;border-bottom:1px solid #ddd;padding-bottom:4px;}
-  table{width:100%;border-collapse:collapse;margin-top:8px;} td{padding:6px 4px;border-bottom:1px solid #eee;font-size:13.5px;}
-  .kpi{display:inline-block;background:#f2f2ea;border-radius:10px;padding:12px 18px;margin:6px 10px 6px 0;}
-  .kpi b{display:block;font-size:22px;color:#20402c;} .kpi span{font-size:11.5px;color:#666;}</style></head>
-  <body>
-  <h1>Monatsbericht — ${esc(name)}</h1>
-  <p style="color:#666;font-size:12.5px;">Erstellt am ${heute} mit Fahrlehrer-Kompass</p>
-  <div>
-    <div class="kpi"><b>${act}</b><span>Aktive Schüler</span></div>
-    <div class="kpi"><b>${lehrer.length}</b><span>Fahrlehrer</span></div>
-    <div class="kpi"><b>${q.pct==null?'–':q.pct+'%'}</b><span>Bestehensquote Monat</span></div>
-  </div>
-  <h2>Bestehensquote pro Fahrlehrer</h2>
-  <table>${quoteProLehrer.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.q.pct}% (${x.q.pass}/${x.q.total})</td></tr>`).join("")||'<tr><td>Keine Prüfungen im Zeitraum</td></tr>'}</table>
-  <h2>Cross-Sell-Quote</h2>
-  <table>
-    <tr><td>Paket gebucht</td><td>${pct(mitPaket)}% (${mitPaket}/${schueler.length})</td></tr>
-    <tr><td>Simulator gekauft</td><td>${pct(mitSimulator)}% (${mitSimulator}/${schueler.length})</td></tr>
-    <tr><td>Theorie-App gekauft</td><td>${pct(mitTheorieApp)}% (${mitTheorieApp}/${schueler.length})</td></tr>
-  </table>
-  <p style="margin-top:30px;color:#999;font-size:11px;">Fahrlehrer-Kompass · ${esc(name)}</p>
-  </body></html>`);
-  win.document.close();
-  setTimeout(()=>win.print(),400);
+  const fsz=_fsAgg.fahrschule||{};
+  const kpi=(w,t)=>`<div class="dkachel"><b>${w}</b>${t}</div>`;
+  const body=`<div class="dkacheln">${kpi(act,"Aktive Schüler")}${kpi(lehrer.length,"Fahrlehrer")}${kpi(q.pct==null?'–':q.pct+'%',"Bestehensquote Monat")}</div>
+  <div class="dblock"><h2>Bestehensquote pro Fahrlehrer</h2>
+  <table><thead><tr><th>Fahrlehrer</th><th class="r">Quote</th></tr></thead><tbody>${quoteProLehrer.map(x=>`<tr><td>${esc(x.name)}</td><td class="r">${x.q.pct}% (${x.q.pass}/${x.q.total})</td></tr>`).join("")||'<tr><td colspan="2">Keine Prüfungen im Zeitraum</td></tr>'}</tbody></table></div>
+  <div class="dblock"><h2>Cross-Sell-Quote</h2>
+  <table><tbody>
+    <tr><td>Paket gebucht</td><td class="r">${pct(mitPaket)}% (${mitPaket}/${schueler.length})</td></tr>
+    <tr><td>Simulator gekauft</td><td class="r">${pct(mitSimulator)}% (${mitSimulator}/${schueler.length})</td></tr>
+    <tr><td>Theorie-App gekauft</td><td class="r">${pct(mitTheorieApp)}% (${mitTheorieApp}/${schueler.length})</td></tr>
+  </tbody></table></div>`;
+  const html=DRUCK.dokument({titel:"Monatsbericht",fenstertitel:"Monatsbericht "+name,untertitel:"Stand "+heute,fahrschule:name,logo:window.DRUCK&&fsz.slug?DRUCK.logoUrl(fsz.slug):"",body,leiste:true});
+  DRUCK.fenster("Monatsbericht",html,{blockiert:"Pop-up blockiert – bitte im Browser-Menü erlauben"});
 }
 
 async function neuenSchuelerAnlegenFS(fahrschuleId){
@@ -19152,8 +19141,10 @@ function _bqDrucken(link,typ,name){
   if(_bqDruckWeg)_bqDruckWeg(); // vorigen Druck sauber aufräumen (mehrfach getippt)
   document.getElementById("bqDruck")?.remove();
   const d=document.createElement("div"); d.id="bqDruck";
+  const fz=_druckFs(); // Kopf mit Fahrschule und Logo (steht im DOM zuletzt, im Druck per order ganz oben; der Code bleibt das erste Bild)
   d.innerHTML=`<div class="bqd-titel">Fahrstunde buchen</div><div class="bqd-zeile">QR-Code mit der Handy-Kamera scannen</div>
-    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>`;
+    <img src="${qrBild(link,900)}" alt=""><div class="bqd-typ">${typ==="automatik"?"Automatik":"Schalter"}${name?` · ${esc(name)}`:""}</div>
+    ${fz.echt||fz.logo?`<div class="bqd-kopf">${fz.logo?`<img class="bqd-logo" src="${esc(fz.logo)}" alt="">`:""}${fz.echt?`<span>${esc(fz.name)}</span>`:""}</div>`:""}`;
   document.body.appendChild(d); document.body.classList.add("bq-drucken");
   let uhr=null;
   const weg=()=>{ if(d.isConnected){ document.body.classList.remove("bq-drucken"); d.remove(); } window.removeEventListener("afterprint",weg); clearTimeout(uhr); if(_bqDruckWeg===weg)_bqDruckWeg=null; };
@@ -19161,7 +19152,9 @@ function _bqDrucken(link,typ,name){
   window.addEventListener("afterprint",weg);
   const los=()=>{ if(!d.isConnected)return; /* schon von einem neueren Druck ersetzt */ try{ window.print(); }catch(e){ weg(); toast("Drucken ging nicht – bitte „Bild speichern“ nutzen"); } uhr=setTimeout(weg,60000); };
   const bild=d.querySelector("img"); // erst drucken, wenn das Bild fertig ist (sonst bleibt es auf manchen Handys leer)
-  Promise.resolve(bild&&bild.decode?bild.decode().catch(()=>{}):null).then(()=>setTimeout(los,60));
+  const logo=d.querySelector(".bqd-logo"); // Logo fehlt oder lädt nicht: weglassen, nicht warten (höchstens ~1,5 s)
+  const logoBereit=logo?Promise.race([logo.decode().catch(()=>{ logo.remove(); }),new Promise(ok=>setTimeout(()=>{ if(!(logo.complete&&logo.naturalWidth>0))logo.remove(); ok(); },1500))]):null;
+  Promise.all([bild&&bild.decode?bild.decode().catch(()=>{}):null,logoBereit]).then(()=>setTimeout(los,60));
 }
 function routeNeuigkeiten(){
   $("#tbTitle").textContent="Neuigkeiten"; setFab(false); view.scrollTop=0;
@@ -19256,37 +19249,41 @@ function routeArchive(){
 }
 
 /* ---------- PDF / Druck ---------- */
-function printDoc(title,bodyHtml){
-  const PR_CSS=`*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#111;background:#fff;padding:12mm;}
-.pr-top{border-bottom:2px solid #3a7350;padding-bottom:8px;margin-bottom:16px;}
-.pr-brand{font-size:10px;color:#3a7350;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
-.pr-title{font-size:20px;font-weight:800;margin-top:3px;}
-.pr-meta{font-size:13px;font-weight:600;margin-bottom:4px;}
-.pr-prog{font-size:11px;color:#444;margin-bottom:14px;}
-.pr-sec{break-inside:avoid;page-break-inside:avoid;margin-bottom:16px;}
-.pr-sec h3{font-size:12.5px;font-weight:800;border-bottom:1px solid #ccc;padding-bottom:4px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;break-after:avoid;page-break-after:avoid;}
-.pr-cnt{font-weight:600;color:#666;font-size:11px;}
-.pr-list{font-size:11.5px;line-height:2;}
-.pr-sub{font-size:11px;color:#555;margin-top:6px;}
-.pr-tbl{width:100%;border-collapse:collapse;}
-.pr-tbl tr{break-inside:avoid;page-break-inside:avoid;}
-.pr-tbl td{padding:4px 6px;border-bottom:1px solid #eee;font-size:11px;vertical-align:top;}
-.pr-tbl td:last-child{width:64px;text-align:right;font-weight:700;}
-.pr-ort{color:#888;font-weight:400;}
-.pr-gruen{color:#2e8b57;}.pr-gelb{color:#b8860b;}.pr-rot{color:#c0392b;}.pr-none{color:#aaa;font-weight:400;}
-.pr-note{font-size:11px;color:#444;margin-top:6px;background:#f6f6f6;padding:6px 8px;border-radius:4px;}
-.pr-bar{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #eee;}
-.pr-bv{font-weight:700;}
-.pr-summary{font-size:11.5px;line-height:1.65;white-space:pre-wrap;}
-.pr-foot{margin-top:20px;border-top:1px solid #ccc;padding-top:8px;font-size:10px;color:#999;}
-@page{margin:14mm;size:A4 portrait;}
-@media print{body{padding:0;}}`;
-  const html=`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${PR_CSS}</style></head><body><div class="pr-doc"><div class="pr-top"><div class="pr-brand">${esc(_druckAbsender())}</div><div class="pr-title">${title}</div></div>${bodyHtml}<div class="pr-foot">Erstellt am ${isoDE(todayISO())} · Fahrlehrer-Kompass</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`;
-  const win=window.open('','_blank');
-  if(!win){toast("Pop-up blockiert – bitte im Browser-Menü erlauben");return;}
-  win.document.write(html);
-  win.document.close();
+/* W26 Teil 5: alle Ausdrucke teilen das Druckbild aus kompass-druck.js (A4, Kopf mit Fahrschule und Logo, Seite x von y).
+   Fahrschul-Name und Logo kommen aus den Daten (Profil bzw. Fahrschul-Zeile), nichts ist fest eingebaut. */
+function _druckFs(){
+  const p=_authProfile||{}, f=(_fsAgg&&_fsAgg.fahrschule)||{};
+  const name=f.name||p.fahrschule_name||"", slug=f.slug||p.fahrschule_slug||"";
+  const zeilen=[]; if(p.name&&!_fsAgg)zeilen.push("Fahrlehrer "+p.name);
+  return {echt:!!name, name:name||"Fahrlehrer-Kompass", zeilen, logo:(window.DRUCK&&slug)?DRUCK.logoUrl(slug):""};
+}
+// Schüler im Kopf: Name, Kundennummer, Anschrift (fehlt etwas, entfällt die Zeile)
+function _druckBezug(s){
+  const f=(typeof _schuelerFristen!=="undefined"&&_schuelerFristen[s.id])||{};
+  const z=[], kn=window.KR&&f.kundennummer?KR.kundennummerText(f.kundennummer):"";
+  if(kn)z.push("Kundennummer: "+kn);
+  const adr=window.KR?KR.adresseZeilen(_adrAktuell(s)):[]; if(adr.length)z.push("Anschrift: "+adr.join(", "));
+  return {wer:s.name,zeilen:z};
+}
+const _PR_CSS=`.pr-prog{font-size:9.5pt;color:#444;margin:0 0 3mm}
+.pr-meta{font-size:10pt;margin:0 0 1.5mm}
+.pr-sec{break-inside:avoid;page-break-inside:avoid;margin:0 0 4.5mm}
+.pr-sec h3{display:flex;justify-content:space-between;align-items:baseline;gap:3mm;margin:0 0 1.5mm;break-after:avoid;page-break-after:avoid}
+.pr-cnt{font-weight:500;color:#666;font-size:9pt}
+.pr-list{font-size:10pt;line-height:1.9}
+.pr-sub{font-size:9.5pt;color:#555;margin-top:1.5mm}
+.dok .pr-tbl{margin:0}
+.dok .pr-tbl td:last-child{width:18mm;text-align:right;font-weight:600;white-space:nowrap}
+.pr-ort{color:#888;font-weight:400}
+.pr-gruen{color:#2e8b57}.pr-gelb{color:#b8860b}.pr-rot{color:#c0392b}.pr-none{color:#999;font-weight:400}
+.pr-note{font-size:9.5pt;color:#444;margin-top:1.5mm;background:#f6f6f6;padding:1.5mm 2.5mm;border-radius:1mm}
+.pr-bar{display:flex;justify-content:space-between;font-size:10pt;padding:.6mm 0}
+.pr-bv{font-weight:600}
+.pr-summary{font-size:10pt;line-height:1.55;white-space:pre-wrap}`;
+function printDoc(title,bodyHtml,opt){
+  opt=opt||{}; const fs=_druckFs();
+  const html=DRUCK.dokument({titel:title,fahrschule:fs.name,zeilen:fs.zeilen,logo:fs.logo,bezug:opt.bezug,body:bodyHtml,extraCss:_PR_CSS,leiste:true});
+  DRUCK.fenster(title,html,{blockiert:"Pop-up blockiert – bitte im Browser-Menü erlauben"});
 }
 function printPlan(s){
   ensure(s);
@@ -19301,11 +19298,11 @@ function printPlan(s){
     return `<div class="pr-sec"><h3><span>${st.nr} · ${esc(st.titel)}</span><span class="pr-cnt">${done}/${st.items.length} grün</span></h3><table class="pr-tbl"><tbody>${rows}</tbody></table>${note}</div>`;
   }).join("");
   const body=`
-    <div class="pr-meta"><b>${esc(s.name)}</b> · Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
+    <div class="pr-meta">Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
     <div class="pr-prog">Ausbildungsstand: <b>${pct} %</b> · Theorie: <b>${pl.theorie?"bestanden":"offen"}</b>${s.simEmpf?` · Simulator empfohlen am ${isoDE(s.simEmpf)}`:""}</div>
     <div class="pr-sec"><h3><span>Fahrstunden</span><span class="pr-cnt">${std.length}/30</span></h3><div class="pr-list">${std.length?std.join(" · "):"—"}</div><div class="pr-sub">${sonder}</div></div>
     ${stufenHtml}`;
-  printDoc("Ausbildungsplan",body);
+  printDoc("Ausbildungsplan",body,{bezug:_druckBezug(s)});
 }
 /* ===== GESAMTAKTE: kompletter Schüler in einem PDF ===== */
 function printGesamtakte(s){
@@ -19313,7 +19310,7 @@ function printGesamtakte(s){
   const pl=s.plan; const pct=planProgress(pl,s.umschreiber,evalSkillsFor(s));
   const VL={rot:"Rot",gelb:"Gelb",gruen:"Grün"};
   // 1. Kopf-Infos
-  const head=`<div class="pr-meta"><b>${esc(s.name)}</b> · Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
+  const head=`<div class="pr-meta">Klasse ${esc(s.form||"B")}${s.beginn?` · Beginn ${esc(s.beginn)}`:""}</div>
     <div class="pr-prog">Ausbildungsstand: <b>${pct} %</b> · Theorie: <b>${pl.theorie?"bestanden":(typeof s.theoriePct==="number"&&s.theoriePct>0?s.theoriePct+" %":"offen")}</b>${s.sehhilfe?` · <b>Sehhilfe erforderlich</b>`:""}${s.simEmpf?` · Simulator empfohlen am ${isoDE(s.simEmpf)}`:""}</div>`;
   // 2. Persönlichkeitsprofil
   let profilSec="";
@@ -19359,10 +19356,10 @@ function printGesamtakte(s){
   let examSec="";
   if(exams.length){
     const rows=exams.map(e=>`<tr><td>${isoDE(e.date)}</td><td>${e.result==="pass"?"✓ Bestanden":"✕ Nicht bestanden"}</td><td>${esc(e.pruefer||"—")}</td><td>${e.attempt?e.attempt+". Versuch":""}</td></tr>`).join("");
-    examSec=`<div class="pr-sec"><h3><span>Prüfungs-Historie</span></h3><table class="pr-tbl"><thead><tr style="background:#f3f3f3"><td><b>Datum</b></td><td><b>Ergebnis</b></td><td><b>Prüfer</b></td><td><b>Versuch</b></td></tr></thead><tbody>${rows}</tbody></table></div>`;
+    examSec=`<div class="pr-sec"><h3><span>Prüfungs-Historie</span></h3><table class="pr-tbl"><thead><tr><th>Datum</th><th>Ergebnis</th><th>Prüfer</th><th>Versuch</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   const body=head+profilSec+fahrSec+stufenHtml+examSec;
-  printDoc("Schüler-Gesamtakte",body);
+  printDoc("Schüler-Gesamtakte",body,{bezug:_druckBezug(s)});
 }
 
 function _wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines){

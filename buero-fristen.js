@@ -138,7 +138,7 @@
         </div>
         <div class="es-fuss">${darf
           ? `<button type="button" class="btn-primary knopf haupt" data-esf-speichern disabled>Speichern</button><span class="esf-fuss-text" data-esf-status>Nichts geändert.</span>`
-          : `<span class="esf-fuss-text">Ändern dürfen Büro, Leitung und Super-Admin.</span>`}</div>
+          : `<span class="esf-fuss-text">Ändern dürfen Büro und Leitung.</span>`}</div>
       </section>`;
       if (!darf) return;
       el.querySelectorAll("[data-esf] input").forEach((i) => i.addEventListener("input", () => this.pruefen()));

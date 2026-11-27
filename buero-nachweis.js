@@ -363,6 +363,9 @@ function nwGrundFragen(titel, text, jaText, pflicht) {
 function nwDruckHTML(x, d, st, teil) {
   const neuRecht = nwNeuesRecht(st.heute);
   const fs = S.fs || {};
+  const logo = DRUCK.logoUrl(fs.slug);
+  const kn = x.kundennummer ? KR.kundennummerText(x.kundennummer) : "";
+  const adr = KR.adresseZeilen({ strasse: x.strasse, plz: x.plz, ort: x.ort });
   const titel = neuRecht ? "Aufzeichnung über die fahrpraktische Ausbildung" : (teil ? "Ausbildungsnachweis (Teil-Nachweis)" : "Ausbildungsnachweis");
   const grundlage = neuRecht ? "Aufzeichnung in geeigneter Form nach dem Fahrlehrergesetz (Fassung ab 01.07.2027)" : "nach § 6 FahrschAusbO, Muster Anlage 3 DV-FahrlG (Abweichungen für die maschinelle Erstellung zulässig, Fußnote zu Anlage 3)";
   const lehrer = [...new Set(st.gelaufen.map((t) => t.fahrlehrer_id).filter(Boolean))];
@@ -376,24 +379,24 @@ function nwDruckHTML(x, d, st, teil) {
   // Änderungs-Spur steht nur im Büro („Verlauf“), nicht im gedruckten Nachweis (🗣 Serband 21.11.2026)
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(titel)} ${esc(x.name)}</title>
 <style>
-@page{size:A4;margin:14mm 12mm 16mm}
-*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums;color:#111;margin:0;font-size:11pt;line-height:1.35}
+${DRUCK.seite({ titel: titel + " " + x.name, rand: "14mm 12mm 18mm" })}
+*{box-sizing:border-box}body{font-family:system-ui,"Segoe UI",Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums;color:#111;margin:0;font-size:10pt;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .blatt{max-width:186mm;margin:0 auto;padding:10px}
 .leiste{position:sticky;top:0;background:#f3f4f6;border-bottom:1px solid #ccc;padding:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .leiste button,.leiste a{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid #888;background:#fff;color:#111;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer}
 .leiste .haupt{background:#2f6b47;border-color:#2f6b47;color:#fff}.hinweis{text-align:center;font-size:12px;color:#555;margin:6px 0 0}
 .fs{font-weight:700;font-size:11pt;margin-bottom:2px}.stand{text-align:right;white-space:nowrap}
-header{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px}
-h1{font-size:17pt;margin:0}h2{font-size:12pt;margin:14px 0 6px;border-bottom:1px solid #999;padding-bottom:2px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:.75pt solid #777;padding-bottom:6px;margin-bottom:10px;break-inside:avoid}.dlogo{display:block;max-width:44mm;max-height:20mm;width:auto;height:auto;object-fit:contain;margin:0 0 3px auto}.kopf .voll{grid-column:1/-1}
+h1{font-size:16pt;font-weight:600;margin:0}h2{font-size:11.5pt;margin:14px 0 6px;border-bottom:.5pt solid #999;padding-bottom:2px;break-after:avoid}
 .klein{font-size:9pt;color:#444}
 .kopf{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:6px}.kopf div{border-bottom:1px dotted #999;padding:2px 0}.kopf b{display:inline-block;min-width:34mm;font-weight:600}
-table{border-collapse:collapse;width:100%;font-size:9.5pt}th,td{border:1px solid #777;padding:3px 5px;vertical-align:middle;text-align:left}th{background:#eee;font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:9.5pt}th,td{border:.6pt solid #888;padding:3px 5px;vertical-align:middle;text-align:left;overflow-wrap:anywhere}th{background:#eee;font-weight:600}
 td.r,th.r{text-align:right}td.us{width:34mm;height:11mm;padding:1px}td.us img{max-height:10mm;max-width:33mm;display:block}
 .neu{font-size:8pt;color:#a00}tr{break-inside:avoid}thead{display:table-header-group}
 .summen{display:flex;flex-wrap:wrap;gap:6px 18px;margin:6px 0}.summen span b{font-weight:700}
-.sig{display:grid;grid-template-columns:1fr 1fr;gap:18mm;margin-top:18mm}.sig div{border-top:1px solid #111;padding-top:3px;font-size:9pt}
+.sig{display:grid;grid-template-columns:1fr 1fr;gap:18mm;margin-top:18mm;break-inside:avoid}.sig div{border-top:.6pt solid #555;padding-top:3px;font-size:9pt}
 ul{margin:4px 0;padding-left:18px}li{margin:1px 0}
-footer{margin-top:10mm;font-size:8pt;color:#555;border-top:1px solid #ccc;padding-top:4px}
+footer{margin-top:10mm;font-size:8pt;color:#555;border-top:.5pt solid #ccc;padding-top:4px;break-inside:avoid}
 @media print{.leiste,.leiste-hinweis{display:none}.blatt{padding:0;max-width:none}}
 @media screen{.breit{overflow-x:auto}}
 @media (max-width:600px){.kopf{grid-template-columns:1fr}td.us{width:auto;min-width:24mm}.sig{grid-template-columns:1fr;gap:12mm}table{font-size:8.5pt}}
@@ -401,11 +404,12 @@ footer{margin-top:10mm;font-size:8pt;color:#555;border-top:1px solid #ccc;paddin
 <div class="leiste"><button class="haupt" id="nwDruck">Drucken / als PDF speichern</button>${x.email ? `<a href="mailto:${encodeURIComponent(x.email)}?subject=${encodeURIComponent(titel)}&body=${encodeURIComponent("Hallo " + x.name + ",\n\nanbei " + (neuRecht ? "deine " : "dein ") + titel + " als PDF.\n\nViele Grüße\n" + (fs.name || ""))}">E-Mail vorbereiten</a>` : ""}<button id="nwZu">Schließen</button></div>
 <p class="hinweis leiste-hinweis">Für die E-Mail: erst als PDF speichern, dann die PDF an die E-Mail anhängen.</p>
 <div class="blatt">
-<header><div><div class="fs">${esc(fs.name || "")}</div><h1>${esc(titel)}</h1>${neuRecht ? "" : `<div class="klein">Muster Anlage 3 DV-FahrlG</div>`}</div><div class="klein stand">Stand ${esc(datumDE(st.heute))}</div></header>
+<header><div><div class="fs">${esc(fs.name || "")}</div><h1>${esc(titel)}</h1>${neuRecht ? "" : `<div class="klein">Muster Anlage 3 DV-FahrlG</div>`}</div><div class="klein stand">${logo ? `<img class="dlogo" src="${esc(logo)}" alt="">` : ""}Stand ${esc(datumDE(st.heute))}</div></header>
 <div class="kopf">
 <div><b>Fahrschüler</b>${esc(x.name)}</div><div><b>Klasse</b>${esc(klasseVon(x) || "B")}${istUmschreiber(x) ? " (Umschreibung)" : ""}</div>
 <div><b>Ausbildungsart</b>${esc(artName(x.ausbildungsart))}</div><div><b>Vertrag vom</b>${x.vertrag_am ? esc(datumDE(x.vertrag_am)) : "–"}</div>
-${x.bewerbernummer ? `<div><b>Bewerbernummer</b>${esc(x.bewerbernummer)}</div>` : ""}<div><b>Fahrschule</b>${esc(fs.name || "")}</div>
+${x.bewerbernummer ? `<div><b>Bewerbernummer</b>${esc(x.bewerbernummer)}</div>` : ""}${kn ? `<div><b>Kundennummer</b>${esc(kn)}</div>` : ""}<div><b>Fahrschule</b>${esc(fs.name || "")}</div>
+${adr.length ? `<div class="voll"><b>Anschrift</b>${adr.map(esc).join(", ")}</div>` : ""}
 </div>
 <h2>Theoretischer Unterricht</h2>
 ${th && th.geladen && th.pflicht ? `<p>${th.ist} von ${th.soll} Doppelstunden${th.fertig ? " – vollständig" : ""}${x.theorie_bestanden_am ? ` · Theorieprüfung bestanden am ${esc(datumDE(x.theorie_bestanden_am))}` : ""}</p>
@@ -422,10 +426,8 @@ ${teil ? `<h2>Teil-Nachweis</h2><p>Die Ausbildung wurde nicht abgeschlossen (Abb
 </div></body></html>`;
 }
 function nwDrucken(x, d, st, teil) {
-  const w = window.open("", "_blank");
-  if (!w) { toast("Bitte Pop-ups für den Ausbildungsnachweis erlauben.", true); return; }
-  w.document.write(nwDruckHTML(x, d, st, teil));
-  w.document.close(); w.focus();
+  const w = DRUCK.fenster("Ausbildungsnachweis", nwDruckHTML(x, d, st, teil), { auto: false, blockiert: "Bitte Pop-ups für den Ausbildungsnachweis erlauben." });
+  if (!w) return;
   const k = (id, f) => { const b = w.document.getElementById(id); if (b) b.addEventListener("click", f); };
   k("nwDruck", () => w.print()); k("nwZu", () => w.close());
 }

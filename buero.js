@@ -2475,17 +2475,13 @@ function druckeAnwesenheit(datum, lektion, termin) {
   const zeilen = anwesenheitZeilen(datum, lektion);
   const lekt = [...new Set(zeilen.map((t) => String(t.lektion)))].sort((a, b) => lektOrd(a) - lektOrd(b));
   const namen = [...new Set(zeilen.map((t) => t.schueler_id))].map((sid) => S.schueler.find((x) => x.id === sid)).filter(Boolean).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
-  const w = window.open("", "_blank");
-  if (!w) { toast("Bitte Pop-ups für den Druck erlauben.", true); return; }
-  w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Anwesenheit ${esc(datumDE(datum))}</title>
-    <style>body{font-family:system-ui,sans-serif;margin:24px;color:#111}h1{font-size:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:6px 8px;text-align:left;font-size:13px}th{background:#eee}</style></head>
-    <body><h1>Theorieunterricht ${esc(datumDE(datum))}${termin && termin.von ? " · " + esc(termin.von) + "–" + esc(termin.bis || "") : ""} · ${esc(S.fs ? S.fs.name : "")}</h1>
-    <p>${termin && termin.fahrlehrer_id ? "Fahrlehrer: " + esc(lehrerName(termin.fahrlehrer_id)) + " · " : ""}${namen.length} Teilnehmer</p>
-    <p>${lekt.map((l) => `Lektion ${esc(l)}`).join(" + ") || "–"}</p>
-    <table><thead><tr><th>#</th><th>Name</th><th>Klasse</th>${lekt.map((l) => `<th>Lektion ${esc(l)}</th>`).join("")}</tr></thead><tbody>
-    ${namen.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.name)}</td><td>${esc(klasseVon(x) || "")}</td>${lekt.map((l) => `<td>${zeilen.some((t) => t.schueler_id === x.id && String(t.lektion) === l) ? "✓" : ""}</td>`).join("")}</tr>`).join("")}
-    </tbody></table><p style="margin-top:24px">Unterschrift Fahrlehrer: ______________________</p></body></html>`);
-  w.document.close(); w.focus(); w.print();
+  const kopfInfo = [termin && termin.fahrlehrer_id ? "Fahrlehrer: " + lehrerName(termin.fahrlehrer_id) : "", `${namen.length} Teilnehmer`, lekt.map((l) => `Lektion ${l}`).join(" + ")].filter(Boolean).join(" · ");
+  const body = `<table><thead><tr><th class="r">#</th><th>Name</th><th>Klasse</th>${lekt.map((l) => `<th>Lektion ${esc(l)}</th>`).join("")}</tr></thead><tbody>
+    ${namen.map((x, i) => `<tr><td class="r">${i + 1}</td><td>${esc(x.name)}</td><td>${esc(klasseVon(x) || "")}</td>${lekt.map((l) => `<td>${zeilen.some((t) => t.schueler_id === x.id && String(t.lektion) === l) ? "✓" : ""}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${3 + lekt.length}">Keine Teilnehmer erfasst.</td></tr>`}
+    </tbody></table><div class="dunterschrift"><div>Unterschrift Fahrlehrer</div></div>`;
+  const html = DRUCK.dokument({ titel: "Anwesenheit Theorieunterricht", fenstertitel: "Anwesenheit " + datumDE(datum), untertitel: `${datumDE(datum)}${termin && termin.von ? " · " + termin.von + "–" + (termin.bis || "") : ""} · ${kopfInfo}`,
+    fahrschule: (S.fs && S.fs.name) || "", logo: DRUCK.logoUrl(S.fs && S.fs.slug), body, quer: lekt.length > 5, leiste: true, fussTitel: "Anwesenheit " + datumDE(datum) });
+  DRUCK.fenster("Anwesenheit", html, { blockiert: "Bitte Pop-ups für den Druck erlauben." });
 }
 /* Sonderfahrten für Fahrlehrer ohne App (Gabriel): Zähler aus dem Kalender, Soll nach Anlage 4 (KR.sonderSoll) */
 const SONDER_ARTEN = [["ueberland", "Überland"], ["autobahn", "Autobahn"], ["nacht", "Dämmerung/Nacht"]];
@@ -5513,10 +5509,32 @@ function fuelleDruckKopf() {
   document.querySelectorAll("#ansicht .filterzeile input[type=search], #ansicht .karte-kopf input[type=search]").forEach((i) => { if (i.value.trim()) teile.push("Suche: „" + i.value.trim() + "“"); });
   document.querySelectorAll("#ansicht .filterzeile input[type=date]:not(#kDatum)").forEach((i) => { if (i.value) teile.push((i.closest("label") ? i.closest("label").textContent.trim().split(/\s+/)[0] + " " : "") + datumDE(i.value)); });
   const jetzt = new Date().toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" });
-  $("druckKopf").innerHTML = `<b>${esc(b.titel)}</b><span>${esc((S.fs && S.fs.name) || "")} · gedruckt am ${esc(jetzt)}${S.werAnzeige || (S.profil && S.profil.name) ? " von " + esc(S.werAnzeige || S.profil.name) : ""}${teile.length ? " · " + esc(teile.join(" · ")) : ""}</span>`;
+  const unter = `gedruckt am ${jetzt}${S.werAnzeige || (S.profil && S.profil.name) ? " von " + (S.werAnzeige || S.profil.name) : ""}${teile.length ? " · " + teile.join(" · ") : ""}`;
+  const logo = window.DRUCK ? DRUCK.logoUrl(S.fs && S.fs.slug) : "";
+  const kopf = $("druckKopf");
+  kopf.innerHTML = window.DRUCK ? DRUCK.kopf({ fahrschule: (S.fs && S.fs.name) || "", logo, titel: b.titel, untertitel: unter })
+    : `<b>${esc(b.titel)}</b><span>${esc((S.fs && S.fs.name) || "")} · ${esc(unter)}</span>`;
+  kopf.querySelectorAll("img").forEach((i) => i.addEventListener("error", () => i.remove())); // Logo fehlt: keine Lücke
+  document.documentElement.classList.toggle("druck-quer", druckQuer());
+}
+// Querformat nur, wo es gebraucht wird: Kalender und Raster (Urlaub, Schichtplan, Platz-Übersicht) stellt buero.css per body[data-bereich]
+// ein; hier kommen Tabellen mit vielen Spalten dazu. Gezählt wird, was im Druck sichtbar bleibt (ohne leere Köpfe und
+// „nur-schmal/nur-unter“-Spalten). Alles andere: A4 hoch.
+const DRUCK_QUER_SPALTEN = 7;
+function druckQuer() {
+  return [...document.querySelectorAll("#ansicht table")].some((t) => {
+    const kopf = t.tHead && t.tHead.rows[0]; if (!kopf) return false;
+    const n = [...kopf.cells].filter((c) => c.textContent.trim() && !c.classList.contains("nur-schmal") && !c.classList.contains("nur-unter")).length;
+    return n >= DRUCK_QUER_SPALTEN;
+  });
 }
 window.addEventListener("beforeprint", fuelleDruckKopf);
-$("drucken").addEventListener("click", () => { fuelleDruckKopf(); window.print(); });
+$("drucken").addEventListener("click", () => {
+  fuelleDruckKopf();
+  // Logo erst fertig laden lassen (höchstens ~1,5 s), sonst fehlt es beim ersten Druck
+  const bilder = [...$("druckKopf").querySelectorAll("img")];
+  (window.DRUCK && bilder.length ? DRUCK.bereit({ images: bilder }) : Promise.resolve()).then(() => window.print());
+});
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && S.geladenAm && Date.now() - S.geladenAm.getTime() > NEU_LADEN_MS) ladeDaten();
 });

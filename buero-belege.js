@@ -175,11 +175,7 @@ async function belegStornieren(id) {
 /* ---------- Druck (auch „Als PDF speichern“ im Druckfenster) ----------
    W26 (27.11.2026): Quittung als Geschäftsdokument, A4 hoch. Nur echte Daten: Fehlt ein Wert, entfällt die ganze Zeile.
    Logo: logos/<slug der Fahrschule>.png (Slug aus fahrschulen.slug). Fehlt die Datei, steht kein Logo und keine leere Fläche. */
-function belegLogoUrl() {
-  const slug = String((S.fs && S.fs.slug) || "").trim();
-  if (!/^[a-z0-9][a-z0-9_-]{0,60}$/i.test(slug)) return "";
-  try { return new URL("logos/" + slug.toLowerCase() + ".png", location.href).href; } catch (e) { return ""; }
-}
+function belegLogoUrl() { return window.DRUCK ? DRUCK.logoUrl(S.fs && S.fs.slug) : ""; } // gemeinsam in kompass-druck.js
 // opt.logo: Bild-Adresse (Test/Vorschau); ohne Angabe aus der Fahrschule. belegHTML läuft ohne Druck (Tests).
 function belegHTML(b, opt) {
   const k = b.fahrschule_daten || {};
@@ -211,7 +207,7 @@ function belegHTML(b, opt) {
   const titel = "Quittung" + (nr ? " Nr. " + nr : "");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(titel)}</title>
 <style>
-  @page{size:A4 portrait;margin:20mm 20mm 22mm 20mm;@bottom-left{content:"${erstelltText ? "Erstellt am " + erstelltText.replace(/["\\]/g, "") : ""}";font:8pt system-ui,"Segoe UI",Helvetica,Arial,sans-serif;color:#666}@bottom-right{content:"${titel.replace(/[^\w .]/g, "")} · Seite " counter(page) " von " counter(pages);font:8pt system-ui,"Segoe UI",Helvetica,Arial,sans-serif;color:#666}}
+  ${window.DRUCK ? DRUCK.seite({ titel, links: erstelltText ? "Erstellt am " + erstelltText : "", rand: "20mm 20mm 22mm 20mm" }) : ""}
   *{box-sizing:border-box}
   body{font:10pt/1.5 system-ui,"Segoe UI",Helvetica,Arial,sans-serif;color:#1c1c1c;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .kopf{display:flex;justify-content:space-between;align-items:flex-start;gap:12mm;padding-bottom:6mm;border-bottom:.6pt solid #9a9a9a}
@@ -264,26 +260,9 @@ function belegHTML(b, opt) {
   <div class="unterschrift"><div>Ort, Datum</div><div>Unterschrift / Stempel</div></div>
 </body></html>`;
 }
-// Logo muss geladen sein, bevor print() startet (höchstens ~1,5 s warten; Bild fehlt oder lädt nicht: ohne Logo weiter)
-function belegBildBereit(doc) {
-  const bilder = [...doc.images];
-  if (!bilder.length) return Promise.resolve();
-  return Promise.race([
-    Promise.all(bilder.map((img) => new Promise((ok) => {
-      const fertig = () => { if (!(img.complete && img.naturalWidth > 0)) img.remove(); ok(); };
-      if (img.complete) fertig(); else { img.addEventListener("load", fertig, { once: true }); img.addEventListener("error", fertig, { once: true }); }
-    }))),
-    new Promise((ok) => setTimeout(() => { bilder.forEach((img) => { if (!(img.complete && img.naturalWidth > 0)) img.remove(); }); ok(); }, 1500)),
-  ]);
-}
+// Logo muss geladen sein, bevor print() startet (höchstens ~1,5 s warten; Bild fehlt oder lädt nicht: ohne Logo weiter) – gemeinsam in kompass-druck.js
 function belegDrucken(b) {
-  const alt = document.getElementById("belegDruckRahmen"); if (alt) alt.remove();
-  const f = document.createElement("iframe");
-  f.id = "belegDruckRahmen"; f.setAttribute("aria-hidden", "true"); f.title = "Beleg drucken";
-  f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-  document.body.appendChild(f);
-  const d = f.contentWindow.document; d.open(); d.write(belegHTML(b)); d.close();
-  belegBildBereit(d).then(() => new Promise((ok) => setTimeout(ok, 150))).then(() => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast("Drucken ging nicht. Bitte noch einmal versuchen.", true); } });
+  DRUCK.rahmen(belegHTML(b), { id: "belegDruckRahmen", titel: "Beleg drucken" });
 }
 
 /* ---------- Einstellungen › Belege & Quittungen ---------- */

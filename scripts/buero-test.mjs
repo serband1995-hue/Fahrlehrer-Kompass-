@@ -39,7 +39,7 @@ async function oeffne({ nutzer, breite = 1366, hoehe = 860, hash = "", dunkel = 
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
   const page = await ctx.newPage();
   const konsole = [];
-  page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+  page.on("console", (m) => { if (m.type() === "error" && !/\/logos\/[^/]+\.png/.test((m.location() || {}).url || "")) konsole.push(m.text()); }); // W26: fehlendes Logo (Datei fehlt) ist gewollt: Quittung und Ausdrucke lassen es dann weg
   page.on("pageerror", (e) => konsole.push(String(e)));
   await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
@@ -2089,7 +2089,7 @@ async function oeffneVorfuehrung({ breite, hoehe, dunkel = false, hash = "#heute
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, colorScheme: dunkel ? "dark" : "light" });
   const page = await ctx.newPage();
   const konsole = [];
-  page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
+  page.on("console", (m) => { if (m.type() === "error" && !/\/logos\/[^/]+\.png/.test((m.location() || {}).url || "")) konsole.push(m.text()); }); // W26: fehlendes Logo (Datei fehlt) ist gewollt: Quittung und Ausdrucke lassen es dann weg
   page.on("pageerror", (e) => konsole.push(String(e)));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.goto(basis + "buero.html?vorfuehrung" + hash);
