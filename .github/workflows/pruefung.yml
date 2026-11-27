@@ -55,6 +55,8 @@ jobs:
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/w19-probe-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/punkte-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/w19-3-probe-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/kunden-sql-test.mjs
+          bash scripts/kunden-parallel-test.sh
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
   # fand keinen Weg, Schüler anzulegen). Jede Rolle wird vom Start bis zum gespeicherten Schüler durchgespielt.

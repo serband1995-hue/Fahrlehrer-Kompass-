@@ -634,9 +634,29 @@
     const zaehle = (a) => (Array.isArray(a) ? a.filter((o) => !!(o && o.iso) && (!heute || String(o.iso).slice(0, 10) <= heute)).length : 0);
     return { ueberland: zaehle(sd.ueberland), autobahn: zaehle(sd.autobahn), nacht: zaehle(sd.nacht) };
   }
+  /* W26 (27.11.2026): Kundennummer und Anschrift – gleiche Anzeige in App, Büro und Quittung.
+     Die Nummer vergibt NUR der Server (Spalte schueler.kundennummer, je Fahrschule fortlaufend). Hier nur die Schreibweise. */
+  function kundennummerText(n) {
+    const z = Number(n);
+    return Number.isInteger(z) && z > 0 ? "K-" + String(z).padStart(5, "0") : "";
+  }
+  // PLZ: leer ist erlaubt (nichts ist Pflicht), sonst genau 5 Ziffern
+  function plzOk(v) { const t = String(v == null ? "" : v).trim(); return t === "" || /^\d{5}$/.test(t); }
+  // Anschrift säubern: {strasse, plz, ort} ohne Leerzeichen am Rand, leer = null
+  function adresseNorm(a) {
+    const t = (v, n) => { const x = String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n); return x || null; };
+    a = a || {};
+    return { strasse: t(a.strasse, 120), plz: t(a.plz, 5), ort: t(a.ort, 80) };
+  }
+  // Zeilen für Anzeige und Druck: ["Musterweg 1", "12345 Musterstadt"], fehlende Teile entfallen
+  function adresseZeilen(a) {
+    const n = adresseNorm(a);
+    return [n.strasse, [n.plz, n.ort].filter(Boolean).join(" ")].filter(Boolean);
+  }
   const api = { paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
-    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, lohnStand, LOHN_FC_AB, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };
+    FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS,
+    kundennummerText, plzOk, adresseNorm, adresseZeilen, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, lohnStand, LOHN_FC_AB, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.KR = api;
 })(typeof self !== "undefined" ? self : this);
