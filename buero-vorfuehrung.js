@@ -470,6 +470,29 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
       return { ok: true, name: p.name };
     },
   };
+  // W21: Belegung (frei/belegt; Schüler nur eigene, Büro alle) und Tauschen
+  R.pruefungstage_belegung = ({ p_von, p_bis }) => {
+    const uid = (F.session && F.session.user && F.session.user.id) || null;
+    const me = (F.tabellen.profiles || []).find((x) => x.id === uid); if (!me) return [];
+    const alle = ["buero", "fahrschule_admin", "super_admin"].includes(me.rolle);
+    return (F.tabellen.pruefungstage || []).filter((t) => t.fahrschule_id === me.fahrschule_id && !t.geloescht && t.datum >= p_von && t.datum <= p_bis)
+      .sort((a, b) => (a.datum + a.start).localeCompare(b.datum + b.start))
+      .map((t) => Object.assign({}, t, { start: String(t.start || "08:00").slice(0, 5), belegt: (F.tabellen.pruefungstermine || []).filter((q) => q.pruefungstag_id === t.id && q.status !== "abgesagt")
+        .sort((a, b) => a.fenster - b.fenster).map((q) => { const sicht = alle || q.fahrlehrer_id === uid;
+          return { fenster: q.fenster, anzahl: q.fenster_anzahl || 1, status: q.status, eigen: q.fahrlehrer_id === uid, id: sicht ? q.id : null, schueler_id: sicht ? q.schueler_id : null, fahrlehrer_id: sicht ? q.fahrlehrer_id : null }; }) }));
+  };
+  R.pruefung_tauschen = ({ a, b }) => {
+    const T = F.tabellen.pruefungstermine || [], pa = T.find((x) => x.id === a), pb = T.find((x) => x.id === b);
+    if (!pa || !pb) throw new Error("W21:nicht_gefunden");
+    if (!pa.pruefungstag_id || !pb.pruefungstag_id) throw new Error("W21:nur_fenster");
+    const uid = (F.session && F.session.user && F.session.user.id) || null, me = (F.tabellen.profiles || []).find((x) => x.id === uid);
+    if (me && me.rolle === "fahrlehrer" && (pa.fahrlehrer_id !== uid || pb.fahrlehrer_id !== uid)) throw new Error("W21:nicht_gefunden");
+    const sa = JSON.parse(JSON.stringify(pa)), sb = JSON.parse(JSON.stringify(pb));
+    const schritt = (ziel, werte) => { const n = Object.assign(JSON.parse(JSON.stringify(ziel)), werte); const f = w21Pruefe(n, JSON.parse(JSON.stringify(ziel))); if (f) throw new Error(f); Object.assign(ziel, n); };
+    try { schritt(pa, { pruefungstag_id: null, fenster: null }); schritt(pb, { pruefungstag_id: sa.pruefungstag_id, fenster: sa.fenster }); schritt(pa, { pruefungstag_id: sb.pruefungstag_id, fenster: sb.fenster }); }
+    catch (e) { Object.assign(pa, sa); Object.assign(pb, sb); throw e; }
+    return null;
+  };
   for (const [k, f] of Object.entries(R)) if (!F.rpcs[k]) F.rpcs[k] = f;
   window.__FAKE = F;
 
@@ -548,6 +571,118 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
     }
     return null;
   }
+
+  // W21: wie supabase/migrations/20261203_w21_01_pruefungstage.sql (pt_schutz, Kalender-/Ergebnis-Spiegel, RPCs). Liefert Fehlertext oder null.
+  const W21_LKW = ["C1", "C1E", "C", "CE"];
+  function w21Uid() { return (F.session && F.session.user && F.session.user.id) || null; }
+  function w21Rolle() { const p = tabelle("profiles").find((x) => x.id === w21Uid()); return p ? p.rolle : null; }
+  function w21Buero() { return ["buero", "fahrschule_admin", "super_admin"].includes(w21Rolle()) || !w21Uid(); }
+  function w21Hm(m) { m = Math.min(23 * 60 + 59, m); return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
+  function w21Min(x) { const q = String(x || "0:0").split(":"); return (+q[0]) * 60 + (+(q[1] || 0)); }
+  function w21Heute() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function w21Pruefe(n, alt) {
+    const T = tabelle("pruefungstermine");
+    if (alt && n.pruefungstag_id === alt.pruefungstag_id && n.fenster === alt.fenster && alt.pruefungstag_id && (n.datum !== alt.datum || String(n.von || "").slice(0, 5) !== String(alt.von || "").slice(0, 5))) { n.pruefungstag_id = null; n.fenster = null; }
+    if (!w21Buero()) {
+      if (alt) { ["entgelt_bezahlt", "tuev_gutschein", "as_portal", "notiz", "quelle", "fahrschule_id"].forEach((k) => { n[k] = alt[k]; }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
+      else { Object.assign(n, { entgelt_bezahlt: false, tuev_gutschein: false, as_portal: false, quelle: "app" }); if (n.fahrlehrer_id !== w21Uid()) return "new row violates row-level security policy"; }
+    }
+    if (!n.quelle) n.quelle = "buero";
+    if (!n.status) n.status = "geplant";
+    if (!n.fenster_anzahl) n.fenster_anzahl = 1;
+    if (!n.pruefungstag_id) n.fenster = null;
+    else {
+      const t = tabelle("pruefungstage").find((x) => x.id === n.pruefungstag_id);
+      if (!t || t.geloescht || t.fahrschule_id !== n.fahrschule_id) return "W21:tag_fehlt";
+      const z = Number(t.fenster_zahl || 9);
+      if (n.fenster == null || n.fenster < 0 || n.fenster + n.fenster_anzahl > z) return "W21:fenster_ungueltig";
+      n.datum = t.datum; n.von = w21Hm(w21Min(t.start || "08:00") + 55 * n.fenster);
+      if (n.status !== "abgesagt" && T.some((q) => q.id !== n.id && q.pruefungstag_id === n.pruefungstag_id && q.status !== "abgesagt" && q.fenster != null
+        && q.fenster < n.fenster + n.fenster_anzahl && n.fenster < q.fenster + (q.fenster_anzahl || 1))) return "W21:fenster_belegt";
+    }
+    if ((n.art || "praxis") === "praxis" && n.status !== "abgesagt" && n.schueler_id && n.datum
+      && (!alt || n.schueler_id !== alt.schueler_id || n.datum !== alt.datum || alt.status === "abgesagt" || alt.art !== n.art)
+      && T.some((q) => q.id !== n.id && q.schueler_id === n.schueler_id && q.datum === n.datum && (q.art || "praxis") === "praxis" && q.status !== "abgesagt")) return "W21:schueler_doppelt";
+    const soll = (n.art || "praxis") === "praxis" && n.fahrlehrer_id && n.von && n.status !== "abgesagt";
+    if (soll) {
+      const neuIm = !alt || !alt.kalender_termin_id || n.datum !== alt.datum || n.schueler_id !== alt.schueler_id || alt.status === "abgesagt";
+      const s = tabelle("schueler").find((x) => x.id === n.schueler_id);
+      if (w21Uid() && neuIm && n.datum >= w21Heute() && s && s.zahlung_gesperrt_seit) return "Zahlung ausstehend: " + (s.zahlung_gesperrt_grund || "Zahlung ausstehend");
+      if (!n.kalender_termin_id) n.kalender_termin_id = "pt" + Math.random().toString(16).slice(2, 12) + Math.random().toString(16).slice(2, 12);
+    }
+    // Kalender-Spiegel
+    const K = tabelle("kalender_termine");
+    if (soll) {
+      const bis = w21Hm(w21Min(n.von) + ((n.fenster_anzahl === 2 || W21_LKW.includes(String(n.klasse || "").toUpperCase())) ? 85 : 55));
+      let k = K.find((x) => x.id === n.kalender_termin_id);
+      if (k) Object.assign(k, { fahrlehrer_id: n.fahrlehrer_id, schueler_id: n.schueler_id, datum: n.datum, von: String(n.von).slice(0, 5), bis, art: "pruefung", geloescht: false, aktualisiert_am: new Date().toISOString() });
+      else K.push({ id: n.kalender_termin_id, fahrschule_id: n.fahrschule_id, fahrlehrer_id: n.fahrlehrer_id, schueler_id: n.schueler_id, datum: n.datum, von: String(n.von).slice(0, 5), bis,
+        art: "pruefung", status: "geplant", geloescht: false, payload: { note: n.quelle === "app" ? "Praxisprüfung" : "Praxisprüfung (vom Büro geplant)", pruefungstermin_id: n.id }, erstellt_von: w21Uid(), aktualisiert_am: new Date().toISOString() });
+      n.kalender_fehler = null;
+    } else if (n.kalender_termin_id) { const k = K.find((x) => x.id === n.kalender_termin_id); if (k) k.geloescht = true; }
+    return null;
+  }
+  // Ergebnis Büro → kalender_pruefungen
+  function w21ErgebnisNachKp(n, alt) {
+    if ((n.art || "praxis") !== "praxis" || !n.schueler_id || !n.datum) return;
+    if (alt && alt.status === n.status && alt.datum === n.datum && alt.fahrlehrer_id === n.fahrlehrer_id) return;
+    const KP = tabelle("kalender_pruefungen"), res = n.status === "bestanden" ? "pass" : n.status === "nicht_bestanden" ? "fail" : null;
+    if (res) {
+      const vorh = KP.filter((x) => x.schueler_id === n.schueler_id && x.datum === n.datum && !x.geloescht).sort((a, b) => (b.id === "pt-" + n.id) - (a.id === "pt-" + n.id))[0];
+      if (vorh) { if (vorh.result !== res) { vorh.result = res; vorh.payload = Object.assign({}, vorh.payload, { buero_korrektur_am: new Date().toISOString() }); } }
+      else {
+        const da = KP.find((x) => x.id === "pt-" + n.id);
+        if (da) Object.assign(da, { result: res, datum: n.datum, fahrlehrer_id: n.fahrlehrer_id, geloescht: false });
+        else KP.push({ id: "pt-" + n.id, fahrschule_id: n.fahrschule_id, fahrlehrer_id: n.fahrlehrer_id, schueler_id: n.schueler_id, datum: n.datum, result: res, pruefer: n.pruefer || null, geloescht: false, payload: { quelle: "buero", pruefungstermin_id: n.id } });
+      }
+    } else { const da = KP.find((x) => x.id === "pt-" + n.id && !x.geloescht); if (da) da.geloescht = true; }
+  }
+  // Ergebnis App → pruefungstermine
+  function w21KpNachPt(r) {
+    if (!r || !r.schueler_id || !r.datum || r.geloescht) return;
+    const st = ["pass", "bestanden"].includes(r.result) ? "bestanden" : ["fail", "nicht_bestanden"].includes(r.result) ? "nicht_bestanden" : null;
+    if (!st) return;
+    tabelle("pruefungstermine").forEach((q) => { if (q.schueler_id === r.schueler_id && q.datum === r.datum && (q.art || "praxis") === "praxis" && ["geplant", "bestanden", "nicht_bestanden"].includes(q.status)) q.status = st; });
+  }
+  function w21Einfuegen(daten) {
+    const T = tabelle("pruefungstermine"), neu = [];
+    for (const r of daten) {
+      const f = w21Pruefe(r, null);
+      if (f) { neu.forEach((x) => T.splice(T.indexOf(x), 1)); return f; }
+      T.push(r); neu.push(r);
+    }
+    neu.forEach((r) => w21ErgebnisNachKp(r, null));
+    return null;
+  }
+  function w21Aendern(zeilen, werte) {
+    const plan = zeilen.map((r) => ({ r, alt: kopie(r), n: Object.assign(kopie(r), kopie(werte)) }));
+    const T = tabelle("pruefungstermine");
+    for (const x of plan) {
+      const f = w21Pruefe(x.n, x.alt);
+      if (f) return f;
+      Object.assign(x.r, x.n); // gleich übernehmen: die nächste Zeile derselben Anfrage sieht den neuen Stand
+    }
+    plan.forEach((x) => w21ErgebnisNachKp(x.r, x.alt));
+    void T; return null;
+  }
+  function w21TagPruefe(n, alt) {
+    if (!alt) { n.start = n.start || "08:00"; n.fenster_zahl = n.fenster_zahl || 9; n.geloescht = !!n.geloescht; n.erstellt_von = n.erstellt_von || w21Uid(); n.aktualisiert_am = new Date().toISOString(); return null; }
+    const drin = tabelle("pruefungstermine").filter((q) => q.pruefungstag_id === alt.id && q.status !== "abgesagt");
+    if (n.geloescht && !alt.geloescht && drin.length) return "W21:tag_nicht_leer";
+    if (!w21Buero() && (n.start !== alt.start || n.datum !== alt.datum) && drin.some((q) => q.fahrlehrer_id !== w21Uid())) return "W21:tag_fremde_pruefungen";
+    if (n.start !== alt.start) n.start_geaendert_am = new Date().toISOString();
+    return null;
+  }
+  function w21TagNachziehen(t, alt) {
+    if (t.start === alt.start && t.datum === alt.datum) return null;
+    for (const q of tabelle("pruefungstermine").filter((x) => x.pruefungstag_id === t.id)) { const a = kopie(q); const f = w21Pruefe(q, a); if (f) return f; }
+    return null;
+  }
+  // Spiegel-Zeile im Kalender: Tag, Zeit, Personen, gelöscht bestimmt nur pruefungstermine (trg_termin_a_pruefung_spiegel)
+  function w21KalenderSchutz(alt, r) {
+    if (!tabelle("pruefungstermine").some((p) => p.kalender_termin_id === r.id)) return;
+    ["datum", "von", "fahrlehrer_id", "schueler_id", "art", "geloescht"].forEach((k) => { r[k] = alt[k]; });
+  }
   class Abfrage {
     constructor(name) { this.name = name; this.filter = []; this.art = "select"; this.einzeln = null; this.sort = []; this.grenze = null; this.nachher = false; }
     select() { if (this.art !== "select") this.nachher = true; return this; }
@@ -584,7 +719,11 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
         if (this.name === "zahlungsbelege") { const f = belegStempel(daten); if (f) return { data: null, error: { message: f } }; }
         // wie der Auslöser schueler_punkte_anlegen (W19 Teil 3): Schalter, Vorzeichen, Kontostand; die Zeilen werden dort schon gebucht
         if (this.name === "schueler_punkte") { const f = punkteStempel(daten); if (f) return { data: null, error: { message: f } }; }
+        // W21: Fenster, Doppelbelegung, Kalender-/Ergebnis-Spiegel wie pt_schutz
+        else if (this.name === "pruefungstermine") { const f = w21Einfuegen(daten); if (f) return { data: null, error: { message: f } }; }
+        else if (this.name === "pruefungstage") { daten.forEach((r) => w21TagPruefe(r, null)); t.push(...daten); }
         else t.push(...daten);
+        if (this.name === "kalender_pruefungen") daten.forEach(w21KpNachPt);
         // wie der Schutz-Trigger von fahrzeug_konflikt_gesehen (K18): wer und wann kommen vom Server
         if (this.name === "fahrzeug_konflikt_gesehen") { const si = meineSitzung(); const p = si && personen().find((x) => x.id === si.person); daten.forEach((r) => { r.gesehen_von = (F.session && F.session.user && F.session.user.id) || null; r.gesehen_am = new Date().toISOString(); r.bearbeiter = p ? p.name : null; }); }
         if (this.name === "zahlungs_mails") daten.forEach((r) => { r.angelegt_am = r.angelegt_am || new Date().toISOString(); });
@@ -599,9 +738,18 @@ if (typeof module !== "undefined" && module.exports) { module.exports = { bauDat
           if (alt) { Object.assign(alt, kopie(r)); return spur(alt); }
           const neu = Object.assign(this.name === "fahrschule_zahlungsdaten" ? {} : { id: r.id || ("fake-" + Math.random().toString(36).slice(2, 10)) }, kopie(r)); t.push(neu); return spur(neu);
         });
+        if (this.name === "kalender_pruefungen") daten.forEach(w21KpNachPt);
       } else if (this.art === "update") {
         daten = t.filter((r) => this.passt(r));
-        daten.forEach((r) => { const alt = kopie(r); Object.assign(r, kopie(this.werte)); if (this.name === "kalender_termine") terminSpur(alt, r); });
+        if (this.name === "pruefungstermine") { const f = w21Aendern(daten, this.werte); if (f) return { data: null, error: { message: f } }; }
+        else if (this.name === "pruefungstage") {
+          for (const r of daten) {
+            const alt = kopie(r), n = Object.assign(kopie(r), kopie(this.werte));
+            const f = w21TagPruefe(n, alt); if (f) return { data: null, error: { message: f } };
+            Object.assign(r, n, { aktualisiert_am: new Date().toISOString() });
+            const f2 = w21TagNachziehen(r, alt); if (f2) { Object.assign(r, alt); return { data: null, error: { message: f2 } }; }
+          }
+        } else daten.forEach((r) => { const alt = kopie(r); Object.assign(r, kopie(this.werte)); if (this.name === "kalender_termine") { w21KalenderSchutz(alt, r); terminSpur(alt, r); } if (this.name === "kalender_pruefungen") w21KpNachPt(r); });
         if (this.name === "fahrschule_pakete") paketStempel(daten);
       } else if (this.art === "delete") {
         daten = t.filter((r) => this.passt(r));
