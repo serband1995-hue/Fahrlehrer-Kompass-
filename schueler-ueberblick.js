@@ -58,7 +58,7 @@
     if (r.theorie_bestanden_am) return { t: "✓ Theorie bestanden", ok: true };
     if (!window.KR || !KR.theorieSoll || !KR.theorieStand) return { t: "", ok: false };
     try {
-      const soll = KR.theorieSoll({ klasse: r.klasse || r.form || "B", form: r.form, weg: r.lkw_weg || null, vorbesitz: Array.isArray(r.vorbesitz) ? r.vorbesitz : [], ausbildungsart: r.umschreiber ? "umschreibung" : r.ausbildungsart });
+      const soll = KR.theorieSoll({ klasse: r.klasse || r.form || "B", form: r.form, weg: r.lkw_weg || null, vorbesitz: Array.isArray(r.vorbesitz) ? r.vorbesitz : [], ausbildungsart: r.ausbildungsart }); // W22: nur die Büro-Spalte (r.umschreiber enthält das App-Echo)
       if (!soll.pflicht) return { t: "✓ Theorie: keine Pflicht", ok: true };
       const lek = r.theorie_lektionen || [];
       if (!lek.length) return { t: "", ok: false }; // noch nichts erfasst: kein Alarm (wie im Büro)

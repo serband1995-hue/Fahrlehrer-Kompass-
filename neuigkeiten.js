@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.27.1", datum: "2026-11-27", kurz: "Umschreiber stellt jetzt das Büro ein.",
+    punkte: ["Das Büro trägt „Umschreibung“ ein. Die App übernimmt das von selbst, der Fahrlehrer muss nichts einstellen.",
+             "Bei Umschreibern entfallen die Sonderfahrten. Im Freigabe-Check steht „entfällt (Umschreiber)“ in Grün.",
+             "Für Umschreiber lässt sich keine neue Sonderfahrt eintragen. Früher gefahrene bleiben gespeichert.",
+             "Nimmt das Büro es zurück, ist alles wieder wie vorher.",
+             "Wer ohne Fahrschule arbeitet, stellt es wie bisher selbst in der Schülerakte ein."] },
   { version: "2026.11.26.18", datum: "2026-11-26", kurz: "Schriften und Technik laden jetzt direkt vom Kompass.",
     punkte: ["Schriften und die Technik für die Anmeldung kommen jetzt direkt vom Kompass, nicht mehr von fremden Servern.",
              "Das macht den Kompass unabhängiger und sicherer: Fällt ein fremder Dienst aus, startet die App trotzdem.",

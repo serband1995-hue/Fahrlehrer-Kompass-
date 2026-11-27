@@ -1794,9 +1794,13 @@ function farbPunkt(a) {
   const f = a && FARBTYP[a.profil];
   return f ? `<span class="farbpunkt" style="background:${f[1]}" title="Farbprofil ${f[0]}" aria-label="Farbprofil ${f[0]}"></span>` : `<span class="farbpunkt ohne" title="kein Farbprofil"></span>`;
 }
-function standHTML(a) {
+function standHTML(a, x) {
   const p = a && typeof a.standPct === "number" ? Math.max(0, Math.min(100, Math.round(a.standPct))) : null;
   if (p == null) return '<span class="leise">–</span>';
+  // W22: Umschreiber gerade im Büro geändert, die App des Fahrlehrers hat den Stand noch nicht neu berechnet → keine alte Zahl zeigen
+  // Nur wenn eine Fahrlehrer-App den Stand nachliefern kann (Fahrlehrer mit App); sonst stünde der Text dauerhaft
+  const fl = x && x.fahrlehrer_id ? teamPerson(x.fahrlehrer_id) : null;
+  if (x && fl && !fl.ohne_app && istUmschreiber(x) !== !!a.umschreiber) return '<span class="leise klein" title="Sonderfahrten zählen jetzt anders. Die Zahl kommt mit dem nächsten Abgleich der Fahrlehrer-App.">wird neu berechnet</span>';
   return `<span class="stand"><span class="stand-spur"><span class="stand-balken" style="width:${p}%"></span></span><span class="stand-zahl">${p} %</span></span>`;
 }
 function paketName(id) { const p = S.pakete.find((x) => x.id === id); return p ? p.name : ""; }
@@ -1831,7 +1835,7 @@ function renderSchueler() {
       <td><div class="name-zeile">${farbPunkt(a)}<b>${esc(x.name)}</b></div><div class="unter">${istAktiv(x) ? "" : `im Archiv seit ${esc(datumDE(x.inaktiv_seit))} · `}${ausgeblendetAm(x) ? `<span class="hinweis-ausgeblendet-klein">vom Fahrlehrer ausgeblendet am ${esc(datumDE(ausgeblendetAm(x).slice(0, 10)))}</span> · ` : ""}${wartetArt(x) ? `<span class="marke-pill gelb">${esc(WARTE_TEXT[wartetArt(x)])}</span> ` : ""}${istAktiv(x) && bueroGesperrt(x) ? zahlungPill(x) + " " : ""}${esc(x.telefon || "")}${x.email ? " · " + esc(x.email) : ""}</div><div class="unter nur-unter">${esc(klasseVon(x))} · ${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}</div></td>
       <td>${x.fahrlehrer_id ? esc(lehrerName(x.fahrlehrer_id)) : '<span class="marke-pill rot">ohne Fahrlehrer</span>'}</td>
       <td class="nur-sehr-breit">${esc(klasseVon(x))}<div class="unter">${esc(artName(x.ausbildungsart))}${bkListenPaket(x)}${a.beginn ? ` · seit <span class="datum">${esc(datumDE(a.beginn))}</span>` : ""}</div></td>
-      <td>${standHTML(a)}<div class="unter">Theorie ${esc(theo)}</div></td>
+      <td>${standHTML(a, x)}<div class="unter">Theorie ${esc(theo)}</div></td>
       <td class="nur-sehr-breit">${naechster[x.id] ? esc(datumDE(naechster[x.id])) : '<span class="leise">–</span>'}</td>
       <td>${istAktiv(x) ? `<span class="marke-pill ${rf}">${rt}</span>` : '<span class="leise">–</span>'}${testfahrt ? `<div class="unter">${testfahrt}</div>` : ""}${notizPill(x.id)}${aufgabePill(x.id)}</td>
       <td class="aktionen"><div class="aktionen-box">${b197 && !x.b197_testfahrt_am && istAktiv(x) ? `<button class="knopf klein" data-testfahrt="${esc(x.id)}" type="button">Testfahrt ✓</button>` : ""}${zahlungKnoepfe(x, { kurz: true })}${typeof belegDarf === "function" && belegDarf() ? `<button class="knopf klein" data-sbeleg="${esc(x.id)}" type="button" title="Zahlungsbeleg (Quittung) erstellen">Beleg</button>` : ""}${typeof punkteAn === "function" && punkteDarf() && punkteAn() ? `<button class="knopf klein" data-spunkte="${esc(x.id)}" type="button" title="Punktekonto des Schülers">Punkte</button>` : ""}<button class="knopf klein" data-sbearb="${esc(x.id)}" type="button">Bearbeiten</button></div></td>
@@ -2254,7 +2258,9 @@ function bindeHeute(ziel) {
    Spalten in schueler: sichtbar nur für Büro, Leitung und den eigenen Fahrlehrer (Regeln der Tabelle). */
 const VORBESITZ_KLASSEN = ["AM", "A1", "A2", "A", "B", "BE", "C1", "C1E", "C", "CE", "D1", "D1E", "D", "DE", "L", "T"];
 const LAENDER = KR.EU_EWR.concat(KR.DRITTSTAATEN).sort((a, b) => a.localeCompare(b, "de"));
-function istUmschreiber(x) { return artKey(x.ausbildungsart) === "umschreibung" || !!(x.ausbildung && x.ausbildung.umschreiber); }
+// W22: Das Büro ist die einzige Quelle (Spalte ausbildungsart). ausbildung.umschreiber ist nur das Echo der Fahrlehrer-App
+// (hinkt bis zum nächsten Abgleich hinterher) und zählt hier nicht – sonst könnte das Büro einen Schüler nicht abschalten.
+function istUmschreiber(x) { return artKey(x.ausbildungsart) === "umschreibung"; }
 function sehhilfeVon(x) { return x.sehhilfe != null ? x.sehhilfe : (x.ausbildung && x.ausbildung.sehhilfe ? true : null); }
 function afsZeileHTML(f) {
   f = f || {};
@@ -2311,8 +2317,7 @@ function bindeBehoerde(dlg, x) {
     hinweis.classList.toggle("warnung", info.stufe === "abgelaufen" || info.stufe === "bald" || info.stufe === "land_pruefen");
     hinweis.classList.toggle("rot", info.stufe === "abgelaufen");
   };
-  const appUmschreiber = !!(x.ausbildung && x.ausbildung.umschreiber);
-  art.addEventListener("change", () => { dlg.querySelector("#umschreiberFeld").hidden = art.value !== "umschreibung" && !appUmschreiber; neuRechnen(); });
+  art.addEventListener("change", () => { dlg.querySelector("#umschreiberFeld").hidden = art.value !== "umschreibung"; neuRechnen(); });
   dlg.querySelector("#afsNeu").addEventListener("click", () => {
     if (liste.querySelectorAll(".afs-zeile").length >= 5) { toast("Höchstens 5 Führerscheine.", true); return; }
     liste.insertAdjacentHTML("beforeend", afsZeileHTML({})); liste.lastElementChild.querySelector("input").focus();
@@ -2623,7 +2628,8 @@ function schuelerDialog(id) {
     if (!id) {
       const neueId = neueSchuelerId();
       const zeile = Object.assign({ id: neueId, fahrschule_id: S.fsId, fahrlehrer_id: neuerLehrer, status: "aktiv", erstellt_von: S.user.id,
-        ausbildung: { form: formAusKlasse(werte.klasse), umschreiber: werte.ausbildungsart === "umschreibung" } }, werte);
+        ausbildung: Object.assign({ form: formAusKlasse(werte.klasse), umschreiber: werte.ausbildungsart === "umschreibung" },
+          werte.ausbildungsart === "umschreibung" ? { umschreiberVomBuero: { am: new Date().toISOString(), vorherApp: false } } : {}) }, werte);
       const res = await supa.from("schueler").insert(zeile).select("*");
       if (res.error || !res.data || !res.data.length) { toast("Nicht angelegt: " + (res.error ? dbFehlerText(res.error) : "keine Berechtigung"), true); return false; }
       S.schueler.push(res.data[0]);
@@ -2634,8 +2640,8 @@ function schuelerDialog(id) {
       if (bkAnm) await bkAnm.nachSpeichern(neueId);
       return true;
     }
-    // Umschreiber: die Fahrlehrer-App liest die Spalte ausbildungsart selbst (nicht ins jsonb schreiben,
-    // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert)
+    // Umschreiber: zählt nur die Spalte ausbildungsart; die Fahrlehrer-App folgt ihr selbst (W22). Nicht ins jsonb schreiben,
+    // sonst überschreibt der nächste Abgleich des Fahrlehrers den Wert; ausbildung.umschreiber ist nur ihr Echo.
     const wirdArchiviert = istAktiv(basisX) && !!werte.inaktiv_seit;
     let absagen = [];
     if (wirdArchiviert) { absagen = await frageKuenftigeTermine(x); if (absagen === null) return false; } // Abbrechen: Fenster bleibt offen
@@ -2924,6 +2930,7 @@ function bindeKalender(ziel) {
   }));
 }
 // K8: Wäre das ein neuer künftiger Termin (neu, anderer Schüler, anderes Datum) für einen gesperrten Schüler? Wie die Datenbank: nur Fahrstunde, Sonder, Nacht, Schalt, Prüfung
+function umschreiberSchueler(sid) { const x = sid && S.schueler.find((y) => y.id === sid); return !!(x && istUmschreiber(x)); }
 function neuerTerminGesperrt(t, id, d) {
   if (!d.schueler_id || !["fahrstunde", "sonder", "nacht", "schalt", "pruefung"].includes(d.art) || d.datum < KR.todayISO()) return false;
   if (id && t.schueler_id === d.schueler_id && t.datum === d.datum) return false;
@@ -2952,6 +2959,7 @@ function terminDialog(id, vorgabe) {
         <label>Interessent: Telefon<input type="tel" name="interessent_telefon" maxlength="30" autocomplete="off" placeholder="für den Rückruf" value="${esc(t.interessent_telefon || "")}"></label>
       </div>
       <label class="voll wahl gross-wahl" id="kursBezahltFeld" hidden><input type="checkbox" name="kurs_bezahlt"${t.kurs_bezahlt ? " checked" : ""}> Kurs bezahlt</label>
+      <p class="voll fl-warnung bald" id="umSfHinweis" hidden>Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.</p>
       <div class="voll raster-zwei" id="ohneAppFeld" hidden>
         <label id="sonderArtFeld">Art der Sonderfahrt<select name="sonderArt"><option value="">– bitte wählen –</option>${SONDER_ARTEN.map(([k, n]) => `<option value="${k}"${(t.payload || {}).sonderArt === k ? " selected" : ""}>${n}</option>`).join("")}</select></label>
         <label id="lkwKlasseFeld">Klasse dieser Stunde<select name="lkwKlasse"></select></label>
@@ -2975,6 +2983,8 @@ function terminDialog(id, vorgabe) {
     }
     // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
     if (neuerTerminGesperrt(t, id, d)) { zahlHinweisZeigen(tdlg, true); toast(ZAHLUNG_MELDUNG, true); return false; }
+    // W22: Umschreiber machen keine Sonderfahrten (eine schon eingetragene bleibt bearbeitbar)
+    if (d.art === "sonder" && t.art !== "sonder" && umschreiberSchueler(d.schueler_id)) { toast("Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.", true); return false; }
     // Stopp-Notiz: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
     if (!id && d.schueler_id && ["fahrstunde", "sonder", "nacht", "schalt"].includes(d.art)) {
       const sch = S.schueler.find((x) => x.id === d.schueler_id) || {};
@@ -3028,6 +3038,7 @@ function terminDialog(id, vorgabe) {
     tdlg.querySelector("#ohneAppFeld").hidden = !fl.ohne_app || (!zeigeSonder && !zeigeKl);
     tdlg.querySelector("#appHinweis").hidden = !!fl.ohne_app;
     tdlg.querySelector("#sonderArtFeld").hidden = !zeigeSonder;
+    tdlg.querySelector("#umSfHinweis").hidden = !(zeigeSonder && t.art !== "sonder" && sx && istUmschreiber(sx));
     tdlg.querySelector("#lkwKlasseFeld").hidden = !zeigeKl;
     if (kl) { const sel = tdlg.querySelector("select[name=lkwKlasse]"), alt = sel.value || (t.payload || {}).lkwKlasse; sel.innerHTML = kl.map((k) => `<option${k === alt ? " selected" : ""}>${k}</option>`).join(""); }
   };
