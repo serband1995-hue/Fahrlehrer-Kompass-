@@ -93,7 +93,7 @@ const ATTRAPPE = `
 async function neueSeite(breite = 1280, hoehe = 800, eingeloggt = true, seed = null) {
   const ctx = await browser.newContext({ viewport: { width: breite, height: hoehe }, acceptDownloads: true });
   if (seed) await ctx.addInitScript((s) => { window.__SEED = s; }, seed);
-  await ctx.route(/cdn\.jsdelivr\.net\/npm\/@supabase/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
+  await ctx.route(/vendor\/supabase-js/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: "" }));
   if (eingeloggt) await ctx.addInitScript(() => sessionStorage.setItem("eingeloggt", "1"));
   const page = await ctx.newPage();
@@ -298,7 +298,7 @@ await punkt("T34 Kompass-Menü hat „Theorieunterricht“ → theorie.html", as
 // Tafel-Fenster mit unbekannter Lektion
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
-  await ctx.route(/cdn\.jsdelivr\.net\/npm\/@supabase/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
+  await ctx.route(/vendor\/supabase-js/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: "" }));
   await ctx.addInitScript(() => sessionStorage.setItem("eingeloggt", "1"));
   const page = await ctx.newPage(); const js = []; page.on("pageerror", e => js.push(e.message));
@@ -310,7 +310,7 @@ await punkt("T34 Kompass-Menü hat „Theorieunterricht“ → theorie.html", as
 for (const [b, h] of [[1920, 1080], [3840, 2160]]) {
   const name = `${b}×${h} Touch`;
   const ctx = await browser.newContext({ viewport: { width: b, height: h }, hasTouch: true, isMobile: false });
-  await ctx.route(/cdn\.jsdelivr\.net\/npm\/@supabase/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
+  await ctx.route(/vendor\/supabase-js/, r => r.fulfill({ contentType: "text/javascript", body: ATTRAPPE }));
   await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ body: "" }));
   await ctx.addInitScript(() => sessionStorage.setItem("eingeloggt", "1"));
   const page = await ctx.newPage(); const js = []; page.on("pageerror", e => js.push(e.message));

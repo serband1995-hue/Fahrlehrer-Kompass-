@@ -42,7 +42,7 @@ async function oeffne({ nutzer = "ad-1", hash = "#fristen?ansicht=alle", vorbere
   const konsole = [];
   page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
   page.on("pageerror", (e) => konsole.push(String(e)));
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.addInitScript(([d, s, v]) => {
     window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s };
@@ -170,7 +170,7 @@ try {
     const page = await ctx.newPage();
     const konsole = [];
     page.on("pageerror", (e) => konsole.push(String(e)));
-    await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+    await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
     await page.goto(basis + "index.html");
     await page.waitForTimeout(1200);
     // kleine Attrappe: rpc reakt_regel steuerbar, schueler-Abfrage liefert zwei Schüler

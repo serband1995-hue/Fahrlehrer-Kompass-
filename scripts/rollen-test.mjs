@@ -651,7 +651,7 @@ for (const R of ROLLEN) {
     const page = await ctx.newPage();
     const konsole = [];
     page.on("pageerror", (e) => konsole.push(String(e)));
-    await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
     await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
     const daten = bauDaten(new Date().toISOString().slice(0, 10));
     await page.addInitScript(([d, ses, schleife]) => {

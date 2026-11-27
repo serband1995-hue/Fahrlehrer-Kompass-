@@ -181,7 +181,7 @@ if (!process.env.LOHN_NUR_A) {
     const bp = await bctx.newPage();
     const bFehler = []; bp.on("pageerror", (e) => bFehler.push(String(e)));
     await bp.clock.setFixedTime(new Date("2026-12-10T12:00:00+01:00"));
-    await bp.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await bp.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
     await bp.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
     const d = bauDaten("2026-12-10");
     d.tabellen.kalender_termine.push({ id: "t-w19-45", fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: "s1", art: "fahrstunde", datum: "2026-12-03", von: "10:00", bis: "10:45", status: "geplant", geloescht: false, payload: { fc: "v1" }, buero_fc_status: "offen", buero_fc_anzahl: null, buero_fc_nachgereicht_am: null });

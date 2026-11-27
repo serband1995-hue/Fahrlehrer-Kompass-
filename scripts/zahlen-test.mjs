@@ -28,7 +28,7 @@ let konsole = [];
 let dialogAntwort = true; // true = OK, false = Abbrechen
 page.on("pageerror", (e) => konsole.push(String(e)));
 page.on("dialog", (d) => (dialogAntwort ? d.accept() : d.dismiss()).catch(() => {}));
-await page.route(/cdn\.jsdelivr|fonts\.(googleapis|gstatic)/, (r) => r.abort());
+await page.route(/vendor\/supabase-js|fonts\.(googleapis|gstatic)/, (r) => r.abort());
 await page.clock.install({ time: new Date("2026-11-11T12:00:00+01:00") });
 await page.goto(basis + "index.html");
 await page.waitForTimeout(1200);

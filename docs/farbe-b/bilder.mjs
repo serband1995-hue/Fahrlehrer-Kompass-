@@ -40,7 +40,7 @@ const vor = `
 async function bueroBild(name, modus, akte) {
   const ctx = await browser.newContext({ ...BREITE, colorScheme: modus === "dunkel" ? "dark" : "light" });
   const page = await ctx.newPage();
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   await page.addInitScript(([d, s, v]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s }; (new Function("F", v))(window.__FAKE); },
     [bauDaten(HEUTE), { user: { id: "ad-1", email: "ad-1@example.org" } }, vor]);

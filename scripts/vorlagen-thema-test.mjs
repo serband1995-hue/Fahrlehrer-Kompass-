@@ -45,7 +45,7 @@ async function oeffne({ hash = "#einstellungen?thema=vorlagen", breite = 1366, h
   page.on("console", (m) => { if (m.type() === "error") konsole.push(m.text()); });
   page.on("pageerror", (e) => konsole.push(String(e)));
   page.on("dialog", (d) => { konsole.push("echtes Browser-Fenster: " + d.type()); d.dismiss().catch(() => {}); });
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+  await page.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
   if (vorher) await page.addInitScript(vorher);
   await page.addInitScript(([d, s]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: s }; }, [daten, session]);
@@ -327,7 +327,7 @@ try {
     const daten = bauDaten(new Date().toISOString().slice(0, 10));
     const c = await browser.newContext({ viewport: { width: 1366, height: 900 } });
     const p = await c.newPage(); c.setDefaultTimeout(8000);
-    await p.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
+    await p.route("**/vendor/supabase-js-*.js", (r) => r.fulfill({ contentType: "text/javascript", body: fake }));
     await p.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, body: "" }));
     await p.route(/buero-vorlagen\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "/* Gegenprobe: Thema fehlt */" }));
     await p.addInitScript(([d]) => { window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: { user: { id: "ad-1", email: "a@example.org" } } }; }, [daten]);
