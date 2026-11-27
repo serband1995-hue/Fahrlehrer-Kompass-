@@ -15,6 +15,10 @@
 --     Vorher-Stand in sicherung.w20_rechte_vorher. Funktionen (EXECUTE) nicht angefasst.
 --   * Buero-Sitzungen: bis zu 5 je Person gleichzeitig (aelteste endet), PIN aendern beendet die anderen Sitzungen der Person,
 --     taeglicher pg_cron-Auftrag buero_sitzungen_aufraeumen. buero_neue_sitzung nur intern (kein EXECUTE fuer anon/authenticated).
+-- W28 (Migration 20261206_w28_01, aus der Datei nachgetragen, nicht live gezogen, NOCH NICHT EINGESPIELT): kalender_termine bekommt
+--   4 RESTRICTIVE-Regeln „W28 Buero-Termine … nur Buero und Leitung“ (select/insert/update/delete, to public):
+--   not termin_art_nur_buero(art) or (select darf_buero_termine()). Arten vortest/simulator/beratung/mpu nur fuer Rolle
+--   buero/fahrschule_admin/super_admin; Fahrlehrer koennen sie weder lesen noch schreiben. Andere Arten unveraendert.
 -- Wichtig zu wissen:
 --   * profiles: jeder darf sein EIGENES Profil ändern („Eigenes Profil ändern“). Rolle, Fahrschule, E-Mail, aktiv
 --     (und ab Migration 20261121_zugang_02 faehrt_selbst) schützt der Trigger profil_schutz (nur Super-Admin oder Server).
