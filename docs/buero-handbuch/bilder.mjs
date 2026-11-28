@@ -131,7 +131,7 @@ async function einBild(b) {
   await page.waitForTimeout(300);
   await marken(page, b.marken);
   const datei = join(HIER, "bilder", b.id + ".png");
-  let aus = b.ausschnitt;
+  let aus = b.ausschnitt, bereich;
   if (typeof aus === "string") aus = { sel: aus };
   if (aus) {
     const loc = page.locator(aus.sel).first();
@@ -143,10 +143,19 @@ async function einBild(b) {
     const sc = await page.evaluate(() => [scrollX, scrollY]);
     const clip = { x: Math.max(0, r.x + sc[0] - rand), y: Math.max(0, r.y + sc[1] - rand), width: r.width + rand * 2, height: Math.min(r.height + rand * 2, aus.maxHoehe || 2400) };
     await page.screenshot({ path: datei, clip, fullPage: true });
+    bereich = clip;
   } else {
     await page.screenshot({ path: datei, fullPage: !!b.ganzeSeite });
+    bereich = b.ganzeSeite ? await page.evaluate(() => ({ x: 0, y: 0, width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }))
+      : await page.evaluate(() => ({ x: scrollX, y: scrollY, width: innerWidth, height: innerHeight }));
   }
+  // Prüfung: Jede rote Nummer muss ganz im Bild liegen (sonst verweist der Text auf eine Stelle, die man nicht sieht)
+  const draussen = await page.evaluate((r) => [...document.querySelectorAll(".hb-marke")].filter((n) => n.textContent.trim()).filter((n) => {
+    const b = n.getBoundingClientRect(), x = b.left + scrollX, y = b.top + scrollY;
+    return x < r.x - 1 || y < r.y - 1 || x + b.width > r.x + r.width + 1 || y + b.height > r.y + r.height + 1;
+  }).map((n) => n.textContent.trim()), bereich);
   await ctx.close();
+  if (draussen.length) throw new Error(`Marke ${draussen.join(", ")} liegt (teilweise) außerhalb des Bildes`);
   return fehler;
 }
 

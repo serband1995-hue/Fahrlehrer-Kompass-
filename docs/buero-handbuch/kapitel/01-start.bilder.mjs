@@ -119,7 +119,7 @@ const teil3 = [
   { id: "01-glocke-fenster", geraet: "pc", vorher: async (page, h) => { await h.klick("#glocke"); await h.warte(500); },
     marken: [{ sel: ".lu-gl-titel >> nth=0", nr: 1 }, { sel: ".lu-gl-titel >> nth=1", nr: 2 }, { sel: "[data-lugesendet] >> nth=0", nr: 3 }], ausschnitt: { sel: dlgSel, rand: 10, maxHoehe: 900 }, hoehe: 1000 },
   // ---- Seite Heute ----
-  { id: "01-heute-ganz", geraet: "pc", rolle: "buero", pin: true, hoehe: 768,
+  { id: "01-heute-ganz", geraet: "pc", rolle: "buero", pin: true, hoehe: 768, ganzeSeite: true,
     marken: [{ sel: ".fuer-dich", nr: 1 }, { sel: ".karte:has-text('Fristen und Warnungen')", nr: 2 }, { sel: ".karte:has-text('Termine heute')", nr: 3 }, { sel: ".kacheln", nr: 4 }] },
   { id: "01-heute-aufgaben", geraet: "pc", rolle: "buero", pin: true,
     marken: [{ sel: ".fuer-dich h2", nr: 1 }, { sel: ".fuer-dich .tabs", nr: 2 }, { sel: "#agNeu", nr: 3 }, { sel: ".fuer-dich .aufgabe-zeile.rot >> nth=0", nr: 4 }, { sel: ".fuer-dich .legende", nr: 5 }], ausschnitt: { sel: ".fuer-dich", rand: 14, maxHoehe: 1400 } },

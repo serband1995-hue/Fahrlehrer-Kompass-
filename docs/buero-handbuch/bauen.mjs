@@ -44,7 +44,7 @@ async function leseKapitel(k) {
     i++;
     const key = `K${k.nr}F${i}`;
     funktionen.push({ key, titel: inhalt.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim() });
-    return `<h2${attr}>${inhalt}<span class="unsichtbar">@@${key}@@</span></h2>`;
+    return `<h2${attr} id="${key}">${inhalt}<span class="unsichtbar">@@${key}@@</span></h2>`;
   });
   return { ...k, html, funktionen };
 }
@@ -53,7 +53,7 @@ const seiteKopf = (titel) => `<!DOCTYPE html><html lang="de"><head><meta charset
 <link rel="stylesheet" href="../../../fonts/fonts.css"><link rel="stylesheet" href="../handbuch.css"></head><body>`;
 
 function verzeichnis(eintraege, seiten) {
-  return `<ul class="verzeichnis">${eintraege.map((e) => `<li class="${e.klasse}"><span class="t">${esc(e.titel)}</span><span class="p"></span><span class="s">${seiten[e.key] ?? "00"}</span></li>`).join("")}</ul>`;
+  return `<ul class="verzeichnis">${eintraege.map((e) => `<li class="${e.klasse}"><a class="t" href="#${e.key}">${esc(e.titel)}</a><span class="p"></span><span class="s">${seiten[e.key] ?? "00"}</span></li>`).join("")}</ul>`;
 }
 
 function deckblatt(titel, kapitelnr, kurz, inhaltHtml) {
@@ -68,7 +68,7 @@ function deckblatt(titel, kapitelnr, kurz, inhaltHtml) {
 const browser = await chromium.launch();
 
 // HTML → PDF: so oft drucken, bis die Seitenzahlen im Verzeichnis stabil sind (echte Zahlen können das Verzeichnis
-// länger machen und alles verschieben), dann ein letztes Mal ohne die unsichtbaren Suchmarken.
+// länger machen und alles verschieben), danach jeden Eintrag prüfen.
 async function druck(name, titel, bauHtml, pruefTitel = {}) {
   const htmlDatei = join(HIER, "html", name + ".html");
   const pdfDatei = join(HIER, "pdf", name + ".pdf");
@@ -85,38 +85,40 @@ async function druck(name, titel, bauHtml, pruefTitel = {}) {
     });
     await page.close();
   };
+  // Seite jeder Überschrift: Jeder Verzeichnis-Eintrag ist ein Link auf seine Überschrift (id = Kennung).
+  // Chromium legt dafür im PDF ein Sprungziel an; dessen Seite lesen wir mit pypdf. (Die Text-Suchmarken waren
+  // unzuverlässig: auf Seiten mit Seitenumbruch davor fehlten Buchstaben im PDF-Text.)
+  const zielSeiten = () => JSON.parse(execFileSync("python3", ["-c", `
+import sys, json
+from pypdf import PdfReader
+r = PdfReader(sys.argv[1])
+print(json.dumps({k.lstrip("/"): r.get_destination_page_number(d) + 1 for k, d in r.named_destinations.items()}))
+`, pdfDatei]).toString());
+  const keys = Object.keys(pruefTitel);
   let seiten = {};
-  for (let lauf = 0; lauf < 5; lauf++) {
+  for (let lauf = 0; lauf < 6; lauf++) {
     await drucke(bauHtml(seiten));
-    const neu = {};
-    const anzahl = Number(execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1]);
-    for (let s = 1; s <= anzahl; s++) {
-      const text = execFileSync("pdftotext", ["-f", String(s), "-l", String(s), pdfDatei, "-"]).toString();
-      for (const m of text.matchAll(/@@(K\d+F\d+)@@/g)) if (!(m[1] in neu)) neu[m[1]] = s;
-    }
-    // Die Suchmarke kann am Seitenende hängen bleiben, wenn die Überschrift auf die nächste Seite rutscht: dann zählt die nächste Seite
-    const seitenText = {};
-    const textVon = (s) => (seitenText[s] ??= execFileSync("pdftotext", ["-f", String(s), "-l", String(s), pdfDatei, "-"]).toString().replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, ""));
-    for (const [key, s] of Object.entries(neu)) {
-      const t = (pruefTitel[key] || "").replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").trim().slice(0, 28);
-      if (t && !textVon(s).includes(t) && s < anzahl && textVon(s + 1).includes(t)) neu[key] = s + 1;
-    }
+    const alle = zielSeiten();
+    const neu = Object.fromEntries(keys.filter((k) => k in alle).map((k) => [k, alle[k]]));
     const gleich = JSON.stringify(neu) === JSON.stringify(seiten);
     seiten = neu;
     if (gleich) break;
   }
   // Die unsichtbaren Suchmarken bleiben im PDF: ohne sie verschiebt Chromium im Gesamt-PDF einzelne Seiten (geprüft 28.11.2026).
   // Folge: Beim Suchen/Kopieren im PDF-Text taucht „@@K1F2@@“ auf; sichtbar sind sie nicht.
-  await drucke(bauHtml(seiten));
-  // Prüfung: Steht jede Überschrift wirklich auf der Seite, die das Verzeichnis nennt?
-  const norm = (t) => t.replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").trim();
+  // Prüfung über ALLE Einträge: Sprungziel vorhanden, Seite wie im Verzeichnis, Überschrift steht auf dieser Seite, nirgends „00“.
+  const endgueltig = zielSeiten();
+  const norm = (t) => t.replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").replace(/-/g, "").trim();
   let falsch = 0;
-  for (const [key, seite] of Object.entries(seiten)) {
-    if (!pruefTitel[key]) continue;
-    const text = norm(execFileSync("pdftotext", ["-f", String(seite), "-l", String(seite), pdfDatei, "-"]).toString());
-    if (!text.includes(norm(pruefTitel[key]).slice(0, 28))) { falsch++; if (falsch <= 5) console.log(`   ! Verzeichnis: „${pruefTitel[key]}“ nicht auf Seite ${seite}`); }
+  const fehl = (t) => { falsch++; if (falsch <= 8) console.log(`   ! ${t}`); };
+  for (const key of keys) {
+    if (!(key in endgueltig)) { fehl(`kein Sprungziel für „${pruefTitel[key]}“`); continue; }
+    if (endgueltig[key] !== seiten[key]) fehl(`„${pruefTitel[key]}“: Verzeichnis sagt ${seiten[key]}, steht auf ${endgueltig[key]}`);
+    const text = norm(execFileSync("pdftotext", ["-f", String(endgueltig[key]), "-l", String(endgueltig[key]), pdfDatei, "-"]).toString());
+    if (!text.includes(norm(pruefTitel[key]).slice(0, 28))) fehl(`„${pruefTitel[key]}“ nicht auf Seite ${endgueltig[key]}`);
   }
-  if (falsch) { console.log(`FEHL pdf/${name}.pdf: ${falsch} Verzeichnis-Einträge zeigen auf die falsche Seite`); process.exitCode = 1; }
+  if (bauHtml(seiten).includes('<span class="s">00</span>')) fehl("„00“ im Verzeichnis");
+  if (falsch) { console.log(`FEHL pdf/${name}.pdf: ${falsch} Fehler im Verzeichnis`); process.exitCode = 1; }
   const anzahl = execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1];
   console.log(`ok   pdf/${name}.pdf  (${anzahl} Seiten)`);
   return Number(anzahl);

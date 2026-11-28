@@ -26,7 +26,7 @@ b, strong { font-weight: 700; }
 /* Inhaltsverzeichnis */
 .verzeichnis { list-style: none; padding: 0; margin: 0; }
 .verzeichnis li { display: flex; align-items: baseline; gap: 4pt; margin: 0 0 3.5pt; }
-.verzeichnis li .t { flex: none; max-width: 85%; }
+.verzeichnis li .t { flex: none; max-width: 85%; color: inherit; text-decoration: none; }
 .verzeichnis li .p { flex: 1; border-bottom: 1px dotted #9aa2ad; transform: translateY(-3pt); }
 .verzeichnis li .s { flex: none; font-variant-numeric: tabular-nums; font-weight: 700; min-width: 16pt; text-align: right; }
 .verzeichnis li.kap { margin-top: 9pt; font-weight: 800; font-size: 11.5pt; }
