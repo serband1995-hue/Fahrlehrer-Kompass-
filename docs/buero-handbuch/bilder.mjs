@@ -129,6 +129,8 @@ async function einBild(b) {
   if (b.url && b.rolle === "buero" && b.pin) await h.geh(b.url);
   if (b.vorher) await b.vorher(page, h);
   await page.waitForTimeout(300);
+  // Bei Ausschnitten: Die klebende Rollen-Leiste oben nicht mitten ins Bild malen (sie behält ihren Platz, nur klebt sie nicht mehr)
+  if (b.ausschnitt) await page.addStyleTag({ content: ".rollen-streifen{position:relative!important}" });
   await marken(page, b.marken);
   const datei = join(HIER, "bilder", b.id + ".png");
   let aus = b.ausschnitt, bereich;
@@ -142,6 +144,14 @@ async function einBild(b) {
     // Marken liegen auf der Seite; boundingBox ist relativ zum Fenster -> mit fullPage arbeiten
     const sc = await page.evaluate(() => [scrollX, scrollY]);
     let clip = { x: Math.max(0, r.x + sc[0] - rand), y: Math.max(0, r.y + sc[1] - rand), width: r.width + rand * 2, height: Math.min(r.height + rand * 2, aus.maxHoehe || 2400) };
+    // auch: weitere Elemente, die mit ins Bild sollen (z. B. eine aufklappende Trefferliste unter dem Feld)
+    for (const sel of aus.auch || []) {
+      const z = await page.locator(sel).first().boundingBox();
+      if (!z) throw new Error("Ausschnitt-Zusatz nicht gefunden: " + sel);
+      const x1 = Math.max(0, Math.min(clip.x, z.x + sc[0] - rand)), y1 = Math.max(0, Math.min(clip.y, z.y + sc[1] - rand));
+      const x2 = Math.max(clip.x + clip.width, z.x + sc[0] + z.width + rand), y2 = Math.max(clip.y + clip.height, z.y + sc[1] + z.height + rand);
+      clip = { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+    }
     // Rote Nummern am Rand nicht abschneiden: Ausschnitt so weit vergrößern, dass jede Nummer ganz drin ist
     // (nur Nummern, die schon teilweise im Ausschnitt liegen; weit entfernte bleiben draußen und melden sich unten)
     const kreise = await page.evaluate(() => [...document.querySelectorAll(".hb-marke")].filter((n) => n.textContent.trim()).map((n) => { const b = n.getBoundingClientRect(); return { x: b.left + scrollX, y: b.top + scrollY, w: b.width, h: b.height }; }));
@@ -165,7 +175,15 @@ async function einBild(b) {
     const b = n.getBoundingClientRect(), x = b.left + scrollX, y = b.top + scrollY;
     return x < r.x - 1 || y < r.y - 1 || x + b.width > r.x + r.width + 1 || y + b.height > r.y + r.height + 1;
   }).map((n) => n.textContent.trim()), bereich);
+  // Zwei Nummern übereinander: die untere ist nicht lesbar
+  const verdeckt = await page.evaluate(() => {
+    const k = [...document.querySelectorAll(".hb-marke")].filter((n) => n.textContent.trim()).map((n) => { const b = n.getBoundingClientRect(); return { nr: n.textContent.trim(), x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+    const paare = [];
+    for (let i = 0; i < k.length; i++) for (let j = i + 1; j < k.length; j++) if (Math.hypot(k[i].x - k[j].x, k[i].y - k[j].y) < 20) paare.push(k[i].nr + "/" + k[j].nr);
+    return paare;
+  });
   await ctx.close();
+  if (verdeckt.length) throw new Error(`Nummern ${verdeckt.join(", ")} liegen übereinander`);
   if (draussen.length) throw new Error(`Marke ${draussen.join(", ")} liegt (teilweise) außerhalb des Bildes`);
   return fehler;
 }

@@ -95,14 +95,14 @@ r = PdfReader(sys.argv[1])
 print(json.dumps({k.lstrip("/"): r.get_destination_page_number(d) + 1 for k, d in r.named_destinations.items()}))
 `, pdfDatei]).toString());
   const keys = Object.keys(pruefTitel);
-  let seiten = {};
+  let seiten = {}, stabil = false;
   for (let lauf = 0; lauf < 6; lauf++) {
     await drucke(bauHtml(seiten));
     const alle = zielSeiten();
     const neu = Object.fromEntries(keys.filter((k) => k in alle).map((k) => [k, alle[k]]));
-    const gleich = JSON.stringify(neu) === JSON.stringify(seiten);
+    stabil = JSON.stringify(neu) === JSON.stringify(seiten);
     seiten = neu;
-    if (gleich) break;
+    if (stabil) break;
   }
   // Die unsichtbaren Suchmarken bleiben im PDF: ohne sie verschiebt Chromium im Gesamt-PDF einzelne Seiten (geprüft 28.11.2026).
   // Folge: Beim Suchen/Kopieren im PDF-Text taucht „@@K1F2@@“ auf; sichtbar sind sie nicht.
@@ -118,6 +118,7 @@ print(json.dumps({k.lstrip("/"): r.get_destination_page_number(d) + 1 for k, d i
     if (!text.includes(norm(pruefTitel[key]).slice(0, 28))) fehl(`„${pruefTitel[key]}“ nicht auf Seite ${endgueltig[key]}`);
   }
   if (bauHtml(seiten).includes('<span class="s">00</span>')) fehl("„00“ im Verzeichnis");
+  if (!stabil) fehl("Seitenzahlen nach 6 Läufen nicht stabil");
   if (falsch) { console.log(`FEHL pdf/${name}.pdf: ${falsch} Fehler im Verzeichnis`); process.exitCode = 1; }
   const anzahl = execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1];
   console.log(`ok   pdf/${name}.pdf  (${anzahl} Seiten)`);
@@ -145,15 +146,15 @@ for (const k of kapitel) {
 if (kapitel.length && !NUR.length) {
   const eintraege = [];
   for (const k of kapitel) {
-    eintraege.push({ key: `K${k.nr}F1`, titel: `${k.nr}  ${k.titel}`, klasse: "kap" });
+    eintraege.push({ key: `K${k.nr}`, titel: `${k.nr}  ${k.titel}`, klasse: "kap" });
     for (const f of k.funktionen) eintraege.push({ key: f.key, titel: f.titel, klasse: "fn" });
   }
   const n = await druck("00-Gesamt-Buero-Handbuch", "Gesamtausgabe", (seiten) =>
     seiteKopf("Büro-Handbuch – Gesamtausgabe") +
     deckblatt("Büro-Handbuch", "Gesamtausgabe", "Die Büro-Seite des Fahrlehrer-Kompass Schritt für Schritt erklärt: jede Funktion mit Bildern, für den Alltag im Büro.", "") +
     `<section class="verzeichnis-seite"><h1>Inhalt</h1>${verzeichnis(eintraege, seiten)}</section>` +
-    kapitel.map((k) => `<header class="kapitel-kopf"><div class="kapitelnr">Kapitel ${k.nr}</div><h1>${esc(k.titel)}</h1><p>${esc(k.kurz)}</p></header>${k.html}`).join("") +
-    "</body></html>", Object.fromEntries(kapitel.flatMap((k) => k.funktionen.map((f) => [f.key, f.titel]))));
+    kapitel.map((k) => `<header class="kapitel-kopf" id="K${k.nr}"><div class="kapitelnr">Kapitel ${k.nr}</div><h1>${esc(k.titel)}</h1><p>${esc(k.kurz)}</p></header>${k.html}`).join("") +
+    "</body></html>", Object.fromEntries(kapitel.flatMap((k) => [[`K${k.nr}`, k.titel], ...k.funktionen.map((f) => [f.key, f.titel])])));
   ergebnis.push({ datei: "pdf/00-Gesamt-Buero-Handbuch.pdf", seiten: n });
 }
 await browser.close();

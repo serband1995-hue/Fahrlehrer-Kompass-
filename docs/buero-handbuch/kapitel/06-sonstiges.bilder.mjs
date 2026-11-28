@@ -117,7 +117,7 @@ const team = [
 
 // ---------------------------------------------------------------- Einstellungen
 const einstellungen = [
-  { id: "06-einst-uebersicht", geraet: "pc", url: "#einstellungen", marken: [{ sel: ".es-themen", nr: 1 }, { sel: ".es-themen .es-thema[aria-current]", nr: 2 }, { sel: ".es-inhalt", nr: 3 }], ausschnitt: { sel: "#ansicht", rand: 16, maxHoehe: 1100 }, hoehe: 900 },
+  { id: "06-einst-uebersicht", geraet: "pc", url: "#einstellungen", marken: [{ sel: ".es-themen .es-thema:not([aria-current]) >> nth=2", nr: 1 }, { sel: ".es-themen .es-thema[aria-current]", nr: 2 }, { sel: ".es-inhalt", nr: 3 }], ausschnitt: { sel: "#ansicht", rand: 16, maxHoehe: 1100 }, hoehe: 900 },
   { id: "06-einst-liste", geraet: "pc", url: "#einstellungen", hoehe: 900, marken: [{ sel: ".es-themen", nr: 1 }], ausschnitt: { sel: ".es-themen", rand: 16 } },
   { id: "06-einst-handy-liste", geraet: "handy", url: "#einstellungen" },
   { id: "06-einst-handy-thema", geraet: "handy", url: einst("fristen"), marken: [{ sel: ".es-zurueck", nr: 1 }] },

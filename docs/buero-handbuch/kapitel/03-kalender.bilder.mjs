@@ -27,7 +27,7 @@ const LISTE = [
   { id: "03-heute-springen", url: KAL + "?tag=2026-12-15", geraet: "pc", marken: [], ausschnitt: { sel: "#ansicht .karte", rand: 0, maxHoehe: 190 }, hoehe: 900 },
   { id: "03-datum-springen", url: KAL, geraet: "pc", marken: [], ausschnitt: { sel: "#ansicht .filterzeile", rand: 10 }, hoehe: 900 },
   { id: "03-suche", url: KAL, geraet: "pc", hoehe: 900, marken: [{ sel: "#kSuche", nr: 1 }, { sel: ".k-suche-erg", nr: 2 }],
-    vorher: async (page, h) => { await h.tippe("#kSuche", "a"); await page.waitForTimeout(900); }, ausschnitt: { sel: "#ansicht .filterzeile", rand: 20, maxHoehe: 900 } },
+    vorher: async (page, h) => { await h.tippe("#kSuche", "a"); await page.waitForTimeout(900); }, ausschnitt: { sel: "#ansicht .filterzeile", auch: [".k-suche-erg"], rand: 20, maxHoehe: 900 } },
 
   // ---------- Ansichten ----------
   { id: "03-ansicht-woche", url: KAL + "?ansicht=woche", geraet: "pc", hoehe: 900, marken: [{ sel: "#ansicht .tabs", nr: 1 }, { sel: "#kWoLehrer", nr: 2 }, { sel: ".k-spalte.heute", nr: 3 }, { sel: "#ansicht .k-titel", nr: 4 }] },
