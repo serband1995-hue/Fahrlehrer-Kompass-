@@ -41,8 +41,12 @@ if (!KR.theorieSoll) { KR.theorieSoll = () => ({ pflicht: false, grund: "Seite b
 
 const ARTEN = {
   fahrstunde: "Fahrstunde", nacht: "Nachtfahrt", sonder: "Sonderfahrt", pruefung: "Prüfung", theorie: "Theorie",
-  schalt: "Schaltkompetenz", block: "Blockiert", vortest: "Vortest", simulator: "Simulator", beratung: "Beratung", ersthilfe: "Erste Hilfe"
+  schalt: "Schaltkompetenz", block: "Blockiert", vortest: "Vortest", simulator: "Simulator", beratung: "Beratungsgespräch vor Ort", mpu: "MPU-Termin", ersthilfe: "Erste Hilfe"
 };
+// W28: Termine, die nur das Büro sieht (nicht in der App, nicht in Lohn, UE, Fahrcheck, Statistik, Nachweis, Monatsbericht).
+// Eigene Liste wie KR.NUR_BUERO_ARTEN, damit auch ein älteres kompass-rechnen.js aus dem Zwischenspeicher passt.
+const NUR_BUERO_ARTEN = ["vortest", "simulator", "beratung", "mpu"];
+function nurBueroArt(art) { return NUR_BUERO_ARTEN.includes(art); }
 
 // Gemeinsamer Büro-Zugang: Jede Anfrage an die Datenbank trägt den Sitzungsschlüssel der Person, die sich mit
 // ihrer PIN angemeldet hat (Kopfzeile x-buero-sitzung). Die Datenbank prüft ihn und schreibt den Namen ins
@@ -2840,7 +2844,7 @@ function kBereichSetzen(termine) {
   }
   K_START = a; K_ENDE = Math.min(e, 24 * 60);
 }
-const K_FARBEN = { fahrstunde: "#6a6a74", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", ersthilfe: "#d65a5a" };
+const K_FARBEN = { fahrstunde: "#6a6a74", nacht: "#5a7da8", sonder: "#5a7da8", pruefung: "#c9a227", theorie: "#9b7dc4", schalt: "#c4607d", block: "#88939a", vortest: "#d68a3e", simulator: "#3ea6a0", beratung: "#7a8fd6", mpu: "#a0705a", ersthilfe: "#d65a5a" };
 const K_ANSICHTEN = [["tag", "Tag"], ["woche", "Woche"], ["monat", "Monat"], ["jahr", "Jahr"]];
 const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
 const WOCHENTAGE_KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -2907,10 +2911,10 @@ function kTageSummen(von, bis, lehrerIds) {
   const m = {};
   const ids = new Set(lehrerIds);
   for (const t of S.termine) {
-    if (t.datum < von || t.datum > bis || t.art === "block" || !ids.has(t.fahrlehrer_id)) continue;
+    if (t.datum < von || t.datum > bis || t.art === "block" || !ids.has(t.fahrlehrer_id) || !kArtSichtbar(t)) continue;
     const e = (m[t.datum] = m[t.datum] || { n: 0, ue: 0 });
     e.n++;
-    if (t.von && t.bis) e.ue += Math.max(KR.hm2min(t.bis) - KR.hm2min(t.von), 0) / 45;
+    if (t.von && t.bis && !nurBueroArt(t.art)) e.ue += Math.max(KR.hm2min(t.bis) - KR.hm2min(t.von), 0) / 45; // W28: Büro-Termine sind keine UE
   }
   return m;
 }
@@ -2959,6 +2963,73 @@ function kVorname(l) {
   const n = String(l.name || l.email || "").replace(/^Fahrlehrer(in)?\s+/i, "").trim();
   return n.split(/\s+/)[0] || n;
 }
+// W28 Teil 3: Terminarten im Büro-Kalender ein-/ausblenden. Mehrfachauswahl, wirkt sofort, ändert keine Termine.
+// Nichts gewählt = alle Arten. Gemerkt je PC (localStorage; ohne Speicher gilt „alle“).
+const K_ART_SPEICHER = "buero-kalender-arten";
+function kArtWahl() {
+  try { const a = JSON.parse(localStorage.getItem(K_ART_SPEICHER) || "[]"); return Array.isArray(a) ? a.filter((x) => typeof x === "string" && ARTEN[x]) : []; } catch (e) { return []; }
+}
+function kArtWahlSetzen(liste) { try { if (liste.length) localStorage.setItem(K_ART_SPEICHER, JSON.stringify(liste)); else localStorage.removeItem(K_ART_SPEICHER); } catch (e) { /* ohne Speicher: gilt nur bis zum Neuzeichnen */ } kArtWahlFluechtig = liste; }
+let kArtWahlFluechtig = null, kArtOffen = false; // kArtOffen: nach einer Änderung aufgeklappt lassen // falls localStorage gesperrt ist: Auswahl bis zum Neuladen der Seite
+function kArtAktiv() { const g = kArtWahl(); return g.length ? g : (kArtWahlFluechtig || []).filter((x) => ARTEN[x]); }
+function kArtSichtbar(t) { const w = kArtAktiv(); return !w.length || w.includes(t.art); }
+function kArtChips() {
+  const w = kArtAktiv();
+  const alle = `<label class="chip k-art-chip"><input type="checkbox" data-kartalle${w.length ? "" : " checked"}> Alle Arten</label>`;
+  const chips = Object.entries(ARTEN).map(([k, n]) => `<label class="chip k-art-chip"><input type="checkbox" data-kart="${esc(k)}"${w.includes(k) ? " checked" : ""}><span class="k-art-punkt" style="background:${K_FARBEN[k] || "#6a6a74"}" aria-hidden="true"></span> ${esc(n)}${nurBueroArt(k) ? ' <span class="k-art-nb">(nur Büro)</span>' : ""}</label>`).join("");
+  const zus = w.length ? `<span class="marke-pill gelb k-art-aktiv">Nur: ${esc(w.map((k) => ARTEN[k]).join(" · "))}</span>` : "alle";
+  return `<details class="k-art-filter"${w.length || kArtOffen ? " open" : ""}><summary>Terminarten: ${zus}</summary>
+    <div class="chips" role="group" aria-label="Terminarten zeigen">${alle}${chips}</div>
+    <p class="leise klein">„Alle Arten“ oder einzelne Arten wählen. Gewählt = nur diese sind zu sehen.</p></details>`;
+}
+// W28 Teil 4: Link je Termin (nur Büro, nur nach Anmeldung: der Link enthält nur die Nummer des Termins, keine Namen)
+const K_LINK_RE = /^#termin=([A-Za-z0-9_-]{1,80})$/;
+let kLinkOffen = null;
+try { const m0 = location.hash.match(K_LINK_RE); if (m0) sessionStorage.setItem("buero-termin-link", m0[1]); } catch (e) { const m0 = location.hash.match(K_LINK_RE); if (m0) kLinkOffen = m0[1]; }
+function kTerminLink(id) { return location.origin + location.pathname + "#termin=" + encodeURIComponent(id); }
+async function kLinkKopieren(id) {
+  const url = kTerminLink(id);
+  try { await navigator.clipboard.writeText(url); toast("Link kopiert. Er öffnet den Termin nur nach Anmeldung im Büro."); }
+  catch (e) { window.prompt("Link zum Termin (kopieren mit Strg+C):", url); }
+}
+function kLinkVormerken() {
+  const m = location.hash.match(K_LINK_RE);
+  if (!m) return false;
+  try { sessionStorage.setItem("buero-termin-link", m[1]); } catch (e) { kLinkOffen = m[1]; }
+  return true;
+}
+let kLinkLaeuft = false;
+async function kLinkEinloesen() {
+  let id = kLinkOffen;
+  try { id = sessionStorage.getItem("buero-termin-link") || id; } catch (e) { /* egal */ }
+  if (!id || kLinkLaeuft) return;
+  // erst, wenn die Daten da sind und keine PIN-Abfrage davor steht
+  if (!S.geladenAm || !S.fsId || ($("wer") && !$("wer").hidden)) { setTimeout(kLinkEinloesen, 500); return; }
+  kLinkLaeuft = true;
+  try { sessionStorage.removeItem("buero-termin-link"); } catch (e) { /* egal */ }
+  kLinkOffen = null;
+  try {
+    let t = S.termine.find((x) => x.id === id && !x.geloescht);
+    let alt = false;
+    if (!t) { // älter als die geladenen Tage? Einmal nachfragen (die Datenbank zeigt nur Termine der eigenen Fahrschule)
+      const r = await supa.from("kalender_termine").select("id,datum,von,fahrlehrer_id,art,geloescht").eq("id", id).eq("fahrschule_id", S.fsId).maybeSingle();
+      if (r.error) { // Netz weg o. Ä.: nicht „gibt es nicht mehr“ sagen, Link für den nächsten Versuch behalten
+        try { sessionStorage.setItem("buero-termin-link", id); } catch (e) { kLinkOffen = id; }
+        toast("Termin konnte gerade nicht geladen werden. Bitte gleich noch einmal „Neu laden“ drücken.", true);
+        return;
+      }
+      if (r.data && !r.data.geloescht) { t = r.data; alt = true; }
+    }
+    if (!t) { try { history.replaceState(history.state, "", "#kalender"); } catch (e) {} zeichne(); bestaetige("Termin nicht gefunden", "Termin gibt es nicht mehr. Er wurde abgesagt oder gelöscht, oder er gehört zu einer anderen Fahrschule.", "OK"); return; }
+    location.replace("#kalender?" + new URLSearchParams({ tag: t.datum }).toString()); // Tagesansicht, alle Fahrlehrer
+    setTimeout(() => {
+      if (alt) { bestaetige("Termin liegt weiter zurück", `Der Termin vom ${datumDE(t.datum)} liegt vor den Tagen, die das Büro lädt. Hier ist der Tag, öffnen lässt er sich hier nicht. Gefahrene Stunden stehen im Ausbildungsnachweis des Schülers.`, "OK"); return; }
+      if (!kArtSichtbar(t)) toast(`Hinweis: „${ARTEN[t.art] || t.art}“ ist im Filter ausgeblendet. Der Termin ist trotzdem geöffnet.`);
+      terminDialog(id);
+    }, 120);
+  } finally { kLinkLaeuft = false; }
+}
+window.addEventListener("hashchange", () => { if (kLinkVormerken()) kLinkEinloesen(); });
 function renderKalender() {
   const ansicht = kAnsicht(), tag = kTag();
   if (ansicht === "woche") return kalenderWoche(tag);
@@ -2966,7 +3037,7 @@ function renderKalender() {
   if (ansicht === "jahr") return kalenderJahr(tag);
   const gewaehlt = kGewaehlteLehrer();
   const lehrer = (gewaehlt.length ? S.lehrer.filter((l) => gewaehlt.includes(l.id)) : S.lehrer).filter((l) => l.aktiv !== false);
-  const termine = S.termine.filter((t) => t.datum === tag);
+  const termine = S.termine.filter((t) => t.datum === tag && kArtSichtbar(t));
   kBereichSetzen(termine);
   const hoehe = (K_ENDE - K_START) * K_PX;
   const spalten = lehrer.map((l) => {
@@ -2978,6 +3049,7 @@ function renderKalender() {
   return `<div class="karte">
     ${kopfKalender("tag", tag, wtag, (n) => KR.addDaysISO(tag, n))}
     ${kLehrerChips(gewaehlt)}
+    ${kArtChips()}
     <p class="leise klein">In eine freie Stelle klicken, um einen Termin anzulegen. Auf einen Termin klicken, um ihn zu verschieben oder abzusagen.</p>
     <div class="kalender">${kStundenAchse()}<div class="k-spalten" style="--spalten:${Math.max(lehrer.length, 1)}">${spalten || '<p class="leer">Kein Fahrlehrer gewählt.</p>'}</div></div>
   </div>`;
@@ -2988,12 +3060,12 @@ function kalenderWoche(tag) {
   const gewaehlt = kGewaehlteLehrer();
   const wahl = fristenParam("wl") || gewaehlt[0] || (aktive[0] || {}).id;
   const l = aktive.find((x) => x.id === wahl) || aktive[0];
-  kBereichSetzen(S.termine.filter((t) => l && t.fahrlehrer_id === l.id && t.datum >= montag && t.datum <= sonntag));
+  kBereichSetzen(S.termine.filter((t) => l && t.fahrlehrer_id === l.id && t.datum >= montag && t.datum <= sonntag && kArtSichtbar(t)));
   const hoehe = (K_ENDE - K_START) * K_PX;
   const heute = KR.todayISO();
   const spalten = l ? Array.from({ length: 7 }, (_, i) => {
     const d = KR.addDaysISO(montag, i);
-    const eigene = S.termine.filter((t) => t.fahrlehrer_id === l.id && t.datum === d && t.von && t.bis);
+    const eigene = S.termine.filter((t) => t.fahrlehrer_id === l.id && t.datum === d && t.von && t.bis && kArtSichtbar(t));
     return `<div class="k-spalte${d === heute ? " heute" : ""}"><div class="k-kopf"><span class="k-lname">${WOCHENTAGE_KURZ[i]} ${esc(datumDE(d).slice(0, 6))}</span><span class="k-anz">${eigene.filter((t) => t.art !== "block").length} Termine</span></div>
       <div class="k-flaeche" data-lehrer="${esc(l.id)}" data-datum="${esc(d)}" style="height:${hoehe}px">${kSpaltenBloecke(eigene)}</div></div>`;
   }).join("") : "";
@@ -3002,6 +3074,7 @@ function kalenderWoche(tag) {
   return `<div class="karte">
     ${kopfKalender("woche", tag, titel, (n) => KR.addDaysISO(tag, 7 * n))}
     <div class="filterzeile"><label class="feld-klein">Fahrlehrer <select class="suche" id="kWoLehrer" aria-label="Fahrlehrer der Woche">${aktive.map((x) => `<option value="${esc(x.id)}"${l && x.id === l.id ? " selected" : ""}>${esc(x.name || x.email)}</option>`).join("")}</select></label></div>
+    ${kArtChips()}
     <p class="leise klein">In eine freie Stelle klicken, um einen Termin anzulegen. Auf einen Termin klicken, um ihn zu verschieben oder abzusagen.</p>
     <div class="kalender">${kStundenAchse()}<div class="k-spalten" style="--spalten:7">${spalten || '<p class="leer">Kein Fahrlehrer vorhanden.</p>'}</div></div>
   </div>`;
@@ -3024,6 +3097,7 @@ function kalenderMonat(tag) {
   return `<div class="karte">
     ${kopfKalender("monat", tag, `${MONATE[m]} ${j}`, (n) => KR.addMonthsISO(tag, n))}
     ${kLehrerChips(gewaehlt)}
+    ${kArtChips()}
     <div class="monat"><div class="m-kopf">${WOCHENTAGE_KURZ.map((w) => `<span>${w}</span>`).join("")}</div><div class="m-raster">${zellen.join("")}</div></div>
     <p class="leise klein">Farbe = Auslastung des Tages (12 UE je Fahrlehrer). Auf einen Tag klicken, um ihn zu öffnen.</p>
   </div>`;
@@ -3049,6 +3123,7 @@ function kalenderJahr(tag) {
   return `<div class="karte">
     ${kopfKalender("jahr", tag, String(j), (n) => KR.addMonthsISO(tag, 12 * n))}
     ${kLehrerChips(gewaehlt)}
+    ${kArtChips()}
     <div class="jahr">${monate}</div>
     <p class="leise klein">Farbe = Auslastung des Tages. Auf einen Tag klicken, um ihn zu öffnen; auf einen Monat klicken, um ihn groß zu sehen. Termine sind ab dem ${esc(datumDE(frueh))} geladen.</p>
   </div>`;
@@ -3070,6 +3145,12 @@ function bindeKalender(ziel) {
     const an = [...ziel.querySelectorAll("[data-klehrer]")].filter((x) => x.checked).map((x) => x.dataset.klehrer);
     setzeFilter("kalender", { lehrer: an.length === ziel.querySelectorAll("[data-klehrer]").length ? "" : (an.join(",") || "keiner") });
   }));
+  ziel.querySelectorAll("[data-kart]").forEach((c) => c.addEventListener("change", () => {
+    kArtWahlSetzen([...ziel.querySelectorAll("[data-kart]")].filter((x) => x.checked).map((x) => x.dataset.kart));
+    kArtOffen = true; zeichne();
+  }));
+  const kAlle = ziel.querySelector("[data-kartalle]");
+  if (kAlle) kAlle.addEventListener("change", () => { kArtWahlSetzen([]); kArtOffen = true; zeichne(); }); // „Alle Arten“: Auswahl leeren (auch beim Abhaken: nichts gewählt = alle)
   ziel.querySelectorAll("[data-termin]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); terminDialog(b.dataset.termin); }));
   ziel.querySelectorAll(".k-flaeche").forEach((f) => f.addEventListener("click", (e) => {
     if (e.target !== f) return;
@@ -3115,6 +3196,7 @@ function terminDialog(id, vorgabe) {
       <label class="voll">Schüler<select name="schueler_id"><option value="">– ohne Schüler –</option>${schuelerOptionen(t.schueler_id)}</select></label>
       <label>Art<select name="art">${Object.entries(ARTEN).map(([k, v]) => `<option value="${k}"${t.art === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
       <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(t.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
+      <p class="voll fl-hinweis-nb leise klein" id="nurBueroHinweis" hidden>Nur im Büro: Dieser Termin erscheint nicht in der App des Fahrlehrers und zählt nicht für Lohn, UE oder Statistik. In seiner App wirkt diese Zeit frei.</p>
       <label>Datum<input type="date" name="datum" required value="${esc(t.datum || "")}"></label>
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
@@ -3135,7 +3217,8 @@ function terminDialog(id, vorgabe) {
       ${id && !spiegel ? `<label class="voll wahl"><input type="checkbox" name="absagen"> Termin absagen (löschen)</label>` : ""}
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
-    <p class="leise klein" id="appHinweis">Der Fahrlehrer sieht die Änderung innerhalb einer Minute in seiner App.${id && t.payload && t.payload.onlineBookingId ? " Online gebuchte Termine: Der Schüler bekommt eine E-Mail." : ""}</p>`;
+    <p class="leise klein" id="appHinweis">Der Fahrlehrer sieht die Änderung innerhalb einer Minute in seiner App.${id && t.payload && t.payload.onlineBookingId ? " Online gebuchte Termine: Der Schüler bekommt eine E-Mail." : ""}</p>
+    ${id ? `<p class="k-link-zeile"><button class="knopf klein" type="button" data-klink>Link kopieren</button> <span class="leise klein">öffnet diesen Termin im Büro (nur nach Anmeldung)</span></p>` : ""}`;
   const tdlg = oeffneDialog(id ? "Termin bearbeiten" : "Termin anlegen", body, async (form) => {
     if (spiegel) { // nur das Fahrzeug gehört dem Kalender; alles andere lässt der Server nicht zu
       const fz = form.querySelector("select[name=fahrzeug]").value || null;
@@ -3156,6 +3239,11 @@ function terminDialog(id, vorgabe) {
     }
     // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
     if (neuerTerminGesperrt(t, id, d)) { zahlHinweisZeigen(tdlg, true); toast(ZAHLUNG_MELDUNG, true); return false; }
+    // W28: Eine gefahrene, unterschriebene oder schon abgerechnete Stunde wird keine Büro-Art (sie verschwände beim Fahrlehrer und aus Lohn/Nachweis)
+    if (id && nurBueroArt(d.art) && !nurBueroArt(t.art) && ["fahrstunde", "sonder", "nacht", "schalt", "pruefung", "theorie"].includes(t.art || "fahrstunde")
+      && ((t.datum || "") <= KR.todayISO() || (t.payload || {}).signed || t.buero_fc_status === "abgegeben" || (typeof nwIstNachweis === "function" && nwIstNachweis(t)))) {
+      toast("Diese Stunde ist schon gefahren oder abgerechnet. Sie kann kein Büro-Termin werden. Bitte einen neuen Termin anlegen.", true); return false;
+    }
     // W22: Umschreiber machen keine Sonderfahrten (eine schon eingetragene bleibt bearbeitbar)
     if (umschreiberSfGesperrt(t, d.art, d.schueler_id)) { toast("Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.", true); return false; }
     // Stopp-Notiz: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
@@ -3213,7 +3301,7 @@ function terminDialog(id, vorgabe) {
     const kl = sx ? lkwKlassenWahl(sx) : null;
     const zeigeSonder = art === "sonder", zeigeKl = !!kl && ["fahrstunde", "sonder", "nacht"].includes(art);
     tdlg.querySelector("#ohneAppFeld").hidden = !fl.ohne_app || (!zeigeSonder && !zeigeKl);
-    tdlg.querySelector("#appHinweis").hidden = !!fl.ohne_app;
+    tdlg.querySelector("#appHinweis").hidden = !!fl.ohne_app || nurBueroArt(art); // W28: Büro-Termine kommen nicht in die App
     tdlg.querySelector("#sonderArtFeld").hidden = !zeigeSonder;
     tdlg.querySelector("#umSfHinweis").hidden = !umschreiberSfGesperrt(t, art, sx ? sx.id : "");
     tdlg.querySelector("#lkwKlasseFeld").hidden = !zeigeKl;
@@ -3224,11 +3312,14 @@ function terminDialog(id, vorgabe) {
   // W16 Teil 3: Felder je Art (Beratung: Interessent; Erste Hilfe: bezahlt). Ohne Spalte in der Datenbank kein Feld.
   const artFelder = () => {
     const art = tdlg.querySelector("select[name=art]").value;
+    tdlg.querySelector("#nurBueroHinweis").hidden = !nurBueroArt(art);
     tdlg.querySelector("#beratungFeld").hidden = art !== "beratung" || !terminSpalteDa("interessent_name");
     tdlg.querySelector("#kursBezahltFeld").hidden = art !== "ersthilfe" || !terminSpalteDa("kurs_bezahlt");
   };
   tdlg.querySelector("select[name=art]").addEventListener("change", artFelder);
   artFelder();
+  const kl = tdlg.querySelector("[data-klink]");
+  if (kl) kl.addEventListener("click", () => kLinkKopieren(id));
   // Hinweis „Zahlung ausstehend“: bei neuem Termin als Sperre, bei bestehendem Termin nur zur Information
   const zahlNeu = () => {
     const sx = S.schueler.find((x) => x.id === tdlg.querySelector("select[name=schueler_id]").value);
@@ -4178,7 +4269,7 @@ function renderZahlenListe() {
   }
   if (liste === "ue") {
     const heute = KR.todayISO();
-    const l = S.termine.filter((t) => imZeitraum(t.datum) && t.datum <= heute && t.art !== "block" && terminPasst(t, f)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
+    const l = S.termine.filter((t) => imZeitraum(t.datum) && t.datum <= heute && t.art !== "block" && !nurBueroArt(t.art) && terminPasst(t, f)).sort((a, b) => (a.datum + (a.von || "")).localeCompare(b.datum + (b.von || "")));
     let summe = 0;
     const gezaehlt = new Set();
     const zeilen = l.map((t) => {
@@ -4240,7 +4331,7 @@ async function adminFunktion(body) {
 function ueJeFahrlehrer(termine, add) {
   const pruef = new Set();
   for (const t of termine) {
-    if (t.art === "block") continue;
+    if (t.art === "block" || nurBueroArt(t.art)) continue; // W28: Büro-Termine zählen nie als UE
     const p = t.payload || {}, status = p.status || t.status;
     if (status === "abgebrochen") continue;
     if (t.art === "pruefung" && t.schueler_id) { const k = t.schueler_id + "|" + t.datum; if (pruef.has(k)) continue; pruef.add(k); }
@@ -5521,6 +5612,7 @@ async function starte(user) {
   starteWer();
   await ladeDaten();
   setInterval(() => { if (!document.hidden) ladeDaten(); }, NEU_LADEN_MS);
+  kLinkEinloesen(); // W28: Link zu einem Termin (#termin=…) erst nach Anmeldung und Laden öffnen
 }
 
 $("schulWahl").addEventListener("change", (e) => {

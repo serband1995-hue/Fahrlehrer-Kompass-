@@ -6,7 +6,10 @@
   "use strict";
 
   // Büro-Kategorien sind keine bezahlten Fahrstunden-UE (index.html: FS_BUERO_ARTEN)
-  const FS_BUERO_ARTEN = ["beratung", "ersthilfe", "vortest", "simulator"];
+  const FS_BUERO_ARTEN = ["beratung", "ersthilfe", "vortest", "simulator", "mpu"];
+  // W28: nur im Büro – nicht in App, Lohn, UE, Fahrcheck, Statistik, Nachweis, Monatsbericht (index.html: NUR_BUERO_ARTEN)
+  const NUR_BUERO_ARTEN = ["vortest", "simulator", "beratung", "mpu"];
+  function istNurBueroArt(art) { return NUR_BUERO_ARTEN.indexOf(art) >= 0; }
 
   function pad2(n) { return String(n).padStart(2, "0"); }
   function hm2min(hm) { const p = ("" + hm).split(":"); return (+p[0]) * 60 + (+(p[1] || 0)); }
@@ -715,7 +718,7 @@
     abschliessen();
     return res;
   }
-  const api = { KONFLIKT_AUS, fahrzeugNorm, terminZaehltFuerKonflikt, terminUeberlappt, konfliktGruende, terminKonflikte, konfliktIds, konfliktText, spaltenLayout, paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
+  const api = { NUR_BUERO_ARTEN, istNurBueroArt, KONFLIKT_AUS, fahrzeugNorm, terminZaehltFuerKonflikt, terminUeberlappt, konfliktGruende, terminKonflikte, konfliktIds, konfliktText, spaltenLayout, paketVerbrauch, terminEndeMin, einheitenGeld, einheitenNachweis, RUNDUNG, sonderMinuten, setzeSonderMinuten, sonderEinheiten, sonderEinheitenAusMinuten, terminMinuten, SONDER_MIN_STANDARD, paketQuelleAusTerminen, paketHinweise, paketSonderAusPlan, PAKET_SONDER, FS_BUERO_ARTEN, pad2, hm2min, parseISO, dateISO, todayISO, ueOf, addMonthsISO, addDaysISO, daysBetweenISO, reaktFaellig, reaktNachZahlung, reaktInfo,
     setzeReaktRegel, holeReaktRegel, reaktMonate, reaktFreiAm, reaktEntfaellt, reaktRegelAusPreisen, REAKT_MONATE_STANDARD,
     FRISTEN_STANDARD, FRISTEN_GRENZEN, PRAXIS_NACH_THEORIE_MONATE, fristZahl, normFristen, fristenAusZeilen, fristenAusKE, setzeFristen, holeFristen, theorieInfo, antragInfo, theorieFristInfo, umschreibInfo, istEuEwr, EU_EWR, UMSCHREIB_MONATE, theorieSoll, theorieStand, sonderSoll, FAHRLEHRERLAUBNIS,
     kundennummerText, plzOk, adresseNorm, adresseZeilen, ausbildungsKlassen, fahrlehrerFristen, lkwWegAusVorbesitz, LEKT_GRUND, LEKT_B, LEKT_C, LEKT_CE, fcGebucht, fcErhalten, fcFuersBuero, fcVomBuero, lohnStand, LOHN_FC_AB, fcGueltigBis, fcGueltigkeit, fcZeitraum, fcVorZeitraum, fcSoll, aufteilung, FAHR_ARTEN, wartetInfo, istDrittstaat, landKey, DRITTSTAATEN, LAND_NAMEN };

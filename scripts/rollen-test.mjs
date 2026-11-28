@@ -423,7 +423,8 @@ for (const R of ROLLEN) {
     await maskeWeg();
     const k8 = await page.evaluate(() => {
       try { closeSheet(); } catch (e) {}
-      const iso = KR.addDaysISO(todayISO(), 1);
+      // nächster Werktag: der App-Kalender hat bewusst keinen Sonntag (sonst schlug R14 jeden Samstag fehl, W28)
+      let iso = KR.addDaysISO(todayISO(), 1); if (weekdayMon0(iso) === 6) iso = KR.addDaysISO(iso, 1);
       ensureAusbildungsplaene();
       const c = DB.ausbildungsplaene.find((p) => p.standard) || DB.ausbildungsplaene[0];
       const mk = (id, name) => { const st = { id, name, form: "B", created: Date.now(), plan: newPlan(), planId: c.id, planSnapshot: JSON.parse(JSON.stringify(c.stufen)), telefon: "" }; ensure(st); return st; };

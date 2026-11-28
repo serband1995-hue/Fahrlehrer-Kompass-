@@ -1,0 +1,76 @@
+/* Büro-Handbuch – Druckbild A4 (Chromium → PDF) */
+@page { size: A4; margin: 16mm 16mm 18mm 16mm; }
+:root { --gruen: #2f6b47; --gruen-hell: #eaf3ed; --gelb-hell: #fdf6e3; --gelb: #b7861b; --rot: #d6202a; --grau: #5b6270; --linie: #d9dde3; --text: #1d2129; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font-family: "Manrope", Arial, sans-serif; font-size: 10.8pt; line-height: 1.5; color: var(--text); }
+h1, h2, h3 { font-family: "Source Serif 4", Georgia, serif; line-height: 1.2; color: #14181f; }
+p { margin: 0 0 6pt; }
+ul { margin: 0 0 6pt; padding-left: 16pt; }
+li { margin: 0 0 3pt; }
+b, strong { font-weight: 700; }
+.knopf-name { display: inline-block; padding: 0 5pt; border: 1px solid #b9c0ca; border-radius: 4pt; background: #f6f7f9; font-weight: 700; font-size: 9.6pt; line-height: 1.5; white-space: nowrap; }
+
+/* Deckblatt */
+.deckblatt { height: 258mm; display: flex; flex-direction: column; break-after: page; }
+.deckblatt .absender { font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--gruen); font-size: 10pt; }
+.deckblatt .oben { border-bottom: 3px solid var(--gruen); padding-bottom: 8pt; display: flex; justify-content: space-between; align-items: center; }
+.deckblatt .oben img { width: 34pt; height: 34pt; border-radius: 8pt; }
+.deckblatt .mitte { margin-top: 48mm; }
+.deckblatt .kapitelnr { font-size: 12pt; color: var(--grau); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.deckblatt h1 { font-size: 30pt; margin: 6pt 0 10pt; }
+.deckblatt .kurz { font-size: 13pt; color: var(--grau); max-width: 150mm; }
+.deckblatt .inhalt { margin-top: 14mm; }
+.deckblatt .unten { margin-top: auto; font-size: 9.5pt; color: var(--grau); border-top: 1px solid var(--linie); padding-top: 6pt; }
+
+/* Inhaltsverzeichnis */
+.verzeichnis { list-style: none; padding: 0; margin: 0; }
+.verzeichnis li { display: flex; align-items: baseline; gap: 4pt; margin: 0 0 3.5pt; }
+.verzeichnis li .t { flex: none; max-width: 85%; color: inherit; text-decoration: none; }
+.verzeichnis li .p { flex: 1; border-bottom: 1px dotted #9aa2ad; transform: translateY(-3pt); }
+.verzeichnis li .s { flex: none; font-variant-numeric: tabular-nums; font-weight: 700; min-width: 16pt; text-align: right; }
+.verzeichnis li.kap { margin-top: 9pt; font-weight: 800; font-size: 11.5pt; }
+.verzeichnis li.fn { padding-left: 14pt; }
+.verzeichnis-seite { break-after: page; }
+.verzeichnis-seite h1 { font-size: 22pt; margin: 0 0 12pt; }
+
+/* Kapitel-Kopf im Gesamt-PDF */
+.kapitel-kopf { break-before: page; border-bottom: 3px solid var(--gruen); padding-bottom: 6pt; margin-bottom: 12pt; }
+.kapitel-kopf .kapitelnr { font-size: 10pt; color: var(--gruen); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.kapitel-kopf h1 { font-size: 24pt; margin: 2pt 0 4pt; }
+.kapitel-kopf p { color: var(--grau); margin: 0; }
+
+/* Eine Funktion */
+.funktion { margin: 0 0 16pt; }
+.funktion + .funktion { border-top: 1px solid var(--linie); padding-top: 12pt; }
+.funktion.neue-seite { break-before: page; border-top: 0; padding-top: 0; }
+.funktion > h2 { font-size: 16pt; margin: 0 0 6pt; break-after: avoid; }
+.funktion h3 { font-size: 11.5pt; margin: 8pt 0 4pt; break-after: avoid; font-family: "Manrope", Arial, sans-serif; font-weight: 800; color: var(--gruen); text-transform: uppercase; letter-spacing: .04em; }
+.wofuer { background: var(--gruen-hell); border-left: 4px solid var(--gruen); padding: 6pt 9pt; border-radius: 0 6pt 6pt 0; margin: 0 0 6pt; break-inside: avoid; }
+.wofuer h3 { margin-top: 0; }
+.gut { background: var(--gelb-hell); border-left: 4px solid var(--gelb); padding: 6pt 9pt; border-radius: 0 6pt 6pt 0; margin: 8pt 0 0; break-inside: avoid; }
+.gut h3 { margin-top: 0; color: #7a5a10; }
+.unsicher { background: #f1f2f4; border-left: 4px solid #8b93a0; padding: 5pt 9pt; border-radius: 0 6pt 6pt 0; margin: 6pt 0 0; font-size: 9.8pt; color: #3c424d; break-inside: avoid; }
+.unsicher::before { content: "Nicht sicher geklärt: "; font-weight: 800; }
+
+/* Schritte: grüne Quadrate. Rote Kreise gibt es nur im Bild (Marken) und im Text als Verweis darauf: (2) → .marke-ref */
+ol.schritte { list-style: none; counter-reset: s; padding: 0; margin: 0 0 6pt; }
+ol.schritte > li { counter-increment: s; position: relative; padding-left: 24pt; margin: 0 0 4pt; min-height: 16pt; }
+ol.schritte > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 16pt; height: 16pt; border-radius: 3pt; background: var(--gruen); color: #fff; font: 700 9pt/16pt Arial, sans-serif; text-align: center; }
+
+/* Bilder */
+figure { margin: 6pt 0 8pt; break-inside: avoid; }
+figure img { display: block; max-width: 100%; border: 1px solid #c4cad3; border-radius: 5pt; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+figure img.handy { max-width: 62mm; }
+figure img.klein { max-width: 110mm; }
+figure img.mittel { max-width: 140mm; }
+figure.nebeneinander { display: flex; gap: 8pt; align-items: flex-start; }
+figure.nebeneinander img { min-width: 0; }
+figcaption { font-size: 9pt; color: var(--grau); margin-top: 3pt; }
+
+/* Tabelle (z. B. Übersicht) */
+table.liste { border-collapse: collapse; width: 100%; font-size: 9.8pt; margin: 4pt 0 8pt; }
+table.liste th, table.liste td { border: 1px solid var(--linie); padding: 3pt 5pt; text-align: left; vertical-align: top; }
+table.liste th { background: #f3f5f7; }
+.unsichtbar { position: absolute; color: #fff; font-size: 1pt; line-height: 0; } /* aus dem Fluss: darf den Umbruch nicht ändern */
+.marke-ref { display: inline-block; width: 13pt; height: 13pt; border-radius: 50%; background: var(--rot); color: #fff; font: 700 8pt/13pt Arial, sans-serif; text-align: center; vertical-align: 1pt; margin: 0 1pt; }

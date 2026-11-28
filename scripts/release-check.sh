@@ -21,9 +21,10 @@ echo "APP_VERSION    : ${app_alt:-?} -> ${app_neu:-?}"
 echo "CACHE_VERSION  : ${cache_alt:-?} -> ${cache_neu:-?}"
 
 # Nur prüfen, wenn sich ausgelieferte Dateien geändert haben (nicht bei reinen Skript-, Workflow- oder Doku-Änderungen).
+# docs/buero-handbuch/ ist ausgenommen (W30, 28.11.2026): Handbuch-PDFs und ihr Bau-Skript, kein Teil der App.
 # supabase/ ist ausgenommen (W16, 26.11.2026): Edge-Funktionen und Migrationen kommen nie in den App-Cache.
 # Geänderte App-Dateien lösen die Versionsprüfung weiter aus; die Geheimnis-Prüfung unten deckt supabase/ weiter ab.
-geaendert=$(git diff --name-only "$BASIS"...HEAD -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md' ':!supabase' 2>/dev/null; git diff --name-only -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md' ':!supabase')
+geaendert=$(git diff --name-only "$BASIS"...HEAD -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md' ':!supabase' ':!docs/buero-handbuch' 2>/dev/null; git diff --name-only -- . ':!scripts' ':!.claude' ':!.github' ':!CLAUDE.md' ':!supabase' ':!docs/buero-handbuch')
 if [ -n "$geaendert" ]; then
   # Höher, nicht nur anders (W13, 24.11.2026): eine zurückgehende Nummer (z. B. nach dem Einmischen von main) ist ein Fehler.
   # sort -V vergleicht 2026.11.24.10 > 2026.11.24.9 und kompass-v110 > kompass-v109 richtig.
