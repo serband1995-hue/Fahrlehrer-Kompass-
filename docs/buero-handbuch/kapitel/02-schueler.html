@@ -7,7 +7,7 @@
   <ol class="schritte">
     <li>Im Menü links auf <span class="knopf-name">Schüler</span> tippen.</li>
     <li>Oben wählst du mit den Reitern, wen du sehen willst: <span class="knopf-name">Aktiv</span>, <span class="knopf-name">Warteliste</span>, <span class="knopf-name">Archiv</span> oder <span class="knopf-name">Alle</span> (1).</li>
-    <li>Mit den drei Auswahlfeldern (2, 3, 4) und dem Suchfeld (5) wird die Liste kürzer.</li>
+    <li>Mit den drei Auswahlfeldern (2) (3) (4) und dem Suchfeld (5) wird die Liste kürzer.</li>
     <li>Mit <span class="knopf-name">+ Schüler anlegen</span> (6) kommt ein neuer Schüler dazu.</li>
     <li>In der Liste auf <span class="knopf-name">Bearbeiten</span> tippen, um die Akte des Schülers zu öffnen.</li>
   </ol>
@@ -168,8 +168,8 @@
   <ol class="schritte">
     <li>Auf der Seite „Schüler“ auf <span class="knopf-name">+ Schüler anlegen</span> tippen. Ein Fenster „Schüler anlegen“ geht auf.</li>
     <li><b>Name</b> (Pflicht) eintragen (1).</li>
-    <li><b>Straße und Hausnummer</b> (2), <b>PLZ</b> (3, genau 5 Ziffern) und <b>Ort</b> (4) eintragen. Das ist freiwillig.</li>
-    <li><b>Telefon</b> (5) eintragen. Die Nummer ist der Login des Schülers für die Fahr-Akademie.</li>
+    <li><b>Straße und Hausnummer</b> (2), <b>PLZ</b> (3) (genau 5 Ziffern) und <b>Ort</b> (4) eintragen. Das ist freiwillig.</li>
+    <li><b>Telefon</b> (5) eintragen. Die Nummer ist der Anmeldename des Schülers für die Fahr-Akademie.</li>
     <li><b>E-Mail</b> (6) eintragen.</li>
     <li>Wenn es Eltern oder Erziehungsberechtigte gibt: <b>E-Mail Eltern</b> (7) eintragen. Das ist freiwillig. Nur das Büro sieht sie.</li>
   </ol>
@@ -177,7 +177,7 @@
   <div class="gut"><h3>Gut zu wissen</h3><ul>
     <li>Die Kundennummer trägst du nicht selbst ein. Sie wird beim Speichern automatisch vergeben und erscheint danach in der Liste und in der Akte als „K-00025“.</li>
     <li>Sobald du bei „E-Mail Eltern“ etwas eintippst, erscheint die Auswahl „Zahlungs-Mails gehen an“ mit „Schüler und Eltern“, „nur Eltern“ und „nur Schüler“.</li>
-    <li>Die Felder für Straße, PLZ und Ort sind nur da, wenn die Datenbank sie schon hat. Sonst fehlen sie, oder es kommt die Meldung „Datenbank noch nicht bereit (Adresse)“. Der Schüler wird dann ohne Anschrift angelegt.</li>
+    <li>Die Felder für Straße, PLZ und Ort sind nur da, wenn dein System sie schon kennt. Sonst fehlen sie, oder es kommt die Meldung „Datenbank noch nicht bereit (Adresse)“. Der Schüler wird dann ohne Anschrift angelegt.</li>
     <li>Sind schon Eingaben im Fenster und du tippst auf „Abbrechen“ oder das ✕, fragt die Seite „Eingaben verwerfen?“.</li>
   </ul></div>
 </section>
@@ -217,7 +217,7 @@
     <li>Ist ein Paket ohne Posten (zum Beispiel „Turboboost“), wird es nur zugeordnet, ohne Preise.</li>
     <li>Fehlt bei einem Posten der Preis, steht dort „Preis fehlt“ und du musst ihn bei „Anpassen“ eintragen.</li>
     <li>Wie Pakete und Preise angelegt werden und wie das Verkaufen im Einzelnen geht, steht im Kapitel 5.</li>
-    <li>Hat die Datenbank das Verkaufen noch nicht, gibt es stattdessen nur ein einfaches Feld „Paket“ („– ohne Paket –“ oder ein Paket zum Zuordnen).</li>
+    <li>Kann dein System das Verkaufen noch nicht, gibt es stattdessen nur ein einfaches Feld „Paket“ („– ohne Paket –“ oder ein Paket zum Zuordnen).</li>
   </ul></div>
 </section>
 
@@ -294,13 +294,13 @@
   <figure><img src="bilder/02-neu-plz-fehler.png" class="mittel" alt=""><figcaption>Die PLZ „123“ ist zu kurz: Das Feld meldet „Bitte 5 Ziffern eintragen.“ und unten steht „Die PLZ hat 5 Ziffern.“.</figcaption></figure>
   <figure><img src="bilder/02-neu-fertig.png" class="mittel" alt=""><figcaption>Der neue Schüler „Max Muster“ steht in der Liste, nach der Suche gefunden.</figcaption></figure>
   <div class="gut"><h3>Gut zu wissen</h3><ul>
-    <li>Der neue Schüler ist „aktiv“. Die Kundennummer vergibt der Server.</li>
+    <li>Der neue Schüler ist „aktiv“. Die Kundennummer vergibt das System von selbst.</li>
     <li>Bei Ausbildungsart „Umschreibung“ merkt sich die Seite, dass das Büro den Schüler als Umschreiber angelegt hat.</li>
     <li>Scheitert nur die Eltern-E-Mail, steht „… ist angelegt, aber die E-Mail der Eltern ist nicht gespeichert. Bitte in der Akte nachtragen.“.</li>
     <li>Ein Paket-Fehler (zum Beispiel ein fehlender Preis) stoppt das Speichern mit einer Meldung.</li>
     <li>Die Felder Simulator, Theorie-App und Antrag gibt es im Formular nicht.</li>
   </ul></div>
-  <p class="unsicher">Wofür die Datenbank-Felder „hat Simulator“ und „hat Theorie-App“ stehen und wo sie das Büro sieht, ist im Büro-Code nicht erkennbar. Der Simulator-Haken wird beim Eintragen eines Simulator-Verkaufs gesetzt.</p>
+  <p class="unsicher">Wofür die Angaben „hat Simulator“ und „hat Theorie-App“ stehen und wo sie das Büro sieht, ist in der Büro-Seite nicht erkennbar. Der Simulator-Haken wird beim Eintragen eines Simulator-Verkaufs gesetzt.</p>
 </section>
 
 <section class="funktion">
@@ -314,6 +314,10 @@
   </ol>
   <figure><img src="bilder/02-neu-handy.png" class="handy" alt=""><figcaption>Das Formular am Handy.</figcaption></figure>
   <figure><img src="bilder/02-liste-handy.png" class="handy" alt=""><figcaption>Die Liste am Handy.</figcaption></figure>
+  <div class="gut"><h3>Gut zu wissen</h3><ul>
+    <li>Am Handy steht Klasse und Paket in kleiner Schrift unter dem Namen. Die Spalten „Klasse“ und „Nächster Termin“ gibt es nur auf sehr breiten Bildschirmen.</li>
+    <li>Das Fenster „Schüler anlegen“ hat dieselben Felder wie am Computer.</li>
+  </ul></div>
 </section>
 
 <section class="funktion neue-seite">
@@ -345,8 +349,8 @@
   </ol>
   <figure><img src="bilder/02-akte-kundennummer.png" class="mittel" alt=""><figcaption>Kundennummer (1) und Name (2).</figcaption></figure>
   <div class="gut"><h3>Gut zu wissen</h3><ul>
-    <li>Die Nummer wird nur vom Server vergeben. Bei einem ganz neuen Schüler steht „wird vergeben“.</li>
-    <li>Die Zeile fehlt, wenn die Datenbank die Spalte noch nicht hat.</li>
+    <li>Die Nummer wird nur vom System vergeben. Bei einem ganz neuen Schüler steht „wird vergeben“.</li>
+    <li>Die Zeile fehlt, wenn dein System die Kundennummer noch nicht kennt.</li>
     <li>Hat der Fahrlehrer den Schüler in seiner App ausgeblendet („gelöscht“), steht über der Kundennummer ein gelber Hinweis: „Vom Fahrlehrer ausgeblendet am … Im Büro bleibt der Schüler ganz normal.“.</li>
   </ul></div>
 </section>
@@ -367,7 +371,7 @@
     <li>Die Seite sendet nur die Felder, die du geändert hast. Was ein Fahrlehrer oder ein anderer PC inzwischen anderswo geändert hat, wird nicht überschrieben.</li>
     <li>Ein Klick neben das Fenster schließt es nur, solange du noch nichts eingegeben hast.</li>
     <li>Wird die Seite wegen Leerlauf oder PIN-Wechsel gesperrt, schließen sich alle Fenster. Deine Eingaben bleiben im Hintergrund. Meldest du dich wieder an, kommt „Dein Fenster mit den Eingaben ist wieder da.“. Meldet sich eine andere Person an, werden die Eingaben verworfen.</li>
-    <li>Die Telefonnummer ändern ist bei Schülern mit Fahr-Akademie-Zugang wichtig, weil sie der Login ist.</li>
+    <li>Die Telefonnummer ändern ist bei Schülern mit Fahr-Akademie-Zugang wichtig, weil sie der Anmeldename ist.</li>
   </ul></div>
 </section>
 
@@ -438,7 +442,7 @@
   <h3>So geht’s</h3>
   <ol class="schritte">
     <li>In der Akte (oder in der Liste) auf <span class="knopf-name">Zahlung offen</span> tippen.</li>
-    <li>Im Fenster „Zahlung ausstehend“ einen Grund antippen (1: „Reaktivierung“ oder „Rechnung offen“) oder selbst einen Grund eintragen (2). Der Grund ist freiwillig.</li>
+    <li>Im Fenster „Zahlung ausstehend“ einen Grund antippen (1) („Reaktivierung“ oder „Rechnung offen“) oder selbst einen Grund eintragen (2). Der Grund ist freiwillig.</li>
     <li>Auf <span class="knopf-name">Zahlung ausstehend</span> tippen (3). Es gibt kein Bestätigen-Fenster, aber danach „Rückgängig“.</li>
     <li>In der Akte steht jetzt ein roter Text „Zahlung ausstehend seit … : Rechnung offen. Keine neuen Termine, bis „Bezahlt“ eingetragen ist.“ (1) und der Knopf <span class="knopf-name">Bezahlt</span> (2).</li>
     <li>Ist bezahlt, tippe auf <span class="knopf-name">Bezahlt</span>. Die Sperre ist weg.</li>
@@ -596,7 +600,7 @@
   </ol>
   <figure><img src="bilder/02-akte-intern.png" class="mittel" alt=""><figcaption>Das Feld „Interne Notiz“ (1).</figcaption></figure>
   <div class="gut"><h3>Gut zu wissen</h3><ul>
-    <li>Das To-do-Feld gibt es nur, wenn die Datenbank es hat. In der Vorführung fehlt es, darum ist dafür kein Bild da.</li>
+    <li>Das To-do-Feld gibt es nur, wenn dein System es schon kennt. In der Vorführung fehlt es, darum ist dafür kein Bild da.</li>
     <li>Keine Gesundheits- oder Privatdaten eintragen.</li>
   </ul></div>
 </section>
@@ -655,7 +659,7 @@
     <li>Das Fenster lädt alle Fahrstunden des Schülers.</li>
     <li>Oben stehen Kacheln (1): Übungsfahrten (Zeit und Zahl der Termine), Sonderfahrten (Überland, Autobahn, Nacht mit Soll), Theorie und Unterschriften.</li>
     <li>Der Kasten „Noch offen“ (2) listet, was noch fehlt, zum Beispiel Unterschriften, Sonderfahrten, Theorie, Theorieprüfung, Praxisprüfung. Rot heißt: jetzt handeln. Sind alle Angaben da, steht „✓ Alles da.“.</li>
-    <li>Darunter steht die Liste „Gefahrene Stunden“ (3 und 4) mit Datum, Zeit, Art, Minuten, Fahrlehrer und Unterschrift.</li>
+    <li>Darunter steht die Liste „Gefahrene Stunden“ (3) (4) mit Datum, Zeit, Art, Minuten, Fahrlehrer und Unterschrift.</li>
   </ol>
   <figure><img src="bilder/02-akte-nachweis-knopf.png" class="mittel" alt=""><figcaption>Der Knopf „Ausbildungsnachweis“ (1) in der Akte. Der Knopf „Serientermine anlegen“ (2) erscheint nur bei Turboboost.</figcaption></figure>
   <figure><img src="bilder/02-nw-uebersicht.png" class="mittel" alt=""><figcaption>Das Fenster „Ausbildungsnachweis“: Kacheln (1), „Noch offen“ (2), „+ Fahrstunde nachtragen“ (3), eine gefahrene Stunde (4).</figcaption></figure>
@@ -665,6 +669,37 @@
     <li>Die Spalte „Unterschrift“ zeigt „✓ unterschrieben“, „offen“ oder „⚠ neu unterschreiben“ (wenn die Stunde nach der Unterschrift geändert wurde). Ab 01.07.2027 gibt es keine Unterschrift des Schülers mehr, dann fehlt die Spalte.</li>
     <li>Sonderfahrten im Ausbildungsplan der App ohne Termin im Kalender werden als Hinweis gemeldet („bitte nachtragen“).</li>
     <li>Der Knopf „Serientermine anlegen“ in der Akte legt mehrere Termine auf einmal an. Er erscheint nur bei Schülern mit dem Paket „Turboboost“.</li>
+  </ul></div>
+</section>
+
+<section class="funktion">
+  <h2>Serientermine anlegen (Paket Turboboost)</h2>
+  <div class="wofuer"><h3>Wofür</h3><p>Schüler mit dem Paket „Turboboost“ fahren viele Stunden hintereinander. Mit den Serienterminen legst du mehrere Fahrstunden auf einmal an, statt jede einzeln einzutragen.</p></div>
+  <h3>So geht’s</h3>
+  <ol class="schritte">
+    <li>Öffne die Akte eines Schülers mit dem Paket „Turboboost“. Nur bei ihm gibt es den Knopf <span class="knopf-name">Serientermine anlegen</span>.</li>
+    <li>Tippe auf den Knopf. Es öffnet sich das Fenster „Serientermine (Turboboost)“. Oben steht, für wen und bei welchem Fahrlehrer die Termine sind. Jeder Termin dauert 90 Minuten.</li>
+    <li>Wähle bei <b>Erster Tag</b> (1) das Datum und bei <b>Uhrzeit</b> (2) den Beginn (Vorgabe: morgen, 10:00).</li>
+    <li>Wähle bei <b>Art</b> (3) „Fahrstunde“ oder „Sonderfahrt“.</li>
+    <li>Wähle bei <b>Wie oft</b> (4): „täglich“, „jeden 2. Tag“ oder „wöchentlich“.</li>
+    <li>Trage bei <b>Anzahl Termine</b> (5) eine Zahl von 1 bis 20 ein (Vorgabe: 5).</li>
+    <li>Unter den Feldern (6) steht eine Vorschau, zum Beispiel „5 Termine: 03.12.2026 bis 07.12.2026“.</li>
+    <li>Tippe auf <span class="knopf-name">Termine anlegen</span> (7).</li>
+    <li>Oben steht „4 Termine angelegt“ mit dem Knopf <span class="knopf-name">Rückgängig</span>. Damit nimmst du alle eben angelegten Termine wieder zurück.</li>
+  </ol>
+  <figure><img src="bilder/02-akte-nachweis-knopf.png" class="mittel" alt=""><figcaption>Der Knopf „Serientermine anlegen“ (2) steht in der Akte neben „Ausbildungsnachweis“ (1).</figcaption></figure>
+  <figure><img src="bilder/02-serien-dialog.png" class="mittel" alt=""><figcaption>Das Fenster „Serientermine (Turboboost)“.</figcaption></figure>
+  <figure><img src="bilder/02-serien-warnung.png" class="mittel" alt=""><figcaption>Liegt zur gleichen Zeit schon etwas, fragt die Seite „Überschneidung … Trotzdem speichern?“. „Abbrechen“ (1) ist der Hauptknopf, „Trotzdem speichern“ (2) legt die Termine trotzdem an.</figcaption></figure>
+  <figure><img src="bilder/02-serien-fertig.png" class="klein" alt=""><figcaption>Nach dem Anlegen: die Meldung mit „Rückgängig“.</figcaption></figure>
+  <div class="gut"><h3>Gut zu wissen</h3><ul>
+    <li>Der Schüler braucht einen Fahrlehrer. Sonst kommt „Erst einen Fahrlehrer zuweisen, dann gehen Serientermine.“.</li>
+    <li>Die Termine gehören dem Fahrlehrer des Schülers.</li>
+    <li>Ist beim Schüler „Zahlung ausstehend“ vermerkt, kommt „Zahlung ausstehend – erst „Bezahlt“ eintragen.“ und es werden keine Termine angelegt.</li>
+    <li>Umschreiber bekommen keine Sonderfahrten, nur Fahrstunden.</li>
+    <li>Liegt ein Tag im Urlaub des Fahrlehrers, fragt die Seite „Trotzdem alle anlegen?“.</li>
+    <li>Ist die Uhrzeit so spät, dass 90 Minuten nicht mehr in den Tag passen, kommt „Zu spät am Tag für 90 Minuten.“.</li>
+    <li>Die Termine stehen sofort im Kalender. Mit „Rückgängig“ verschwinden sie wieder (sie werden nicht endgültig gelöscht).</li>
+    <li>In der Vorführung hat jeder vierte Schüler das Paket Turboboost.</li>
   </ul></div>
 </section>
 

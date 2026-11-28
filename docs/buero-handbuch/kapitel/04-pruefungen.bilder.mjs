@@ -28,11 +28,11 @@ const LISTE = [
   // ---------- Prüfungen ----------
   { id: "04-pr-uebersicht", url: "#pruefungen", geraet: "pc", hoehe: 1500, ausschnitt: "#ansicht",
     marken: [{ sel: "#ansicht .kacheln", nr: 1 }, { sel: "#ansicht .warnkarte", nr: 2 }, { sel: `${KARTE} .tabs`, nr: 3 }] },
-  { id: "04-pr-menue", url: "#pruefungen", geraet: "pc", ausschnitt: { sel: '#nav a[href="#pruefungen"]', rand: 14 }, marken: [{ sel: '#nav a[href="#pruefungen"] .zahl, #nav a[href="#pruefungen"] span:last-child', nr: 1 }] },
+  { id: "04-pr-menue", url: "#pruefungen", geraet: "pc", ausschnitt: { sel: '#nav a[href="#pruefungen"]', rand: 8 }, marken: [{ sel: '#nav a[href="#pruefungen"] .zahl, #nav a[href="#pruefungen"] span:last-child', nr: null }] },
   { id: "04-pr-kacheln", url: "#pruefungen", geraet: "pc", ausschnitt: "#ansicht .kacheln" },
   { id: "04-pr-warnkarte", url: "#pruefungen", geraet: "pc", ausschnitt: "#ansicht .warnkarte",
     marken: [{ sel: "#ansicht .warnkarte .haupt >> nth=0", nr: 1 }, { sel: "#ansicht .warnkarte [data-ergebnis]", nr: 2 }, { sel: "#ansicht .warnkarte [data-pbearb]", nr: 3 }] },
-  { id: "04-pr-knoepfe", url: "#pruefungen", geraet: "pc", ausschnitt: `${KARTE} .karte-kopf`,
+  { id: "04-pr-knoepfe", url: "#pruefungen", geraet: "pc", ausschnitt: { sel: `${KARTE} .karte-kopf`, rand: 26 },
     marken: [{ sel: `${KARTE} .tabs .tab >> nth=0`, nr: 1 }, { sel: "a[href='#pruefungen?gross=1']", nr: 2 }, { sel: "#ptNeu", nr: 3 }, { sel: "#pNeu", nr: 4 }] },
   { id: "04-pr-haken-legende", url: "#pruefungen?ansicht=kommend", geraet: "pc", ausschnitt: ".legende", marken: [{ sel: ".legende span:nth-child(1) .haken", nr: 1 }, { sel: ".legende span:nth-child(2) .haken", nr: 2 }, { sel: ".legende span:nth-child(3) .haken", nr: 3 }] },
 
@@ -70,7 +70,7 @@ const LISTE = [
   { id: "04-pr-kommende", url: "#pruefungen?ansicht=kommend", geraet: "pc", hoehe: 1500, ausschnitt: { sel: KARTE, maxHoehe: 1000 },
     marken: [{ sel: `${KARTE} .tabs .tab[aria-current]`, nr: 1 }, { sel: `${KARTE} .tabs .tab:nth-of-type(n) ~ .trenner + .tab`, nr: 2 }, { sel: "#pSuche", nr: 3 }, { sel: "#pVon", nr: 4 }, { sel: "#pSort", nr: 5 }] },
   { id: "04-pr-filter", url: "#pruefungen?ansicht=kommend&suche=muster", geraet: "pc", ausschnitt: ".filterzeile", marken: [{ sel: "#pSuche", nr: 1 }, { sel: "#pVon", nr: 2 }, { sel: "#pBis", nr: 3 }, { sel: "#pSort", nr: 4 }, { sel: ".filterzeile a.knopf", nr: 5 }] },
-  { id: "04-pr-arten", url: "#pruefungen?ansicht=kommend", geraet: "pc", ausschnitt: `${KARTE} .karte-kopf .tabs`, marken: [{ sel: `${KARTE} .tabs .trenner + .tab`, nr: 1 }] },
+  { id: "04-pr-arten", url: "#pruefungen?ansicht=kommend", geraet: "pc", ausschnitt: { sel: `${KARTE} .karte-kopf .tabs`, rand: 26 }, marken: [{ sel: `${KARTE} .tabs .trenner + .tab`, nr: 1 }] },
   { id: "04-pr-ergebnisse", url: "#pruefungen?ansicht=ergebnis", geraet: "pc", hoehe: 1300, ausschnitt: "#ansicht",
     marken: [{ sel: "[data-eja]", nr: 1 }, { sel: "[data-enein]", nr: 2 }, { sel: ".tab[aria-current]", nr: 3 }] },
   { id: "04-pr-ergebnis-ja", url: "#pruefungen?ansicht=ergebnis", geraet: "pc", hoehe: 1300, vorher: async (p, h) => { await h.klick("[data-eja]", { warte: 900 }); },
@@ -101,7 +101,7 @@ const LISTE = [
   // ---------- Fristen ----------
   { id: "04-fr-uebersicht", url: "#fristen", geraet: "pc", hoehe: 1500, ausschnitt: "#ansicht",
     marken: [{ sel: "#ansicht .kacheln", nr: 1 }, { sel: `${KARTE} .tabs`, nr: 2 }, { sel: "#fristenSuche", nr: 3 }] },
-  { id: "04-fr-menue", url: "#fristen", geraet: "pc", ausschnitt: { sel: '#nav a[href="#fristen"]', rand: 14 } },
+  { id: "04-fr-menue", url: "#fristen", geraet: "pc", ausschnitt: { sel: '#nav a[href="#fristen"]', rand: 2 } },
   { id: "04-fr-kacheln", url: "#fristen", geraet: "pc", hoehe: 1000, ausschnitt: "#ansicht .kacheln",
     marken: [{ sel: "#ansicht .kachel >> nth=0", nr: 1 }, { sel: "#ansicht .kachel >> nth=1", nr: 2 }, { sel: "#ansicht .kachel >> nth=2", nr: 3 }, { sel: "#ansicht .kachel >> nth=3", nr: 4 }, { sel: "#ansicht .kachel >> nth=4", nr: 5 }, { sel: "[data-kachelbald]", nr: 6 }] },
   { id: "04-fr-handeln", url: "#fristen", geraet: "pc", hoehe: 2000, ausschnitt: { sel: KARTE, maxHoehe: 1000 }, marken: [{ sel: `${KARTE} .tab[aria-current]`, nr: 1 }, { sel: `${KARTE} tbody tr:first-child .marke-pill >> nth=0`, nr: 2 }] },
@@ -115,7 +115,7 @@ const LISTE = [
   { id: "04-fr-antrag", url: "#fristen?ansicht=antrag", geraet: "pc", hoehe: 1500, ausschnitt: { sel: KARTE, maxHoehe: 1000 }, marken: [{ sel: "[data-antragneu] >> nth=0", nr: 1 }, { sel: `${KARTE} [data-fristen] >> nth=0`, nr: 2 }] },
   { id: "04-fr-antrag-neu", url: "#fristen?ansicht=antrag", geraet: "pc", hoehe: 1500, vorher: async (p, h) => { await h.klick("[data-antragneu]", { warte: 700 }); }, ausschnitt: "#ansicht" },
   { id: "04-fr-umschreiber", url: "#fristen?ansicht=umschreiber", geraet: "pc", hoehe: 1100, ausschnitt: { sel: KARTE, maxHoehe: 1000 } },
-  { id: "04-fr-suche", url: "#fristen?ansicht=alle&suche=anna", geraet: "pc", hoehe: 900, ausschnitt: `${KARTE} .karte-kopf`, marken: [{ sel: "#fristenSuche", nr: 1 }] },
+  { id: "04-fr-suche", url: "#fristen?ansicht=alle&suche=anna", geraet: "pc", hoehe: 900, ausschnitt: { sel: `${KARTE} .karte-kopf`, rand: 26 }, marken: [{ sel: "#fristenSuche", nr: 1 }] },
   { id: "04-fr-regel", url: "#fristen", geraet: "pc", hoehe: 2000, vorher: async (p, h) => { await h.scrolle("[data-reaktregel]"); }, ausschnitt: { sel: "[data-reaktregel]", rand: 30 }, marken: [{ sel: "[data-reaktregel]", nr: 1 }] },
 
   // Dialoge
@@ -135,15 +135,15 @@ const LISTE = [
 
   // ---------- Fahrcheck ----------
   { id: "04-fc-uebersicht", url: "#fahrchecks", geraet: "pc", hoehe: 1700, ausschnitt: "#ansicht", marken: [{ sel: "#ansicht .kacheln", nr: 1 }, { sel: `${KARTE} .tabs`, nr: 2 }, { sel: ".filterzeile", nr: 3 }] },
-  { id: "04-fc-menue", url: "#fahrchecks", geraet: "pc", ausschnitt: { sel: '#nav a[href="#fahrchecks"]', rand: 14 } },
+  { id: "04-fc-menue", url: "#fahrchecks", geraet: "pc", ausschnitt: { sel: '#nav a[href="#fahrchecks"]', rand: 2 } },
   { id: "04-fc-kacheln", url: "#fahrchecks", geraet: "pc", ausschnitt: "#ansicht .kacheln", marken: [{ sel: "#ansicht .kachel >> nth=0", nr: 1 }, { sel: "#ansicht .kachel >> nth=1", nr: 2 }, { sel: "#ansicht .kachel >> nth=2", nr: 3 }] },
   { id: "04-fc-filter", url: "#fahrchecks", geraet: "pc", ausschnitt: ".filterzeile", marken: [{ sel: "#fcSuche", nr: 1 }, { sel: "#fcLehrer", nr: 2 }, { sel: "#fcZeitraum", nr: 3 }, { sel: "#fcStatus", nr: 4 }] },
-  { id: "04-fc-tabelle", url: "#fahrchecks", geraet: "pc", hoehe: 1700, vorher: async (p, h) => { await h.scrolle(`${KARTE} table`); }, ausschnitt: `${KARTE} table`, marken: [{ sel: `${KARTE} tbody tr:first-child td:nth-child(2)`, nr: 1 }, { sel: `${KARTE} tbody tr:first-child td:nth-child(3)`, nr: 2 }, { sel: `${KARTE} tbody tr:first-child td:nth-child(4)`, nr: 3 }, { sel: "[data-fcabgabe] >> nth=0", nr: 4 }, { sel: "a[href*='ansicht=stunden'] >> nth=0", nr: 5 }] },
+  { id: "04-fc-tabelle", url: "#fahrchecks", geraet: "pc", hoehe: 1700, vorher: async (p, h) => { await h.scrolle(`${KARTE} table`); }, ausschnitt: `${KARTE} table`, marken: [{ sel: `${KARTE} tbody tr:first-child td:nth-child(1)`, nr: 1 }, { sel: `${KARTE} tbody tr:first-child td:nth-child(2)`, nr: 2 }, { sel: `${KARTE} tbody tr:first-child td:nth-child(4)`, nr: 3 }, { sel: "[data-fcabgabe] >> nth=0", nr: 4 }, { sel: "a[href*='ansicht=stunden'] >> nth=0", nr: 5 }] },
   { id: "04-fc-abgabe", url: "#fahrchecks", geraet: "pc", hoehe: 1600, vorher: async (p, h) => { await h.klick("[data-fcabgabe] >> nth=0"); await h.tippe(`${DLG} input[name=ist]`, "5"); },
     ausschnitt: DLG, marken: [{ sel: `${DLG} .soll-ist > div:first-child`, nr: 1 }, { sel: `${DLG} input[name=ist]`, nr: 2 }, { sel: `${DLG} #fcErgebnis`, nr: 3 }, { sel: `${DLG} input[name=fehlt] >> nth=0`, nr: 4 }, { sel: `${DLG} input[name=notiz]`, nr: 5 }, { sel: `${DLG} footer .haupt`, nr: 6 }] },
   { id: "04-fc-abgabe-stimmt", url: "#fahrchecks", geraet: "pc", hoehe: 1600, vorher: async (p, h) => { await h.klick("[data-fcabgabe] >> nth=0"); await h.tippe(`${DLG} input[name=ist]`, "6"); },
     ausschnitt: ".soll-ist", marken: [{ sel: "#fcErgebnis", nr: 1 }] },
-  { id: "04-fc-abgabe-fertig", url: "#fahrchecks", geraet: "pc", hoehe: 1700, vorher: async (p, h) => { await h.klick("[data-fcabgabe] >> nth=0"); await h.tippe(`${DLG} input[name=ist]`, "6"); await h.klick(`${DLG} footer button[value=ok]`, { warte: 1000 }); },
+  { id: "04-fc-abgabe-fertig", url: "#fahrchecks", geraet: "pc", hoehe: 1700, vorher: async (p, h) => { await h.klick("[data-fcabgabe] >> nth=0"); await h.tippe(`${DLG} input[name=ist]`, "6"); await h.klick(`${DLG} footer button[value=ok]`, { warte: 1000 }); await p.evaluate(() => { S.fcAbgaben.forEach((q) => { if (!q.bestaetigt_am) q.bestaetigt_am = new Date().toISOString(); }); zeichne(); }); await h.warte(400); },
     ausschnitt: `${KARTE} table`, marken: [{ sel: `${KARTE} tbody tr:first-child .marke-pill.gruen`, nr: 1 }, { sel: "[data-fcabgabe] >> nth=0", nr: 2 }] },
   { id: "04-fc-verlauf", url: "#fahrchecks", geraet: "pc", hoehe: 2200, vorher: async (p, h) => { await h.scrolle(".karte:last-of-type h2"); }, ausschnitt: ".karte:last-of-type" },
   { id: "04-fc-lohn", url: "#fahrchecks", geraet: "pc", hoehe: 1700, ausschnitt: { sel: `${KARTE} tbody tr:first-child`, rand: 10 }, marken: [{ sel: `${KARTE} tbody tr:first-child td:nth-child(4) .marke-pill.gelb`, nr: 1 }, { sel: `${KARTE} tbody tr:first-child td:nth-child(4) .marke-pill.rot`, nr: 2 }] },

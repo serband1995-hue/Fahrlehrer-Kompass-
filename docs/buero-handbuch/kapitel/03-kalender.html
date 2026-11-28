@@ -59,8 +59,8 @@
   <div class="wofuer"><h3>Wofür</h3><p>Im Kasten steht das Wichtigste zu einem Termin, ohne dass du ihn öffnen musst.</p></div>
   <h3>So geht’s</h3>
   <ol class="schritte">
-    <li>Oben steht die Uhrzeit (1). Bei schmalen Kästen steht nur die Anfangszeit.</li>
-    <li>Darunter steht der Name des Schülers. Ohne Schüler steht dort der Name des Interessenten (bei Beratung), die Notiz oder die Terminart (2).</li>
+    <li>Oben steht die Uhrzeit. Bei schmalen Kästen steht nur die Anfangszeit.</li>
+    <li>Darunter steht der Name des Schülers. Ohne Schüler steht dort der Name des Interessenten (bei Beratung), die Notiz oder die Terminart.</li>
     <li>Zuletzt steht das Fahrzeug, wenn eines eingetragen ist.</li>
   </ol>
   <figure><img src="bilder/03-terminkarte.png" class="klein" alt=""><figcaption>Ein Termin-Kasten.</figcaption></figure>
@@ -97,8 +97,8 @@
   <h3>So geht’s</h3>
   <ol class="schritte">
     <li>Tippe oben auf <span class="knopf-name">Monat</span>.</li>
-    <li>Jeder Tag ist ein Feld mit der Tagesnummer (1). Darunter stehen die Zahl der Termine und die Unterrichtseinheiten (UE).</li>
-    <li>Die Farbe zeigt, wie voll der Tag ist (2). Je dunkler, desto voller.</li>
+    <li>Jeder Tag ist ein Feld mit der Tagesnummer (1). Darunter stehen die Zahl der Termine (2) und die Unterrichtseinheiten (UE) (3).</li>
+    <li>Die Farbe zeigt, wie voll der Tag ist. Je dunkler, desto voller.</li>
     <li>Tippe auf einen Tag, um ihn in der Tagesansicht zu öffnen.</li>
   </ol>
   <figure><img src="bilder/03-ansicht-monat.png" class="mittel" alt=""><figcaption>Monatsansicht.</figcaption></figure>
@@ -169,7 +169,7 @@
   <h3>So geht’s</h3>
   <ol class="schritte">
     <li>Über dem Kalender stehen die Namen aller aktiven Fahrlehrer mit einem Häkchen (1).</li>
-    <li>Nimm das Häkchen weg, und die Spalte verschwindet (2).</li>
+    <li>Nimm ein Häkchen weg (2), und die Spalte verschwindet.</li>
     <li>Setze es wieder, und die Spalte kommt zurück.</li>
     <li>Sind alle abgehakt, ist der Filter aus.</li>
   </ol>
@@ -214,7 +214,7 @@
     <li>Prüfe das Datum (4), wähle ein Fahrzeug (5) und stelle Von (6) und Bis (7) ein.</li>
     <li>Tippe auf <span class="knopf-name">Speichern</span> (8). Es erscheint „Termin gespeichert“.</li>
   </ol>
-  <figure><img src="bilder/03-termin-neu-klick.png" class="mittel" alt=""><figcaption>Tippe in eine freie Stelle der Spalte (1).</figcaption></figure>
+  <figure><img src="bilder/03-termin-neu-klick.png" class="mittel" alt=""><figcaption>Tippe in eine freie Stelle der Spalte.</figcaption></figure>
   <figure><img src="bilder/03-termin-neu-dialog.png" class="mittel" alt=""><figcaption>Das Fenster „Termin anlegen“.</figcaption></figure>
   <figure><img src="bilder/03-termin-neu-gespeichert.png" class="klein" alt=""><figcaption>Nach dem Speichern.</figcaption></figure>
   <div class="gut"><h3>Gut zu wissen</h3><ul>
@@ -243,7 +243,7 @@
     <li>Schüler, die von einem anderen Führerschein umschreiben (Umschreiber), machen keine Sonderfahrten (siehe „Gesperrte Schüler und Stopp-Notizen“).</li>
     <li>„Blockiert“ sperrt eine Zeit für einen Fahrlehrer, zum Beispiel für Mittagspause oder Werkstatt. Die Zeit zählt nicht als Termin und löst keine Überschneidungs-Warnung aus.</li>
   </ul></div>
-  <p class="unsicher">Was „Schaltkompetenz“ genau bedeutet und wie sie gezählt wird, steht im Kalender-Code nicht. Der Name wird nur als Terminart angeboten.</p>
+  <p class="unsicher">Was „Schaltkompetenz“ genau bedeutet und wie sie gezählt wird, steht auf der Kalender-Seite nicht. Der Name wird nur als Terminart angeboten.</p>
 </section>
 
 <section class="funktion neue-seite">
@@ -267,9 +267,9 @@
     <li>Im Kalender steht bei der Beratung der Name des Interessenten, sonst der Schüler.</li>
     <li>Im Monat und Jahr zählen diese Termine als Termine, aber nicht als Unterrichtseinheiten.</li>
     <li>Eine Stunde, die schon gefahren, unterschrieben oder abgerechnet ist, kann nicht zu einem Büro-Termin gemacht werden. Du bekommst die Meldung „Diese Stunde ist schon gefahren oder abgerechnet …“. Lege dann einen neuen Termin an.</li>
-    <li>Die Felder „Interessent: Name“ und „Telefon“ erscheinen nur, wenn die Datenbank sie schon kennt.</li>
+    <li>Die Felder „Interessent: Name“ und „Telefon“ erscheinen nur, wenn die Seite sie schon kennt. Sonst fehlen sie.</li>
+    <li>Büro-Termine zählen nicht für Lohn, Unterrichtseinheiten, Fahrcheck, Statistik, Nachweis und Monatsbericht.</li>
   </ul></div>
-  <p class="unsicher">Ob und wo die Büro-Termine in der Statistik oder im Nachweis auftauchen, ist hier nur als „zählt nicht“ aus dem Hinweistext übernommen.</p>
 </section>
 
 <section class="funktion">
@@ -285,7 +285,7 @@
   <figure><img src="bilder/03-termin-block.png" class="mittel" alt=""><figcaption>Blockierte Zeit.</figcaption></figure>
   <div class="gut"><h3>Gut zu wissen</h3><ul>
     <li>Blockierte Zeiten zählen bei „Wer hat Platz?“ nicht als freie Zeit (Montag bis Freitag, höchstens 12 UE am Tag).</li>
-    <li>Das Häkchen „Kurs bezahlt“ erscheint nur, wenn die Datenbank es kennt.</li>
+    <li>Das Häkchen „Kurs bezahlt“ erscheint nur, wenn die Seite es schon kennt. Sonst fehlt es.</li>
   </ul></div>
 </section>
 
@@ -327,8 +327,8 @@
     <li>Prüfungen sagst du nicht hier ab, sondern in „Prüfungen“ (siehe „Prüfungen im Kalender“).</li>
     <li>Im Papierkorb stehen Fehleinträge 30 Tage. Stornierte und unterschriebene Stunden bleiben aufbewahrt.</li>
     <li>Schon gelaufene Stunden werden nicht gelöscht, sondern storniert (siehe „Schutz für vergangene Termine“).</li>
+    <li>Wie lange „Rückgängig“ gilt, stellt die Fahrschule in den Einstellungen ein (mindestens 4, höchstens 30 Sekunden). Ohne Einstellung sind es 6.</li>
   </ul></div>
-  <p class="unsicher">Die Zahl 6 Sekunden ist eine Einstellung der Fahrschule (mindestens 4, höchstens 30). Ohne Einstellung gilt 6.</p>
 </section>
 
 <section class="funktion neue-seite">
@@ -406,7 +406,7 @@
   <figure><img src="bilder/03-umschreiber-sonder.png" class="mittel" alt=""><figcaption>Umschreiber und Sonderfahrt.</figcaption></figure>
   <div class="gut"><h3>Gut zu wissen</h3><ul>
     <li>Bestehende Termine eines Schülers mit offener Zahlung bleiben bestehen und lassen sich ändern. Auch ein Termin am selben Tag für denselben Schüler bleibt bearbeitbar.</li>
-    <li>Die Sperre gilt für Fahrstunde, Sonderfahrt, Nachtfahrt, Schaltkompetenz und Prüfung. Die Datenbank prüft sie ebenfalls.</li>
+    <li>Die Sperre gilt für Fahrstunde, Sonderfahrt, Nachtfahrt, Schaltkompetenz und Prüfung. Beim Speichern wird sie noch einmal geprüft.</li>
     <li>Die Stopp-Notiz wird nur beim Neuanlegen von Fahrstunde, Sonderfahrt, Nachtfahrt und Schaltkompetenz geprüft.</li>
     <li>Eine schon gespeicherte Sonderfahrt eines Umschreibers bleibt bearbeitbar.</li>
   </ul></div>
@@ -431,8 +431,8 @@
     <li>Korrekturen mit Grund machst du im Ausbildungsnachweis des Schülers.</li>
     <li>Eine Stunde gilt als gelaufen, wenn ihre Zeit vorbei ist, außer sie ist ausgefallen. Ausgefallene Stunden ohne Berechnung dürfen gelöscht werden.</li>
     <li>Eine stornierte Stunde holst du gleich danach mit „Rückgängig“ zurück.</li>
+    <li>Eine Stunde, die ausgefallen ist (abgebrochen oder nicht erschienen) und nicht berechnet wird, wird nicht storniert, sondern abgesagt und liegt im Papierkorb. Wie solche Stunden zählen, steht im Kapitel „Schüler und Akte“ beim Ausbildungsnachweis.</li>
   </ul></div>
-  <p class="unsicher">Genau, welche Ausfälle als „ausgefallen“ zählen (abgebrochen, nicht erschienen), steht im Nachweis-Teil des Handbuchs (Kapitel Schüler).</p>
 </section>
 
 <section class="funktion">
@@ -528,8 +528,8 @@
   <h3>So geht’s</h3>
   <ol class="schritte">
     <li>Tippe im Kalender auf <span class="knopf-name">Urlaub</span>, oder in den Reitern auf <span class="knopf-name">Urlaub</span>.</li>
-    <li>Tippe auf <span class="knopf-name">+ Urlaub eintragen</span> (1).</li>
-    <li>Wähle bei „Für wen?“ (1) einen Fahrlehrer. Oder „Andere Person (ohne Kalender)“ und schreibe den Namen (2).</li>
+    <li>Tippe auf <span class="knopf-name">+ Urlaub eintragen</span>.</li>
+    <li>Wähle bei „Für wen?“ (1) einen Fahrlehrer. Oder „Andere Person (ohne Kalender)“ und schreibe dann den Namen der Person.</li>
     <li>Wähle „Von“ (2) und „Bis“ (3).</li>
     <li>Tippe auf <span class="knopf-name">Eintragen</span> (4). Es erscheint „Urlaub eingetragen“.</li>
     <li>Die Liste zeigt Person, Zeitraum und eine Notiz, wenn es eine gibt.</li>
@@ -551,8 +551,8 @@
   <div class="wofuer"><h3>Wofür</h3><p>Einen falschen oder nicht mehr gültigen Urlaubseintrag entfernen.</p></div>
   <h3>So geht’s</h3>
   <ol class="schritte">
-    <li>Tippe in der Zeile auf <span class="knopf-name">Löschen</span> (3).</li>
-    <li>Es erscheint „Urlaubseintrag gelöscht“ mit <span class="knopf-name">Rückgängig</span>. Tippe darauf, wenn es ein Versehen war.</li>
+    <li>Tippe in der Zeile auf <span class="knopf-name">Löschen</span>.</li>
+    <li>Es erscheint „Urlaubseintrag gelöscht“ mit <span class="knopf-name">Rückgängig</span> (1). Tippe darauf, wenn es ein Versehen war.</li>
   </ol>
   <figure><img src="bilder/03-urlaub-loeschen.png" class="klein" alt=""><figcaption>Der Hinweis nach dem Löschen.</figcaption></figure>
   <figure><img src="bilder/03-urlaub-gestern.png" class="klein" alt=""><figcaption>Der Urlaub von gestern wird nicht angenommen.</figcaption></figure>
@@ -640,7 +640,7 @@
     <li>Ändert sich einer der beiden Termine (Zeit, Tag, Fahrzeug), kommt die Warnung zurück.</li>
     <li>Abgesagte oder abgebrochene Termine zählen nicht.</li>
     <li>Alle im Büro sehen dasselbe.</li>
-    <li>Den Knopf „Gesehen“ gibt es nur, wenn die Datenbank die Markierungen kennt.</li>
+    <li>Den Knopf „Gesehen“ gibt es nur, wenn die Seite die Markierungen schon speichern kann.</li>
   </ul></div>
 </section>
 

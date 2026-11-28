@@ -16,6 +16,7 @@ const SLUG = async (page, h) => {
   await page.evaluate(() => { for (const l of S.lehrer) { if (!l.slug) l.slug = String(l.name || "x").toLowerCase().replace(/[^a-z]+/g, "-"); } for (const l of S.team) { if (!l.slug && l.rolle === "fahrlehrer") l.slug = String(l.name || "x").toLowerCase().replace(/[^a-z]+/g, "-"); } zeichne(); });
   await h.warte(300);
 };
+const TEL = (page) => page.evaluate(() => { S.personen.forEach((p) => { if (p.telefon) p.telefon = "0170 0000000"; }); zeichne(); });
 const einst = (thema) => `#einstellungen?thema=${thema}`;
 const mehrere = (sel) => ({ sel, nr: 0 });
 
@@ -96,21 +97,21 @@ const team = [
   { id: "06-team-sperren-knopf", geraet: "pc", url: "#team", hoehe: 900, vorher: async (page, h) => { await page.evaluate(() => { S.profil.rolle = "super_admin"; zeichne(); }); await h.warte(300); },
     marken: [{ sel: ".karte:has(h2:has-text('Fahrlehrer (')) tbody tr >> nth=0 >> [data-sperren]", nr: 1 }], ausschnitt: { sel: ".karte:has(h2:has-text('Fahrlehrer (')) tbody tr >> nth=0", rand: 18 } },
   { id: "06-team-buero-karte", geraet: "pc", url: "#team", marken: [{ sel: "#tNeuBu", nr: 1 }, { sel: ".karte:has(h2:text-is('Büro und Leitung')) table", nr: 2 }], ausschnitt: { sel: ".karte:has(h2:text-is('Büro und Leitung'))", rand: 16 } },
-  { id: "06-team-ohne-recht", geraet: "pc", rolle: "buero", pin: true, vorher: async (page, h) => { await page.evaluate(() => { S.sitzung = { token: "x", id: "bp-3", name: "Paula Muster", verwalten: false }; S.werAnzeige = "Paula Muster"; zeichne(); }); await h.geh("#team"); await h.warte(500); },
+  { id: "06-team-ohne-recht", geraet: "pc", rolle: "buero", pin: true, vorher: async (page, h) => { await page.evaluate(() => { S.sitzung = { token: "x", id: "bp-3", name: "Paula Muster", verwalten: false }; S.werAnzeige = "Paula Muster"; zeichne(); }); await h.geh("#team"); await TEL(page); await h.warte(500); },
     marken: [{ sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) .leise.klein >> nth=-1", nr: 1 }], ausschnitt: { sel: ".karte:has(h2:has-text('Büro-Personen und PIN'))", rand: 16 } },
   // ---- Büro-Personen und PIN
-  { id: "06-personen", geraet: "pc", url: "#team", marken: [{ sel: "#pNeu", nr: 1 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> td >> nth=2", nr: 2 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> td >> nth=3", nr: 3 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> [data-pbearb]", nr: 4 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> [data-preset]", nr: 5 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=3 >> [data-preset]", nr: 6 }], ausschnitt: { sel: ".karte:has(h2:has-text('Büro-Personen und PIN'))", rand: 16 } },
+  { id: "06-personen", geraet: "pc", url: "#team", vorher: async (page, h) => { await TEL(page); await h.warte(300); }, marken: [{ sel: "#pNeu", nr: 1 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> td >> nth=2", nr: 2 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> td >> nth=3", nr: 3 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> [data-pbearb]", nr: 4 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=0 >> [data-preset]", nr: 5 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) tbody tr >> nth=3 >> [data-preset]", nr: 6 }], ausschnitt: { sel: ".karte:has(h2:has-text('Büro-Personen und PIN'))", rand: 16 } },
   { id: "06-person-neu", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await h.klick("#pNeu"); await h.tippe(`${dlg} input[name=name]`, "Erika"); await h.tippe(`${dlg} input[name=telefon]`, "0170 0000000"); await h.warte(200); },
     marken: [{ sel: `${dlg} input[name=name]`, nr: 1 }, { sel: `${dlg} input[name=telefon]`, nr: 2 }, { sel: `${dlg} input[name=verwalten]`, nr: 3 }, { sel: ok, nr: 4 }], ausschnitt: { sel: dlg, rand: 14 } },
-  { id: "06-person-bearbeiten", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await h.klick("[data-pbearb] >> nth=2"); await h.warte(500); },
+  { id: "06-person-bearbeiten", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await TEL(page); await h.klick("[data-pbearb] >> nth=2"); await h.warte(500); },
     marken: [{ sel: `${dlg} #pAustritt`, nr: 1 }, { sel: ok, nr: 2 }], ausschnitt: { sel: dlg, rand: 14 } },
-  { id: "06-person-austritt", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await h.klick("[data-pbearb] >> nth=2"); await h.klick("#pAustritt"); await h.warte(600); },
+  { id: "06-person-austritt", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await TEL(page); await h.klick("[data-pbearb] >> nth=2"); await h.klick("#pAustritt"); await h.warte(600); },
     marken: [{ sel: ok, nr: 1 }], ausschnitt: { sel: dlg, rand: 14 } },
   { id: "06-person-pin-zuruecksetzen", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await h.klick("[data-preset] >> nth=0"); await h.warte(600); },
     marken: [{ sel: ok, nr: 1 }], ausschnitt: { sel: dlg, rand: 14 } },
   { id: "06-person-pin-freigeben", geraet: "pc", url: "#team", hoehe: 800, vorher: async (page, h) => { await h.klick(".karte:has(h2:has-text('Büro-Personen und PIN')) tr:has-text('Tom Muster') [data-preset]"); await h.warte(600); },
     marken: [{ sel: ok, nr: 1 }], ausschnitt: { sel: dlg, rand: 14 } },
-  { id: "06-person-zurueck", geraet: "pc", url: "#team", vorher: async (page, h) => { await page.evaluate(() => { S.personen.find((p) => p.id === "bp-3").aktiv = false; zeichne(); }); await h.warte(300); },
+  { id: "06-person-zurueck", geraet: "pc", url: "#team", vorher: async (page, h) => { await page.evaluate(() => { S.personen.find((p) => p.id === "bp-3").aktiv = false; }); await TEL(page); await h.warte(300); },
     marken: [{ sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) [data-pzurueck]", nr: 1 }, { sel: ".karte:has(h2:has-text('Büro-Personen und PIN')) .marke-pill:has-text('ausgetreten')", nr: 2 }], ausschnitt: { sel: ".karte:has(h2:has-text('Büro-Personen und PIN'))", rand: 16 } },
 ];
 

@@ -58,9 +58,6 @@ Alle Funktionen aus dem Code (buero.js, buero-verwaltung.js, buero-nachweis.js).
 ## ❓ Nicht sicher aus dem Code erklärt
 
 - ❓ „Schaltkompetenz“: Bedeutung und Zählung stehen nicht im Kalender-Code.
-- ❓ Statistik/Nachweis/Lohn für Büro-Termine: nur der Hinweistext „zählt nicht für Lohn, UE oder Statistik“ ist übernommen (KR.NUR_BUERO_ARTEN in kompass-rechnen.js nicht geprüft).
-- ❓ „ausgefallene“ Stunden bei Absage (nwAusgefallen in buero-nachweis.js): nur grob beschrieben.
-- ❓ Die 6 Sekunden Rückgängig sind eine Einstellung (KE rueckgaengig.sekunden 4 bis 30).
 - ❓ Druck: nur Bildschirm-Vorschau (print-Ansicht) geprüft, kein echter Drucker.
 - ❓ Die Felder Interessent Name/Telefon und „Kurs bezahlt“ erscheinen nur, wenn die Datenbank die Spalten hat. In der Vorführung fehlen sie; für die Bilder wurden sie im Browser ergänzt.
 - ❓ Rollen-Unterschiede im Kalender: im Code keine gefunden (nur Fahrzeug-Verwaltung ist eingeschränkt).

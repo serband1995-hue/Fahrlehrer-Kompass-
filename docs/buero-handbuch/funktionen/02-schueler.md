@@ -88,7 +88,11 @@ Abschnitt = Überschrift in `kapitel/02-schueler.html`. ❓ = nicht sicher aus d
 | „Reaktivierung bezahlt (240 €)“ (Fenster Betrag/Datum/Absprache/Notiz) | B:1138 | „Zahlung ausstehend …“ (Gut zu wissen) | – (Kap. 5) |
 | Fahr-Akademie: Sprache + „Akademie-Zugang anlegen“ | B:2535, B:2564 | „Fahr-Akademie: Zugang anlegen“ | 02-akte-akademie |
 | Knopf „Ausbildungsnachweis“ | B:2676 | „Ausbildungsnachweis: öffnen und Übersicht“ | 02-akte-nachweis-knopf |
-| Knopf „Serientermine anlegen“ (nur Turboboost) | B:2677, buero-luecken.js:346 | dito (Gut zu wissen) | 02-akte-nachweis-knopf |
+| Knopf „Serientermine anlegen“ (nur Paket Turboboost; Hinweis „Turboboost: mehrere Termine auf einmal“) | B:2677, buero-luecken.js:346, :411 | „Serientermine anlegen (Paket Turboboost)“ | 02-akte-nachweis-knopf |
+| Fenster „Serientermine (Turboboost)“: Erster Tag, Uhrzeit, Art (Fahrstunde/Sonderfahrt), Wie oft (täglich, jeden 2. Tag, wöchentlich), Anzahl Termine (1–20), Vorschau, „Termine anlegen“ | buero-luecken.js:355–372, :395–402 | dito | 02-serien-dialog |
+| Serientermine: Sperren/Meldungen (kein Fahrlehrer, Zahlung ausstehend, Umschreiber ohne Sonderfahrt, „Zu spät am Tag für 90 Minuten“) | buero-luecken.js:353, :366–372 | dito (Gut zu wissen) | – (nur Text) |
+| Serientermine: Warnung „Überschneidung … Trotzdem speichern?“, Urlaubs-Frage „Trotzdem alle anlegen?“ | buero-luecken.js:378–379 | dito | 02-serien-warnung |
+| Serientermine: Meldung „n Termine angelegt“ + „Rückgängig“ | buero-luecken.js:385–395 | dito | 02-serien-fertig |
 | Block „Prüfungen“ (nur Ansicht) | B:1750 | „Prüfungen und Mails in der Akte“ (Kap. 4 verwiesen) | 02-akte-pruefungen |
 | Block „Zahlung per Mail“ | ZM:252 | dito (Kap. 5 verwiesen) | 02-akte-zahlungsmail |
 | Block „Erinnerung per Mail“ (nur wenn Frist bald abläuft) | ZM:576, ZM:542 | dito | – (in der Vorführung nicht angeboten) ❓ |

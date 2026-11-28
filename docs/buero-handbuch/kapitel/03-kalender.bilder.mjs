@@ -21,11 +21,11 @@ const LISTE = [
   { id: "03-kalender-tag", url: KAL, geraet: "pc", hoehe: 900,
     marken: [{ sel: "#ansicht .tabs", nr: 1 }, { sel: "#ansicht .k-titel", nr: 2 }, { sel: "#ansicht .knopfreihe", nr: 3 }, { sel: "#kDatum", nr: 4 }, { sel: "#kSuche", nr: 5 }, { sel: "#ansicht .chips >> nth=0", nr: 6 }, { sel: ".k-art-filter", nr: 7 }, { sel: "#kopfAktionen", nr: 8 }] },
   { id: "03-kopfknoepfe", url: KAL, geraet: "pc", marken: [{ sel: "#kPlatz", nr: 1 }, { sel: "#kUrlaub", nr: 2 }, { sel: "#kNeuTermin", nr: 3 }], ausschnitt: { sel: "#kopfAktionen", rand: 14 } },
-  { id: "03-tag-kopf", url: KAL, geraet: "pc", marken: [{ sel: "#ansicht .tabs", nr: 1 }, { sel: "#ansicht .knopfreihe", nr: 2 }, { sel: "#kDatum", nr: 3 }, { sel: "#kSuche", nr: 4 }], ausschnitt: { sel: "#ansicht .karte", rand: 0, maxHoehe: 190 }, hoehe: 900 },
+  { id: "03-tag-kopf", url: KAL, geraet: "pc", marken: [{ sel: "#ansicht .knopfreihe button >> nth=0", nr: 1 }, { sel: "#ansicht .knopfreihe button >> nth=2", nr: 1 }, { sel: "#ansicht .knopfreihe button >> nth=1", nr: 2 }, { sel: "#kDatum", nr: 3 }], ausschnitt: { sel: "#ansicht .karte", rand: 0, maxHoehe: 190 }, hoehe: 900 },
   { id: "03-tag-spalten", url: KAL, geraet: "pc", hoehe: 900, marken: [{ sel: ".k-kopf >> nth=0", nr: 1 }, { sel: ".k-stunde >> nth=1", nr: 2 }, { sel: ".k-termin >> nth=0", nr: 3 }], ausschnitt: { sel: ".kalender", rand: 8, maxHoehe: 520 } },
   { id: "03-terminkarte", url: KAL, geraet: "pc", hoehe: 900, marken: [{ sel: ".k-termin >> nth=0", nr: 1 }], ausschnitt: { sel: ".k-termin >> nth=0", rand: 16 } },
-  { id: "03-heute-springen", url: KAL + "?tag=2026-12-15", geraet: "pc", marken: [{ sel: "#ansicht .knopfreihe button >> nth=1", nr: 1 }, { sel: "#ansicht .k-titel", nr: 2 }], ausschnitt: { sel: "#ansicht .karte", rand: 0, maxHoehe: 190 }, hoehe: 900 },
-  { id: "03-datum-springen", url: KAL, geraet: "pc", marken: [{ sel: "#kDatum", nr: 1 }], ausschnitt: { sel: "#ansicht .filterzeile", rand: 10 }, hoehe: 900 },
+  { id: "03-heute-springen", url: KAL + "?tag=2026-12-15", geraet: "pc", marken: [{ sel: "#ansicht .knopfreihe button >> nth=1", nr: 2 }], ausschnitt: { sel: "#ansicht .karte", rand: 0, maxHoehe: 190 }, hoehe: 900 },
+  { id: "03-datum-springen", url: KAL, geraet: "pc", marken: [{ sel: "#kDatum", nr: 3 }], ausschnitt: { sel: "#ansicht .filterzeile", rand: 10 }, hoehe: 900 },
   { id: "03-suche", url: KAL, geraet: "pc", hoehe: 900, marken: [{ sel: "#kSuche", nr: 1 }, { sel: ".k-suche-erg", nr: 2 }],
     vorher: async (page, h) => { await h.tippe("#kSuche", "a"); await page.waitForTimeout(900); }, ausschnitt: { sel: "#ansicht .filterzeile", rand: 10, maxHoehe: 520 } },
 
@@ -35,8 +35,7 @@ const LISTE = [
   { id: "03-ansicht-monat", url: KAL + "?ansicht=monat", geraet: "pc", hoehe: 900, marken: [{ sel: ".m-tag.heute", nr: 1 }, { sel: "#ansicht .chips >> nth=0", nr: 2 }] },
   { id: "03-monat-zelle", url: KAL + "?ansicht=monat", geraet: "pc", hoehe: 900, marken: [{ sel: ".m-nr >> nth=10", nr: 1 }, { sel: ".m-anz >> nth=10", nr: 2 }, { sel: ".m-ue >> nth=10", nr: 3 }], ausschnitt: { sel: ".m-raster", rand: 6, maxHoehe: 300 } },
   { id: "03-ansicht-jahr", url: KAL + "?ansicht=jahr", geraet: "pc", hoehe: 900, marken: [{ sel: ".j-titel >> nth=11", nr: 1 }, { sel: ".j-tag.heute", nr: 2 }] },
-  { id: "03-ansicht-tabs", url: KAL, geraet: "pc", marken: [{ sel: "#ansicht .tabs .tab >> nth=0", nr: 1 }, { sel: "#ansicht .tabs .tab >> nth=1", nr: 2 }, { sel: "#ansicht .tabs .tab >> nth=2", nr: 3 }, { sel: "#ansicht .tabs .tab >> nth=3", nr: 4 }], ausschnitt: { sel: "#ansicht .tabs", rand: 12 }, hoehe: 900 },
-
+  
   // ---------- Filter ----------
   { id: "03-filter-lehrer", url: KAL + "?lehrer=fl-1,fl-2", geraet: "pc", hoehe: 900, marken: [{ sel: "#ansicht .chips >> nth=0", nr: 1 }], ausschnitt: { sel: "#ansicht .karte", rand: 8, maxHoehe: 700 } },
   { id: "03-filter-lehrer-chips", url: KAL + "?lehrer=fl-1,fl-2", geraet: "pc", hoehe: 900, marken: [{ sel: "[data-klehrer=fl-1]", nr: 1 }, { sel: "[data-klehrer=fl-3]", nr: 2 }], ausschnitt: { sel: "#ansicht .chips >> nth=0", rand: 10 } },
@@ -73,7 +72,7 @@ const LISTE = [
     marken: [{ sel: `${DLG} select[name=art]`, nr: 1 }, { sel: "#nurBueroHinweis", nr: 2 }], ausschnitt: { sel: DLG, rand: 10 } },
   { id: "03-termin-beratung", url: KAL, geraet: "pc", hoehe: 1000,
     vorher: async (page, h) => { await spaltenDa(page); await oeffneNeu(page, h, { art: "beratung" }); await page.locator(`${DLG} input[name=interessent_name]`).fill("Max Muster"); await page.locator(`${DLG} input[name=interessent_telefon]`).fill("0170 0000000"); },
-    marken: [{ sel: `${DLG} select[name=art]`, nr: 1 }, { sel: "#beratungFeld", nr: 2 }, { sel: "#nurBueroHinweis", nr: 3 }], ausschnitt: { sel: DLG, rand: 10 } },
+    marken: [{ sel: `${DLG} select[name=art]`, nr: 1 }, { sel: "#nurBueroHinweis", nr: 2 }, { sel: "#beratungFeld", nr: 3 }], ausschnitt: { sel: DLG, rand: 10 } },
   { id: "03-termin-ersthilfe", url: KAL, geraet: "pc", hoehe: 1000,
     vorher: async (page, h) => { await spaltenDa(page); await oeffneNeu(page, h, { art: "ersthilfe" }); await page.locator(`${DLG} input[name=kurs_bezahlt]`).check(); },
     marken: [{ sel: `${DLG} select[name=art]`, nr: 1 }, { sel: "#kursBezahltFeld", nr: 2 }], ausschnitt: { sel: DLG, rand: 10 } },
@@ -166,7 +165,7 @@ const LISTE2 = [
     ausschnitt: { sel: LAST, rand: 10 } },
   { id: "03-konflikt-zeichen", url: KAL, geraet: "pc", hoehe: 1000,
     vorher: async (page) => { await page.evaluate(() => { const t = S.termine.find((x) => x.datum === KR.todayISO() && x.fahrlehrer_id === "fl-1" && x.art === "fahrstunde"); S.termine.push(Object.assign({}, t, { id: "dbl1", von: t.von, bis: t.bis, schueler_id: "s9" })); zeichne(); }); },
-    marken: [{ sel: ".kf-ueber >> nth=0", nr: 1 }, { sel: ".kf-zeichen >> nth=0", nr: 2 }], ausschnitt: { sel: ".k-spalte >> nth=0", rand: 6, maxHoehe: 420 } },
+    marken: [{ sel: ".kf-ueber >> nth=0", nr: 1 }, { sel: ".kf-zeichen >> nth=0", nr: 2 }], ausschnitt: { sel: ".k-spalte >> nth=0", rand: 24, maxHoehe: 420 } },
   { id: "03-urlaub-frage", url: KAL, geraet: "pc", hoehe: 1000,
     vorher: async (page, h) => { await urlaubEintragen(page, h, "fl-1"); await h.geh("#kalender"); await oeffneNeu(page, h, { lehrer: "fl-1" }); await speichern(h); await page.waitForTimeout(600); },
     ausschnitt: { sel: LAST, rand: 10 } },
@@ -212,13 +211,11 @@ const LISTE2 = [
     marken: [{ sel: ".k-art-aktiv", nr: 1 }, { sel: "[data-kart=simulator]", nr: 2 }, { sel: "[data-kart=beratung]", nr: 3 }], ausschnitt: { sel: "#ansicht .karte", rand: 6, maxHoehe: 560 } },
   { id: "03-bueroarten-beratung-dialog", url: KAL, geraet: "pc", hoehe: 1000,
     vorher: async (page, h) => { await bueroTermine(page); await oeffneId(page, h, "bx2"); },
-    marken: [{ sel: "#beratungFeld", nr: 1 }, { sel: "#nurBueroHinweis", nr: 2 }], ausschnitt: { sel: DLG, rand: 10 } },
+    marken: [{ sel: "#nurBueroHinweis", nr: 2 }, { sel: "#beratungFeld", nr: 3 }], ausschnitt: { sel: DLG, rand: 10 } },
   { id: "03-art-farben", url: KAL, geraet: "pc", hoehe: 900,
     vorher: async (page, h) => { await h.klick(".k-art-filter summary"); },
     marken: [{ sel: ".k-art-punkt >> nth=0", nr: 1 }], ausschnitt: { sel: ".k-art-filter .chips", rand: 8 } },
-  { id: "03-monat-bueroarten", url: KAL + "?ansicht=monat", geraet: "pc", hoehe: 900,
-    vorher: async (page, h) => { await h.klick(".k-art-filter summary"); await h.klick("[data-kart=simulator]"); }, marken: [{ sel: ".k-art-aktiv", nr: 1 }], ausschnitt: { sel: "#ansicht .karte", rand: 6, maxHoehe: 760 } },
-
+  
   // ---------- Handy ----------
   { id: "03-handy-tag", url: KAL, geraet: "handy", marken: [{ sel: "#ansicht .tabs", nr: 1 }, { sel: "#ansicht .k-titel", nr: 2 }] },
   { id: "03-handy-woche", url: KAL + "?ansicht=woche", geraet: "handy", marken: [{ sel: "#kWoLehrer", nr: 1 }] },

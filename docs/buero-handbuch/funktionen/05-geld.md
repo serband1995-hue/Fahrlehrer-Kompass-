@@ -131,7 +131,7 @@ Rollen: B = Büro, L = Leitung (fahrschule_admin), S = Super-Admin. Fahrlehrer a
 | Knopf „Drucken“ (Symbol), am Handy ausgeblendet, im Bereich „Fahrlehrer & Büro“ verborgen | buero.html:120, buero.css:696, buero.js:~295 | „Der Knopf Drucken oben“ | 05-druck-knopf, 05-druck-handy |
 | Druckkopf (Fahrschule, Logo, Bereich, „gedruckt am … von …“, Filter) | buero.js:5639 fuelleDruckKopf | „Das Druckbild“ | 05-druck-vorschau-belege, -preise |
 | Fuß „Vertraulich …“ und „Seite x von y“ | buero.css:513 (@page) | dito | dito |
-| Querformat (Kalender, Urlaub, Schichtplan, Auslastung, ≥7 Spalten) | buero.js:5658 druckQuer, buero.css:538 | dito | 05-druck-vorschau-kalender |
+| Querformat (Kalender, Urlaub, Schichtplan, Auslastung, ≥7 Spalten) | buero.js:5658 druckQuer, buero.css:538 | dito (Kalender: Kalender beginnt auf Seite 2) | 05-druck-vorschau-kalender (Seite 2) |
 | Team-Bereich wird nicht gedruckt | buero.css:589 | dito | 05-druck-team |
 | Anwesenheitsliste Theorie (Fenster, Querformat >5 Lektionen) | buero.js:2478 druckeAnwesenheit, 3333 | „Alle Druckansichten“ | 05-druck-anwesenheit-fenster, -blatt |
 | Monatsbericht (PDF) | buero-luecken.js:237 | dito | 05-druck-monatsbericht-fenster, -blatt |
@@ -142,7 +142,7 @@ Rollen: B = Büro, L = Leitung (fahrschule_admin), S = Super-Admin. Fahrlehrer a
 
 ## Nicht sicher erklärt (❓)
 - Rolle „Fahrlehrer“ bei Preisen/Belegen: Der Code erlaubt nur B/L/S das Ändern. Ob Fahrlehrer die Büro-Seite überhaupt sehen, gehört in Kapitel 1.
-- Tagesansicht des Kalenders erschien im Test-Druck ohne Inhalt (Wochenansicht ok).
+- Kalender-Druck (Wochenansicht): Seite 1 enthält nur Kopf und Fuß, der Kalender steht erst auf Seite 2 (mögliche Auffälligkeit der Druckregel `.kalender{break-inside:avoid}` bei hohem Kalender; nicht geändert). Das Bild `05-druck-vorschau-kalender` zeigt Seite 2.
 - Buchungs-QR-Blatt zeigt die Überschrift „Dokument“ (Titel leer, `DRUCK.dokument` setzt Vorgabe „Dokument“). Auffälligkeit, nicht geändert.
 - Im Testlauf wird das Logo in neuen Druckfenstern zu früh verworfen (Test-Netz). Beim Bild nachgereicht.
 - Dateiablage der Downloads (CSV/JSON) hängt vom Browser ab.

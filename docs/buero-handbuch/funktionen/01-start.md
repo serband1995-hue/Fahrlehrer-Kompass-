@@ -23,8 +23,8 @@ Spalten: Name auf dem Bildschirm | Fundstelle | im Handbuch erklärt | Bild
 | Sperren (Platz verlassen) | buero.html:104–108, buero.js:5226–5236, 5490 | ja: „Sperren (Platz verlassen)“ | 01-wer-knoepfe, 01-wer-kopf, 01-wer-gesperrt-seite |
 | Wechseln (andere Person) | buero.js:5488, 5272 | ja: „Wechseln (andere Person)“ | 01-wer-wechseln |
 | PIN ändern | buero.js:5489, 5352–5370 | ja: „PIN ändern“ | 01-wer-pin-aendern |
-| Automatische Sperre nach 20 Minuten ❓ | buero.js:5500–5510, 5469–5481, 5200 | ja: „Automatische Sperre nach 20 Minuten“ | 01-wer-gesperrt-seite |
-| Abmelden und „Büro-Konto ganz abmelden“ | buero.js:5545–5557, buero.html:98–103 | ja: „Abmelden und „Büro-Konto ganz abmelden““ | 01-abmelden-buero, 01-abmelden, 01-wer-ganz-abmelden |
+| Automatische Sperre nach 20 Minuten | buero.js:5500–5510, 5469–5481, 5200 | ja: „Automatische Sperre nach 20 Minuten“ | 01-wer-gesperrt-seite |
+| Abmelden und „Büro-Konto ganz abmelden“ | buero.js:5545–5557, buero.html:98–103 | ja: „Abmelden und „Büro-Konto ganz abmelden““ | 01-abmelden-buero, 01-wer-ganz-abmelden, 01-abmelden |
 | Seitenleiste (Menü) | buero.js:164–262, buero.html:84–110 | ja: „Seitenleiste (Menü)“ | 01-menue |
 | Zahlen an den Menüpunkten | buero.js:183–195, 241–262 | ja: „Zahlen an den Menüpunkten“ | 01-menue-zahlen |
 | Menü am Handy (Knopf „Menü“) | buero.html:91, buero.js:406–431 | ja: „Menü am Handy (Knopf „Menü“)“ | 01-handy-menue-zu, 01-handy-menue-offen |
@@ -49,6 +49,6 @@ Spalten: Name auf dem Bildschirm | Fundstelle | im Handbuch erklärt | Bild
 | Warnung „Notizen an Fahrlehrer noch nicht gelesen“ | buero.js:539–540, 2008–2057 | ja: „Warnung „Notizen an Fahrlehrer noch nicht gelesen““ | 01-heute-notizwarnung |
 | Termine heute | buero.js:495–517 | ja: „Termine heute“ | 01-heute-termine |
 | Kacheln auf der Seite „Heute“ | buero.js:499–504 | ja: „Kacheln auf der Seite „Heute““ | 01-heute-kacheln |
-| Neuigkeiten (Seite) | buero.js:453–465, neuigkeiten.js | ja: „Neuigkeiten (Seite)“ | 01-neuigkeiten, 01-neuigkeiten-seite |
+| Neuigkeiten (Seite) | buero.js:453–465, neuigkeiten.js | ja: „Neuigkeiten (Seite)“ | 01-neuigkeiten-seite, 01-neuigkeiten |
 | Hinweis nach einem Update | buero.js:466–478 | ja: „Hinweis nach einem Update“ | 01-neuigkeiten-hinweis |
 | Als App installieren | buero.html:113–114, buero.js:5698–5712 | ja: „Als App installieren“ | 01-installieren |
