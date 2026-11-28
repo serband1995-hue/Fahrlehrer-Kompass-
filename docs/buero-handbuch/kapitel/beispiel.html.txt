@@ -1,0 +1,13 @@
+<!-- BEISPIEL für den Aufbau einer Funktion (diese Datei wird nicht gedruckt) -->
+<section class="funktion">
+  <h2>Wer bedient gerade? (Anmeldung mit PIN)</h2>
+  <div class="wofuer"><h3>Wofür</h3><p>Mehrere Personen teilen sich ein Büro-Konto. Mit der PIN sieht man bei jeder Änderung, wer sie gemacht hat.</p></div>
+  <h3>So geht’s</h3>
+  <ol class="schritte">
+    <li>Auf den eigenen Namen tippen.</li>
+    <li>Die 4-stellige PIN eingeben.</li>
+  </ol>
+  <figure><img src="bilder/01-pin-namen.png" class="mittel" alt=""><figcaption>Die Nummern im Bild passen zu den Schritten.</figcaption></figure>
+  <div class="gut"><h3>Gut zu wissen</h3><ul><li>Nach 20 Minuten ohne Eingabe fragt die Seite wieder nach dem Namen.</li></ul></div>
+  <p class="unsicher">Wie oft man sich bei der PIN vertippen darf, bevor gesperrt wird.</p>
+</section>

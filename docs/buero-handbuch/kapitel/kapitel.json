@@ -1,0 +1,8 @@
+[
+  { "nr": 1, "datei": "01-start", "titel": "Start und Anmeldung", "kurz": "Anmelden, PIN, Menü, die Seite „Heute“, Erinnerungen und Neuigkeiten." },
+  { "nr": 2, "datei": "02-schueler", "titel": "Schüler und Akte", "kurz": "Schüler anlegen und finden, die Akte, Kundennummer, Adresse, Lehrerwechsel, Papierkorb, Ausbildungsnachweis." },
+  { "nr": 3, "datei": "03-kalender", "titel": "Kalender und Termine", "kurz": "Kalender, Terminarten, Filter und Links, Urlaub, Schichtplan, „Wer hat Platz?“ und Fahrzeuge." },
+  { "nr": 4, "datei": "04-pruefungen", "titel": "Prüfungen, Fristen und Fahrcheck", "kurz": "Prüfungstage und Ergebnisse, Fristen, Fahrchecks abhaken, Durchfallgründe." },
+  { "nr": 5, "datei": "05-geld", "titel": "Geld, Quittung und Druck", "kurz": "Preise und Pakete, Belege, Verkäufe und Provision, Quittung, Zahlungs-Mail, Drucken." },
+  { "nr": 6, "datei": "06-sonstiges", "titel": "Team, Statistik und Einstellungen", "kurz": "Fahrlehrer und Büro-Personen, Statistik, Einstellungen, Vorlagen, Backups und Buchungslinks." }
+]
