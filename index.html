@@ -4924,6 +4924,8 @@ function _brueckeLauf(fn, kanal) {
   return p;
 }
 async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
+  // W28 (Daten-Prüfer M1): eine alte Kopie eines Büro-Termins (Sicherung, Rückgängig, Snapshot) nie hochladen – sie überschriebe das Büro
+  if (tabelle === "kalender_termine") eintraege = eintraege.filter(e => !(e && istNurBueroArt(e.art)));
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
   const offen = [];
@@ -6024,10 +6026,15 @@ async function pullTermineZuweisungen() {
         geaendert++;
       }
     }
+    // W28 (Daten-Prüfer M1/S5/S6): Büro-Termine gehören nie in die App – lokale Kopien immer wegräumen (auch ohne _syncedAt,
+    // auch wenn der Server sonst nichts liefert). Nur lokal: die Brücke lädt sie nicht hoch und löscht sie nicht (siehe _brueckeAbgleichen).
+    const vorBuero = DB.lessons.length;
+    DB.lessons = DB.lessons.filter(l => { if (!istNurBueroArt(l.art)) return true; delete mem.termine[l.id]; return false; });
+    const bueroWeg = vorBuero - DB.lessons.length;
     // Sicherheitssperre: Kommt gar nichts zurück, obwohl das Gerät viele abgeglichene Termine hat,
     // ist das eher ein Lese-Problem (z.B. abgelaufene Anmeldung) als eine echte Löschung.
     const abgeglichen = DB.lessons.filter(l => l._syncedAt).length;
-    const vorherAnzahl = DB.lessons.length;
+    const vorherAnzahl = DB.lessons.length + bueroWeg;
     if (rows.length || abgeglichen <= 3) {
       DB.lessons = DB.lessons.filter(l => {
         const bleibt = !weggegeben.has(l.id) && (remoteIds.has(l.id) || !l._syncedAt);

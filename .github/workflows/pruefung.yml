@@ -125,7 +125,7 @@ jobs:
       - name: "Büro: Seitenleiste (8 Punkte) und Doppelbelegung gesehen (K18)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-gruppen-test.mjs
       - name: "W28 Büro-Terminarten: nur im Büro, Filter, Link je Termin"
-        run: NODE_PATH=$(npm root -g) node scripts/w28-test.mjs
+        run: NODE_PATH=$(npm root -g) node scripts/w28-test.mjs && NODE_PATH=$(npm root -g) node scripts/w28-abgleich-test.mjs
       - name: "Löschen, Stornieren, Papierkorb (K7)"
         run: NODE_PATH=$(npm root -g) node scripts/loeschen-test.mjs
       - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"
