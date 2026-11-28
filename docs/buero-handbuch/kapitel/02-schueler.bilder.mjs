@@ -152,6 +152,4 @@ export default [
       await pop.waitForLoadState("load").catch(() => {}); const html = await pop.content(); await pop.close().catch(() => {});
       await p.evaluate((html) => { document.querySelectorAll("dialog").forEach((d) => d.close && d.close()); const f = document.createElement("iframe"); f.srcdoc = html; Object.assign(f.style, { position: "fixed", inset: "0", width: "100%", height: "100%", border: "0", background: "#fff", zIndex: 99999 }); document.body.appendChild(f); }, html);
       await h.warte(900); } },
-  // ---------- Papierkorb der Fahrschule (Kalender) ----------
-  { id: "02-pk-kalender", url: "#kalender", hoehe: 900, ausschnitt: { sel: "#buPapierkorb", rand: 14, maxHoehe: 700 }, vorher: async (p, h) => { await h.warte(2500); await p.evaluate(() => { const k = document.querySelector("#pkKarte"); if (k) { k.open = true; k.scrollIntoView({ block: "center" }); } }); await h.warte(300); await mk(p, [{ sel: "#pkKarte summary", nr: 1 }], "body"); } },
 ];

@@ -7,7 +7,7 @@ const dlgInit = () => {
   });
   mo.observe(document, { childList: true, subtree: true });
 };
-const alle = (liste) => liste.map((b) => ({ ...b, vorInit: b.vorInit ? () => { dlgInit(); b.vorInit(); } : dlgInit,
+const alle = (liste) => liste.map((b) => ({ ...b, vorInit: "(" + dlgInit + ")();" + (b.vorInit ? "(" + b.vorInit + ")();" : ""),
   // Bei Ausschnitten verdeckt der mitlaufende Rollen-Streifen sonst die erste Zeile
   vorher: b.ausschnitt && b.geraet !== "handy" && !/streifen/.test(b.id) ? async (page, h) => { if (b.vorher) await b.vorher(page, h); await page.evaluate(() => { const s = document.getElementById("rollenStreifen"); if (s) s.style.visibility = "hidden"; }); } : b.vorher }));
 const dlg = "dialog[open]";

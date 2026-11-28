@@ -128,7 +128,7 @@ Abschnitt = Überschrift in `kapitel/02-schueler.html`. ❓ = nicht sicher aus d
 | „Teil-Nachweis“ Haken | N:183 | „Nachweis erstellen, drucken“ | 02-nw-unten |
 | „Nachweis erstellen“ → Druckfenster (Drucken / als PDF speichern, E-Mail vorbereiten, Schließen) | N:187–194, N:365–435 | dito | 02-nw-unten, 02-nw-druck |
 | Druckbild alt/neu (ab 01.07.2027) | N:13, N:365 | dito (Gut zu wissen) | 02-nw-druck |
-| Papierkorb der Fahrschule im Kalender (Wiederherstellen, „Storniert, bleibt aufbewahrt“) | N:437–502, B:3132 | „Papierkorb der Fahrschule“ (Kalender selbst: Kap. 3) | 02-pk-kalender |
+| Papierkorb der Fahrschule im Kalender (Wiederherstellen, „Storniert, bleibt aufbewahrt“) | N:437–502, B:3132 | „Papierkorb der Fahrschule“ (Kalender selbst: Kap. 3) | 03-papierkorb (Bild aus Kap. 3) |
 
 ## Nicht sicher / offen
 

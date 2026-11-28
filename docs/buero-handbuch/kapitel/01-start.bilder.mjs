@@ -7,7 +7,7 @@ const dlgInit = () => {
   });
   mo.observe(document, { childList: true, subtree: true });
 };
-const alle = (liste) => liste.map((b) => ({ ...b, vorInit: b.vorInit ? () => { dlgInit(); b.vorInit(); } : dlgInit,
+const alle = (liste) => liste.map((b) => ({ ...b, vorInit: "(" + dlgInit + ")();" + (b.vorInit ? "(" + b.vorInit + ")();" : ""),
   // Bei Ausschnitten verdeckt der mitlaufende Rollen-Streifen sonst die erste Zeile
   vorher: b.ausschnitt && b.geraet !== "handy" && !/streifen/.test(b.id) ? async (page, h) => { if (b.vorher) await b.vorher(page, h); await page.evaluate(() => { const s = document.getElementById("rollenStreifen"); if (s) s.style.visibility = "hidden"; }); } : b.vorher }));
 const zeigeLogin = async (page) => {
@@ -163,7 +163,7 @@ const teil3 = [
   // ---- Neuigkeiten ----
   { id: "01-neuigkeiten", geraet: "pc", url: "#neuigkeiten", marken: [{ sel: ".nz-e >> nth=0 >> .nz-kopf", nr: 1 }, { sel: ".nz-e >> nth=0 >> .nz-titel", nr: 2 }, { sel: ".nz-e >> nth=0 >> .nz-p", nr: 3 }, { sel: ".nz-e >> nth=0 >> .nz-ver", nr: 4 }], ausschnitt: { sel: ".nz-e >> nth=0", rand: 22 } },
   { id: "01-neuigkeiten-seite", geraet: "pc", url: "#neuigkeiten", marken: [{ sel: '.nav-punkt[href="#neuigkeiten"]', nr: 1 }] },
-  { id: "01-neuigkeiten-hinweis", geraet: "pc", vorInit: () => { try { localStorage.setItem("buero-neu-gesehen", "2026.01.01.1"); } catch (e) {} }, vorher: async (page, h) => { await h.warte(3000); },
+  { id: "01-neuigkeiten-hinweis", geraet: "pc", vorInit: () => { try { localStorage.setItem("buero-neu-gesehen", "2026.01.01.1"); } catch (e) {} }, vorher: async (page, h) => { await page.waitForSelector("#toast.zeigen", { timeout: 9000 }); await h.warte(300); },
     marken: [{ sel: "#toast.zeigen", nr: 1 }] },
   // ---- Als App installieren, Abmelden ----
   { id: "01-installieren", geraet: "pc", vorher: async (page, h) => { await page.evaluate(() => { document.getElementById("installieren").hidden = false; }); await h.warte(200); },
