@@ -1,11 +1,11 @@
 [
   {
     "datei": "pdf/01-Start-und-Anmeldung.pdf",
-    "seiten": 58
+    "seiten": 59
   },
   {
     "datei": "pdf/02-Schueler-und-Akte.pdf",
-    "seiten": 62
+    "seiten": 63
   },
   {
     "datei": "pdf/03-Kalender-und-Termine.pdf",
@@ -13,11 +13,11 @@
   },
   {
     "datei": "pdf/04-Pruefungen-Fristen-und-Fahrcheck.pdf",
-    "seiten": 89
+    "seiten": 91
   },
   {
     "datei": "pdf/05-Geld-Quittung-und-Druck.pdf",
-    "seiten": 50
+    "seiten": 48
   },
   {
     "datei": "pdf/06-Team-Statistik-und-Einstellungen.pdf",
@@ -25,6 +25,6 @@
   },
   {
     "datei": "pdf/00-Gesamt-Buero-Handbuch.pdf",
-    "seiten": 399
+    "seiten": 401
   }
 ]
