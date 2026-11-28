@@ -103,8 +103,8 @@ const init = (o) => "(" + seedFn.toString() + ")(" + JSON.stringify(o || {}) + "
 async function pdfZuPng(seite, opt) {
   const ord = mkdtempSync(join(tmpdir(), "hb-geld-"));
   const pdf = join(ord, "x.pdf");
-  { const { dpi, ...rest } = opt || {}; writeFileSync(pdf, await seite.pdf({ preferCSSPageSize: true, printBackground: true, ...rest })); }
-  execFileSync("pdftoppm", ["-r", String((opt && opt.dpi) || 110), "-png", "-f", "1", "-l", "1", pdf, join(ord, "s")], { stdio: "ignore" });
+  { const { dpi, seite: _s, ...rest } = opt || {}; writeFileSync(pdf, await seite.pdf({ preferCSSPageSize: true, printBackground: true, ...rest })); }
+  execFileSync("pdftoppm", ["-r", String((opt && opt.dpi) || 110), "-png", "-f", String((opt && opt.seite) || 1), "-l", String((opt && opt.seite) || 1), pdf, join(ord, "s")], { stdio: "ignore" });
   const datei = readdirSync(ord).find((f) => f.endsWith(".png"));
   return readFileSync(join(ord, datei));
 }
@@ -147,10 +147,10 @@ async function htmlBild(page, html, opt) {
   await zeigeBild(page, png, opt);
 }
 // Die Seite so drucken, wie der Knopf „Drucken“ es tut (Kopf wird gefüllt, dann Druckbild)
-async function seiteDruckbild(page) {
+async function seiteDruckbild(page, seite) {
   await page.evaluate(() => { window.fuelleDruckKopf(); });
   await page.waitForTimeout(300);
-  return pdfZuPng(page, { dpi: 190 });
+  return pdfZuPng(page, { dpi: 190, seite });
 }
 // Neues Fenster (window.open) abwarten, Ansicht im Fenster als Bild
 async function fensterBild(page, ausloeser, breite = 900, hoehe = 1100) {
@@ -330,7 +330,7 @@ const LISTE = [
   { id: "05-druck-knopf", ...preise({ ausschnitt: { sel: ".kopf-rechts", rand: 20 } }), marken: [{ sel: "#drucken", nr: 1 }, { sel: "#neuLaden", nr: 2 }] },
   { id: "05-druck-vorschau-preise", ...preise({ hoehe: 1250, vorher: async (p) => { await zeigeBild(p, await seiteDruckbild(p), { breite: 760 }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 } }) },
   { id: "05-druck-vorschau-belege", ...belege({ hoehe: 1250, vorher: async (p) => { await zeigeBild(p, await seiteDruckbild(p), { breite: 760 }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 } }) },
-  { id: "05-druck-vorschau-kalender", url: "#kalender?ansicht=woche", geraet: "pc", vorInit: init(VOLL), hoehe: 900, vorher: async (p) => { await zeigeBild(p, await seiteDruckbild(p), { breite: 1100 }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 } },
+  { id: "05-druck-vorschau-kalender", url: "#kalender?ansicht=woche", geraet: "pc", vorInit: init(VOLL), hoehe: 900, vorher: async (p) => { await zeigeBild(p, await seiteDruckbild(p, 2), { breite: 1100 }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 } },
   { id: "05-druck-team", url: "#team", geraet: "pc", vorInit: init(VOLL), hoehe: 1250, vorher: async (p) => { await zeigeBild(p, await seiteDruckbild(p), { breite: 760, oben: 0.3 }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 } },
   { id: "05-druck-handy", url: "#preise", geraet: "handy", vorInit: init(VOLL), ausschnitt: { sel: ".kopf", rand: 10 } },
 
