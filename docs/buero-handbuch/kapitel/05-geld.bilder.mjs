@@ -171,14 +171,19 @@ const VOLL = { preise: true, pakete: true, zahlungsdaten: "test", belegKopf: tru
 // Fenster öffnen (Knopf), dann entweder Bildschirm-Ansicht des Fensters oder sein Druckbild einblenden
 async function popupBild(p, ausloeser, modus, opt) {
   opt = opt || {};
-  const logo = await p.evaluate(() => (window.DRUCK && S.fs ? DRUCK.logoUrl(S.fs.slug) : ""));
+  // Das Logo kommt als eingebettetes Bild (data-Adresse): Im neuen Fenster wartet die Seite nur 1,5 s auf das Netz und wirft es sonst weg
+  const logo = await p.evaluate(async () => {
+    if (!window.DRUCK || !S.fs) return "";
+    const u = DRUCK.logoUrl(S.fs.slug); if (!u) return "";
+    try { const r = await fetch(u); const bl = await r.blob(); return await new Promise((ok) => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(bl); }); } catch (e) { return ""; }
+  });
   const pop = await fensterBild(p, ausloeser, opt.pw || 900, opt.ph || 1100);
-  // Im Testlauf wird das Logo im neuen Fenster zu früh verworfen (die Seite wartet nur 1,5 s): hier an derselben Stelle nachreichen
   if (logo) {
     await pop.evaluate((u) => new Promise((ok) => {
       const host = document.querySelector(".dkopf") || document.querySelector(".stand");
       if (!host || host.querySelector("img")) return ok();
       const i = document.createElement("img"); i.className = "dlogo"; i.onload = i.onerror = () => ok(); i.src = u; host.insertBefore(i, host.firstChild);
+      setTimeout(ok, 3000);
     }), logo);
   }
   const png = modus === "fenster" ? await pop.screenshot() : await pdfZuPng(pop, { dpi: 190 });
