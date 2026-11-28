@@ -182,7 +182,7 @@ async function popupBild(p, ausloeser, modus, opt) {
     await pop.evaluate((u) => new Promise((ok) => {
       const host = document.querySelector(".dkopf") || document.querySelector(".stand");
       if (!host || host.querySelector("img")) return ok();
-      const i = document.createElement("img"); i.className = "dlogo"; i.onload = i.onerror = () => ok(); i.src = u; host.insertBefore(i, host.firstChild);
+      const i = document.createElement("img"); i.className = "dlogo"; i.onload = i.onerror = () => ok(); i.src = u; if (host.classList.contains("dkopf")) host.appendChild(i); else host.insertBefore(i, host.firstChild);
       setTimeout(ok, 3000);
     }), logo);
   }
