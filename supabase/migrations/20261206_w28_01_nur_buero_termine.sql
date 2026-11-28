@@ -16,7 +16,8 @@ as $f$ select coalesce(p_art = any (array['vortest', 'simulator', 'beratung', 'm
 create or replace function public.darf_buero_termine()
  returns boolean language sql stable security definer
  set search_path to 'public'
-as $f$ select coalesce((select p.rolle in ('buero', 'fahrschule_admin', 'super_admin') from public.profiles p where p.id = auth.uid()), false) $f$;
+-- Dieselben Hilfsfunktionen wie die bestehenden Regeln auf kalender_termine (Lese-Abfrage A6 vom 28.11.): gleiche Definition von Büro/Leitung/Super-Admin
+as $f$ select coalesce(public.is_buero(auth.uid()) or public.is_fahrschule_admin(auth.uid()) or public.is_super_admin(auth.uid()), false) $f$;
 
 revoke all on function public.darf_buero_termine() from public;
 grant execute on function public.darf_buero_termine() to authenticated, anon;

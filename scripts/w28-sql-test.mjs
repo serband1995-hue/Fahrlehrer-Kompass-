@@ -39,6 +39,10 @@ await db.exec(`
     with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.rolle in ('buero','fahrschule_admin') and p.fahrschule_id = kalender_termine.fahrschule_id));
   create policy "Super-Admin" on public.kalender_termine for all to authenticated
     using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.rolle = 'super_admin')) with check (true);
+  -- Nachbildung der Hilfsfunktionen (Rolle in profiles, security definer), wie in der Datenbank vorhanden (Lese-Abfrage A6)
+  create function public.is_buero(uid uuid) returns boolean language sql stable security definer as $$ select exists (select 1 from public.profiles where id = uid and rolle = 'buero') $$;
+  create function public.is_fahrschule_admin(uid uuid) returns boolean language sql stable security definer as $$ select exists (select 1 from public.profiles where id = uid and rolle = 'fahrschule_admin') $$;
+  create function public.is_super_admin(uid uuid) returns boolean language sql stable security definer as $$ select exists (select 1 from public.profiles where id = uid and rolle = 'super_admin') $$;
   grant usage on schema public to authenticated, anon;
   grant select, insert, update, delete on public.kalender_termine to authenticated;
   grant select on public.profiles to authenticated;
