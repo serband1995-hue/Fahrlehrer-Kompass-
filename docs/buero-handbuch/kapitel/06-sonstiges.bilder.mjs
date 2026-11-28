@@ -22,7 +22,7 @@ const mehrere = (sel) => ({ sel, nr: 0 });
 
 // ---------------------------------------------------------------- Statistik
 const statistik = [
-  { id: "06-statistik-ganz", geraet: "pc", url: "#zahlen", marken: [{ sel: ".filterzeile", nr: 1 }, { sel: ".kacheln", nr: 2 }, { sel: ".raster.zwei >> nth=0", nr: 3 }, { sel: ".karte:has-text('Offenes Geld und Verkäufe')", nr: 4 }, { sel: "#luQuoteLehrer", nr: 5 }, { sel: "#awKarte", nr: 6 }], hoehe: 1700 },
+  { id: "06-statistik-ganz", geraet: "pc", url: "#zahlen", marken: [{ sel: ".filterzeile", nr: 1 }, { sel: ".kacheln", nr: 2 }, { sel: ".raster.zwei >> nth=0", nr: 3 }, { sel: ".karte:has-text('Offenes Geld und Verkäufe')", nr: 4 }, { sel: "#luQuoteLehrer", nr: 5 }, { sel: "#awKarte", nr: 6 }], hoehe: 1700, ganzeSeite: true },
   { id: "06-statistik-kopf", geraet: "pc", url: "#zahlen", marken: [{ sel: "#kMonatsbericht", nr: 1 }], ausschnitt: { sel: "header.kopf", rand: 18 } },
   { id: "06-statistik-reiter", geraet: "pc", url: "#fehler", marken: [{ sel: ".aw-reiter a[href='#zahlen']", nr: 1 }, { sel: ".aw-reiter a[href='#fehler']", nr: 2 }, { sel: ".aw-reiter a[href='#verlauf']", nr: 3 }], ausschnitt: { sel: ".aw-reiter", rand: 18 } },
   { id: "06-statistik-filter", geraet: "pc", url: "#zahlen", marken: [{ sel: "#zZr", nr: 1 }, { sel: "#zKlasse", nr: 2 }, { sel: "#zLehrer", nr: 3 }], ausschnitt: { sel: ".filterzeile", rand: 16 } },

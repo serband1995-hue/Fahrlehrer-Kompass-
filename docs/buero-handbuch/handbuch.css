@@ -72,5 +72,5 @@ figcaption { font-size: 9pt; color: var(--grau); margin-top: 3pt; }
 table.liste { border-collapse: collapse; width: 100%; font-size: 9.8pt; margin: 4pt 0 8pt; }
 table.liste th, table.liste td { border: 1px solid var(--linie); padding: 3pt 5pt; text-align: left; vertical-align: top; }
 table.liste th { background: #f3f5f7; }
-.unsichtbar { color: #fff; font-size: 1pt; line-height: 0; }
+.unsichtbar { position: absolute; color: #fff; font-size: 1pt; line-height: 0; } /* aus dem Fluss: darf den Umbruch nicht ändern */
 .marke-ref { display: inline-block; width: 13pt; height: 13pt; border-radius: 50%; background: var(--rot); color: #fff; font: 700 8pt/13pt Arial, sans-serif; text-align: center; vertical-align: 1pt; margin: 0 1pt; }

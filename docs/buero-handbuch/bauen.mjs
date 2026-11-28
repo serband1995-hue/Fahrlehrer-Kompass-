@@ -61,14 +61,14 @@ function deckblatt(titel, kapitelnr, kurz, inhaltHtml) {
   <div class="oben"><span class="absender">${ABSENDER}</span><img src="../../../icon-192.png" alt=""></div>
   <div class="mitte"><div class="kapitelnr">${esc(kapitelnr)}</div><h1>${esc(titel)}</h1><p class="kurz">${esc(kurz)}</p></div>
   ${inhaltHtml ? `<div class="inhalt"><h3 style="font-family:Manrope,Arial;font-size:10pt;text-transform:uppercase;letter-spacing:.06em;color:#2f6b47;margin:0 0 6pt">Inhalt</h3>${inhaltHtml}</div>` : ""}
-  <div class="unten">Handbuch zur Büro-Seite des Fahrlehrer-Kompass („Kompass Büro“) · Stand ${STAND}<br>Alle Namen und Daten in den Bildern sind erfunden (Vorführ-Modus).</div>
+  <div class="unten">Handbuch zur Büro-Seite des Fahrlehrer-Kompass („Kompass Büro“) · Stand ${STAND}<br>Alle Namen und Daten in den Bildern sind erfunden (Vorführ-Modus). Nur der Name „Serband“ ist echt: Er steht fest in einigen Hinweisen der Büro-Seite.</div>
 </section>`;
 }
 
 const browser = await chromium.launch();
 
 // HTML → PDF, zweimal: beim ersten Mal die Seitenzahlen der Überschriften suchen, beim zweiten Mal ins Verzeichnis schreiben
-async function druck(name, titel, bauHtml) {
+async function druck(name, titel, bauHtml, pruefTitel = {}) {
   const htmlDatei = join(HIER, "html", name + ".html");
   const pdfDatei = join(HIER, "pdf", name + ".pdf");
   let seiten = {};
@@ -94,6 +94,15 @@ async function druck(name, titel, bauHtml) {
       }
     }
   }
+  // Prüfung: Steht jede Überschrift wirklich auf der Seite, die das Verzeichnis nennt?
+  const norm = (t) => t.replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").trim().slice(0, 28);
+  let falsch = 0;
+  for (const [key, seite] of Object.entries(seiten)) {
+    if (!pruefTitel[key]) continue;
+    const text = norm(execFileSync("pdftotext", ["-f", String(seite), "-l", String(seite), pdfDatei, "-"]).toString());
+    if (!text.includes(norm(pruefTitel[key]))) { falsch++; if (falsch <= 5) console.log(`   ! Verzeichnis: „${pruefTitel[key]}“ nicht auf Seite ${seite}`); }
+  }
+  if (falsch) { console.log(`FEHL pdf/${name}.pdf: ${falsch} Verzeichnis-Einträge zeigen auf die falsche Seite`); process.exitCode = 1; }
   const anzahl = execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1];
   console.log(`ok   pdf/${name}.pdf  (${anzahl} Seiten)`);
   return Number(anzahl);
@@ -113,7 +122,7 @@ for (const k of kapitel) {
   const eintraege = k.funktionen.map((f) => ({ key: f.key, titel: f.titel, klasse: "fn" }));
   // Seitenzahlen im Einzel-PDF: Funktionen aus diesem Kapitel
   const n = await druck(name, `Kapitel ${k.nr}: ${k.titel}`, (seiten) =>
-    seiteKopf(`Kapitel ${k.nr}: ${k.titel}`) + deckblatt(k.titel, `Kapitel ${k.nr}`, k.kurz, "") + `<section class="verzeichnis-seite"><h1>Inhalt</h1>${verzeichnis(eintraege, seiten)}</section>` + k.html + "</body></html>");
+    seiteKopf(`Kapitel ${k.nr}: ${k.titel}`) + deckblatt(k.titel, `Kapitel ${k.nr}`, k.kurz, "") + `<section class="verzeichnis-seite"><h1>Inhalt</h1>${verzeichnis(eintraege, seiten)}</section>` + k.html + "</body></html>", Object.fromEntries(k.funktionen.map((f) => [f.key, f.titel])));
   ergebnis.push({ datei: `pdf/${name}.pdf`, seiten: n });
 }
 
@@ -128,7 +137,7 @@ if (kapitel.length && !NUR.length) {
     deckblatt("Büro-Handbuch", "Gesamtausgabe", "Die Büro-Seite des Fahrlehrer-Kompass Schritt für Schritt erklärt: jede Funktion mit Bildern, für den Alltag im Büro.", "") +
     `<section class="verzeichnis-seite"><h1>Inhalt</h1>${verzeichnis(eintraege, seiten)}</section>` +
     kapitel.map((k) => `<header class="kapitel-kopf"><div class="kapitelnr">Kapitel ${k.nr}</div><h1>${esc(k.titel)}</h1><p>${esc(k.kurz)}</p></header>${k.html}`).join("") +
-    "</body></html>");
+    "</body></html>", Object.fromEntries(kapitel.flatMap((k) => k.funktionen.map((f) => [f.key, f.titel]))));
   ergebnis.push({ datei: "pdf/00-Gesamt-Buero-Handbuch.pdf", seiten: n });
 }
 await browser.close();

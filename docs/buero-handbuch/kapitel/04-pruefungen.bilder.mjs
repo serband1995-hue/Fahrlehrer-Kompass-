@@ -28,7 +28,7 @@ const LISTE = [
   // ---------- Prüfungen ----------
   { id: "04-pr-uebersicht", url: "#pruefungen", geraet: "pc", hoehe: 1500, ausschnitt: "#ansicht",
     marken: [{ sel: "#ansicht .kacheln", nr: 1 }, { sel: "#ansicht .warnkarte", nr: 2 }, { sel: `${KARTE} .tabs`, nr: 3 }] },
-  { id: "04-pr-menue", url: "#pruefungen", geraet: "pc", ausschnitt: { sel: '#nav a[href="#pruefungen"]', rand: 8 }, marken: [{ sel: '#nav a[href="#pruefungen"] .zahl, #nav a[href="#pruefungen"] span:last-child', nr: null }] },
+  { id: "04-pr-menue", url: "#pruefungen", geraet: "pc", ausschnitt: { sel: '#nav a[href="#pruefungen"]', rand: 8 }, marken: [{ sel: '#nav a[href="#pruefungen"] .zahl, #nav a[href="#pruefungen"] span:last-child', nr: 1 }] },
   { id: "04-pr-kacheln", url: "#pruefungen", geraet: "pc", ausschnitt: "#ansicht .kacheln" },
   { id: "04-pr-warnkarte", url: "#pruefungen", geraet: "pc", ausschnitt: "#ansicht .warnkarte",
     marken: [{ sel: "#ansicht .warnkarte .haupt >> nth=0", nr: 1 }, { sel: "#ansicht .warnkarte [data-ergebnis]", nr: 2 }, { sel: "#ansicht .warnkarte [data-pbearb]", nr: 3 }] },
