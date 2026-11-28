@@ -191,6 +191,18 @@ async function popupBild(p, ausloeser, modus, opt) {
   await zeigeBild(p, png, opt);
 }
 
+// Zu lange Fenster/Formulare kürzen: nur die Kinder von „von“ (Textanfang, sonst Anfang) bis vor „bis“ (Textanfang, sonst Ende) bleiben
+async function behalte(p, sel, von, bis) {
+  await p.evaluate(({ sel, von, bis }) => {
+    const host = document.querySelector(sel);
+    const kinder = [...host.children];
+    const idx = (t, std) => { if (!t) return std; const i = kinder.findIndex((k) => k.textContent.trim().startsWith(t)); return i < 0 ? std : i; };
+    const a = idx(von, 0), b = idx(bis, kinder.length);
+    kinder.forEach((k, i) => { if (i < a || i >= b) k.remove(); });
+  }, { sel, von, bis });
+}
+const entferne = (p, sel) => p.evaluate((sel) => document.querySelectorAll(sel).forEach((e) => e.remove()), sel);
+
 const D = "dialog[open]";
 const preise = (extra) => Object.assign({ url: "#preise", geraet: "pc", vorInit: init(VOLL) }, extra);
 const pakete = (extra) => Object.assign({ url: "#preise?reiter=pakete", geraet: "pc", vorInit: init(VOLL) }, extra);
@@ -210,7 +222,7 @@ const LISTE = [
   /* ---------- Zahlungen und Preise ---------- */
   { id: "05-zahlungen-reiter", ...preise({ ausschnitt: { sel: ".zahl-reiter", rand: 26 } }),
     marken: [{ sel: ".zahl-reiter a:nth-child(1)", nr: 1 }, { sel: ".zahl-reiter a:nth-child(2)", nr: 2 }, { sel: ".zahl-reiter a:nth-child(3)", nr: 3 }, { sel: ".zahl-reiter a:nth-child(4)", nr: 4 }] },
-  { id: "05-zahlungen-nav", ...preise({ ausschnitt: { sel: "#nav", rand: 6 } }), marken: [{ sel: "a.nav-punkt[href='#zahlungen']", nr: 1 }] },
+  { id: "05-zahlungen-nav", ...preise({ ausschnitt: { sel: "#nav", rand: 6, maxHoehe: 340 } }), marken: [{ sel: "a.nav-punkt[href='#zahlungen']", nr: 1 }] },
   { id: "05-preise-kopf", ...preise({ ausschnitt: { sel: ".pr-kopf", rand: 26 } }),
     marken: [{ sel: "#prNeu", nr: 1 }, { sel: "#prCsv", nr: 2 }, { sel: "#prJson", nr: 3 }] },
   { id: "05-preise-tabelle", ...preise({ hoehe: 1000, ausschnitt: { sel: ".pr-tabelle", rand: 20, maxHoehe: 600 } }),
@@ -227,8 +239,10 @@ const LISTE = [
     marken: [{ sel: "#bkNeu", nr: 1 }, { sel: ".bk-v-summe", nr: 2 }, { sel: "[data-bk-bearbeiten]", nr: 3 }, { sel: "[data-bk-kopie]", nr: 4 }, { sel: "[data-bk-archiv]", nr: 5 }, { sel: "details.bk-archiv summary", nr: 6 }] },
   { id: "05-paket-neu", ...pakete({ hoehe: 1000, vorher: async (p, h) => { await h.klick("#bkNeu"); await h.tippe(D + " input[name=name]", "Boost-Paket 3"); }, ...dlgBild(),
     marken: [{ sel: D + " input[name=name]", nr: 1 }, { sel: D + " select[name=klasse]", nr: 2 }, { sel: D + " [data-bk-chips]", nr: 3 }] }) },
-  { id: "05-paket-posten", ...pakete({ hoehe: 2300, vorher: async (p, h) => { await p.locator("[data-bk-bearbeiten='p-2']").click(); await h.warte(600); }, ...dlgBild(),
-    marken: [{ sel: D + " .bk-posten:nth-child(1) .bk-p-titel b", nr: 1 }, { sel: D + " .bk-posten:nth-child(3) .bk-stepper", nr: 2 }, { sel: D + " .bk-posten:nth-child(3) .bk-preisfeld", nr: 3 }, { sel: D + " .bk-posten:nth-child(7) [data-bk-hinweis]", nr: 4 }, { sel: D + " .bk-posten:nth-child(1) .bk-weg", nr: 5 }, { sel: D + " .bk-gesamt", nr: 6 }, { sel: D + " [data-bk-chips]", nr: 7 }] }) },
+  { id: "05-paket-posten-a", ...pakete({ hoehe: 2300, vorher: async (p, h) => { await p.locator("[data-bk-bearbeiten='p-2']").click(); await h.warte(600); await entferne(p, D + " .bk-posten:nth-child(n+4), " + D + " .bk-gesamt, " + D + " [data-bk-chips], " + D + " .bk-chips-titel"); }, ...dlgBild(),
+    marken: [{ sel: D + " .bk-posten:nth-child(1) .bk-p-titel b", nr: 1 }, { sel: D + " .bk-posten:nth-child(3) .bk-stepper", nr: 2 }, { sel: D + " .bk-posten:nth-child(3) .bk-preisfeld", nr: 3 }] }) },
+  { id: "05-paket-posten-b", ...pakete({ hoehe: 2300, vorher: async (p, h) => { await p.locator("[data-bk-bearbeiten='p-2']").click(); await h.warte(600); await entferne(p, D + " .bk-posten:nth-child(-n+3), " + D + " .bk-form, " + D + " .bk-zwischen"); }, ...dlgBild(),
+    marken: [{ sel: D + " .bk-posten:nth-child(4) [data-bk-hinweis]", nr: 4 }, { sel: D + " .bk-posten:nth-child(1) .bk-weg", nr: 5 }, { sel: D + " .bk-gesamt", nr: 6 }, { sel: D + " [data-bk-chips]", nr: 7 }] }) },
   { id: "05-paket-kopieren", ...pakete({ hoehe: 1100, vorher: async (p, h) => { await p.locator("[data-bk-kopie='p-1']").click(); await h.warte(600); }, ...dlgBild(), marken: [{ sel: D + " input[name=name]", nr: 1 }] }) },
   { id: "05-paket-archiviert", toast: true, ...pakete({ hoehe: 1000, vorher: async (p, h) => { await p.locator("[data-bk-archiv='p-1']").click(); await h.warte(600); }, ausschnitt: { sel: ".toast.zeigen", rand: 14 } }) },
 
@@ -265,8 +279,10 @@ const LISTE = [
   { id: "05-quittung-storno", ...belege({ vorher: async (p) => { const html = await p.evaluate(() => belegHTML(S.belege.find((b) => b.nummer === 5))); await htmlBild(p, html, { breite: 760, oben: 0.62, punkte: QP.storno }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 }, hoehe: 1000 }) },
   { id: "05-quittung-steuer", ...belege({ vorher: async (p) => { const html = await p.evaluate(() => { const b = Object.assign({}, S.belege.find((x) => x.nummer === 7), { nummer: 8, steuer: { ausweisen: true, satz: "19", hinweis: "Vorführ-Hinweis: Dies ist ein Beispieltext." } }); return belegHTML(b); }); await htmlBild(p, html, { breite: 760, oben: 0.7, punkte: QP.steuer }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 }, hoehe: 1000 }) },
   { id: "05-quittung-schlicht", ...belege({ vorher: async (p) => { const html = await p.evaluate(() => { const b = Object.assign({}, S.belege.find((x) => x.nummer === 7), { nummer: 9, kundennummer: null, schueler_adresse: null, fahrschule_daten: { name: "Fahrschule Boost" }, aussteller: "" }); return belegHTML(b); }); await htmlBild(p, html, { breite: 760, oben: 0.55 }); }, ausschnitt: { sel: "#hbVorschau", rand: 0 }, hoehe: 1000 }) },
-  { id: "05-einst-belege", url: "#einstellungen?thema=belege", geraet: "pc", vorInit: init(VOLL), hoehe: 1750, ausschnitt: { sel: ".es-inhalt", rand: 10 },
-    marken: [{ sel: "#belegEinst input[name=name]", nr: 1 }, { sel: "#belegEinst textarea[name=anschrift]", nr: 2 }, { sel: "#belegEinst input[name=steuernummer]", nr: 3 }, { sel: "#belegEinst input[name=ustid]", nr: 4 }, { sel: "#belegEinst input[name=ausweisen]", nr: 5 }, { sel: "#belegEinst input[name=satz]", nr: 6 }, { sel: "#belegEinst input[name=hinweis]", nr: 7 }, { sel: "#belegEinst input[name=bargeld]", nr: 8 }, { sel: "#belegEinst button[type=submit]", nr: 9 }] },
+  { id: "05-einst-belege-a", url: "#einstellungen?thema=belege", geraet: "pc", vorInit: init(VOLL), hoehe: 1300, vorher: async (p) => { await behalte(p, "#belegEinst", null, "Umsatzsteuer auf dem Beleg"); }, ausschnitt: { sel: "#belegEinst", rand: 14 },
+    marken: [{ sel: "#belegEinst input[name=name]", nr: 1 }, { sel: "#belegEinst textarea[name=anschrift]", nr: 2 }, { sel: "#belegEinst input[name=steuernummer]", nr: 3 }, { sel: "#belegEinst input[name=ustid]", nr: 4 }] },
+  { id: "05-einst-belege-b", url: "#einstellungen?thema=belege", geraet: "pc", vorInit: init(VOLL), hoehe: 1300, vorher: async (p) => { await behalte(p, "#belegEinst", "Umsatzsteuer auf dem Beleg", null); }, ausschnitt: { sel: "#belegEinst", rand: 14 },
+    marken: [{ sel: "#belegEinst input[name=ausweisen]", nr: 5 }, { sel: "#belegEinst input[name=satz]", nr: 6 }, { sel: "#belegEinst input[name=hinweis]", nr: 7 }, { sel: "#belegEinst input[name=bargeld]", nr: 8 }, { sel: "#belegEinst button[type=submit]", nr: 9 }] },
   { id: "05-einst-bargeld-frage", url: "#einstellungen?thema=belege", geraet: "pc", vorInit: init(VOLL), vorher: async (p, h) => { await p.locator("#belegEinst input[name=bargeld]").check(); await p.locator("#belegEinst button[type=submit]").click(); await h.warte(800); }, ...dlgBild() },
 
   { id: "05-einst-preise", url: "#einstellungen?thema=preise", geraet: "pc", vorInit: init(VOLL), hoehe: 900, ausschnitt: { sel: ".es-inhalt", rand: 10 }, marken: [{ sel: ".es-inhalt .es-satz", nr: 1 }, { sel: "#esReakt", nr: 2 }] },
@@ -279,14 +295,16 @@ const LISTE = [
   /* ---------- Pakete an Schüler ---------- */
   { id: "05-akte-paket-wahl", url: "#schueler", geraet: "pc", hoehe: 1100, vorInit: init(VOLL), vorher: async (p, h) => { await akte(p, h, "s14"); await p.locator("[data-bk-wahl]").selectOption("v:p-2"); await h.warte(500); await p.locator("[data-bk-anm]").scrollIntoViewIfNeeded(); }, ausschnitt: { sel: "[data-bk-anm]", rand: 14 },
     marken: [{ sel: "[data-bk-wahl]", nr: 1 }, { sel: ".bk-anm-posten", nr: 2 }, { sel: ".bk-anm-summe", nr: 3 }, { sel: "[data-bk-anpassen]", nr: 4 }] },
-  { id: "05-akte-paket-anpassen", url: "#schueler", geraet: "pc", hoehe: 2300, vorInit: init(VOLL), vorher: async (p, h) => { await akte(p, h, "s14"); await p.locator("[data-bk-wahl]").selectOption("v:p-2"); await h.warte(400); await p.locator("[data-bk-anpassen]").click(); await h.warte(700); }, ausschnitt: { sel: "dialog[open]:has(h2:has-text('Paket für'))", rand: 20 }, marken: [{ sel: "dialog[open]:has(h2:has-text('Paket für')) footer .haupt", nr: 1 }] },
+  { id: "05-akte-paket-anpassen", url: "#schueler", geraet: "pc", hoehe: 2300, vorInit: init(VOLL), vorher: async (p, h) => { await akte(p, h, "s14"); await p.locator("[data-bk-wahl]").selectOption("v:p-2"); await h.warte(400); await p.locator("[data-bk-anpassen]").click(); await h.warte(700); await entferne(p, "dialog.bk-dialog[open] .bk-posten:nth-child(n+3), dialog.bk-dialog[open] [data-bk-chips], dialog.bk-dialog[open] .bk-chips-titel"); }, ausschnitt: { sel: "dialog[open]:has(h2:has-text('Paket für'))", rand: 20 }, marken: [{ sel: "dialog[open]:has(h2:has-text('Paket für')) footer .haupt", nr: 1 }] },
   { id: "05-akte-paket-verkauft", url: "#schueler", geraet: "pc", hoehe: 1100, vorInit: init(VOLL), vorher: async (p, h) => { await akte(p, h, "s14"); await p.locator("[data-bk-wahl]").selectOption("v:p-2"); await h.warte(400); await p.locator("dialog[open] footer .haupt").click(); await h.warte(1800); await akte(p, h, "s14"); await h.warte(1200); await p.locator("[data-bk-anm]").scrollIntoViewIfNeeded(); }, ausschnitt: { sel: "[data-bk-anm]", rand: 14 },
     marken: [{ sel: ".bk-anm-verkauft", nr: 1 }, { sel: ".bk-anm-stand", nr: 2 }, { sel: ".bk-anm-summe", nr: 3 }, { sel: "[data-bk-anpassen]", nr: 4 }] },
   { id: "05-akte-paket-normal", url: "#schueler", geraet: "pc", hoehe: 1100, vorInit: init(VOLL), vorher: async (p, h) => { await akte(p, h, "s14"); await p.locator("[data-bk-anm]").scrollIntoViewIfNeeded(); }, ausschnitt: { sel: "[data-bk-anm]", rand: 14 }, marken: [{ sel: "[data-bk-wahl]", nr: 1 }] },
 
   /* ---------- Zahlung per Mail ---------- */
-  { id: "05-einst-zahlungsdaten", url: "#einstellungen?thema=zahlungen", geraet: "pc", hoehe: 1500, vorInit: init(VOLL), ausschnitt: { sel: "#zmEinst", rand: 10 },
-    marken: [{ sel: "#zmEinst .zm-aktuell", nr: 1 }, { sel: "#zmEinst .zm-modus-wahl", nr: 2 }, { sel: "#zmEinst input[name=test_email]", nr: 3 }, { sel: "#zmEinst input[name=kontoinhaber]", nr: 4 }, { sel: "#zmEinst input[name=iban]", nr: 5 }, { sel: "#zmEinst input[name=bic]", nr: 6 }, { sel: "#zmEinst input[name=paypal]", nr: 7 }, { sel: "#zmEinst textarea[name=impressum]", nr: 8 }, { sel: "#zmSpeichern", nr: 9 }] },
+  { id: "05-einst-zahlungsdaten-a", url: "#einstellungen?thema=zahlungen", geraet: "pc", hoehe: 1300, vorInit: init(VOLL), vorher: async (p) => { await behalte(p, "#zmForm", null, "Zahlungsdaten"); }, ausschnitt: { sel: "#zmForm", rand: 14 },
+    marken: [{ sel: "#zmEinst .zm-aktuell", nr: 1 }, { sel: "#zmEinst .zm-modus-wahl", nr: 2 }, { sel: "#zmEinst input[name=test_email]", nr: 3 }] },
+  { id: "05-einst-zahlungsdaten-b", url: "#einstellungen?thema=zahlungen", geraet: "pc", hoehe: 1300, vorInit: init(VOLL), vorher: async (p) => { await behalte(p, "#zmForm", "Zahlungsdaten", null); }, ausschnitt: { sel: "#zmForm", rand: 14 },
+    marken: [{ sel: "#zmEinst input[name=kontoinhaber]", nr: 4 }, { sel: "#zmEinst input[name=iban]", nr: 5 }, { sel: "#zmEinst input[name=bic]", nr: 6 }, { sel: "#zmEinst input[name=paypal]", nr: 7 }, { sel: "#zmEinst textarea[name=impressum]", nr: 8 }, { sel: "#zmSpeichern", nr: 9 }] },
   { id: "05-einst-zahlungsdaten-fehler", url: "#einstellungen?thema=zahlungen", geraet: "pc", hoehe: 1500, vorInit: init(VOLL), vorher: async (p, h) => { await h.tippe("#zmEinst input[name=iban]", "DE89 3704 0044 0532 0130 01"); await p.locator("#zmEinst input[name=iban]").blur(); await h.warte(300); }, ausschnitt: { sel: "#zmEinst label:has(input[name=iban])", rand: 14 }, marken: [{ sel: "[data-zmiban]", nr: 1 }] },
   { id: "05-akte-zahlung-keine-daten", url: "#schueler", geraet: "pc", hoehe: 1100, vorInit: init({ ...VOLL, zahlungsdaten: false, email: true }), vorher: async (p, h) => { await akte(p, h, "s3"); await p.locator("#zmBlock").scrollIntoViewIfNeeded(); }, ausschnitt: { sel: "#zmBlock", rand: 14 }, marken: [{ sel: "[data-zmohnedaten]", nr: 1 }] },
   { id: "05-akte-zahlung-mail", url: "#schueler", geraet: "pc", hoehe: 1100, vorInit: init({ ...VOLL, email: true }), vorher: async (p, h) => { await akte(p, h, "s3"); await p.locator("#zmBlock [data-zmoeffne]").first().click(); await h.warte(400); await p.locator("#zmBlock").scrollIntoViewIfNeeded(); }, ausschnitt: { sel: "#zmBlock", rand: 14 },
@@ -298,8 +316,10 @@ const LISTE = [
   { id: "05-akte-erinnerung-mail", url: "#schueler", geraet: "pc", hoehe: 1100, vorInit: init({ ...VOLL, email: true }), vorher: async (p, h) => { await akte(p, h, "s11"); await p.locator("#emBlock").scrollIntoViewIfNeeded(); }, ausschnitt: { sel: "#emBlock", rand: 14 }, marken: [{ sel: "#emBlock .zm-modus-zeile", nr: 1 }, { sel: "[data-emsenden]", nr: 2 }] },
 
   /* ---------- Punkte ---------- */
-  { id: "05-einst-punkte", url: "#einstellungen?thema=punkte", geraet: "pc", hoehe: 1700, vorInit: init({ ...VOLL, punkte: true, verschenken: true }), ausschnitt: { sel: ".es-inhalt", rand: 10 },
-    marken: [{ sel: "#punkteEinst .hinweis-kasten", nr: 1 }, { sel: "#punkteEinst input[name=aktiv]", nr: 2 }, { sel: "#punkteEinst .punkte-edit[data-art=regeln]", nr: 3 }, { sel: "#punkteEinst [data-neu=regeln]", nr: 4 }, { sel: "#punkteEinst .punkte-edit[data-art=praemien]", nr: 5 }, { sel: "#punkteEinst input[name=verschenken]", nr: 6 }, { sel: "#punkteEinst textarea[name=bedingungen]", nr: 7 }, { sel: "#punkteEinst button[type=submit]", nr: 8 }] },
+  { id: "05-einst-punkte-a", url: "#einstellungen?thema=punkte", geraet: "pc", hoehe: 1300, vorInit: init({ ...VOLL, punkte: true, verschenken: true }), vorher: async (p) => { await behalte(p, "#punkteEinst", null, "Verschenken"); }, ausschnitt: { sel: "#punkteEinst", rand: 14 },
+    marken: [{ sel: "#punkteEinst .hinweis-kasten", nr: 1 }, { sel: "#punkteEinst input[name=aktiv]", nr: 2 }, { sel: "#punkteEinst .punkte-edit[data-art=regeln]", nr: 3 }, { sel: "#punkteEinst [data-neu=regeln]", nr: 4 }, { sel: "#punkteEinst .punkte-edit[data-art=praemien]", nr: 5 }] },
+  { id: "05-einst-punkte-b", url: "#einstellungen?thema=punkte", geraet: "pc", hoehe: 1300, vorInit: init({ ...VOLL, punkte: true, verschenken: true }), vorher: async (p) => { await behalte(p, "#punkteEinst", "Verschenken", null); }, ausschnitt: { sel: "#punkteEinst", rand: 14 },
+    marken: [{ sel: "#punkteEinst input[name=verschenken]", nr: 6 }, { sel: "#punkteEinst textarea[name=bedingungen]", nr: 7 }, { sel: "#punkteEinst button[type=submit]", nr: 8 }] },
   { id: "05-einst-punkte-aus", url: "#einstellungen?thema=punkte", geraet: "pc", hoehe: 1100, vorInit: init(VOLL), ausschnitt: { sel: ".es-inhalt", rand: 10 }, marken: [{ sel: "#punkteEinst input[name=aktiv]", nr: 1 }] },
   { id: "05-punkte-liste", url: "#schueler", geraet: "pc", hoehe: 800, vorInit: init({ ...VOLL, punkte: true, punkteBuchungen: true }), vorher: async (p, h) => { await h.tippe("input[type=search]", "Lena"); await h.warte(600); }, ausschnitt: { sel: "#ansicht table tbody tr", rand: 10 }, marken: [{ sel: "[data-spunkte]", nr: 1 }] },
   { id: "05-punkte-dialog", url: "#schueler", geraet: "pc", hoehe: 1500, vorInit: init({ ...VOLL, punkte: true, punkteBuchungen: true, verschenken: true }), vorher: async (p, h) => { await p.evaluate(() => punkteDialog("s1")); await h.warte(900); }, ...dlgBild(),

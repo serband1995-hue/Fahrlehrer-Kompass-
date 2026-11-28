@@ -36,13 +36,13 @@ Rollen: B = Büro, L = Leitung (fahrschule_admin), S = Super-Admin. Fahrlehrer a
 |---|---|---|---|
 | Liste mit Name, Klasse, Gesamtpreis, Posten, „Preis fehlt“-Marke | :124 renderPakete | „Pakete: die Vorlagen ansehen“ | 05-pakete-liste |
 | Neues Paket (Name, Klasse) | :259 bkEditor | „Neues Paket bauen“ | 05-paket-neu |
-| Posten hinzufügen (Grundbetrag, Lernapp, Übungsstunden, Sonderfahrt, Simulator, Prüfung, Sonstiges) | :259 | dito | 05-paket-neu, 05-paket-posten |
-| Anzahl − / + / tippen (1–999) | :259 | dito | 05-paket-posten |
-| Einzelpreis aus Preisliste / eigener Preis / „Preis aus der Liste nehmen“ | :259 bkHinweisHTML | dito | 05-paket-posten |
+| Posten hinzufügen (Grundbetrag, Lernapp, Übungsstunden, Sonderfahrt, Simulator, Prüfung, Sonstiges) | :259 | dito | 05-paket-neu, 05-paket-posten-a, -b |
+| Anzahl − / + / tippen (1–999) | :259 | dito | 05-paket-posten-a, -b |
+| Einzelpreis aus Preisliste / eigener Preis / „Preis aus der Liste nehmen“ | :259 bkHinweisHTML | dito | 05-paket-posten-a, -b |
 | Hinweise: „Preis fehlt in der Preisliste“, „entfällt“, „Preis nicht lesbar“ | bkHinweisHTML | dito | – |
-| Posten entfernen (✕) mit Rückgängig | :259 | dito | 05-paket-posten |
-| Gesamtpreis, „Posten ohne Preis“ | :259 rechne | dito | 05-paket-posten |
-| Bearbeiten, Rückgängig, Konflikt „Jemand anderes hat dieses Paket gerade geändert“ | bkSchreiben | dito | 05-paket-posten |
+| Posten entfernen (✕) mit Rückgängig | :259 | dito | 05-paket-posten-a, -b |
+| Gesamtpreis, „Posten ohne Preis“ | :259 rechne | dito | 05-paket-posten-a, -b |
+| Bearbeiten, Rückgängig, Konflikt „Jemand anderes hat dieses Paket gerade geändert“ | bkSchreiben | dito | 05-paket-posten-a, -b |
 | Kopieren („… (Kopie)“) | bkFreierName | „Paket kopieren, archivieren …“ | 05-paket-kopieren |
 | Archivieren / Zurückholen / Archiv (6 s Rückgängig) | :192 bkAktiv | dito | 05-pakete-liste, 05-paket-archiviert |
 | Turboboost: Name fest (⚡) | bkTurbo | „Pakete ansehen“ (Gut zu wissen) | – |
@@ -71,7 +71,7 @@ Rollen: B = Büro, L = Leitung (fahrschule_admin), S = Super-Admin. Fahrlehrer a
 | Quittung Storno-Stempel, „Gegenbeleg zu“ | :180 | dito | 05-quittung-storno |
 | Quittung mit Steuerzeilen und Hinweis | :180 | dito | 05-quittung-steuer |
 | Quittung ohne Kundennummer/Adresse (Zeilen entfallen) | :180 | dito | 05-quittung-schlicht |
-| Einstellungen › Belege & Quittungen (Kopf, Steuer, Hinweis, Bargeld) | :276 | „Einstellungen › Belege & Quittungen“ | 05-einst-belege |
+| Einstellungen › Belege & Quittungen (Kopf, Steuer, Hinweis, Bargeld) | :276 | „Einstellungen › Belege & Quittungen“ | 05-einst-belege-a, 05-einst-belege-b |
 | Rückfrage „Bargeld-Belege einschalten?“ | :276 | dito | 05-einst-bargeld-frage |
 
 ## 5. Verkäufe & Provision (buero.js, buero-luecken.js)
@@ -103,7 +103,7 @@ Rollen: B = Büro, L = Leitung (fahrschule_admin), S = Super-Admin. Fahrlehrer a
 ## 7. Zahlungs-Mail und Erinnerung (buero-zahlungsmail.js)
 | Funktion | Fundstelle | Handbuch | Bild |
 |---|---|---|---|
-| Einstellungen › Zahlungen & Mails (Modus, Test-Adresse, Kontoinhaber, IBAN, BIC, PayPal, Impressum) | :110 zmEinstellungenHTML | „Zahlungsdaten für Mails“ | 05-einst-zahlungsdaten |
+| Einstellungen › Zahlungen & Mails (Modus, Test-Adresse, Kontoinhaber, IBAN, BIC, PayPal, Impressum) | :110 zmEinstellungenHTML | „Zahlungsdaten für Mails“ | 05-einst-zahlungsdaten-a, -b |
 | IBAN-Prüfung, Fehler „Echt“ ohne Daten, Konflikt beim Speichern | :140–200 zmBindeEinstellungen | dito | 05-einst-zahlungsdaten-fehler |
 | Block „Zahlung per Mail“ in der Akte, 3 Arten | :252 zmBlockHTML, :217 zmAngebote | „Zahlung per Mail aus der Akte“ | 05-akte-zahlung-mail |
 | Hinweis „Zahlungsdaten fehlen“ | :252 | dito | 05-akte-zahlung-keine-daten |
@@ -118,7 +118,7 @@ Rollen: B = Büro, L = Leitung (fahrschule_admin), S = Super-Admin. Fahrlehrer a
 ## 8. Punkte (buero-punkte.js) – geldbezogen (Bonuspunkte, wirken wie Rabatt), darum hier
 | Funktion | Fundstelle | Handbuch | Bild |
 |---|---|---|---|
-| Einstellungen › Punktesystem (einschalten, Regeln, Prämien, Verschenken, Bedingungen) | :140–228 | „Punktesystem einrichten“ | 05-einst-punkte, 05-einst-punkte-aus |
+| Einstellungen › Punktesystem (einschalten, Regeln, Prämien, Verschenken, Bedingungen) | :140–228 | „Punktesystem einrichten“ | 05-einst-punkte-a, -b, 05-einst-punkte-aus |
 | Rückfrage „Punktesystem einschalten?“ | :210 | dito | – (Text) |
 | Knopf „Punkte“ in der Schülerliste (nur wenn an) | buero.js:1931, 1998 | „Punkte buchen“ | 05-punkte-liste |
 | Fenster: Kontostand, Verlauf | buero-punkte.js:41 punkteDialog | dito | 05-punkte-dialog |
