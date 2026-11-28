@@ -273,6 +273,15 @@ fall("D Server liefert nur Büro-Arten, >3 alte Kopien: Kopien werden lokal wegg
   const ids = await dbIds("lessons");
   if (ids.length) f("alte Büro-Kopien bleiben in der App (" + ids.length + "), Sperre 'Server liefert keine Termine' greift: zählt in Statistik/Kalender");
 });
+fall("G Alte Büro-Kopie lokal (z. B. Backup), Büro hat daraus inzwischen eine Fahrstunde gemacht: App löscht sie nicht", async (f) => {
+  await neu();
+  await setzeLokal("lessons", [termin("X1"), termin("G1")]);
+  await bruecke(); // Gerät kennt G1 (Gedächtnis), Server: Fahrstunde
+  await ruf(() => { DB.lessons.find((l) => l.id === "G1").art = "simulator"; }); // alte Kopie (Backup) mit Büro-Art
+  await bruecke();
+  const z = await zeile("kalender_termine", "G1");
+  if (!z || z.geloescht) f("G1 (auf dem Server eine Fahrstunde) wurde von der App gelöscht: " + JSON.stringify(z && { art: z.art, geloescht: z.geloescht }));
+});
 // Fall E (Büro stuft um, Fahrlehrer ändert dieselbe Stunde binnen ~60 s): allgemeiner Wettlauf jeder Büro-Änderung, nicht W28-spezifisch;
 // mit Migration 20261206_w28_01 lehnt die Datenbank das für Fahrlehrer ab. Darum hier nicht geprüft.
 fall("F Gesamtansicht: kein Löschen/Schreiben von Büro-Terminen (Baseline gefiltert)", async (f) => {

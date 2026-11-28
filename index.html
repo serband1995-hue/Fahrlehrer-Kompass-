@@ -4925,7 +4925,9 @@ function _brueckeLauf(fn, kanal) {
 }
 async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWert, aktivFilter, loeschWertFuer }) {
   // W28 (Daten-Prüfer M1): eine alte Kopie eines Büro-Termins (Sicherung, Rückgängig, Snapshot) nie hochladen – sie überschriebe das Büro
-  if (tabelle === "kalender_termine") eintraege = eintraege.filter(e => !(e && istNurBueroArt(e.art)));
+  // Richter W28: deren Kennungen merken – fehlen sie danach lokal, ist das KEIN Löschwunsch (das Büro kann den Termin inzwischen umgestuft haben)
+  const bueroLokal = new Set();
+  if (tabelle === "kalender_termine") eintraege = eintraege.filter(e => { if (e && istNurBueroArt(e.art)) { bueroLokal.add(e.id); return false; } return true; });
   const supa = getSupa(); const merk = _abglLaden()[art];
   const nowIso = new Date().toISOString();
   const offen = [];
@@ -4955,7 +4957,7 @@ async function _brueckeAbgleichen({ tabelle, art, eintraege, zeileVon, loeschWer
   }
   // Löschen: nur Einträge, die dieses Gerät kannte und die es lokal nicht mehr gibt.
   const lokal = new Set(eintraege.map(e => e && e.id));
-  const bekanntWeg = Object.keys(merk).filter(id => !lokal.has(id));
+  const bekanntWeg = Object.keys(merk).filter(id => !lokal.has(id) && !bueroLokal.has(id));
   if (bekanntWeg.length) {
     // Sicherheitssperre: leerer lokaler Bestand ist eher ein Lade-Fehler als echte Absicht (18.08.26: 200 Fahrstunden weg).
     if (!eintraege.length) { console.warn("[Kompass] " + tabelle + ": lokaler Bestand leer - Löschung übersprungen."); return geschrieben; }
