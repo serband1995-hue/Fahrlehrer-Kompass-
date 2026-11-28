@@ -10814,6 +10814,7 @@ function paketCard(s){
   // Solange der Stand fehlt: bei zählbaren Posten „–“ statt der Paketgröße (sonst sähe „20 ×“ wie ein Stand aus)
   const zaehlbar=x=>KR.paketVerbrauch([x],{fahrstunden:0,sonder:{ueberland:0,autobahn:0,nacht:0},pruefungen:0,simulator:0})[0].verbraucht!=null;
   const rechts=(x,i)=>{ const z=v[i];
+    if(x.art==="simulator"&&zaehlbar(x)) return "Stand im Büro"; // W28: Simulator-Termine gibt es nur im Büro, die App kennt sie nicht (keine falsche 0)
     if(!q&&zaehlbar(x)) return "–";
     if(!z||z.verbraucht==null)return Number(x.anzahl)===1?"enthalten":esc(zahl(x.anzahl))+" ×";
     return z.offen>0?`${zahl(z.verbraucht)} von ${zahl(z.anzahl)}`:`<span style="white-space:nowrap">${zahl(z.anzahl)} von ${zahl(z.anzahl)} ✓${z.mehr>0?` · +${zahl(z.mehr)}`:""}</span>`; };

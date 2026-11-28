@@ -164,6 +164,15 @@ for (const breite of [1024, 360]) {
     const r = await page.evaluate(() => { let s = 0; ueJeFahrlehrer(["vortest", "simulator", "beratung", "mpu"].map((art, i) => ({ id: "u" + i, art, von: "10:00", bis: "11:30", datum: "2026-12-01", fahrlehrer_id: "fl-1", payload: {} })), (fl, u) => { s += u; }); return { s, kr: KR.ueOf("mpu", "10:00", "11:30") }; });
     return r.s === 0 && r.kr === 0 ? null : JSON.stringify(r);
   });
+  await pruefe("W6d [Büro]", "Paket-Verbrauch zählt Simulator-Termine weiter wie vorher (2 gefahren, 1 abgesagt, 1 künftig → 2)", async () => {
+    const r = await page.evaluate(() => {
+      const T = (datum, status) => ({ art: "simulator", datum, von: "10:00", bis: "11:00", status, bueroFc: "offen" });
+      const q = KR.paketQuelleAusTerminen([T("2026-11-01", "geplant"), T("2026-11-02", "geplant"), T("2026-11-03", "abgesagt"), T("2099-01-01", "geplant")], "2026-11-20", 600, { pruefDaten: [] });
+      const v = KR.paketVerbrauch([{ art: "simulator", anzahl: 5, bezeichnung: "Simulator" }], q)[0];
+      return { sim: q.simulator, verbraucht: v.verbraucht };
+    });
+    return r.sim === 2 && r.verbraucht === 2 ? null : JSON.stringify(r);
+  });
   await ctx.close();
   const actx = await browser.newContext({ viewport: { width: 412, height: 800 } });
   const ap = await actx.newPage(); const aFehler = []; ap.on("pageerror", (e) => aFehler.push(e.message));
@@ -187,6 +196,7 @@ for (const breite of [1024, 360]) {
     if (!/eq\("fahrlehrer_id", _authUser\.id\)\.eq\("geloescht", false\)\)\)\.filter\(r => !istNurBueroArt\(r\.art\)\)/.test(html)) f.push("Abruf ohne Filter");
     if (!/\.then\(data=>\(\{data:data\.filter\(r=>!istNurBueroArt\(r\.art\)\)\}\)\)/.test(html)) f.push("Gesamtansicht ohne Filter");
     if (!/filter\(r => !termine \|\| !istNurBueroArt\(r\.art\)\)/.test(html)) f.push("Brücke ohne Schutz");
+    if (!/x\.art==="simulator"&&zaehlbar\(x\)\) return "Stand im Büro"/.test(html)) f.push("App-Paketkarte zeigt Simulator-Zahl");
     return f;
   });
   await actx.close();

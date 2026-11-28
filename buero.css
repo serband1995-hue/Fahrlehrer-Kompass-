@@ -1284,9 +1284,12 @@ details[data-ergapphinweis][open]>summary .knopf{display:inline-flex;}
 
 /* W28: Terminarten-Filter und Link im Büro-Kalender */
 .k-art-filter{margin:4px 0 8px;}
-.k-art-filter > summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px;font-size:14px;}
+.k-art-filter > summary{cursor:pointer;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:15px;font-weight:700;}
+.k-art-aktiv{font-size:14px;}
+.k-art-nb{font-size:13px;color:var(--muted);font-weight:600;}
 .k-art-filter .chips{margin-top:2px;}
 .k-art-punkt{display:inline-block;width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
-.k-art-chip{align-items:center;gap:6px;}
+.k-art-chip{align-items:center;gap:6px;min-height:44px;max-width:100%;}
 .k-link-zeile{margin:10px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.k-link-zeile .knopf.klein{min-height:44px;}
 @media print{.k-art-filter,.k-link-zeile{display:none !important;}}

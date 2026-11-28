@@ -2970,15 +2970,17 @@ function kArtWahl() {
   try { const a = JSON.parse(localStorage.getItem(K_ART_SPEICHER) || "[]"); return Array.isArray(a) ? a.filter((x) => typeof x === "string" && ARTEN[x]) : []; } catch (e) { return []; }
 }
 function kArtWahlSetzen(liste) { try { if (liste.length) localStorage.setItem(K_ART_SPEICHER, JSON.stringify(liste)); else localStorage.removeItem(K_ART_SPEICHER); } catch (e) { /* ohne Speicher: gilt nur bis zum Neuzeichnen */ } kArtWahlFluechtig = liste; }
-let kArtWahlFluechtig = null; // falls localStorage gesperrt ist: Auswahl bis zum Neuladen der Seite
+let kArtWahlFluechtig = null, kArtOffen = false; // kArtOffen: nach einer Änderung aufgeklappt lassen // falls localStorage gesperrt ist: Auswahl bis zum Neuladen der Seite
 function kArtAktiv() { const g = kArtWahl(); return g.length ? g : (kArtWahlFluechtig || []).filter((x) => ARTEN[x]); }
 function kArtSichtbar(t) { const w = kArtAktiv(); return !w.length || w.includes(t.art); }
 function kArtChips() {
   const w = kArtAktiv();
-  const chips = Object.entries(ARTEN).map(([k, n]) => `<label class="chip k-art-chip"><input type="checkbox" data-kart="${esc(k)}"${w.includes(k) ? " checked" : ""}><span class="k-art-punkt" style="background:${K_FARBEN[k] || "#6a6a74"}" aria-hidden="true"></span> ${esc(n)}${nurBueroArt(k) ? ' <span class="leise klein">(nur Büro)</span>' : ""}</label>`).join("");
-  return `<details class="k-art-filter"${w.length ? " open" : ""}><summary>Terminarten: ${w.length ? `<b>${w.length} von ${Object.keys(ARTEN).length} gewählt</b>` : "alle"}</summary>
-    <div class="chips" role="group" aria-label="Terminarten zeigen">${chips}</div>
-    ${w.length ? '<button class="knopf klein" type="button" data-kartalle>Alle Arten zeigen</button>' : '<p class="leise klein">Nichts gewählt: alle Arten sind zu sehen. Häkchen setzen, um nur diese Arten zu zeigen.</p>'}</details>`;
+  const alle = `<label class="chip k-art-chip"><input type="checkbox" data-kartalle${w.length ? "" : " checked"}> Alle Arten</label>`;
+  const chips = Object.entries(ARTEN).map(([k, n]) => `<label class="chip k-art-chip"><input type="checkbox" data-kart="${esc(k)}"${w.includes(k) ? " checked" : ""}><span class="k-art-punkt" style="background:${K_FARBEN[k] || "#6a6a74"}" aria-hidden="true"></span> ${esc(n)}${nurBueroArt(k) ? ' <span class="k-art-nb">(nur Büro)</span>' : ""}</label>`).join("");
+  const zus = w.length ? `<span class="marke-pill gelb k-art-aktiv">Nur: ${esc(w.map((k) => ARTEN[k]).join(" · "))}</span>` : "alle";
+  return `<details class="k-art-filter"${w.length || kArtOffen ? " open" : ""}><summary>Terminarten: ${zus}</summary>
+    <div class="chips" role="group" aria-label="Terminarten zeigen">${alle}${chips}</div>
+    <p class="leise klein">„Alle Arten“ oder einzelne Arten wählen. Gewählt = nur diese sind zu sehen.</p></details>`;
 }
 // W28 Teil 4: Link je Termin (nur Büro, nur nach Anmeldung: der Link enthält nur die Nummer des Termins, keine Namen)
 const K_LINK_RE = /^#termin=([A-Za-z0-9_-]{1,80})$/;
@@ -3011,12 +3013,17 @@ async function kLinkEinloesen() {
     let alt = false;
     if (!t) { // älter als die geladenen Tage? Einmal nachfragen (die Datenbank zeigt nur Termine der eigenen Fahrschule)
       const r = await supa.from("kalender_termine").select("id,datum,von,fahrlehrer_id,art,geloescht").eq("id", id).eq("fahrschule_id", S.fsId).maybeSingle();
+      if (r.error) { // Netz weg o. Ä.: nicht „gibt es nicht mehr“ sagen, Link für den nächsten Versuch behalten
+        try { sessionStorage.setItem("buero-termin-link", id); } catch (e) { kLinkOffen = id; }
+        toast("Termin konnte gerade nicht geladen werden. Bitte gleich noch einmal „Neu laden“ drücken.", true);
+        return;
+      }
       if (r.data && !r.data.geloescht) { t = r.data; alt = true; }
     }
     if (!t) { try { history.replaceState(history.state, "", "#kalender"); } catch (e) {} zeichne(); bestaetige("Termin nicht gefunden", "Termin gibt es nicht mehr. Er wurde abgesagt oder gelöscht, oder er gehört zu einer anderen Fahrschule.", "OK"); return; }
     location.replace("#kalender?" + new URLSearchParams({ tag: t.datum }).toString()); // Tagesansicht, alle Fahrlehrer
     setTimeout(() => {
-      if (alt) { toast(`Der Termin vom ${datumDE(t.datum)} liegt vor den geladenen Tagen. Hier ist der Tag.`, true); return; }
+      if (alt) { bestaetige("Termin liegt weiter zurück", `Der Termin vom ${datumDE(t.datum)} liegt vor den Tagen, die das Büro lädt. Hier ist der Tag, öffnen lässt er sich hier nicht. Gefahrene Stunden stehen im Ausbildungsnachweis des Schülers.`, "OK"); return; }
       if (!kArtSichtbar(t)) toast(`Hinweis: „${ARTEN[t.art] || t.art}“ ist im Filter ausgeblendet. Der Termin ist trotzdem geöffnet.`);
       terminDialog(id);
     }, 120);
@@ -3140,10 +3147,10 @@ function bindeKalender(ziel) {
   }));
   ziel.querySelectorAll("[data-kart]").forEach((c) => c.addEventListener("change", () => {
     kArtWahlSetzen([...ziel.querySelectorAll("[data-kart]")].filter((x) => x.checked).map((x) => x.dataset.kart));
-    zeichne();
+    kArtOffen = true; zeichne();
   }));
   const kAlle = ziel.querySelector("[data-kartalle]");
-  if (kAlle) kAlle.addEventListener("click", () => { kArtWahlSetzen([]); zeichne(); });
+  if (kAlle) kAlle.addEventListener("change", () => { kArtWahlSetzen([]); kArtOffen = true; zeichne(); }); // „Alle Arten“: Auswahl leeren (auch beim Abhaken: nichts gewählt = alle)
   ziel.querySelectorAll("[data-termin]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); terminDialog(b.dataset.termin); }));
   ziel.querySelectorAll(".k-flaeche").forEach((f) => f.addEventListener("click", (e) => {
     if (e.target !== f) return;
@@ -3189,6 +3196,7 @@ function terminDialog(id, vorgabe) {
       <label class="voll">Schüler<select name="schueler_id"><option value="">– ohne Schüler –</option>${schuelerOptionen(t.schueler_id)}</select></label>
       <label>Art<select name="art">${Object.entries(ARTEN).map(([k, v]) => `<option value="${k}"${t.art === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
       <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(t.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
+      <p class="voll fl-hinweis-nb leise klein" id="nurBueroHinweis" hidden>Nur im Büro: Dieser Termin erscheint nicht in der App des Fahrlehrers und zählt nicht für Lohn, UE oder Statistik.</p>
       <label>Datum<input type="date" name="datum" required value="${esc(t.datum || "")}"></label>
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
@@ -3210,8 +3218,7 @@ function terminDialog(id, vorgabe) {
       ${id && t.art === "theorie" ? anwesenheitTerminHTML(t) : ""}
     </div>
     <p class="leise klein" id="appHinweis">Der Fahrlehrer sieht die Änderung innerhalb einer Minute in seiner App.${id && t.payload && t.payload.onlineBookingId ? " Online gebuchte Termine: Der Schüler bekommt eine E-Mail." : ""}</p>
-    <p class="leise klein" id="nurBueroHinweis" hidden>Nur im Büro: Dieser Termin erscheint nicht in der App des Fahrlehrers und zählt nicht für Lohn, UE oder Statistik.</p>
-    ${id ? `<p class="k-link-zeile"><button class="knopf klein" type="button" data-klink>🔗 Link kopieren</button> <span class="leise klein">öffnet diesen Termin im Büro (nur nach Anmeldung)</span></p>` : ""}`;
+    ${id ? `<p class="k-link-zeile"><button class="knopf klein" type="button" data-klink>Link kopieren</button> <span class="leise klein">öffnet diesen Termin im Büro (nur nach Anmeldung)</span></p>` : ""}`;
   const tdlg = oeffneDialog(id ? "Termin bearbeiten" : "Termin anlegen", body, async (form) => {
     if (spiegel) { // nur das Fahrzeug gehört dem Kalender; alles andere lässt der Server nicht zu
       const fz = form.querySelector("select[name=fahrzeug]").value || null;
