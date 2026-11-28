@@ -17,11 +17,25 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 await mkdir(join(HIER, "html"), { recursive: true });
 await mkdir(join(HIER, "pdf"), { recursive: true });
+// Bilder fürs PDF als JPEG (Qualität 80, höchstens 1700 Pixel breit ≈ 240 dpi auf A4): die PDFs werden deutlich kleiner, Text bleibt scharf
+execFileSync("python3", ["-c", `
+import os, sys
+from PIL import Image
+q, z = sys.argv[1], sys.argv[2]
+os.makedirs(z, exist_ok=True)
+for f in os.listdir(q):
+    if not f.endswith(".png"): continue
+    a, b = os.path.join(q, f), os.path.join(z, f[:-4] + ".jpg")
+    if os.path.exists(b) and os.path.getmtime(b) >= os.path.getmtime(a): continue
+    im = Image.open(a).convert("RGB")
+    if im.width > 1700: im = im.resize((1700, round(im.height * 1700 / im.width)), Image.LANCZOS)
+    im.save(b, "JPEG", quality=80, optimize=True, progressive=True)
+`, join(HIER, "bilder"), join(HIER, "html", "jpg")]);
 
 // Kapitel lesen, jede Funktion (h2) bekommt eine Kennung für das Inhaltsverzeichnis
 async function leseKapitel(k) {
   let html = await readFile(join(HIER, "kapitel", k.datei + ".html"), "utf8");
-  html = html.replace(/src="bilder\//g, 'src="../bilder/');
+  html = html.replace(/src="bilder\/([^"]+)\.png"/g, 'src="jpg/$1.jpg"').replace(/src="bilder\//g, 'src="../bilder/');
   const funktionen = [];
   let i = 0;
   html = html.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/g, (m, attr, inhalt) => {
@@ -91,7 +105,7 @@ for (const k of KAPITEL) {
 
 const ergebnis = [];
 for (const k of kapitel) {
-  const name = `${String(k.nr).padStart(2, "0")}-${k.titel.replace(/[,„“"]/g, "").replace(/\s+/g, "-")}`;
+  const name = `${String(k.nr).padStart(2, "0")}-${k.titel.replace(/[,„“"]/g, "").replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/\s+/g, "-")}`; // Dateinamen ohne Umlaute (Handy, Mail, Dropbox)
   const eintraege = k.funktionen.map((f) => ({ key: f.key, titel: f.titel, klasse: "fn" }));
   // Seitenzahlen im Einzel-PDF: Funktionen aus diesem Kapitel
   const n = await druck(name, `Kapitel ${k.nr}: ${k.titel}`, (seiten) =>
