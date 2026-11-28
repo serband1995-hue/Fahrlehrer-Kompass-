@@ -44,7 +44,8 @@ const basis = `http://127.0.0.1:${server.address().port}/`;
 // Feste Uhrzeit/Datum, damit die Bilder bei jedem Lauf gleich aussehen: Dienstag, 02.12.2026, 09:30
 const FEST = new Date("2026-12-02T09:30:00").getTime();
 
-const browser = await chromium.launch();
+// Deutsche Anzeige auch in Datums- und Zeitfeldern (sonst mm/dd/yyyy und AM/PM)
+const browser = await chromium.launch({ args: ["--lang=de-DE"], env: { ...process.env, LANG: "de_DE.UTF-8", LANGUAGE: "de_DE", LC_ALL: "de_DE.UTF-8" } });
 
 // Helfer für vorher(): kurze Wartezeiten, Klick per Text, Formulare
 function helfer(page) {
@@ -75,13 +76,17 @@ async function marken(page, liste) {
     rects.push({ ...m, x: b.x + sc[0], y: b.y + sc[1], w: b.width, h: b.height });
   }
   await page.evaluate((rects) => {
+    // Offenes Fenster (<dialog> im Vordergrund): Marken müssen IM Fenster liegen, sonst verdeckt es sie
+    const dlg = [...document.querySelectorAll("dialog[open]")].pop();
+    const ziel = dlg || document.body;
     for (const r of rects) {
+      if (dlg) { r.x -= scrollX; r.y -= scrollY; }
       const pad = 4;
       if (!r.nurNummer) {
         const box = document.createElement("div");
         box.className = "hb-marke";
-        Object.assign(box.style, { position: "absolute", left: r.x - pad + "px", top: r.y - pad + "px", width: r.w + pad * 2 + "px", height: r.h + pad * 2 + "px", border: "3px solid #d6202a", borderRadius: "10px", zIndex: 2147483646, pointerEvents: "none", boxShadow: "0 0 0 2px rgba(255,255,255,.85)" });
-        document.body.appendChild(box);
+        Object.assign(box.style, { position: dlg ? "fixed" : "absolute", left: r.x - pad + "px", top: r.y - pad + "px", width: r.w + pad * 2 + "px", height: r.h + pad * 2 + "px", border: "3px solid #d6202a", borderRadius: "10px", zIndex: 2147483646, pointerEvents: "none", boxShadow: "0 0 0 2px rgba(255,255,255,.85)" });
+        ziel.appendChild(box);
       }
       if (r.nr != null) {
         const n = document.createElement("div");
@@ -90,8 +95,8 @@ async function marken(page, liste) {
         const s = 26;
         let lx = r.x - pad - s / 2 - 2, ly = r.y - pad - s / 2 - 2;
         if (lx < 2) lx = 2; if (ly < 2) ly = 2;
-        Object.assign(n.style, { position: "absolute", left: lx + "px", top: ly + "px", width: s + "px", height: s + "px", lineHeight: s + "px", borderRadius: "50%", background: "#d6202a", color: "#fff", font: "700 15px/26px Arial, sans-serif", textAlign: "center", zIndex: 2147483647, pointerEvents: "none", boxShadow: "0 0 0 2px #fff" });
-        document.body.appendChild(n);
+        Object.assign(n.style, { position: dlg ? "fixed" : "absolute", left: lx + "px", top: ly + "px", width: s + "px", height: s + "px", lineHeight: s + "px", borderRadius: "50%", background: "#d6202a", color: "#fff", font: "700 15px/26px Arial, sans-serif", textAlign: "center", zIndex: 2147483647, pointerEvents: "none", boxShadow: "0 0 0 2px #fff" });
+        ziel.appendChild(n);
       }
     }
   }, rects);

@@ -27,7 +27,7 @@ async function leseKapitel(k) {
   html = html.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/g, (m, attr, inhalt) => {
     i++;
     const key = `K${k.nr}F${i}`;
-    funktionen.push({ key, titel: inhalt.replace(/<[^>]+>/g, "").trim() });
+    funktionen.push({ key, titel: inhalt.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim() });
     return `<h2${attr}>${inhalt}<span class="unsichtbar">@@${key}@@</span></h2>`;
   });
   return { ...k, html, funktionen };
@@ -95,7 +95,7 @@ for (const k of kapitel) {
   const eintraege = k.funktionen.map((f) => ({ key: f.key, titel: f.titel, klasse: "fn" }));
   // Seitenzahlen im Einzel-PDF: Funktionen aus diesem Kapitel
   const n = await druck(name, `Kapitel ${k.nr}: ${k.titel}`, (seiten) =>
-    seiteKopf(`Kapitel ${k.nr}: ${k.titel}`) + deckblatt(k.titel, `Kapitel ${k.nr}`, k.kurz, verzeichnis(eintraege, seiten)) + k.html + "</body></html>");
+    seiteKopf(`Kapitel ${k.nr}: ${k.titel}`) + deckblatt(k.titel, `Kapitel ${k.nr}`, k.kurz, "") + `<section class="verzeichnis-seite"><h1>Inhalt</h1>${verzeichnis(eintraege, seiten)}</section>` + k.html + "</body></html>");
   ergebnis.push({ datei: `pdf/${name}.pdf`, seiten: n });
 }
 
