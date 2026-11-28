@@ -67,15 +67,13 @@ function deckblatt(titel, kapitelnr, kurz, inhaltHtml) {
 
 const browser = await chromium.launch();
 
-// HTML → PDF, zweimal: beim ersten Mal die Seitenzahlen der Überschriften suchen, beim zweiten Mal ins Verzeichnis schreiben
+// HTML → PDF: so oft drucken, bis die Seitenzahlen im Verzeichnis stabil sind (echte Zahlen können das Verzeichnis
+// länger machen und alles verschieben), dann ein letztes Mal ohne die unsichtbaren Suchmarken.
 async function druck(name, titel, bauHtml, pruefTitel = {}) {
   const htmlDatei = join(HIER, "html", name + ".html");
   const pdfDatei = join(HIER, "pdf", name + ".pdf");
-  let seiten = {};
-  for (let lauf = 0; lauf < 2; lauf++) {
-    // Im zweiten Lauf die unsichtbaren Suchmarken weglassen (sonst stehen sie beim Suchen/Kopieren im PDF-Text)
-    const html = bauHtml(seiten);
-    await writeFile(htmlDatei, lauf ? html.replace(/<span class="unsichtbar">@@K\d+F\d+@@<\/span>/g, "") : html);
+  const drucke = async (html) => {
+    await writeFile(htmlDatei, html);
     const page = await browser.newPage();
     await page.goto(pathToFileURL(htmlDatei).href, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
@@ -86,21 +84,37 @@ async function druck(name, titel, bauHtml, pruefTitel = {}) {
       footerTemplate: `<div style="width:100%;font:8px Arial,sans-serif;color:#6b7280;padding:0 16mm;display:flex;justify-content:space-between"><span>${esc(ABSENDER)} · Büro-Handbuch · ${esc(titel)}</span><span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span></div>`,
     });
     await page.close();
-    if (lauf === 0) {
-      const anzahl = Number(execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1]);
-      for (let s = 1; s <= anzahl; s++) {
-        const text = execFileSync("pdftotext", ["-f", String(s), "-l", String(s), pdfDatei, "-"]).toString();
-        for (const m of text.matchAll(/@@(K\d+F\d+)@@/g)) if (!(m[1] in seiten)) seiten[m[1]] = s;
-      }
+  };
+  let seiten = {};
+  for (let lauf = 0; lauf < 5; lauf++) {
+    await drucke(bauHtml(seiten));
+    const neu = {};
+    const anzahl = Number(execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1]);
+    for (let s = 1; s <= anzahl; s++) {
+      const text = execFileSync("pdftotext", ["-f", String(s), "-l", String(s), pdfDatei, "-"]).toString();
+      for (const m of text.matchAll(/@@(K\d+F\d+)@@/g)) if (!(m[1] in neu)) neu[m[1]] = s;
     }
+    // Die Suchmarke kann am Seitenende hängen bleiben, wenn die Überschrift auf die nächste Seite rutscht: dann zählt die nächste Seite
+    const seitenText = {};
+    const textVon = (s) => (seitenText[s] ??= execFileSync("pdftotext", ["-f", String(s), "-l", String(s), pdfDatei, "-"]).toString().replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, ""));
+    for (const [key, s] of Object.entries(neu)) {
+      const t = (pruefTitel[key] || "").replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").trim().slice(0, 28);
+      if (t && !textVon(s).includes(t) && s < anzahl && textVon(s + 1).includes(t)) neu[key] = s + 1;
+    }
+    const gleich = JSON.stringify(neu) === JSON.stringify(seiten);
+    seiten = neu;
+    if (gleich) break;
   }
+  // Die unsichtbaren Suchmarken bleiben im PDF: ohne sie verschiebt Chromium im Gesamt-PDF einzelne Seiten (geprüft 28.11.2026).
+  // Folge: Beim Suchen/Kopieren im PDF-Text taucht „@@K1F2@@“ auf; sichtbar sind sie nicht.
+  await drucke(bauHtml(seiten));
   // Prüfung: Steht jede Überschrift wirklich auf der Seite, die das Verzeichnis nennt?
-  const norm = (t) => t.replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").trim().slice(0, 28);
+  const norm = (t) => t.replace(/\s+/g, " ").replace(/[‚‘’„“"]/g, "").trim();
   let falsch = 0;
   for (const [key, seite] of Object.entries(seiten)) {
     if (!pruefTitel[key]) continue;
     const text = norm(execFileSync("pdftotext", ["-f", String(seite), "-l", String(seite), pdfDatei, "-"]).toString());
-    if (!text.includes(norm(pruefTitel[key]))) { falsch++; if (falsch <= 5) console.log(`   ! Verzeichnis: „${pruefTitel[key]}“ nicht auf Seite ${seite}`); }
+    if (!text.includes(norm(pruefTitel[key]).slice(0, 28))) { falsch++; if (falsch <= 5) console.log(`   ! Verzeichnis: „${pruefTitel[key]}“ nicht auf Seite ${seite}`); }
   }
   if (falsch) { console.log(`FEHL pdf/${name}.pdf: ${falsch} Verzeichnis-Einträge zeigen auf die falsche Seite`); process.exitCode = 1; }
   const anzahl = execFileSync("pdfinfo", [pdfDatei]).toString().match(/Pages:\s+(\d+)/)[1];
