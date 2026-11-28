@@ -4,6 +4,12 @@
    "kurz" (höchstens ~60 Zeichen) erscheint nach dem Update einmal als kleiner Hinweis (verschwindet von selbst, kein Knopf).
    Einfache Worte, keine Fachwörter, keine Schülerdaten. */
 window.KOMPASS_NEU = [
+  { version: "2026.11.28.1", datum: "2026-11-28", kurz: "Büro: neue Terminarten, Filter und Link je Termin.",
+    punkte: ["Im Büro gibt es die Terminarten Vortest, Simulator, Beratungsgespräch vor Ort und MPU-Termin. Man legt sie an, ändert, verschiebt und löscht sie wie andere Termine. Die Warnung bei Überschneidungen gilt auch hier.",
+             "Diese vier Arten sieht nur das Büro. Sie stehen nicht in der App der Fahrlehrer und zählen nicht für Lohn, Unterrichtseinheiten, Fahrcheck oder Statistik.",
+             "Im Büro-Kalender kann man Terminarten ein- und ausblenden. Ist nichts gewählt, sieht man alle. Die Auswahl bleibt an diesem PC gespeichert.",
+             "Jeder Termin hat im Büro den Knopf „Link kopieren“. Der Link öffnet genau diesen Termin, aber nur nach Anmeldung im Büro.",
+             "In der App sieht die Leitung Vortest, Simulator und Beratung nicht mehr. Diese Termine gibt es jetzt nur noch im Büro."] },
   { version: "2026.11.27.8", datum: "2026-11-27", kurz: "Neu: Kundennummer, Anschrift und schönere Ausdrucke.",
     punkte: ["Jeder Schüler hat jetzt eine eigene Kundennummer, zum Beispiel K-00012. Sie wird automatisch vergeben und ändert sich nie. Du siehst sie in der Schülerliste und in der Akte. Ist das Handy offline, steht dort „wird vergeben“, bis die Nummer da ist.",
              "Beim Anlegen und Bearbeiten kannst du die Anschrift eintragen: Straße und Hausnummer, Postleitzahl und Ort. Nichts davon ist Pflicht.",

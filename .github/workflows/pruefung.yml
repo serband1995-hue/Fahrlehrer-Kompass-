@@ -56,6 +56,7 @@ jobs:
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/punkte-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/w19-3-probe-sql-test.mjs
           NODE_PATH=/tmp/w15-pg/node_modules node scripts/kunden-sql-test.mjs
+          NODE_PATH=/tmp/w15-pg/node_modules node scripts/w28-sql-test.mjs
           bash scripts/kunden-parallel-test.sh
 
   # 🗣 Serband 21.11.2026: „sorge dafür, dass solche Fehler nicht nochmal vorkommen“ (Jelena: Leitung, die selbst fährt,
@@ -123,6 +124,8 @@ jobs:
         run: NODE_PATH=$(npm root -g) node scripts/sync-status-test.mjs
       - name: "Büro: Seitenleiste (8 Punkte) und Doppelbelegung gesehen (K18)"
         run: NODE_PATH=$(npm root -g) node scripts/buero-gruppen-test.mjs
+      - name: "W28 Büro-Terminarten: nur im Büro, Filter, Link je Termin"
+        run: NODE_PATH=$(npm root -g) node scripts/w28-test.mjs && NODE_PATH=$(npm root -g) node scripts/w28-abgleich-test.mjs
       - name: "Löschen, Stornieren, Papierkorb (K7)"
         run: NODE_PATH=$(npm root -g) node scripts/loeschen-test.mjs
       - name: "Preisliste im Büro (K9: gültig ab, Verlauf, Herunterladen)"

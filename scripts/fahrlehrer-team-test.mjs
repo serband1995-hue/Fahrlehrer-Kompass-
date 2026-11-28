@@ -77,7 +77,10 @@ const FS = "fs-muster";
 const PW = "Muster-1234";
 const heuteBerlin = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Berlin" }).format(new Date());
 const addTage = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
-const HEUTE = heuteBerlin, MORGEN = addTage(HEUTE, 1), UEBERMORGEN = addTage(HEUTE, 2);
+// „Morgen“ = nächster Werktag (Mo–Sa): Der App-Kalender hat bewusst keinen Sonntag („Sonntag entfällt“, index.html).
+// Sonst schlug der Test jeden Samstag fehl (W28, 28.11.2026: Termin am Sonntag nicht in der Wochenansicht).
+const werktagNach = (iso) => { let d = addTage(iso, 1); if (new Date(d + "T12:00:00Z").getUTCDay() === 0) d = addTage(d, 1); return d; };
+const HEUTE = heuteBerlin, MORGEN = werktagNach(HEUTE), UEBERMORGEN = werktagNach(MORGEN);
 // k = Kürzel, app = hat Zugang zur App, form = Klasse des ersten Schülers
 const FL = [
   { k: "anna", name: "Anna Muster", klassen: ["B"], app: true, form: "B", sch: "Lena Schülermuster1" },
