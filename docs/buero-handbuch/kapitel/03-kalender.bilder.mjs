@@ -33,7 +33,7 @@ const LISTE = [
   { id: "03-ansicht-woche", url: KAL + "?ansicht=woche", geraet: "pc", hoehe: 900, marken: [{ sel: "#ansicht .tabs", nr: 1 }, { sel: "#kWoLehrer", nr: 2 }, { sel: ".k-spalte.heute", nr: 3 }, { sel: "#ansicht .k-titel", nr: 4 }] },
   { id: "03-woche-lehrer", url: KAL + "?ansicht=woche", geraet: "pc", marken: [], ausschnitt: { sel: "#ansicht .filterzeile >> nth=1", rand: 10 }, hoehe: 900 },
   { id: "03-ansicht-monat", url: KAL + "?ansicht=monat", geraet: "pc", hoehe: 900, marken: [] },
-  { id: "03-monat-zelle", url: KAL + "?ansicht=monat", geraet: "pc", hoehe: 900, marken: [{ sel: ".m-nr >> nth=10", nr: 1 }, { sel: ".m-anz >> nth=10", nr: 2 }, { sel: ".m-ue >> nth=10", nr: 3 }], ausschnitt: { sel: ".m-raster", rand: 6, maxHoehe: 300 } },
+  { id: "03-monat-zelle", url: KAL + "?ansicht=monat", geraet: "pc", hoehe: 900, marken: [{ sel: ".m-nr >> nth=10", nr: 1 }, { sel: ".m-anz >> nth=10", nr: 2 }, { sel: ".m-ue >> nth=11", nr: 3 }], ausschnitt: { sel: ".m-raster", rand: 6, maxHoehe: 300 } },
   { id: "03-ansicht-jahr", url: KAL + "?ansicht=jahr", geraet: "pc", hoehe: 900, marken: [{ sel: ".j-titel >> nth=11", nr: 1 }, { sel: ".j-tag.heute", nr: 2 }], ganzeSeite: true },
   
   // ---------- Filter ----------
