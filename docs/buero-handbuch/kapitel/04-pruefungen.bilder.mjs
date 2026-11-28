@@ -80,7 +80,7 @@ const LISTE = [
   { id: "04-pr-archiv-frage", url: "#pruefungen?ansicht=ergebnis", geraet: "pc", hoehe: 1000, vorher: async (p, h) => { await h.klick("[data-eja]", { warte: 900 }); await h.klick("[data-earchiv]"); }, ausschnitt: DLG },
   { id: "04-pr-ergebnis-dialog", url: "#pruefungen", geraet: "pc", hoehe: 1100, vorher: async (p, h) => { await h.klick("[data-ergebnis]"); },
     ausschnitt: DLG, marken: [{ sel: `${DLG} input[value=bestanden]`, nr: 1 }, { sel: `${DLG} input[value=nicht_bestanden]`, nr: 2 }, { sel: `${DLG} footer .haupt`, nr: 3 }] },
-  { id: "04-pr-vergangene", url: "#pruefungen?ansicht=vergangen", geraet: "pc", hoehe: 1200, ausschnitt: { sel: KARTE, maxHoehe: 1000 }, marken: [{ sel: ".marke-pill.gruen >> nth=0", nr: 1 }, { sel: "#pSort", nr: 2 }] },
+  { id: "04-pr-vergangene", url: "#pruefungen?ansicht=vergangen", geraet: "pc", hoehe: 1200, ausschnitt: { sel: KARTE, maxHoehe: 1000 }, marken: [{ sel: ".marke-pill:text-is(\"bestanden\") >> nth=0", nr: 1 }, { sel: "#pSort", nr: 2 }] },
   { id: "04-pr-alle", url: "#pruefungen?ansicht=alle", geraet: "pc", hoehe: 1500, ausschnitt: { sel: KARTE, maxHoehe: 1000 } },
   { id: "04-pr-gross", url: "#pruefungen?gross=1", geraet: "pc", hoehe: 1000, ausschnitt: "#ansicht", marken: [{ sel: ".kiosk-kopf .knopf", nr: 1 }] },
 
@@ -184,6 +184,8 @@ const LISTE = [
   { id: "04-fr-erinnert-liste", url: "#fristen?ansicht=bald&suche=finn", geraet: "pc", hoehe: 1700, vorInit: () => { window.ZM_WARTE_MS = 300; },
     vorher: async (p, h) => { await seed(p, h); await h.klick("[data-baldart=theorie] >> nth=0", { warte: 1200 }); await h.klick("#emBlock [data-emsenden]", { warte: 2500 }); await p.keyboard.press("Escape"); await h.warte(700); },
     ausschnitt: { sel: KARTE, maxHoehe: 900 }, marken: [{ sel: "[data-balderinnert] >> nth=0", nr: 1 }] },
+  { id: "04-fr-erinnern-knopf", url: "#fristen?ansicht=bald", geraet: "pc", hoehe: 1200, ausschnitt: { sel: KARTE, maxHoehe: 420 }, marken: [{ sel: "[data-balderinnern] >> nth=0", nr: 1 }] },
+  { id: "04-fc-gueltigkeit", url: "#fahrchecks?ansicht=stunden", geraet: "pc", ausschnitt: { sel: ".tabelle tbody tr:first-child", rand: 10 }, marken: [{ sel: ".tabelle tbody tr:first-child td:first-child .unter >> nth=1", nr: 1 }] },
 ];
 
 // Marken in Fenstern (Dialoge liegen über allem): die Marken werden im Dialog selbst gesetzt

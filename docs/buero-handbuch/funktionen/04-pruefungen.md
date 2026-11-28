@@ -139,7 +139,7 @@ Nicht in diesem Kapitel: Einstellungen „Fristen“ (`buero-fristen.js`, Kapite
 | 5 Sekunden „Rückgängig“ vor dem Versand | ZM:`emBinde` ZM:607 | ja | – (Meldung verschwindet; Text) |
 | Haken „✓ erinnert am (Datum)“ (Test-Marke) in der Akte und in „Läuft bald ab“ | `baldErinnert` B:826, ZM:581 | ja | 04-fr-erinnert, 04-fr-erinnert-liste |
 | Grau-Gründe: „E-Mail fehlt“, „Zahlungsdaten fehlen“, „Erst die laufende Mail abwarten“; Server-Fehlertexte; Limits 5/Tag je Schüler, 100/Tag je Fahrschule | ZM:30–44, ZM:589 | ja | 04-fr-akte-mail (Zahlungsdaten fehlen siehe Hinweis) |
-| WhatsApp-Erinnerung bei Fristen | – | ja: gibt es hier nicht (nur Glocke, Kap. 1, `buero-luecken.js:252`) | 04-fr-bald |
+| WhatsApp-Erinnerung bei Fristen | – | ja: gibt es hier nicht (nur Glocke, Kap. 1, `buero-luecken.js:252`) | 04-fr-erinnern-knopf |
 | Regeltext unter der Liste („Reaktivierung: … fällig … Monate …“ / „entfällt laut Preisliste“) | B:922–924 | ja | 04-fr-regel |
 | Hinweis „Zahlungsdaten in den Einstellungen“ (Link) | B:934 | ja | 04-fr-regel (Text; Link liegt unter der Karte) |
 | Handy | buero.css `[data-baldliste]` | ja | 04-fr-handy, 04-fr-handy-bald |
@@ -178,7 +178,7 @@ Nicht in diesem Kapitel: Einstellungen „Fristen“ (`buero-fristen.js`, Kapite
 | „Ändern“: Fenster „Fahrcheck ändern“ (Status im Büro, „Nachgereicht am“, „Abgegeben“-Zahl) | `fcStundeDialog` B:3748 | ja | 04-fc-stunde-dialog |
 | Vermerk des Fahrlehrers: „Alle FC erhalten“, „1 FC fehlt“ (v1), „2 FC fehlen“ (v2), „geschenkt“, „FC noch offen“, „nachgereicht“, „keine FC“ | `FC_TYP` B:3553, `fcTyp` B:3557, KR:210–235 | ja, mit Tabelle | 04-fc-typen |
 | Status Büro: „noch nicht geprüft“, „abgegeben“, „fehlt“ | `FC_BUERO` B:3567 | ja | 04-fc-stunden-zeilen, 04-fc-abgehakt |
-| Gültigkeit der Fahrcheck-Zettel (12 Monate, Warnung 60 Tage – einstellbar Kap. 6) | KR:`fcGueltigkeit` KR:456 | ja | 04-fc-stunden-zeilen |
+| Gültigkeit der Fahrcheck-Zettel (12 Monate, Warnung 60 Tage – einstellbar Kap. 6) | KR:`fcGueltigkeit` KR:456 | ja | 04-fc-gueltigkeit |
 | Grenze 300 Zeilen („Angezeigt: die ersten 300 von n“) | B:3579, B:3671 | ja | 04-fc-stunden (Text) |
 | Rechenregel: 1 FC je volle 45 Minuten, Halbmonate, heutige Stunden erst nach Ende | KR:210–230, KR:464–495 | ja | 04-fc-uebersicht (Text) |
 | Handy | buero.css, `fcNeuZeichnen` B:3727 | ja | 04-fc-handy, 04-fc-handy-stunden |
