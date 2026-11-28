@@ -28,7 +28,7 @@ const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 
 const args = process.argv.slice(2);
 const nurKapitel = args.filter((a) => /^\d+$/.test(a)).map((a) => a.padStart(2, "0"));
-const nurBild = (args.find((a) => a.startsWith("--nur=")) || "").slice(6);
+const nurBild = (args.find((a) => a.startsWith("--nur=")) || "").slice(6).split(",").filter(Boolean); // --nur=id1,id2
 
 const server = createServer(async (req, res) => {
   try {
@@ -141,7 +141,18 @@ async function einBild(b) {
     const rand = aus.rand ?? 12;
     // Marken liegen auf der Seite; boundingBox ist relativ zum Fenster -> mit fullPage arbeiten
     const sc = await page.evaluate(() => [scrollX, scrollY]);
-    const clip = { x: Math.max(0, r.x + sc[0] - rand), y: Math.max(0, r.y + sc[1] - rand), width: r.width + rand * 2, height: Math.min(r.height + rand * 2, aus.maxHoehe || 2400) };
+    let clip = { x: Math.max(0, r.x + sc[0] - rand), y: Math.max(0, r.y + sc[1] - rand), width: r.width + rand * 2, height: Math.min(r.height + rand * 2, aus.maxHoehe || 2400) };
+    // Rote Nummern am Rand nicht abschneiden: Ausschnitt so weit vergrößern, dass jede Nummer ganz drin ist
+    // (nur Nummern, die schon teilweise im Ausschnitt liegen; weit entfernte bleiben draußen und melden sich unten)
+    const kreise = await page.evaluate(() => [...document.querySelectorAll(".hb-marke")].filter((n) => n.textContent.trim()).map((n) => { const b = n.getBoundingClientRect(); return { x: b.left + scrollX, y: b.top + scrollY, w: b.width, h: b.height }; }));
+    const seite = await page.evaluate(() => ({ w: document.documentElement.scrollWidth, h: document.documentElement.scrollHeight }));
+    for (const k of kreise) {
+      const ueberlapp = k.x + k.w > clip.x && k.x < clip.x + clip.width && k.y + k.h > clip.y && k.y < clip.y + clip.height;
+      if (!ueberlapp) continue;
+      const x1 = Math.max(0, Math.min(clip.x, k.x - 4)), y1 = Math.max(0, Math.min(clip.y, k.y - 4));
+      const x2 = Math.min(seite.w, Math.max(clip.x + clip.width, k.x + k.w + 4)), y2 = Math.min(seite.h, Math.max(clip.y + clip.height, k.y + k.h + 4));
+      clip = { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+    }
     await page.screenshot({ path: datei, clip, fullPage: true });
     bereich = clip;
   } else {
@@ -166,7 +177,7 @@ for (const f of dateien) {
   if (nurKapitel.length && !nurKapitel.includes(f.slice(0, 2))) continue;
   const liste = (await import(pathToFileURL(join(HIER, "kapitel", f)).href)).default;
   for (const b of liste) {
-    if (nurBild && b.id !== nurBild) continue;
+    if (nurBild.length && !nurBild.includes(b.id)) continue;
     try {
       const fehler = await einBild(b);
       anzahl++;

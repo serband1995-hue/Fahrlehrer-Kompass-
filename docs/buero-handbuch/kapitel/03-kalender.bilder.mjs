@@ -90,7 +90,7 @@ const dlgMarken = (page, liste) => page.evaluate((liste) => {
   if (!dlg) return;
   const dr = dlg.getBoundingClientRect();
   for (const m of liste) {
-    const el = dlg.querySelector(m.sel.replace(/^dialog\[open\]\s*/, ""));
+    const el = [...dlg.querySelectorAll(m.sel.replace(/^dialog\[open\]\s*/, ""))].find((e) => e.getBoundingClientRect().width); // erstes sichtbares
     if (!el || !el.getBoundingClientRect().width) { console.log("Marke fehlt " + m.sel); continue; }
     const r = el.getBoundingClientRect(), pad = 4;
     const x = r.left - dr.left - pad, y = r.top - dr.top - pad;
@@ -182,7 +182,7 @@ const LISTE2 = [
     ausschnitt: { sel: LAST, rand: 10 } },
   { id: "03-vergangen-unterschrieben", url: KAL, geraet: "pc", hoehe: 1100,
     vorher: async (page, h) => { const id = await page.evaluate(() => S.termine.find((t) => t.payload && t.payload.signed && t.art !== "block").id); await oeffneId(page, h, id); },
-    marken: [{ sel: `${DLG} .fl-warnung:visible`, nr: 1 }, { sel: "[name=absagen]", nr: 2 }], ausschnitt: { sel: DLG, rand: 10 } },
+    marken: [{ sel: `${DLG} .fl-warnung`, nr: 1 }, { sel: "[name=absagen]", nr: 2 }], ausschnitt: { sel: DLG, rand: 10 } },
   { id: "03-termin-theorie", url: KAL, geraet: "pc", hoehe: 1100,
     vorher: async (page, h) => { const id = await page.evaluate(() => { const z = S.theorie.find((x) => x.lektion); S.termine.push({ id: "th1", fahrschule_id: S.fsId, fahrlehrer_id: "fl-1", schueler_id: null, datum: z.datum, von: "18:00", bis: "19:30", art: "theorie", fahrzeug: "", status: "geplant", geloescht: false, payload: { lektion: String(z.lektion) } }); return "th1"; }); await oeffneId(page, h, id); },
     marken: [{ sel: ".anwesenheit", nr: 1 }, { sel: "[data-anwdruck]", nr: 2 }], ausschnitt: { sel: DLG, rand: 10 } },
