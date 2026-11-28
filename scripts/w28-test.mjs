@@ -51,6 +51,7 @@ async function bueroSeite(breite, { mitSitzung = true, hash = "#kalender?tag=" +
     d.tabellen.kalender_termine = d.tabellen.kalender_termine.filter((t) => t.datum !== TAG);
     const T = (id, sid, von, bis, art) => d.tabellen.kalender_termine.push({ id, fahrschule_id: "fs-test-1", fahrlehrer_id: "fl-1", schueler_id: sid, datum: TAG, von, bis, art, fahrzeug: null, status: "geplant", geloescht: false, payload: {}, aktualisiert_am: new Date().toISOString() });
     T("w28f", "s1", "08:00", "09:30", "fahrstunde"); T("w28v", "s2", "10:00", "11:00", "vortest"); T("w28s", null, "12:00", "13:00", "simulator");
+    T("w28p", "s1", "08:00", "09:30", "fahrstunde"); d.tabellen.kalender_termine[d.tabellen.kalender_termine.length - 1].datum = "2026-11-02";
     T("w28weg", "s1", "14:00", "15:00", "beratung"); d.tabellen.kalender_termine[d.tabellen.kalender_termine.length - 1].geloescht = true;
     window.__FAKE = { tabellen: d.tabellen, konten: d.konten, session: mitSitzung ? { user: { id: "ad-1", email: "ad-1@example.org" } } : null, rpcs: {}, fehler: {} };
     window.__KOPIE = null;
@@ -85,6 +86,14 @@ for (const breite of [1024, 360]) {
     const neu = await page.evaluate(() => window.__FAKE.tabellen.kalender_termine.filter((t) => t.art === "mpu" && !t.geloescht).length);
     if (neu !== 1) f.push("mpu-Zeilen: " + neu);
     return f;
+  });
+  await pruefe("W1c " + B, "gefahrene Fahrstunde kann keine Büro-Art werden", async () => {
+    await page.evaluate(() => terminDialog("w28p")); await warte(page);
+    await page.selectOption("dialog[open] select[name=art]", "vortest");
+    await page.click("dialog[open] footer button[value=ok]"); await warte(page, 400);
+    const r = await page.evaluate(() => ({ art: window.__FAKE.tabellen.kalender_termine.find((t) => t.id === "w28p").art, offen: !!document.querySelector("dialog[open]") }));
+    await page.evaluate(() => document.querySelectorAll("dialog[open]").forEach((d) => { d.querySelectorAll("input,select").forEach((e) => { e.defaultValue = e.value; }); d.close(); }));
+    return r.art === "fahrstunde" && r.offen ? null : JSON.stringify(r);
   });
   await pruefe("W2a " + B, "ohne Auswahl alle Arten sichtbar", async () => {
     const ids = await sichtbareIds(page);

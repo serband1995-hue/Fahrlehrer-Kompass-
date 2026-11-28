@@ -3196,7 +3196,7 @@ function terminDialog(id, vorgabe) {
       <label class="voll">Schüler<select name="schueler_id"><option value="">– ohne Schüler –</option>${schuelerOptionen(t.schueler_id)}</select></label>
       <label>Art<select name="art">${Object.entries(ARTEN).map(([k, v]) => `<option value="${k}"${t.art === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
       <label>Fahrlehrer<select name="fahrlehrer_id" required>${lehrerAuswahl(t.fahrlehrer_id).map((l) => `<option value="${esc(l.id)}"${l.id === t.fahrlehrer_id ? " selected" : ""}>${esc(l.name || l.email)}</option>`).join("")}</select></label>
-      <p class="voll fl-hinweis-nb leise klein" id="nurBueroHinweis" hidden>Nur im Büro: Dieser Termin erscheint nicht in der App des Fahrlehrers und zählt nicht für Lohn, UE oder Statistik.</p>
+      <p class="voll fl-hinweis-nb leise klein" id="nurBueroHinweis" hidden>Nur im Büro: Dieser Termin erscheint nicht in der App des Fahrlehrers und zählt nicht für Lohn, UE oder Statistik. In seiner App wirkt diese Zeit frei.</p>
       <label>Datum<input type="date" name="datum" required value="${esc(t.datum || "")}"></label>
       <label>Fahrzeug<select name="fahrzeug"><option value="">–</option>${fahrzeuge.map((f) => `<option${t.fahrzeug === f ? " selected" : ""}>${esc(f)}</option>`).join("")}</select></label>
       <label>Von<input type="time" name="von" required value="${esc(t.von || "")}"></label>
@@ -3239,6 +3239,11 @@ function terminDialog(id, vorgabe) {
     }
     // K8: gesperrter Schüler (Zahlung ausstehend): kein neuer künftiger Termin, kein „Trotzdem“ (bestehende Termine bleiben, die Datenbank prüft ebenso)
     if (neuerTerminGesperrt(t, id, d)) { zahlHinweisZeigen(tdlg, true); toast(ZAHLUNG_MELDUNG, true); return false; }
+    // W28: Eine gefahrene, unterschriebene oder schon abgerechnete Stunde wird keine Büro-Art (sie verschwände beim Fahrlehrer und aus Lohn/Nachweis)
+    if (id && nurBueroArt(d.art) && !nurBueroArt(t.art) && ["fahrstunde", "sonder", "nacht", "schalt", "pruefung", "theorie"].includes(t.art || "fahrstunde")
+      && ((t.datum || "") <= KR.todayISO() || (t.payload || {}).signed || t.buero_fc_status === "abgegeben" || (typeof nwIstNachweis === "function" && nwIstNachweis(t)))) {
+      toast("Diese Stunde ist schon gefahren oder abgerechnet. Sie kann kein Büro-Termin werden. Bitte einen neuen Termin anlegen.", true); return false;
+    }
     // W22: Umschreiber machen keine Sonderfahrten (eine schon eingetragene bleibt bearbeitbar)
     if (umschreiberSfGesperrt(t, d.art, d.schueler_id)) { toast("Umschreiber: keine Sonderfahrten. Bitte eine andere Art wählen.", true); return false; }
     // Stopp-Notiz: Büro vor dem Buchen warnen (wie in der Fahrlehrer-App)
