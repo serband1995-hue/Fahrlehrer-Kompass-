@@ -17,7 +17,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 await mkdir(join(HIER, "html"), { recursive: true });
 await mkdir(join(HIER, "pdf"), { recursive: true });
-// Bilder fürs PDF als JPEG (Qualität 80, höchstens 1700 Pixel breit ≈ 240 dpi auf A4): die PDFs werden deutlich kleiner, Text bleibt scharf
+// Bilder fürs PDF als JPEG (Qualität 75, höchstens 1400 Pixel breit ≈ 200 dpi auf A4): die PDFs werden deutlich kleiner, Text bleibt scharf
 execFileSync("python3", ["-c", `
 import os, sys
 from PIL import Image
@@ -28,14 +28,16 @@ for f in os.listdir(q):
     a, b = os.path.join(q, f), os.path.join(z, f[:-4] + ".jpg")
     if os.path.exists(b) and os.path.getmtime(b) >= os.path.getmtime(a): continue
     im = Image.open(a).convert("RGB")
-    if im.width > 1700: im = im.resize((1700, round(im.height * 1700 / im.width)), Image.LANCZOS)
-    im.save(b, "JPEG", quality=80, optimize=True, progressive=True)
-`, join(HIER, "bilder"), join(HIER, "html", "jpg")]);
+    if im.width > 1400: im = im.resize((1400, round(im.height * 1400 / im.width)), Image.LANCZOS)
+    im.save(b, "JPEG", quality=75, optimize=True, progressive=True)
+`, join(HIER, "bilder"), join(HIER, "html", "jpg-1400-75")]); // Ordnername enthält Größe und Qualität: andere Werte = frische Umrechnung
 
 // Kapitel lesen, jede Funktion (h2) bekommt eine Kennung für das Inhaltsverzeichnis
 async function leseKapitel(k) {
   let html = await readFile(join(HIER, "kapitel", k.datei + ".html"), "utf8");
-  html = html.replace(/src="bilder\/([^"]+)\.png"/g, 'src="jpg/$1.jpg"').replace(/src="bilder\//g, 'src="../bilder/');
+  html = html.replace(/src="bilder\/([^"]+)\.png"/g, 'src="jpg-1400-75/$1.jpg"').replace(/src="bilder\//g, 'src="../bilder/');
+  // Verweise auf die roten Nummern im Bild: „(2)“ im Text wird zum roten Kreis wie im Bild
+  html = html.replace(/\((\d{1,2})\)/g, '<span class="marke-ref">$1</span>');
   const funktionen = [];
   let i = 0;
   html = html.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/g, (m, attr, inhalt) => {
@@ -71,7 +73,9 @@ async function druck(name, titel, bauHtml) {
   const pdfDatei = join(HIER, "pdf", name + ".pdf");
   let seiten = {};
   for (let lauf = 0; lauf < 2; lauf++) {
-    await writeFile(htmlDatei, bauHtml(seiten));
+    // Im zweiten Lauf die unsichtbaren Suchmarken weglassen (sonst stehen sie beim Suchen/Kopieren im PDF-Text)
+    const html = bauHtml(seiten);
+    await writeFile(htmlDatei, lauf ? html.replace(/<span class="unsichtbar">@@K\d+F\d+@@<\/span>/g, "") : html);
     const page = await browser.newPage();
     await page.goto(pathToFileURL(htmlDatei).href, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);

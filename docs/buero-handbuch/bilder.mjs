@@ -41,8 +41,8 @@ const server = createServer(async (req, res) => {
 await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
 const basis = `http://127.0.0.1:${server.address().port}/`;
 
-// Feste Uhrzeit/Datum, damit die Bilder bei jedem Lauf gleich aussehen: Dienstag, 02.12.2026, 09:30
-const FEST = new Date("2026-12-02T09:30:00").getTime();
+// Feste Uhrzeit/Datum, damit die Bilder bei jedem Lauf gleich aussehen: Mittwoch, 02.12.2026, 09:30 Uhr deutscher Zeit
+const FEST = new Date("2026-12-02T09:30:00+01:00").getTime();
 
 // Deutsche Anzeige auch in Datums- und Zeitfeldern (sonst mm/dd/yyyy und AM/PM)
 const browser = await chromium.launch({ args: ["--lang=de-DE"], env: { ...process.env, LANG: "de_DE.UTF-8", LANGUAGE: "de_DE", LC_ALL: "de_DE.UTF-8" } });

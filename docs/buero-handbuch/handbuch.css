@@ -53,10 +53,10 @@ b, strong { font-weight: 700; }
 .unsicher { background: #f1f2f4; border-left: 4px solid #8b93a0; padding: 5pt 9pt; border-radius: 0 6pt 6pt 0; margin: 6pt 0 0; font-size: 9.8pt; color: #3c424d; break-inside: avoid; }
 .unsicher::before { content: "Nicht sicher geklärt: "; font-weight: 800; }
 
-/* Schritte mit roten Nummern (passen zu den Nummern im Bild) */
+/* Schritte: grüne Quadrate. Rote Kreise gibt es nur im Bild (Marken) und im Text als Verweis darauf: (2) → .marke-ref */
 ol.schritte { list-style: none; counter-reset: s; padding: 0; margin: 0 0 6pt; }
 ol.schritte > li { counter-increment: s; position: relative; padding-left: 24pt; margin: 0 0 4pt; min-height: 16pt; }
-ol.schritte > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 16pt; height: 16pt; border-radius: 50%; background: var(--rot); color: #fff; font: 700 9pt/16pt Arial, sans-serif; text-align: center; }
+ol.schritte > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 16pt; height: 16pt; border-radius: 3pt; background: var(--gruen); color: #fff; font: 700 9pt/16pt Arial, sans-serif; text-align: center; }
 
 /* Bilder */
 figure { margin: 6pt 0 8pt; break-inside: avoid; }
@@ -73,3 +73,4 @@ table.liste { border-collapse: collapse; width: 100%; font-size: 9.8pt; margin: 
 table.liste th, table.liste td { border: 1px solid var(--linie); padding: 3pt 5pt; text-align: left; vertical-align: top; }
 table.liste th { background: #f3f5f7; }
 .unsichtbar { color: #fff; font-size: 1pt; line-height: 0; }
+.marke-ref { display: inline-block; width: 13pt; height: 13pt; border-radius: 50%; background: var(--rot); color: #fff; font: 700 8pt/13pt Arial, sans-serif; text-align: center; vertical-align: 1pt; margin: 0 1pt; }
